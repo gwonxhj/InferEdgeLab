@@ -1,4 +1,4 @@
-.PHONY: save demo_deps demo_models demo_profile demo_doc demo_readme demo demo_clean ci_bench
+.PHONY: save demo_deps demo_models demo_profile demo_doc demo_readme demo demo_clean ci_bench ci_guard
 
 SIZES  ?= 224 320 640
 RUNS   ?= 300
@@ -75,3 +75,12 @@ demo_clean:
 
 ci_bench: demo_profile demo_doc
 	@echo "✅ ci_bench complete (reports + $(BENCH_DOC), no README update)"
+
+ci_guard:
+	@echo "==> Regression guard (mean, +15% allowed)"
+	poetry run python scripts/check_regression.py \
+		--baseline benchmarks/baseline_codespaces_cpu.json \
+		--reports "reports/*.json" \
+		--metric mean \
+		--max-regress-pct 15 \
+		--allow-missing-keys
