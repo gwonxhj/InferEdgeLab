@@ -19,6 +19,9 @@ class BenchmarkResult:
 
     timestamp: str
     source_report_path: Optional[str] = None
+
+    system: Dict[str, Any] | None = None
+    run_config: Dict[str, Any] | None = None
     extra: Dict[str, Any] | None = None
 
     def to_dict(self) -> Dict[str, Any]:

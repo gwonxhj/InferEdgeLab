@@ -6,6 +6,8 @@ from datetime import datetime
 import typer
 from rich import print as rprint
 
+from edgebench.utils.system_info import collect_system_snapshot
+
 from edgebench.core.analyzer import analyze_onnx, collect_package_versions, collect_system_info
 from edgebench.core.profiler import profile_onnxruntime_cpu
 from edgebench.core.report import (
@@ -42,6 +44,7 @@ def profile_cmd(
     )
     sysinfo = collect_system_info()
     pkgs = collect_package_versions()
+    system_snapshot = collect_system_snapshot()
 
     prof = profile_onnxruntime_cpu(
         model_path,
@@ -111,14 +114,15 @@ def profile_cmd(
         p99_ms=prof.latency_ms.get("p99"),
         timestamp=ts,
         source_report_path=output,
-        extra={
+        system=system_snapshot,
+        run_config={
             "warmup": warmup,
             "runs": runs,
             "intra_threads": intra_threads,
             "inter_threads": inter_threads,
-            "os": sysinfo.get("os"),
-            "python": sysinfo.get("python"),
-            "machine": sysinfo.get("machine"),
+        },
+        extra={
+            "input_names": prof.extra.get("input_names"),
         },
     )
 
