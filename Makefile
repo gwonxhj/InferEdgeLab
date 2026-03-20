@@ -1,4 +1,4 @@
-.PHONY: save demo_deps demo_models demo_profile demo_doc demo_readme demo demo_clean
+.PHONY: save demo_deps demo_models demo_profile demo_doc demo_readme demo demo_clean ci_bench
 
 SIZES  ?= 224 320 640
 RUNS   ?= 300
@@ -72,3 +72,6 @@ demo: demo_profile demo_readme
 
 demo_clean:
 	rm -rf models reports $(BENCH_DOC)
+
+ci_bench: demo_profile demo_doc
+	@echo "✅ ci_bench complete (reports + $(BENCH_DOC), no README update)"
