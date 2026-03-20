@@ -1,0 +1,2 @@
+from .markdown_generator import generate_compare_markdown
+from .html_generator import generate_compare_html

@@ -6,6 +6,10 @@ from rich.table import Table
 
 from edgebench.result.loader import load_result
 from edgebench.compare.comparator import compare_results
+from edgebench.report.markdown_generator import generate_compare_markdown
+from edgebench.report.html_generator import generate_compare_html
+
+
 
 def _fmt_num(v):
     if v is None:
@@ -22,6 +26,8 @@ def _fmt_pct(v):
 def compare_cmd(
         base_path: str = typer.Argument(..., help="기준 result JSON 경로"),
         new_path: str = typer.Argument(..., help="비교 대상 result JSON 경로"),
+        markdown_out: str = typer.Option("", "--markdown-out", help="비교 결과 Markdown 저장 경로"),
+        html_out: str = typer.Option("", "--html-out", help="비교 결과 HTML 저장 경로"),
 ):
     """
     structured benchmark result 두 개를 비교해서 콘솔 표로 출력한다.
@@ -97,3 +103,17 @@ def compare_cmd(
         )
 
     rprint(run_table)
+
+    if markdown_out:
+        md_text = generate_compare_markdown(result)
+        with open(markdown_out, "w", encoding="utf-8") as f:
+            f.write(md_text)
+            f.write("\n")
+        rprint(f"[green]Saved markdown report[/green]: {markdown_out}")
+
+    if html_out:
+        html_text = generate_compare_html(result)
+        with open(html_out, "w", encoding="utf-8") as f:
+            f.write(html_text)
+            f.write("\n")
+        rprint(f"[green]Saved HTML report[/green]: {html_out}")
