@@ -209,3 +209,4 @@ __marimo__/
 # EdgeBench generated artifacts (do not commit)
 models/
 reprots/
+results/
