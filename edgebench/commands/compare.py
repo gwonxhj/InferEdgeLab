@@ -37,6 +37,10 @@ def compare_cmd(
     """
     base = load_result(base_path)
     new = load_result(new_path)
+
+    if base.get("legacy_result") or new.get("legacy_result"):
+        rprint("[yellow]Warning[/yellow]: one or both result files are legacy format. Some fields may be missing.")
+
     result = compare_results(base, new)
     judgement = judge_comparison(result)
 

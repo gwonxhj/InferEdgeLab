@@ -16,7 +16,7 @@ def _judge_delta_pct(delta_pct: Optional[float], improve_threshold: float = -3.0
         return "improvement"
     if delta_pct >= regress_threshold:
         return "regression"
-    return "newtral"
+    return "neutral"
 
 def judge_comparison(compare_result: Dict[str, Any]) -> Dict[str, Any]:
     metrics = compare_result["metrics"]

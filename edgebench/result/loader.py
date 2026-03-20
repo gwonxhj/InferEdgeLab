@@ -8,7 +8,18 @@ from typing import Any, Dict, List
 
 def load_result(path: str) -> Dict[str, Any]:
     with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+
+    # legacy compatibility
+    has_system = "system" in data
+    has_run_config = "run_config" in data
+
+    data.setdefault("system", {})
+    data.setdefault("run_config", {})
+    data.setdefault("extra", {})
+    data["legacy_result"] = not (has_system and has_run_config)
+
+    return data
 
 
 def load_results(pattern: str = "results/*.json") -> List[Dict[str, Any]]:
@@ -22,18 +33,49 @@ def load_results(pattern: str = "results/*.json") -> List[Dict[str, Any]]:
 
 
 def list_result_paths(pattern: str = "results/*.json") -> List[str]:
-    """
-    structured result 파일 경로들을 수정 시간 기준 오름차순으로 반환한다.
-    """
     paths = glob.glob(pattern)
     return sorted(paths, key=os.path.getmtime)
 
 
 def latest_result_paths(count: int = 2, pattern: str = "results/*.json") -> List[str]:
-    """
-    가장 최근 result 파일 N개 경로를 반환한다.
-    """
     paths = list_result_paths(pattern)
     if len(paths) < count:
         raise ValueError(f"최소 {count}개의 result 파일이 필요합니다. 현재: {len(paths)}개")
     return paths[-count:]
+
+
+def result_identity_key(item: Dict[str, Any]) -> str:
+    return "::".join(
+        [
+            str(item.get("model")),
+            str(item.get("engine")),
+            str(item.get("device")),
+            str(item.get("batch")),
+            str(item.get("height")),
+            str(item.get("width")),
+        ]
+    )
+
+
+def latest_comparable_result_paths(pattern: str = "results/*.json") -> List[str]:
+    paths = list_result_paths(pattern)
+    if len(paths) < 2:
+        raise ValueError(f"최소 2개의 result 파일이 필요합니다. 현재: {len(paths)}개")
+
+    items = [(path, load_result(path)) for path in paths]
+    items_desc = list(reversed(items))
+
+    newest_path, newest_item = items_desc[0]
+    target_key = result_identity_key(newest_item)
+
+    matched_paths: List[str] = []
+    for path, item in items_desc:
+        if result_identity_key(item) == target_key:
+            matched_paths.append(path)
+        if len(matched_paths) == 2:
+            break
+
+    if len(matched_paths) < 2:
+        raise ValueError("같은 조건(model/engine/device/batch/height/width)의 최근 결과 2개를 찾지 못했습니다.")
+
+    return list(reversed(matched_paths))

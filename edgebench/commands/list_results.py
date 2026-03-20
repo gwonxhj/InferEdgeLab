@@ -37,6 +37,7 @@ def list_results_cmd(
     table.add_column("Shape", justify="right")
     table.add_column("Mean (ms)", justify="right")
     table.add_column("P99 (ms)", justify="right")
+    table.add_column("Legacy")
 
     for path in paths:
         item = load_result(path)
@@ -49,6 +50,7 @@ def list_results_cmd(
             shape,
             _fmt_num(item.get("mean_ms")),
             _fmt_num(item.get("p99_ms")),
+            str(item.get("legacy_result")),
         )
 
     rprint(table)
