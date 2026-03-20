@@ -6,9 +6,9 @@ from datetime import datetime
 import typer
 from rich import print as rprint
 
-from edgebench.analyzer import analyze_onnx, collect_package_versions, collect_system_info
-from edgebench.profiler import profile_onnxruntime_cpu
-from edgebench.report import (
+from edgebench.core.analyzer import analyze_onnx, collect_package_versions, collect_system_info
+from edgebench.core.profiler import profile_onnxruntime_cpu
+from edgebench.core.report import (
     EdgeBenchReport,
     ModelInfo,
     StaticAnalysis,
@@ -16,6 +16,8 @@ from edgebench.report import (
     RuntimeProfile,
     utc_now_iso,
 )
+from edgebench.result.schema import BenchmarkResult
+from edgebench.result.saver import save_result
 
 
 def profile_cmd(
@@ -77,14 +79,19 @@ def profile_cmd(
             latency_ms=prof.latency_ms,
             extra=prof.extra,
         ),
-        system=SystemInfo(os=sysinfo["os"], python=sysinfo["python"], packages=pkgs),
+        system=SystemInfo(
+            os=sysinfo["os"],
+            python=sysinfo["python"],
+            packages=pkgs,
+        ),
         meta={"machine": sysinfo.get("machine"), "notes": "Phase 1 profile"},
     )
+
+    ts = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
 
     if not output:
         os.makedirs("reports", exist_ok=True)
         model_name = os.path.splitext(os.path.basename(model_path))[0]
-        ts = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
         output = os.path.join(
             "reports",
             f"{model_name}__{prof.engine}_{prof.device}__b{batch}__h{height or 0}w{width or 0}__r{runs}__{ts}.json",
@@ -92,3 +99,28 @@ def profile_cmd(
 
     report.write_json(output)
     rprint(f"[green]Saved[/green]: {output}")
+
+    structured = BenchmarkResult(
+        model=os.path.basename(model_path),
+        engine=prof.engine,
+        device=prof.device,
+        batch=batch,
+        height=height if height > 0 else 0,
+        width=width if width > 0 else 0,
+        mean_ms=prof.latency_ms.get("mean"),
+        p99_ms=prof.latency_ms.get("p99"),
+        timestamp=ts,
+        source_report_path=output,
+        extra={
+            "warmup": warmup,
+            "runs": runs,
+            "intra_threads": intra_threads,
+            "inter_threads": inter_threads,
+            "os": sysinfo.get("os"),
+            "python": sysinfo.get("python"),
+            "machine": sysinfo.get("machine"),
+        },
+    )
+
+    result_path = save_result(structured)
+    rprint(f"[cyan]Saved structured result[/cyan]: {result_path}")

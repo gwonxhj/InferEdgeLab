@@ -3,8 +3,8 @@ from __future__ import annotations
 import typer
 from rich import print as rprint
 
-from edgebench.analyzer import analyze_onnx, collect_package_versions, collect_system_info
-from edgebench.report import EdgeBenchReport, ModelInfo, StaticAnalysis, SystemInfo, utc_now_iso
+from edgebench.core.analyzer import analyze_onnx, collect_package_versions, collect_system_info
+from edgebench.core.report import EdgeBenchReport, ModelInfo, StaticAnalysis, SystemInfo, utc_now_iso
 
 
 def analyze_cmd(
@@ -47,7 +47,10 @@ def analyze_cmd(
             python=sysinfo["python"],
             packages=pkgs,
         ),
-        meta={"machine": sysinfo.get("machine"), "notes": "Phase 1 static analyze"},
+        meta={
+            "machine": sysinfo.get("machine"),
+            "notes": "Phase 1 static analyze",
+        },
         runtime=None,
     )
 
