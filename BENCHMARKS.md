@@ -6,15 +6,15 @@
 
 | Model | Engine | Device | Batch | Input(HxW) | FLOPs | Mean (ms) | P99 (ms) | Timestamp (UTC) |
 |---|---|---:|---:|---:|---:|---:|---:|---|
-| toy320.onnx | onnxruntime | cpu | 1 | 320x320 | 258,048,640 | 1.046 | 1.434 | 2026-02-27T08:30:37Z |
-| toy224.onnx | onnxruntime | cpu | 1 | 224x224 | 126,444,160 | 0.599 | 1.473 | 2026-02-27T08:30:35Z |
-| toy640.onnx | onnxruntime | cpu | 1 | 640x640 | 1,032,192,640 | 4.088 | 5.092 | 2026-02-27T08:30:39Z |
+| toy224.onnx | onnxruntime | cpu | 1 | 224x224 | 126,444,160 | 0.450 | 0.488 | 2026-02-27T07:05:49Z |
+| toy320.onnx | onnxruntime | cpu | 1 | 320x320 | 258,048,640 | 0.908 | 0.943 | 2026-02-27T07:05:50Z |
+| toy640.onnx | onnxruntime | cpu | 1 | 640x640 | 1,032,192,640 | 4.250 | 5.423 | 2026-02-27T07:05:53Z |
 
 ## History (raw)
 
 | Model | Engine | Device | Batch | Input(HxW) | FLOPs | Mean (ms) | P99 (ms) | Timestamp (UTC) |
 |---|---|---:|---:|---:|---:|---:|---:|---|
-| toy224.onnx | onnxruntime | cpu | 1 | 224x224 | 126,444,160 | 0.599 | 1.473 | 2026-02-27T08:30:35Z |
-| toy320.onnx | onnxruntime | cpu | 1 | 320x320 | 258,048,640 | 1.046 | 1.434 | 2026-02-27T08:30:37Z |
-| toy640.onnx | onnxruntime | cpu | 1 | 640x640 | 1,032,192,640 | 4.088 | 5.092 | 2026-02-27T08:30:39Z |
+| toy224.onnx | onnxruntime | cpu | 1 | 224x224 | 126,444,160 | 0.450 | 0.488 | 2026-02-27T07:05:49Z |
+| toy320.onnx | onnxruntime | cpu | 1 | 320x320 | 258,048,640 | 0.908 | 0.943 | 2026-02-27T07:05:50Z |
+| toy640.onnx | onnxruntime | cpu | 1 | 640x640 | 1,032,192,640 | 4.250 | 5.423 | 2026-02-27T07:05:53Z |
 
