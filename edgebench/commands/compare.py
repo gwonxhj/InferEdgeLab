@@ -5,7 +5,10 @@ from rich import print as rprint
 from rich.table import Table
 
 from edgebench.result.loader import load_result
+
 from edgebench.compare.comparator import compare_results
+from edgebench.compare.judgement import judge_comparison
+
 from edgebench.report.markdown_generator import generate_compare_markdown
 from edgebench.report.html_generator import generate_compare_html
 
@@ -35,10 +38,16 @@ def compare_cmd(
     base = load_result(base_path)
     new = load_result(new_path)
     result = compare_results(base, new)
+    judgement = judge_comparison(result)
 
     rprint("[bold]Compare Results[/bold]")
     rprint(f"Base: {base_path}")
     rprint(f"New : {new_path}")
+    rprint(f"Overall judgement: [bold]{judgement['overall']}[/bold]")
+    rprint(f"Shape match      : {judgement['shape_match']}")
+    rprint(f"System match     : {judgement['system_match']}")
+    rprint(f"Mean judgement   : {judgement['mean_ms']}")
+    rprint(f"P99 judgement    : {judgement['p99_ms']}")
 
     metrics = result["metrics"]
     metric_table = Table(title="Latency Comparison")
@@ -105,14 +114,14 @@ def compare_cmd(
     rprint(run_table)
 
     if markdown_out:
-        md_text = generate_compare_markdown(result)
+        md_text = generate_compare_markdown(result, judgement)
         with open(markdown_out, "w", encoding="utf-8") as f:
             f.write(md_text)
             f.write("\n")
         rprint(f"[green]Saved markdown report[/green]: {markdown_out}")
 
     if html_out:
-        html_text = generate_compare_html(result)
+        html_text = generate_compare_html(result, judgement)
         with open(html_out, "w", encoding="utf-8") as f:
             f.write(html_text)
             f.write("\n")

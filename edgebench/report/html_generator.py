@@ -50,7 +50,7 @@ def _table_rows_from_diff_map(diff_map: Dict[str, Dict[str, Any]]) -> str:
     return "\n".join(rows)
 
 
-def generate_compare_html(compare_result: Dict[str, Any]) -> str:
+def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, Any]) -> str:
     base_id = compare_result["base_id"]
     new_id = compare_result["new_id"]
     metrics = compare_result["metrics"]
@@ -117,6 +117,14 @@ def generate_compare_html(compare_result: Dict[str, Any]) -> str:
   <div class="meta">
     <p><strong>Base</strong>: <code>{escape(str(base_id["model"]))}</code> / <code>{escape(str(base_id["engine"]))}</code> / <code>{escape(str(base_id["device"]))}</code> / <code>{escape(str(base_id["timestamp"]))}</code></p>
     <p><strong>New</strong>: <code>{escape(str(new_id["model"]))}</code> / <code>{escape(str(new_id["engine"]))}</code> / <code>{escape(str(new_id["device"]))}</code> / <code>{escape(str(new_id["timestamp"]))}</code></p>
+  </div>
+
+  <div class="meta">
+    <p><strong>Overall</strong>: <code>{escape(str(judgement["overall"]))}</code></p>
+    <p><strong>Shape match</strong>: <code>{escape(str(judgement["shape_match"]))}</code></p>
+    <p><strong>System match</strong>: <code>{escape(str(judgement["system_match"]))}</code></p>
+    <p><strong>Mean judgement</strong>: <code>{escape(str(judgement["mean_ms"]))}</code></p>
+    <p><strong>P99 judgement</strong>: <code>{escape(str(judgement["p99_ms"]))}</code></p>
   </div>
 
   <h2>Latency Comparison</h2>

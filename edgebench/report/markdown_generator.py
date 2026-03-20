@@ -14,7 +14,7 @@ def _fmt_pct(v: Optional[float]) -> str:
         return "-"
     return f"{v:+.2f}%"
 
-def generate_compare_markdown(compare_result: Dict[str, Any]) -> str:
+def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[str, Any]) -> str:
     """
     compare_results() 출력 dict를 Markdown 문서 문자열로 변환한다.
     """
@@ -33,6 +33,14 @@ def generate_compare_markdown(compare_result: Dict[str, Any]) -> str:
     lines.append("")
     lines.append(f"- Base: `{base_id['model']}` / `{base_id['engine']}` / `{base_id['device']}` / `{base_id['timestamp']}`")
     lines.append(f"- New: `{new_id['model']}` / `{new_id['engine']}` / `{new_id['device']}` / `{new_id['timestamp']}`")
+    lines.append("")
+    lines.append("## Judgement")
+    lines.append("")
+    lines.append(f"- Overall: **{judgement['overall']}**")
+    lines.append(f"- Shape match: **{judgement['shape_match']}**")
+    lines.append(f"- System match: **{judgement['system_match']}**")
+    lines.append(f"- Mean judgement: **{judgement['mean_ms']}**")
+    lines.append(f"- P99 judgement: **{judgement['p99_ms']}**")
     lines.append("")
 
     lines.append("## Latency Comparison")
