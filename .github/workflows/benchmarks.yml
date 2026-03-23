@@ -19,6 +19,7 @@ on:
       - "pyproject.toml"
       - "poetry.lock"
       - ".github/workflows/benchmarks.yml"
+      - "README.md"
 
 permissions:
   contents: write
