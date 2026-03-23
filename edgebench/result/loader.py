@@ -79,3 +79,58 @@ def latest_comparable_result_paths(pattern: str = "results/*.json") -> List[str]
         raise ValueError("같은 조건(model/engine/device/batch/height/width)의 최근 결과 2개를 찾지 못했습니다.")
 
     return list(reversed(matched_paths))
+
+def sort_results_by_timestamp(results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    return sorted(results, key=lambda item: str(item.get("timestamp") or ""))
+
+def filter_results(
+        results: List[Dict[str, Any]],
+        model: str = "",
+        engine: str = "",
+        device: str = "",
+        batch: int | None = None,
+        height: int | None = None,
+        width: int | None = None,
+) -> List[Dict[str, Any]]:
+    filtered = results
+
+    if model:
+        filtered = [item for item in filtered if str(item.get("model")) == model]
+
+    if engine:
+        filtered = [item for item in filtered if str(item.get("engine")) == engine]
+
+    if device:
+        filtered = [item for item in filtered if str(item.get("device")) == device]
+
+    if batch is not None:
+        filtered = [item for item in filtered if item.get("batch") == batch]
+
+    if height is not None:
+        filtered = [item for item in filtered if item.get("height") == height]
+
+    if width is not None:
+        filtered = [item for item in filtered if item.get("width") == width]
+
+    return filtered
+
+def select_history_results(
+        pattern: str = "results/*.json",
+        model: str = "",
+        engine: str = "",
+        device: str = "",
+        batch: int | None = None,
+        height: int | None = None,
+        width: int | None = None,
+) -> List[Dict[str, Any]]:
+    results = load_results(pattern)
+    results = filter_results(
+        results,
+        model=model,
+        engine=engine,
+        device=device,
+        batch=batch,
+        height=height,
+        width=width,
+    )
+    return sort_results_by_timestamp(results)
