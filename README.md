@@ -22,6 +22,34 @@ EdgeBench는 다음을 제공합니다:
 
 ---
 
+## ⚡ 핵심 기능
+
+EdgeBench는 단순한 벤치마크 도구가 아니라  
+**모델 성능을 정량적으로 비교·추적하는 시스템**입니다.
+
+- 📊 Static Analysis  
+  - Parameters, FLOPs, Model size 분석
+
+- ⚡ Runtime Profiling  
+  - ONNX Runtime 기반 실제 latency 측정 (mean / p99)
+
+- 🧱 Structured Result System  
+  - 모든 결과를 JSON 스키마로 저장
+  - 이후 비교 및 리포트 생성 가능
+
+- 🔍 Result Comparison  
+  - 두 실행 결과를 자동 비교 (delta / % 변화)
+  - regression / improvement 판단
+
+- 📄 Report Generation  
+  - Markdown / HTML 리포트 자동 생성
+
+- 🤖 CI Benchmark Pipeline  
+  - PR마다 자동 벤치마크 실행
+  - 성능 회귀(regression) 자동 감지
+
+---
+
 ## 🎯 왜 필요한가?
 
 Jetson, RK3588, CPU-only 환경과 같은 엣지 디바이스에서는  
@@ -55,19 +83,99 @@ CLI 기반 구조:
 
 ---
 
-## 🛠 예정 기능 (MVP)
+## 🧱 Structured Result System
 
-- ONNX 모델 로드
-- 파라미터 수 계산
-- FLOPs 추정
-- CPU latency 벤치마크
-- JSON 리포트 출력
+EdgeBench는 모든 벤치마크 결과를 다음과 같은 구조로 저장합니다:
+
+- model / engine / device
+- input shape (batch, height, width)
+- latency (mean, p99)
+- system info (OS, CPU, Python)
+- run config (threads, warmup, runs)
+
+이 구조를 기반으로:
+
+- 결과 비교 (compare)
+- 리포트 생성 (markdown / html)
+- CI 성능 추적
+
+이 가능합니다.
+
+---
+
+## 📊 Comparison & Report
+
+EdgeBench는 두 실행 결과를 자동으로 비교합니다:
+
+- latency delta 계산
+- percentage 변화
+- regression / improvement 판별
+
+또한 결과를 다음 형태로 출력할 수 있습니다:
+
+- CLI 표 (rich)
+- Markdown 리포트
+- HTML 리포트
+
+---
+
+## 🛠 향후 확장 계획
+
+- TensorRT backend
+- RKNN (NPU) 지원
+- Jetson GPU inference
+- multi-device benchmark 비교
+- visualization dashboard
+
+---
+
+## 🖥 CLI 사용 예시
+
+### 1. 모델 성능 측정
+
+```bash
+edgebench profile model.onnx \
+  --warmup 10 \
+  --runs 300 \
+  --batch 1 \
+  --height 320 --width 320
+```
+
+---
+
+### 2. 최근 결과 비교
+`edgebench compare-latest`
+
+---
+
+### 3. 두 결과 직접 비교
+`edgebench compare result_a.json result_b.json`
+
+---
+
+### 4. 결과 목록 확인
+`edgebench list-results`
 
 ---
 
 ## 🗺 개발 로드맵
 
 자세한 계획은 Roadmap.md 참고
+
+---
+
+## 🤖 CI Benchmark & Regression Guard
+
+EdgeBench는 CI 환경에서 자동으로:
+
+1. 모델 생성 및 profiling 수행
+2. 결과를 artifact로 저장
+3. baseline과 비교하여 성능 변화 분석
+
+- regression 허용 범위 설정 가능
+- PR 단계에서 성능 저하 자동 차단
+
+이를 통해 모델 성능을 지속적으로 추적할 수 있습니다.
 
 ---
 
