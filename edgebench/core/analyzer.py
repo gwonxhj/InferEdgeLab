@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
-from edgebench.flops import estimate_flops_conv_gemm_detailed
+from edgebench.core.flops import estimate_flops_conv_gemm_detailed
 
 import hashlib
 import os
