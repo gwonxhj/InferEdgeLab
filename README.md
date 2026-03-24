@@ -1,7 +1,17 @@
+![CI](https://github.com/gwonxhj/edgebench/actions/workflows/benchmarks.yml/badge.svg)
+![Python](https://img.shields.io/badge/python-3.11-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 # EdgeBench
 
 > Edge AI Inference Profiling Framework  
-> ONNX 모델의 구조 분석과 실제 추론 성능을 정량화하는 개발자용 벤치마크 도구
+> EdgeBench is a CLI-based framework for profiling, comparing, and tracking AI inference performance across edge environments.
+
+---
+
+## 📄 Portfolio Document
+
+👉 [EdgeBench Portfolio (Detailed Design & Architecture)](docs/portfolio/edgebench_portfolio.md)
 
 ---
 
@@ -19,10 +29,7 @@ EdgeBench는 다음을 제공합니다:
 - 모델 파일 크기 확인
 - FLOPs 추정
 - CPU 기반 실제 추론 latency 측정
-- structured benchmark result 저장
-- 최근 결과 비교 및 regression 판단
-- Markdown / HTML 리포트 생성
-- benchmark history 추적
+- JSON 형태의 정량 리포트 출력
 
 ---
 
