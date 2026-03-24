@@ -12,11 +12,13 @@ on:
       - "poetry.lock"
       - ".github/workflows/benchmarks.yml"
   pull_request:
-    paths:
-      - "**"
 
 permissions:
   contents: write
+
+concurrency:
+  group: benchmarks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   benchmark:
