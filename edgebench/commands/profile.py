@@ -107,6 +107,7 @@ def profile_cmd(
         model=os.path.basename(model_path),
         engine=prof.engine,
         device=prof.device,
+        precision="fp32",
         batch=batch,
         height=height if height > 0 else 0,
         width=width if width > 0 else 0,

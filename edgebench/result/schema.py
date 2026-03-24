@@ -9,6 +9,7 @@ class BenchmarkResult:
     model: str
     engine: str
     device: str
+    precision: str
 
     batch: int
     height: int
