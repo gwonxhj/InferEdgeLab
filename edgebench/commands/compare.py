@@ -47,6 +47,8 @@ def compare_cmd(
     rprint("[bold]Compare Results[/bold]")
     rprint(f"Base: {base_path}")
     rprint(f"New : {new_path}")
+    rprint(f"Base precision   : {base.get('precision')}")
+    rprint(f"New precision    : {new.get('precision')}")
     rprint(f"Overall judgement: [bold]{judgement['overall']}[/bold]")
     rprint(f"Shape match      : {judgement['shape_match']}")
     rprint(f"System match     : {judgement['system_match']}")
@@ -71,6 +73,19 @@ def compare_cmd(
         )
 
     rprint(metric_table)
+
+    precision_table = Table(title="Precision")
+    precision_table.add_column("Field")
+    precision_table.add_column("Base")
+    precision_table.add_column("New")
+
+    precision_table.add_row(
+        "precision",
+        str(base.get("precision")),
+        str(new.get("precision")),
+    )
+
+    rprint(precision_table)
 
     shape = result["shape"]
     shape_table = Table(title="Input Shape")

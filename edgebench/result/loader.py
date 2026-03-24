@@ -51,6 +51,7 @@ def result_identity_key(item: Dict[str, Any]) -> str:
             str(item.get("model")),
             str(item.get("engine")),
             str(item.get("device")),
+            str(item.get("precision")),
             str(item.get("batch")),
             str(item.get("height")),
             str(item.get("width")),
@@ -89,6 +90,7 @@ def filter_results(
         model: str = "",
         engine: str = "",
         device: str = "",
+        precision: str = "",
         batch: int | None = None,
         height: int | None = None,
         width: int | None = None,
@@ -103,6 +105,9 @@ def filter_results(
 
     if device:
         filtered = [item for item in filtered if str(item.get("device")) == device]
+
+    if precision:
+        filtered = [item for item in filtered if str(item.get("precision")) == precision]
 
     if batch is not None:
         filtered = [item for item in filtered if item.get("batch") == batch]
@@ -120,6 +125,7 @@ def select_history_results(
         model: str = "",
         engine: str = "",
         device: str = "",
+        precision: str = "",
         batch: int | None = None,
         height: int | None = None,
         width: int | None = None,
@@ -130,6 +136,7 @@ def select_history_results(
         model=model,
         engine=engine,
         device=device,
+        precision=precision,
         batch=batch,
         height=height,
         width=width,

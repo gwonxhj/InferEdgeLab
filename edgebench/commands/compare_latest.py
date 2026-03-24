@@ -13,6 +13,7 @@ def compare_latest_cmd(
         model: str = typer.Option("", "--model", help="모델 필터"),
         engine: str = typer.Option("", "--engine", help="엔진 필터"),
         device: str = typer.Option("", "--device", help="디바이스 필터"),
+        precision: str = typer.Option("", "--precision", help="precision 필터 (예: fp32, int8)"),
         strict: bool = typer.Option(True, "--strict/--no-strict", help="조건 불일치 시 에러 여부"),
         markdown_out: str = typer.Option("", "--markdown-out", help="Markdown 출력 파일"),
         html_out: str = typer.Option("", "--html-out", help="HTML 출력 파일"),
@@ -39,6 +40,8 @@ def compare_latest_cmd(
         if engine and item.get("engine") != engine:
             return False
         if device and item.get("device") != device:
+            return False
+        if precision and item.get("precision") != precision:
             return False
         return True
     

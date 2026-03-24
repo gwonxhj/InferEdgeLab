@@ -20,6 +20,7 @@ def list_results_cmd(
     model: str = typer.Option("", "--model", help="모델명 필터"),
     engine: str = typer.Option("", "--engine", help="엔진 필터"),
     device: str = typer.Option("", "--device", help="디바이스 필터"),
+    precision: str = typer.Option("", "--precision", help="precision 필터 (예: fp32, int8)"),
     batch: int = typer.Option(-1, "--batch", help="batch 필터"),
     height: int = typer.Option(-1, "--height", help="height 필터"),
     width: int = typer.Option(-1, "--width", help="width 필터"),
@@ -42,6 +43,8 @@ def list_results_cmd(
         if engine and item.get("engine") != engine:
             return False
         if device and item.get("device") != device:
+            return False
+        if precision and item.get("precision") != precision:
             return False
         if batch >= 0 and item.get("batch") != batch:
             return False
@@ -72,6 +75,7 @@ def list_results_cmd(
     table.add_column("Model")
     table.add_column("Engine")
     table.add_column("Device")
+    table.add_column("Precision")
     table.add_column("Shape", justify="right")
     table.add_column("Mean (ms)", justify="right")
     table.add_column("P99 (ms)", justify="right")
@@ -84,6 +88,7 @@ def list_results_cmd(
             str(item.get("model")),
             str(item.get("engine")),
             str(item.get("device")),
+            str(item.get("precision")),
             shape,
             _fmt_num(item.get("mean_ms")),
             _fmt_num(item.get("p99_ms")),
