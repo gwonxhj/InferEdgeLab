@@ -14,6 +14,8 @@ def compare_latest_cmd(
         engine: str = typer.Option("", "--engine", help="엔진 필터"),
         device: str = typer.Option("", "--device", help="디바이스 필터"),
         strict: bool = typer.Option(True, "--strict/--no-strict", help="조건 불일치 시 에러 여부"),
+        markdown_out: str = typer.Option("", "--markdown-out", help="Markdown 출력 파일"),
+        html_out: str = typer.Option("", "--html-out", help="HTML 출력 파일"),
 ):
     """
     동일 조건의 최신 2개 결과를 비교한다.
@@ -55,6 +57,6 @@ def compare_latest_cmd(
     compare_cmd(
         base_path=base_path,
         new_path=new_path,
-        markdown_out="",
-        html_out="",
+        markdown_out=markdown_out,
+        html_out=html_out,
     )
