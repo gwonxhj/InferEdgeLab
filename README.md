@@ -139,6 +139,14 @@ EdgeBench는 benchmark 결과를 단순 출력에 그치지 않고
 - Markdown 리포트
 - HTML 리포트
 
+### Example: Compare Latest
+
+![compare-latest example](assets/images/compare-latest.png)
+
+### Example: History Report
+
+![history-report example](assets/images/history-report.png)
+
 ---
 
 ## 🛠 향후 확장 계획
@@ -196,6 +204,10 @@ edgebench compare-latest --html-out latest.html --markdown-out latest.md
 edgebench history-report --model toy640.onnx --html-out history_toy640.html
 edgebench history-report --model toy640.onnx --html-out history_toy640.html --markdown-out history_toy640.md
 ```
+
+### Example: Stored Result Listing
+
+![list-results example](assets/images/list-results.png)
 
 ---
 
