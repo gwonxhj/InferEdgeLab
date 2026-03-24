@@ -65,6 +65,59 @@ Edge 환경에서는 모델의 accuracy보다 latency와 리소스 사용량이 
 
 ## 🧩 시스템 아키텍처
 
+### 전체 처리 흐름
+
+```mermaid
+flowchart LR
+    A[ONNX Model] --> B[Analyzer]
+    A --> C[Profiler]
+
+    B --> D[Static Analysis Result<br/>params / FLOPs / model size]
+    C --> E[Runtime Profile Result<br/>mean / p99 latency]
+
+    D --> F[Structured Result JSON]
+    E --> F
+
+    F --> G[Result Loader]
+    G --> H[Comparator]
+    G --> I[History Tracker]
+
+    H --> J[Compare Report<br/>CLI / Markdown / HTML]
+    I --> K[History Report<br/>Trend Chart / Markdown / HTML]
+
+    F --> L[CI Regression Guard]
+```
+
+### CLI 중심 모듈 구조
+
+```mermaid
+flowchart TB
+    CLI[Typer CLI] --> AnalyzeCmd[analyze]
+    CLI --> ProfileCmd[profile]
+    CLI --> CompareCmd[compare]
+    CLI --> CompareLatestCmd[compare-latest]
+    CLI --> ListResultsCmd[list-results]
+    CLI --> HistoryReportCmd[history-report]
+
+    AnalyzeCmd --> Analyzer
+    ProfileCmd --> Profiler
+    ProfileCmd --> ResultSaver[Structured Result Saver]
+
+    CompareCmd --> Loader
+    CompareLatestCmd --> Loader
+    ListResultsCmd --> Loader
+    HistoryReportCmd --> Loader
+
+    Loader --> Comparator
+    Loader --> HistoryTracker
+
+    Comparator --> CompareMD[Markdown Generator]
+    Comparator --> CompareHTML[HTML Generator]
+
+    HistoryTracker --> HistoryMD[History Markdown Generator]
+    HistoryTracker --> HistoryHTML[History HTML Generator]
+```
+
 - Analyzer: 모델 구조 분석 (FLOPs, params)
 - Profiler: 실제 추론 latency 측정
 - Result Loader: structured 결과 로딩 및 정렬

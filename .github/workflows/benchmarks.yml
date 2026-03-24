@@ -12,17 +12,13 @@ on:
       - "poetry.lock"
       - ".github/workflows/benchmarks.yml"
   pull_request:
-    paths:
-      - "edgebench/**"
-      - "scripts/**"
-      - "Makefile"
-      - "pyproject.toml"
-      - "poetry.lock"
-      - ".github/workflows/benchmarks.yml"
-      - "README.md"
 
 permissions:
   contents: write
+
+concurrency:
+  group: benchmarks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   benchmark:
