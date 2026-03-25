@@ -43,6 +43,45 @@ def _judge_accuracy_delta_pp(
     return "neutral"
 
 
+def _classify_tradeoff_risk(
+    comparison_mode: str,
+    mean_judgement: str,
+    p99_judgement: str,
+    accuracy_present: bool,
+    accuracy_delta_pp: Optional[float],
+) -> str:
+    """
+    cross-precision 시나리오에서 latency-accuracy trade-off 위험도를 분류한다.
+    """
+    if comparison_mode != "cross_precision":
+        return "not_applicable"
+
+    latency_faster = mean_judgement == "improvement" and p99_judgement in ("improvement", "neutral")
+    latency_slower = mean_judgement == "regression" or p99_judgement == "regression"
+
+    if latency_slower:
+        return "not_beneficial"
+
+    if not accuracy_present or accuracy_delta_pp is None:
+        if latency_faster:
+            return "unknown_risk"
+        return "no_clear_tradeoff"
+
+    if accuracy_delta_pp <= -2.0:
+        return "severe_tradeoff"
+
+    if accuracy_delta_pp <= -1.0:
+        return "risky_tradeoff"
+
+    if accuracy_delta_pp <= -0.30:
+        return "caution_tradeoff"
+
+    if latency_faster:
+        return "acceptable_tradeoff"
+
+    return "no_clear_tradeoff"
+
+
 def _build_overall(
     comparison_mode: str,
     shape_match: bool,
@@ -88,6 +127,7 @@ def _build_summary(
     accuracy_judgement: str,
     accuracy_delta_pp: Optional[float],
     accuracy_present: bool,
+    tradeoff_risk: str,
     shape_match: bool,
 ) -> str:
     if not shape_match:
@@ -102,14 +142,22 @@ def _build_summary(
         accuracy_text = " Accuracy trade-offs are not available in these results."
 
     if comparison_mode == "cross_precision":
+        risk_text = f" Trade-off risk: {tradeoff_risk}."
+
         if overall == "tradeoff_slower":
             return (
                 f"Cross-precision comparison ({precision_pair}) shows slower latency in the new result."
+                f"{accuracy_text}{risk_text}"
                 f"{accuracy_text}"
             )
         if overall == "tradeoff_faster":
             return (
                 f"Cross-precision comparison ({precision_pair}) shows faster latency in the new result."
+                f"{accuracy_text}{risk_text}"
+            )
+        return (
+            f"Cross-precision comparison ({precision_pair}) shows no strong latency change."
+            f"{accuracy_text}{risk_text}"
                 f"{accuracy_text}"
             )
         return (
@@ -140,6 +188,7 @@ def _build_notes(
     accuracy_present: bool,
     accuracy_judgement: str,
     accuracy_delta_pp: Optional[float],
+    tradeoff_risk: str,
 ) -> list[str]:
     notes: list[str] = []
 
@@ -151,6 +200,7 @@ def _build_notes(
         notes.append(
             "Cross-precision overall status uses trade-off semantics instead of same-condition regression semantics."
         )
+        notes.append(f"Trade-off risk classification: {tradeoff_risk}.")
     else:
         notes.append(
             "This is a same-precision comparison, so latency deltas are more suitable for regression tracking."
@@ -214,6 +264,14 @@ def judge_comparison(compare_result: Dict[str, Any]) -> Dict[str, Any]:
     precision_pair = precision_info["pair"]
     precision_match = precision_info["match"]
 
+    tradeoff_risk = _classify_tradeoff_risk(
+        comparison_mode=comparison_mode,
+        mean_judgement=mean_judgement,
+        p99_judgement=p99_judgement,
+        accuracy_present=accuracy_present,
+        accuracy_delta_pp=accuracy_delta_pp,
+    )
+
     overall = _build_overall(
         comparison_mode=comparison_mode,
         shape_match=shape_match,
@@ -231,6 +289,7 @@ def judge_comparison(compare_result: Dict[str, Any]) -> Dict[str, Any]:
         accuracy_judgement=accuracy_judgement,
         accuracy_delta_pp=accuracy_delta_pp,
         accuracy_present=accuracy_present,
+        tradeoff_risk=tradeoff_risk,
         shape_match=shape_match,
     )
 
@@ -242,6 +301,7 @@ def judge_comparison(compare_result: Dict[str, Any]) -> Dict[str, Any]:
         accuracy_present=accuracy_present,
         accuracy_judgement=accuracy_judgement,
         accuracy_delta_pp=accuracy_delta_pp,
+        tradeoff_risk=tradeoff_risk,
     )
 
     return {
@@ -255,6 +315,7 @@ def judge_comparison(compare_result: Dict[str, Any]) -> Dict[str, Any]:
         "p99_ms": p99_judgement,
         "accuracy": accuracy_judgement,
         "accuracy_present": accuracy_present,
+        "tradeoff_risk": tradeoff_risk,
         "summary": summary,
         "notes": notes,
     }

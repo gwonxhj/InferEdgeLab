@@ -66,6 +66,7 @@ def compare_cmd(
     rprint(f"Mean judgement   : {judgement['mean_ms']}")
     rprint(f"P99 judgement    : {judgement['p99_ms']}")
     rprint(f"Accuracy judge   : {judgement['accuracy']}")
+    rprint(f"Trade-off risk   : {judgement['tradeoff_risk']}")
     rprint(f"Summary          : {judgement['summary']}")
 
     if not judgement["precision_match"]:

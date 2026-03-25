@@ -77,6 +77,7 @@ def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[st
     lines.append(f"- P99 judgement: **{judgement['p99_ms']}**")
     lines.append(f"- Accuracy judgement: **{judgement['accuracy']}**")
     lines.append(f"- Accuracy present: **{judgement['accuracy_present']}**")
+    lines.append(f"- Trade-off risk: **{judgement['tradeoff_risk']}**")
     lines.append(f"- Summary: {judgement['summary']}")
     lines.append("")
 
