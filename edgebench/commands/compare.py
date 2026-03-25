@@ -36,6 +36,27 @@ def _fmt_pp(v):
 def compare_cmd(
     base_path: str = typer.Argument(..., help="기준 result JSON 경로"),
     new_path: str = typer.Argument(..., help="비교 대상 result JSON 경로"),
+    latency_improve_threshold: float = typer.Option(
+        -3.0, "--latency-improve-threshold", help="latency improvement threshold (%)"
+    ),
+    latency_regress_threshold: float = typer.Option(
+        3.0, "--latency-regress-threshold", help="latency regression threshold (%)"
+    ),
+    accuracy_improve_threshold: float = typer.Option(
+        0.20, "--accuracy-improve-threshold", help="accuracy improvement threshold (pp)"
+    ),
+    accuracy_regress_threshold: float = typer.Option(
+        -0.20, "--accuracy-regress-threshold", help="accuracy regression threshold (pp)"
+    ),
+    tradeoff_caution_threshold: float = typer.Option(
+        -0.30, "--tradeoff-caution-threshold", help="trade-off caution threshold (pp)"
+    ),
+    tradeoff_risky_threshold: float = typer.Option(
+        -1.00, "--tradeoff-risky-threshold", help="trade-off risky threshold (pp)"
+    ),
+    tradeoff_severe_threshold: float = typer.Option(
+        -2.00, "--tradeoff-severe-threshold", help="trade-off severe threshold (pp)"
+    ),
     markdown_out: str = typer.Option("", "--markdown-out", help="비교 결과 Markdown 저장 경로"),
     html_out: str = typer.Option("", "--html-out", help="비교 결과 HTML 저장 경로"),
 ):
@@ -49,7 +70,16 @@ def compare_cmd(
         rprint("[yellow]Warning[/yellow]: one or both result files are legacy format. Some fields may be missing.")
 
     result = compare_results(base, new)
-    judgement = judge_comparison(result)
+    judgement = judge_comparison(
+        result,
+        latency_improve_threshold=latency_improve_threshold,
+        latency_regress_threshold=latency_regress_threshold,
+        accuracy_improve_threshold=accuracy_improve_threshold,
+        accuracy_regress_threshold=accuracy_regress_threshold,
+        tradeoff_caution_threshold=tradeoff_caution_threshold,
+        tradeoff_risky_threshold=tradeoff_risky_threshold,
+        tradeoff_severe_threshold=tradeoff_severe_threshold,
+    )
     precision_info = result["precision"]
 
     rprint("[bold]Compare Results[/bold]")
@@ -68,6 +98,16 @@ def compare_cmd(
     rprint(f"Accuracy judge   : {judgement['accuracy']}")
     rprint(f"Trade-off risk   : {judgement['tradeoff_risk']}")
     rprint(f"Summary          : {judgement['summary']}")
+
+    thresholds = judgement["thresholds"]
+    rprint("[bold]Thresholds[/bold]")
+    rprint(f"Latency improve threshold : {thresholds['latency_improve_threshold']:+.2f}%")
+    rprint(f"Latency regress threshold : {thresholds['latency_regress_threshold']:+.2f}%")
+    rprint(f"Accuracy improve threshold: {thresholds['accuracy_improve_threshold']:+.2f}pp")
+    rprint(f"Accuracy regress threshold: {thresholds['accuracy_regress_threshold']:+.2f}pp")
+    rprint(f"Tradeoff caution threshold: {thresholds['tradeoff_caution_threshold']:+.2f}pp")
+    rprint(f"Tradeoff risky threshold  : {thresholds['tradeoff_risky_threshold']:+.2f}pp")
+    rprint(f"Tradeoff severe threshold : {thresholds['tradeoff_severe_threshold']:+.2f}pp")
 
     if not judgement["precision_match"]:
         rprint(
