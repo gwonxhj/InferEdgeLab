@@ -148,6 +148,7 @@ def _build_summary(
             return (
                 f"Cross-precision comparison ({precision_pair}) shows slower latency in the new result."
                 f"{accuracy_text}{risk_text}"
+                f"{accuracy_text}"
             )
         if overall == "tradeoff_faster":
             return (
@@ -157,6 +158,11 @@ def _build_summary(
         return (
             f"Cross-precision comparison ({precision_pair}) shows no strong latency change."
             f"{accuracy_text}{risk_text}"
+                f"{accuracy_text}"
+            )
+        return (
+            f"Cross-precision comparison ({precision_pair}) shows no strong latency change."
+            f"{accuracy_text}"
         )
 
     if overall == "regression":
