@@ -4,12 +4,13 @@ EdgeBench는 ONNX 기반 모델의 추론 성능을 분석하고,
 그 결과를 구조화하여 비교·추적·리포트화할 수 있는 CLI 기반 벤치마크 시스템입니다.
 
 단순한 1회성 벤치마크가 아니라,  
-지속적인 성능 추적과 회귀(regression) 감지가 가능하도록 설계되었습니다.
+지속적인 성능 추적과 회귀(regression) 감지, 그리고 precision-aware 비교 해석이 가능하도록 설계되었습니다.
 
 - Static analysis (Parameters, FLOPs)
 - Runtime profiling (mean / p99 latency)
 - Structured result 저장
-- 결과 비교 및 히스토리 추적
+- same-precision / cross-precision 비교
+- 최신 comparable pair 자동 선택
 - HTML / Markdown 리포트 생성
 - CI 기반 성능 검증
 
@@ -52,14 +53,16 @@ Edge 환경에서는 모델의 accuracy보다 latency와 리소스 사용량이 
 이 문제를 해결하기 위해 다음과 같은 시스템을 설계했습니다:
 
 1. 모든 benchmark 결과를 structured JSON 형태로 저장
-2. 동일 조건의 결과를 자동으로 비교
-3. latency 변화량(delta, %) 계산
-4. history 기반 성능 추세 추적
-5. HTML / Markdown 리포트 자동 생성
-6. CI에서 regression 자동 감지
+2. model / engine / device / shape / precision 정보를 기준으로 comparable result를 식별
+3. same-precision 비교와 cross-precision 비교를 분리하여 해석
+4. latency 변화량(delta, %) 계산
+5. 최신 comparable pair 자동 선택 (`compare-latest`)
+6. history 기반 성능 추세 추적
+7. HTML / Markdown 리포트 자동 생성
+8. CI에서 regression 자동 감지
 
 이를 통해 단순 벤치마크가 아닌
-"지속적인 성능 관리 시스템"을 구축했습니다.
+**지속적인 성능 관리와 precision trade-off 해석이 가능한 benchmarking system** 을 구축했습니다.
 
 ---
 
@@ -137,12 +140,14 @@ Profile -> JSON 저장 -> Compare -> History -> Report -> CI 검증
 ## 🔧 핵심 기술 포인트
 
 - ONNX Runtime 기반 추론 성능 측정
-- structured result schema 설계
+- structured result schema 설계 (`model / engine / device / precision / shape / latency / system / run config`)
 - CLI 인터페이스 설계 (Typer)
-- HTML report generation (trend visualization)
-- Markdown report generation (CI 활용)
+- HTML report generation (trend visualization / compare report)
+- Markdown report generation (CI 활용 / compare report)
 - 결과 비교 알고리즘 (delta / % 계산)
-- 동일 조건 자동 매칭 (model / engine / device / shape)
+- 동일 조건 자동 매칭 (model / engine / device / precision / shape)
+- latest comparable pair 자동 선택 로직
+- same-precision regression semantics / cross-precision trade-off semantics 분리
 - Github Actions 기반 regression guard
 
 ---
@@ -152,23 +157,30 @@ Profile -> JSON 저장 -> Compare -> History -> Report -> CI 검증
 기존:
 
 - 단일 실행 기반 벤치마크
+- 이전 결과와의 비교가 수작업에 의존
+- precision 차이에 따른 비교 해석 기준이 없음
 
 개선 후:
 
 - 성능을 지속적으로 추적 가능한 시스템 구축
 - latency 변화 자동 분석
 - regression 자동 감지 가능
+- same-precision regression tracking 지원
+- cross-precision trade-off comparison 지원
+- 최신 comparable pair 자동 선택 기능 구현
 - CI 기반 성능 검증 파이프라인 구축
 
 결과적으로:
 
-> 모델 성능을 "정량적으로 관리"할 수 있는 구조를 구현했습니다.
+> 모델 성능을 단순 측정하는 수준을 넘어,
+> **비교·추적·해석까지 가능한 benchmarking workflow** 를 구현했습니다.
 
 ---
 
 ## 💡 배운 점
 
 - 단순 기능 구현보다 "데이터 흐름 설계"가 중요하다는 것을 경험
-- inference 성능은 단일 지표가 아니라 추세로 봐야 한다는 점 이해
+- inference 성능은 단일 지표가 아니라 추세와 비교 맥락으로 봐야 한다는 점 이해
+- same-condition regression과 precision trade-off comparison은 해석 용어부터 달라야 한다는 점 학습
 - CLI UX와 개발자 경험(DevEx)의 중요성 체감
 - CI와 결합했을 때 시스템의 가치가 크게 증가한다는 점 확인
