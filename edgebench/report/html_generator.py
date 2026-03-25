@@ -18,6 +18,12 @@ def _fmt_pct(v: Optional[float]) -> str:
     return f"{v:+.2f}%"
 
 
+def _fmt_pp(v: Optional[float]) -> str:
+    if v is None:
+        return "-"
+    return f"{v:+.2f}pp"
+
+
 def _table_rows_from_metric_map(metrics: Dict[str, Dict[str, Any]]) -> str:
     rows = []
     for metric_name, values in metrics.items():
@@ -29,6 +35,24 @@ def _table_rows_from_metric_map(metrics: Dict[str, Dict[str, Any]]) -> str:
               <td>{escape(_fmt_num(values.get("new")))}</td>
               <td>{escape(_fmt_num(values.get("delta")))}</td>
               <td>{escape(_fmt_pct(values.get("delta_pct")))}</td>
+            </tr>
+            """
+        )
+    return "\n".join(rows)
+
+
+def _table_rows_from_accuracy_map(metrics: Dict[str, Dict[str, Any]]) -> str:
+    rows = []
+    for metric_name, values in metrics.items():
+        rows.append(
+            f"""
+            <tr>
+              <td>{escape(metric_name)}</td>
+              <td>{escape(_fmt_num(values.get("base")))}</td>
+              <td>{escape(_fmt_num(values.get("new")))}</td>
+              <td>{escape(_fmt_num(values.get("delta")))}</td>
+              <td>{escape(_fmt_pct(values.get("delta_pct")))}</td>
+              <td>{escape(_fmt_pp(values.get("delta_pp")))}</td>
             </tr>
             """
         )
@@ -62,6 +86,7 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
     new_id = compare_result["new_id"]
     precision = compare_result["precision"]
     metrics = compare_result["metrics"]
+    accuracy = compare_result["accuracy"]
 
     shape_rows = _table_rows_from_diff_map(
         {
@@ -80,9 +105,19 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
         }
     )
 
+    sample_rows = _table_rows_from_diff_map(
+        {
+            "sample_count": {
+                "base": accuracy["sample_count"]["base"],
+                "new": accuracy["sample_count"]["new"],
+            }
+        }
+    )
+
     system_rows = _table_rows_from_diff_map(compare_result["system_diff"])
     run_rows = _table_rows_from_diff_map(compare_result["run_config_diff"])
     metric_rows = _table_rows_from_metric_map(metrics)
+    accuracy_rows = _table_rows_from_accuracy_map(accuracy["metrics"])
     notes_html = _notes_to_html(judgement["notes"])
 
     warning_html = ""
@@ -181,6 +216,8 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
     <p><strong>System match</strong>: <code>{escape(str(judgement["system_match"]))}</code></p>
     <p><strong>Mean judgement</strong>: <code>{escape(str(judgement["mean_ms"]))}</code></p>
     <p><strong>P99 judgement</strong>: <code>{escape(str(judgement["p99_ms"]))}</code></p>
+    <p><strong>Accuracy judgement</strong>: <code>{escape(str(judgement["accuracy"]))}</code></p>
+    <p><strong>Accuracy present</strong>: <code>{escape(str(judgement["accuracy_present"]))}</code></p>
     <div class="summary"><strong>Summary</strong>: {escape(str(judgement["summary"]))}</div>
     {notes_html}
   </div>
@@ -198,6 +235,39 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
     </thead>
     <tbody>
       {metric_rows}
+    </tbody>
+  </table>
+
+  <h2>Accuracy Comparison</h2>
+  <div class="meta">
+    <p><strong>Task</strong>: <code>{escape(str(accuracy.get("task") or "unknown"))}</code></p>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Metric</th>
+        <th>Base</th>
+        <th>New</th>
+        <th>Delta</th>
+        <th>Delta %</th>
+        <th>Delta pp</th>
+      </tr>
+    </thead>
+    <tbody>
+      {accuracy_rows}
+    </tbody>
+  </table>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Field</th>
+        <th>Base</th>
+        <th>New</th>
+      </tr>
+    </thead>
+    <tbody>
+      {sample_rows}
     </tbody>
   </table>
 

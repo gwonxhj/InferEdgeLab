@@ -16,6 +16,12 @@ def _safe_pct_delta(base: Optional[float], new: Optional[float]) -> Optional[flo
     return ((new - base) / base) * 100.0
 
 
+def _safe_delta(base: Optional[float], new: Optional[float]) -> Optional[float]:
+    if base is None or new is None:
+        return None
+    return new - base
+
+
 def _normalize_precision(value: Any) -> str:
     if value is None:
         return "unknown"
@@ -39,11 +45,22 @@ def compare_results(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]
     base_run = base.get("run_config") or {}
     new_run = new.get("run_config") or {}
 
+    base_accuracy = base.get("accuracy") or {}
+    new_accuracy = new.get("accuracy") or {}
+
+    base_accuracy_metrics = base_accuracy.get("metrics") or {}
+    new_accuracy_metrics = new_accuracy.get("metrics") or {}
+
+    base_top1 = base_accuracy_metrics.get("top1_accuracy")
+    new_top1 = new_accuracy_metrics.get("top1_accuracy")
+
     base_precision = _normalize_precision(base.get("precision"))
     new_precision = _normalize_precision(new.get("precision"))
     precision_match = base_precision == new_precision
     comparison_mode = "same_precision" if precision_match else "cross_precision"
     precision_pair = f"{base_precision}_vs_{new_precision}"
+
+    accuracy_present = (base_top1 is not None) or (new_top1 is not None)
 
     return {
         "base_id": {
@@ -71,14 +88,36 @@ def compare_results(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]
             "mean_ms": {
                 "base": base_mean,
                 "new": new_mean,
-                "delta": (new_mean - base_mean) if (base_mean is not None and new_mean is not None) else None,
+                "delta": _safe_delta(base_mean, new_mean),
                 "delta_pct": _safe_pct_delta(base_mean, new_mean),
             },
             "p99_ms": {
                 "base": base_p99,
                 "new": new_p99,
-                "delta": (new_p99 - base_p99) if (base_p99 is not None and new_p99 is not None) else None,
+                "delta": _safe_delta(base_p99, new_p99),
                 "delta_pct": _safe_pct_delta(base_p99, new_p99),
+            },
+        },
+        "accuracy": {
+            "present": accuracy_present,
+            "task": new_accuracy.get("task") or base_accuracy.get("task"),
+            "metric_name": "top1_accuracy",
+            "sample_count": {
+                "base": base_accuracy.get("sample_count"),
+                "new": new_accuracy.get("sample_count"),
+            },
+            "metrics": {
+                "top1_accuracy": {
+                    "base": base_top1,
+                    "new": new_top1,
+                    "delta": _safe_delta(base_top1, new_top1),
+                    "delta_pct": _safe_pct_delta(base_top1, new_top1),
+                    "delta_pp": (
+                        _safe_delta(base_top1, new_top1) * 100.0
+                        if _safe_delta(base_top1, new_top1) is not None
+                        else None
+                    ),
+                }
             },
         },
         "shape": {
@@ -127,6 +166,14 @@ def compare_results(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]
             "inter_threads": {
                 "base": base_run.get("inter_threads"),
                 "new": new_run.get("inter_threads"),
+            },
+            "mode": {
+                "base": base_run.get("mode"),
+                "new": new_run.get("mode"),
+            },
+            "task": {
+                "base": base_run.get("task"),
+                "new": new_run.get("task"),
             },
         },
     }
