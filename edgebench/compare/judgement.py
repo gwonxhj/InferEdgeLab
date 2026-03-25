@@ -5,8 +5,8 @@ from typing import Any, Dict, Optional
 
 def _judge_delta_pct(
     delta_pct: Optional[float],
-    improve_threshold: float = -3.0,
-    regress_threshold: float = 3.0,
+    improve_threshold: float,
+    regress_threshold: float,
 ) -> str:
     """
     delta_pct 기준으로 latency 성능 판정
@@ -25,8 +25,8 @@ def _judge_delta_pct(
 
 def _judge_accuracy_delta_pp(
     delta_pp: Optional[float],
-    improve_threshold: float = 0.20,
-    regress_threshold: float = -0.20,
+    improve_threshold: float,
+    regress_threshold: float,
 ) -> str:
     """
     accuracy delta_pp(percentage point) 기준 판정
@@ -49,9 +49,15 @@ def _classify_tradeoff_risk(
     p99_judgement: str,
     accuracy_present: bool,
     accuracy_delta_pp: Optional[float],
+    caution_threshold: float,
+    risky_threshold: float,
+    severe_threshold: float,
 ) -> str:
     """
     cross-precision 시나리오에서 latency-accuracy trade-off 위험도를 분류한다.
+    threshold는 모두 음수(pp 하락) 기준이어야 한다.
+    예:
+    caution=-0.30, risky=-1.0, severe=-2.0
     """
     if comparison_mode != "cross_precision":
         return "not_applicable"
@@ -67,13 +73,13 @@ def _classify_tradeoff_risk(
             return "unknown_risk"
         return "no_clear_tradeoff"
 
-    if accuracy_delta_pp <= -2.0:
+    if accuracy_delta_pp <= severe_threshold:
         return "severe_tradeoff"
 
-    if accuracy_delta_pp <= -1.0:
+    if accuracy_delta_pp <= risky_threshold:
         return "risky_tradeoff"
 
-    if accuracy_delta_pp <= -0.30:
+    if accuracy_delta_pp <= caution_threshold:
         return "caution_tradeoff"
 
     if latency_faster:
@@ -148,7 +154,6 @@ def _build_summary(
             return (
                 f"Cross-precision comparison ({precision_pair}) shows slower latency in the new result."
                 f"{accuracy_text}{risk_text}"
-                f"{accuracy_text}"
             )
         if overall == "tradeoff_faster":
             return (
@@ -158,11 +163,6 @@ def _build_summary(
         return (
             f"Cross-precision comparison ({precision_pair}) shows no strong latency change."
             f"{accuracy_text}{risk_text}"
-                f"{accuracy_text}"
-            )
-        return (
-            f"Cross-precision comparison ({precision_pair}) shows no strong latency change."
-            f"{accuracy_text}"
         )
 
     if overall == "regression":
@@ -189,6 +189,7 @@ def _build_notes(
     accuracy_judgement: str,
     accuracy_delta_pp: Optional[float],
     tradeoff_risk: str,
+    thresholds: Dict[str, float],
 ) -> list[str]:
     notes: list[str] = []
 
@@ -201,6 +202,12 @@ def _build_notes(
             "Cross-precision overall status uses trade-off semantics instead of same-condition regression semantics."
         )
         notes.append(f"Trade-off risk classification: {tradeoff_risk}.")
+        notes.append(
+            "Trade-off thresholds: "
+            f"caution<={thresholds['tradeoff_caution_threshold']:.2f}pp, "
+            f"risky<={thresholds['tradeoff_risky_threshold']:.2f}pp, "
+            f"severe<={thresholds['tradeoff_severe_threshold']:.2f}pp."
+        )
     else:
         notes.append(
             "This is a same-precision comparison, so latency deltas are more suitable for regression tracking."
@@ -238,7 +245,16 @@ def _build_notes(
     return notes
 
 
-def judge_comparison(compare_result: Dict[str, Any]) -> Dict[str, Any]:
+def judge_comparison(
+    compare_result: Dict[str, Any],
+    latency_improve_threshold: float = -3.0,
+    latency_regress_threshold: float = 3.0,
+    accuracy_improve_threshold: float = 0.20,
+    accuracy_regress_threshold: float = -0.20,
+    tradeoff_caution_threshold: float = -0.30,
+    tradeoff_risky_threshold: float = -1.00,
+    tradeoff_severe_threshold: float = -2.00,
+) -> Dict[str, Any]:
     metrics = compare_result["metrics"]
     accuracy = compare_result["accuracy"]
     shape = compare_result["shape"]
@@ -252,13 +268,25 @@ def judge_comparison(compare_result: Dict[str, Any]) -> Dict[str, Any]:
         for values in system_diff.values()
     )
 
-    mean_judgement = _judge_delta_pct(metrics["mean_ms"]["delta_pct"])
-    p99_judgement = _judge_delta_pct(metrics["p99_ms"]["delta_pct"])
+    mean_judgement = _judge_delta_pct(
+        metrics["mean_ms"]["delta_pct"],
+        improve_threshold=latency_improve_threshold,
+        regress_threshold=latency_regress_threshold,
+    )
+    p99_judgement = _judge_delta_pct(
+        metrics["p99_ms"]["delta_pct"],
+        improve_threshold=latency_improve_threshold,
+        regress_threshold=latency_regress_threshold,
+    )
 
     accuracy_metric = accuracy["metrics"]["top1_accuracy"]
     accuracy_delta_pp = accuracy_metric.get("delta_pp")
     accuracy_present = accuracy.get("present", False)
-    accuracy_judgement = _judge_accuracy_delta_pp(accuracy_delta_pp)
+    accuracy_judgement = _judge_accuracy_delta_pp(
+        accuracy_delta_pp,
+        improve_threshold=accuracy_improve_threshold,
+        regress_threshold=accuracy_regress_threshold,
+    )
 
     comparison_mode = precision_info["comparison_mode"]
     precision_pair = precision_info["pair"]
@@ -270,6 +298,9 @@ def judge_comparison(compare_result: Dict[str, Any]) -> Dict[str, Any]:
         p99_judgement=p99_judgement,
         accuracy_present=accuracy_present,
         accuracy_delta_pp=accuracy_delta_pp,
+        caution_threshold=tradeoff_caution_threshold,
+        risky_threshold=tradeoff_risky_threshold,
+        severe_threshold=tradeoff_severe_threshold,
     )
 
     overall = _build_overall(
@@ -293,6 +324,16 @@ def judge_comparison(compare_result: Dict[str, Any]) -> Dict[str, Any]:
         shape_match=shape_match,
     )
 
+    thresholds = {
+        "latency_improve_threshold": latency_improve_threshold,
+        "latency_regress_threshold": latency_regress_threshold,
+        "accuracy_improve_threshold": accuracy_improve_threshold,
+        "accuracy_regress_threshold": accuracy_regress_threshold,
+        "tradeoff_caution_threshold": tradeoff_caution_threshold,
+        "tradeoff_risky_threshold": tradeoff_risky_threshold,
+        "tradeoff_severe_threshold": tradeoff_severe_threshold,
+    }
+
     notes = _build_notes(
         comparison_mode=comparison_mode,
         precision_pair=precision_pair,
@@ -302,6 +343,7 @@ def judge_comparison(compare_result: Dict[str, Any]) -> Dict[str, Any]:
         accuracy_judgement=accuracy_judgement,
         accuracy_delta_pp=accuracy_delta_pp,
         tradeoff_risk=tradeoff_risk,
+        thresholds=thresholds,
     )
 
     return {
@@ -316,6 +358,7 @@ def judge_comparison(compare_result: Dict[str, Any]) -> Dict[str, Any]:
         "accuracy": accuracy_judgement,
         "accuracy_present": accuracy_present,
         "tradeoff_risk": tradeoff_risk,
+        "thresholds": thresholds,
         "summary": summary,
         "notes": notes,
     }
