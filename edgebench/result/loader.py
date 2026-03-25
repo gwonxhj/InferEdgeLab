@@ -142,3 +142,26 @@ def select_history_results(
         width=width,
     )
     return sort_results_by_timestamp(results)
+
+def latest_comparable_items(results: List[Dict[str, Any]], count: int = 2) -> List[Dict[str, Any]]:
+    if len(results) < count:
+        raise ValueError(f"최소 {count}개의 result 항목이 필요합니다. 현재: {len(results)}개")
+
+    items_desc = list(reversed(sort_results_by_timestamp(results)))
+
+    newest_item = items_desc[0]
+    target_key = result_identity_key(newest_item)
+
+    matched_items: List[Dict[str, Any]] = []
+    for item in items_desc:
+        if result_identity_key(item) == target_key:
+            matched_items.append(item)
+        if len(matched_items) == count:
+            break
+
+    if len(matched_items) < count:
+        raise ValueError(
+            "같은 조건(model/engine/device/precision/batch/height/width)의 최근 결과 2개를 찾지 못했습니다."
+        )
+
+    return list(reversed(matched_items))
