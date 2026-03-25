@@ -218,6 +218,7 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
     <p><strong>P99 judgement</strong>: <code>{escape(str(judgement["p99_ms"]))}</code></p>
     <p><strong>Accuracy judgement</strong>: <code>{escape(str(judgement["accuracy"]))}</code></p>
     <p><strong>Accuracy present</strong>: <code>{escape(str(judgement["accuracy_present"]))}</code></p>
+    <p><strong>Trade-off risk</strong>: <code>{escape(str(judgement["tradeoff_risk"]))}</code></p>
     <div class="summary"><strong>Summary</strong>: {escape(str(judgement["summary"]))}</div>
     {notes_html}
   </div>
