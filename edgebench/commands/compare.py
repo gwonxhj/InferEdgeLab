@@ -54,6 +54,8 @@ def compare_cmd(
     rprint(f"Precision match  : {judgement['precision_match']}")
     rprint(f"Comparison mode  : {judgement['comparison_mode']}")
     rprint(f"Precision pair   : {judgement['precision_pair']}")
+    rprint(f"Base precision   : {base.get('precision')}")
+    rprint(f"New precision    : {new.get('precision')}")
     rprint(f"Overall judgement: [bold]{judgement['overall']}[/bold]")
     rprint(f"Shape match      : {judgement['shape_match']}")
     rprint(f"System match     : {judgement['system_match']}")
@@ -100,6 +102,8 @@ def compare_cmd(
         "precision",
         str(precision_info["base"]),
         str(precision_info["new"]),
+        str(base.get("precision")),
+        str(new.get("precision")),
     )
 
     rprint(precision_table)
