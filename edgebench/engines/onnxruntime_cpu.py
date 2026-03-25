@@ -125,7 +125,7 @@ class OnnxRuntimeCpuEngine:
             feeds[inp.name] = arr
         return feeds
 
-    def run(self, feeds: Dict[str, Any]) -> None:
+    def run(self, feeds: Dict[str, Any]) -> List[Any]:
         if self.sess is None:
             raise RuntimeError("Engine not loaded")
-        self.sess.run(self.outputs, feeds)
+        return self.sess.run(self.outputs, feeds)
