@@ -16,6 +16,12 @@ def _safe_pct_delta(base: Optional[float], new: Optional[float]) -> Optional[flo
     return ((new - base) / base) * 100.0
 
 
+def _normalize_precision(value: Any) -> str:
+    if value is None:
+        return "unknown"
+    return str(value).strip().lower()
+
+
 def compare_results(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]:
     """
     structured result 두 개를 비교해서 핵심 차이를 정리한다.
@@ -33,18 +39,33 @@ def compare_results(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]
     base_run = base.get("run_config") or {}
     new_run = new.get("run_config") or {}
 
+    base_precision = _normalize_precision(base.get("precision"))
+    new_precision = _normalize_precision(new.get("precision"))
+    precision_match = base_precision == new_precision
+    comparison_mode = "same_precision" if precision_match else "cross_precision"
+    precision_pair = f"{base_precision}_vs_{new_precision}"
+
     return {
         "base_id": {
             "model": base.get("model"),
             "engine": base.get("engine"),
             "device": base.get("device"),
             "timestamp": base.get("timestamp"),
+            "precision": base_precision,
         },
         "new_id": {
             "model": new.get("model"),
             "engine": new.get("engine"),
             "device": new.get("device"),
             "timestamp": new.get("timestamp"),
+            "precision": new_precision,
+        },
+        "precision": {
+            "base": base_precision,
+            "new": new_precision,
+            "match": precision_match,
+            "comparison_mode": comparison_mode,
+            "pair": precision_pair,
         },
         "metrics": {
             "mean_ms": {

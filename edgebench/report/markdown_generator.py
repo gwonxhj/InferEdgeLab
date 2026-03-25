@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
+
 def _fmt_num(v: Optional[float]) -> str:
     if v is None:
         return "-"
@@ -9,10 +10,12 @@ def _fmt_num(v: Optional[float]) -> str:
         return f"{v:.4f}"
     return str(v)
 
+
 def _fmt_pct(v: Optional[float]) -> str:
     if v is None:
         return "-"
     return f"{v:+.2f}%"
+
 
 def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[str, Any]) -> str:
     """
@@ -20,6 +23,7 @@ def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[st
     """
     base_id = compare_result["base_id"]
     new_id = compare_result["new_id"]
+    precision = compare_result["precision"]
     metrics = compare_result["metrics"]
     shape = compare_result["shape"]
     system_diff = compare_result["system_diff"]
@@ -31,9 +35,29 @@ def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[st
     lines.append("")
     lines.append("## Compared Results")
     lines.append("")
-    lines.append(f"- Base: `{base_id['model']}` / `{base_id['engine']}` / `{base_id['device']}` / `{base_id['timestamp']}`")
-    lines.append(f"- New: `{new_id['model']}` / `{new_id['engine']}` / `{new_id['device']}` / `{new_id['timestamp']}`")
+    lines.append(
+        f"- Base: `{base_id['model']}` / `{base_id['engine']}` / `{base_id['device']}` / `{base_id['timestamp']}`"
+    )
+    lines.append(
+        f"- New: `{new_id['model']}` / `{new_id['engine']}` / `{new_id['device']}` / `{new_id['timestamp']}`"
+    )
     lines.append("")
+
+    lines.append("## Precision Context")
+    lines.append("")
+    lines.append(f"- Base precision: **`{precision['base']}`**")
+    lines.append(f"- New precision: **`{precision['new']}`**")
+    lines.append(f"- Precision match: **{judgement['precision_match']}**")
+    lines.append(f"- Comparison mode: **`{judgement['comparison_mode']}`**")
+    lines.append(f"- Precision pair: **`{judgement['precision_pair']}`**")
+    lines.append("")
+
+    if not judgement["precision_match"]:
+        lines.append("> [!WARNING]")
+        lines.append("> This is a cross-precision comparison.")
+        lines.append("> Interpret latency deltas as a precision trade-off signal, not a strict apples-to-apples regression result.")
+        lines.append("")
+
     lines.append("## Judgement")
     lines.append("")
     lines.append(f"- Overall: **{judgement['overall']}**")
@@ -41,7 +65,15 @@ def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[st
     lines.append(f"- System match: **{judgement['system_match']}**")
     lines.append(f"- Mean judgement: **{judgement['mean_ms']}**")
     lines.append(f"- P99 judgement: **{judgement['p99_ms']}**")
+    lines.append(f"- Summary: {judgement['summary']}")
     lines.append("")
+
+    if judgement["notes"]:
+        lines.append("## Notes")
+        lines.append("")
+        for note in judgement["notes"]:
+            lines.append(f"- {note}")
+        lines.append("")
 
     lines.append("## Latency Comparison")
     lines.append("")
