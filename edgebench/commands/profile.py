@@ -31,10 +31,16 @@ def profile_cmd(
     width: int = typer.Option(0, "--width", help="입력 width override(0이면 사용 안 함)"),
     intra_threads: int = typer.Option(1, "--intra-threads", help="ONNX Runtime intra_op_num_threads"),
     inter_threads: int = typer.Option(1, "--inter-threads", help="ONNX Runtime inter_op_num_threads"),
+    precision: str = typer.Option("fp32", "--precision", help="precision 메타데이터 (fp32, fp16, int8)"),
     output: str = typer.Option("", "--output", "-o", help="JSON 리포트 저장 경로(미지정 시 자동 파일명)"),
     no_hash: bool = typer.Option(True, "--no-hash/--hash", help="profile 시 해시 계산(기본 off)"),
 ):
     rprint(f"[bold]Profiling[/bold]: {model_path}")
+
+    precision = precision.lower().strip()
+    allowed_precisions = {"fp32", "fp16", "int8"}
+    if precision not in allowed_precisions:
+        raise typer.BadParameter("--precision must be one of: fp32, fp16, int8")
 
     result = analyze_onnx(
         model_path,
@@ -107,6 +113,7 @@ def profile_cmd(
         model=os.path.basename(model_path),
         engine=prof.engine,
         device=prof.device,
+        precision=precision,
         batch=batch,
         height=height if height > 0 else 0,
         width=width if width > 0 else 0,

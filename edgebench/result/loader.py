@@ -17,6 +17,7 @@ def load_result(path: str) -> Dict[str, Any]:
     data.setdefault("system", {})
     data.setdefault("run_config", {})
     data.setdefault("extra", {})
+    data.setdefault("precision", "fp32")
     data["legacy_result"] = not (has_system and has_run_config)
 
     return data
@@ -50,6 +51,7 @@ def result_identity_key(item: Dict[str, Any]) -> str:
             str(item.get("model")),
             str(item.get("engine")),
             str(item.get("device")),
+            str(item.get("precision")),
             str(item.get("batch")),
             str(item.get("height")),
             str(item.get("width")),
@@ -88,6 +90,7 @@ def filter_results(
         model: str = "",
         engine: str = "",
         device: str = "",
+        precision: str = "",
         batch: int | None = None,
         height: int | None = None,
         width: int | None = None,
@@ -102,6 +105,9 @@ def filter_results(
 
     if device:
         filtered = [item for item in filtered if str(item.get("device")) == device]
+
+    if precision:
+        filtered = [item for item in filtered if str(item.get("precision")) == precision]
 
     if batch is not None:
         filtered = [item for item in filtered if item.get("batch") == batch]
@@ -119,6 +125,7 @@ def select_history_results(
         model: str = "",
         engine: str = "",
         device: str = "",
+        precision: str = "",
         batch: int | None = None,
         height: int | None = None,
         width: int | None = None,
@@ -129,8 +136,32 @@ def select_history_results(
         model=model,
         engine=engine,
         device=device,
+        precision=precision,
         batch=batch,
         height=height,
         width=width,
     )
     return sort_results_by_timestamp(results)
+
+def latest_comparable_items(results: List[Dict[str, Any]], count: int = 2) -> List[Dict[str, Any]]:
+    if len(results) < count:
+        raise ValueError(f"최소 {count}개의 result 항목이 필요합니다. 현재: {len(results)}개")
+
+    items_desc = list(reversed(sort_results_by_timestamp(results)))
+
+    newest_item = items_desc[0]
+    target_key = result_identity_key(newest_item)
+
+    matched_items: List[Dict[str, Any]] = []
+    for item in items_desc:
+        if result_identity_key(item) == target_key:
+            matched_items.append(item)
+        if len(matched_items) == count:
+            break
+
+    if len(matched_items) < count:
+        raise ValueError(
+            "같은 조건(model/engine/device/precision/batch/height/width)의 최근 결과 2개를 찾지 못했습니다."
+        )
+
+    return list(reversed(matched_items))

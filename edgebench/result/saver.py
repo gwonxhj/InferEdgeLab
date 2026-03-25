@@ -10,7 +10,7 @@ def save_result(result: BenchmarkResult, out_dir: str = "results") -> str:
     os.makedirs(out_dir, exist_ok=True)
 
     filename = (
-        f"{result.model}__{result.engine}__{result.device}"
+        f"{result.model}__{result.engine}__{result.device}__{result.precision}"
         f"__b{result.batch}__h{result.height}w{result.width}"
         f"__{result.timestamp}.json"
     )
