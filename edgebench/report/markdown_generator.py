@@ -17,6 +17,12 @@ def _fmt_pct(v: Optional[float]) -> str:
     return f"{v:+.2f}%"
 
 
+def _fmt_pp(v: Optional[float]) -> str:
+    if v is None:
+        return "-"
+    return f"{v:+.2f}pp"
+
+
 def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[str, Any]) -> str:
     """
     compare_results() 출력 dict를 Markdown 문서 문자열로 변환한다.
@@ -25,6 +31,8 @@ def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[st
     new_id = compare_result["new_id"]
     precision = compare_result["precision"]
     metrics = compare_result["metrics"]
+    accuracy = compare_result["accuracy"]
+    accuracy_metric = accuracy["metrics"]["top1_accuracy"]
     shape = compare_result["shape"]
     system_diff = compare_result["system_diff"]
     run_config_diff = compare_result["run_config_diff"]
@@ -67,6 +75,8 @@ def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[st
     lines.append(f"- System match: **{judgement['system_match']}**")
     lines.append(f"- Mean judgement: **{judgement['mean_ms']}**")
     lines.append(f"- P99 judgement: **{judgement['p99_ms']}**")
+    lines.append(f"- Accuracy judgement: **{judgement['accuracy']}**")
+    lines.append(f"- Accuracy present: **{judgement['accuracy_present']}**")
     lines.append(f"- Summary: {judgement['summary']}")
     lines.append("")
 
@@ -85,6 +95,23 @@ def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[st
         lines.append(
             f"| {metric_name} | {_fmt_num(values['base'])} | {_fmt_num(values['new'])} | {_fmt_num(values['delta'])} | {_fmt_pct(values['delta_pct'])} |"
         )
+    lines.append("")
+
+    lines.append("## Accuracy Comparison")
+    lines.append("")
+    lines.append(f"- Task: **`{accuracy.get('task') or 'unknown'}`**")
+    lines.append("")
+    lines.append("| Metric | Base | New | Delta | Delta % | Delta pp |")
+    lines.append("|---|---:|---:|---:|---:|---:|")
+    lines.append(
+        f"| top1_accuracy | {_fmt_num(accuracy_metric['base'])} | {_fmt_num(accuracy_metric['new'])} | {_fmt_num(accuracy_metric['delta'])} | {_fmt_pct(accuracy_metric['delta_pct'])} | {_fmt_pp(accuracy_metric['delta_pp'])} |"
+    )
+    lines.append("")
+    lines.append("| Field | Base | New |")
+    lines.append("|---|---:|---:|")
+    lines.append(
+        f"| sample_count | {_fmt_num(accuracy['sample_count']['base'])} | {_fmt_num(accuracy['sample_count']['new'])} |"
+    )
     lines.append("")
 
     lines.append("## Input Shape")

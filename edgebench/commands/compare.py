@@ -27,6 +27,12 @@ def _fmt_pct(v):
     return f"{v:+.2f}%"
 
 
+def _fmt_pp(v):
+    if v is None:
+        return "-"
+    return f"{v:+.2f}pp"
+
+
 def compare_cmd(
     base_path: str = typer.Argument(..., help="기준 result JSON 경로"),
     new_path: str = typer.Argument(..., help="비교 대상 result JSON 경로"),
@@ -59,6 +65,7 @@ def compare_cmd(
     rprint(f"System match     : {judgement['system_match']}")
     rprint(f"Mean judgement   : {judgement['mean_ms']}")
     rprint(f"P99 judgement    : {judgement['p99_ms']}")
+    rprint(f"Accuracy judge   : {judgement['accuracy']}")
     rprint(f"Summary          : {judgement['summary']}")
 
     if not judgement["precision_match"]:
@@ -90,6 +97,46 @@ def compare_cmd(
         )
 
     rprint(metric_table)
+
+    accuracy = result["accuracy"]
+    accuracy_metric = accuracy["metrics"]["top1_accuracy"]
+
+    accuracy_table = Table(title="Accuracy Comparison")
+    accuracy_table.add_column("Metric")
+    accuracy_table.add_column("Base", justify="right")
+    accuracy_table.add_column("New", justify="right")
+    accuracy_table.add_column("Delta", justify="right")
+    accuracy_table.add_column("Delta %", justify="right")
+    accuracy_table.add_column("Delta pp", justify="right")
+
+    accuracy_table.add_row(
+        "top1_accuracy",
+        _fmt_num(accuracy_metric["base"]),
+        _fmt_num(accuracy_metric["new"]),
+        _fmt_num(accuracy_metric["delta"]),
+        _fmt_pct(accuracy_metric["delta_pct"]),
+        _fmt_pp(accuracy_metric["delta_pp"]),
+    )
+
+    rprint(accuracy_table)
+
+    sample_table = Table(title="Accuracy Context")
+    sample_table.add_column("Field")
+    sample_table.add_column("Base", justify="right")
+    sample_table.add_column("New", justify="right")
+
+    sample_table.add_row(
+        "task",
+        str(accuracy.get("task") or "-"),
+        str(accuracy.get("task") or "-"),
+    )
+    sample_table.add_row(
+        "sample_count",
+        _fmt_num(accuracy["sample_count"]["base"]),
+        _fmt_num(accuracy["sample_count"]["new"]),
+    )
+
+    rprint(sample_table)
 
     precision_table = Table(title="Precision")
     precision_table.add_column("Field")
