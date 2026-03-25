@@ -23,6 +23,7 @@ class BenchmarkResult:
 
     system: Dict[str, Any] | None = None
     run_config: Dict[str, Any] | None = None
+    accuracy: Dict[str, Any] | None = None
     extra: Dict[str, Any] | None = None
 
     def to_dict(self) -> Dict[str, Any]:

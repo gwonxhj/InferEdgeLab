@@ -18,6 +18,9 @@ def load_result(path: str) -> Dict[str, Any]:
     data.setdefault("run_config", {})
     data.setdefault("extra", {})
     data.setdefault("precision", "fp32")
+
+    if data.get("accuracy") is None:
+        data["accuracy"] = {}
     data["legacy_result"] = not (has_system and has_run_config)
 
     return data
