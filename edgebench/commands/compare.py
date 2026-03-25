@@ -64,7 +64,7 @@ def compare_cmd(
     if not judgement["precision_match"]:
         rprint(
             "[yellow]Warning[/yellow]: cross-precision comparison detected. "
-            "Interpret latency deltas as a precision trade-off signal, not a strict regression result."
+            "Interpret latency deltas as a precision trade-off signal, not a strict same-condition regression result."
         )
 
     if judgement["notes"]:

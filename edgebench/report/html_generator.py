@@ -176,6 +176,7 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
 
   <div class="meta">
     <p><strong>Overall</strong>: <code>{escape(str(judgement["overall"]))}</code></p>
+    {"<p><strong>Overall semantics</strong>: <code>trade-off status, not same-condition regression status</code></p>" if judgement["comparison_mode"] == "cross_precision" else ""}
     <p><strong>Shape match</strong>: <code>{escape(str(judgement["shape_match"]))}</code></p>
     <p><strong>System match</strong>: <code>{escape(str(judgement["system_match"]))}</code></p>
     <p><strong>Mean judgement</strong>: <code>{escape(str(judgement["mean_ms"]))}</code></p>

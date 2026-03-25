@@ -55,12 +55,14 @@ def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[st
     if not judgement["precision_match"]:
         lines.append("> [!WARNING]")
         lines.append("> This is a cross-precision comparison.")
-        lines.append("> Interpret latency deltas as a precision trade-off signal, not a strict apples-to-apples regression result.")
+        lines.append("> Interpret latency deltas as a precision trade-off signal, not a strict same-condition regression result.")
         lines.append("")
 
     lines.append("## Judgement")
     lines.append("")
     lines.append(f"- Overall: **{judgement['overall']}**")
+    if judgement["comparison_mode"] == "cross_precision":
+        lines.append("- Overall semantics: **trade-off status, not same-condition regression status**")
     lines.append(f"- Shape match: **{judgement['shape_match']}**")
     lines.append(f"- System match: **{judgement['system_match']}**")
     lines.append(f"- Mean judgement: **{judgement['mean_ms']}**")

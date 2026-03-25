@@ -24,6 +24,29 @@ def _judge_delta_pct(
     return "neutral"
 
 
+def _build_overall(
+    comparison_mode: str,
+    shape_match: bool,
+    mean_judgement: str,
+    p99_judgement: str,
+) -> str:
+    if not shape_match:
+        return "mismatch"
+
+    if comparison_mode == "cross_precision":
+        if mean_judgement == "regression" or p99_judgement == "regression":
+            return "tradeoff_slower"
+        if mean_judgement == "improvement" and p99_judgement in ("improvement", "neutral"):
+            return "tradeoff_faster"
+        return "tradeoff_neutral"
+
+    if mean_judgement == "regression" or p99_judgement == "regression":
+        return "regression"
+    if mean_judgement == "improvement" and p99_judgement in ("improvement", "neutral"):
+        return "improvement"
+    return "neutral"
+
+
 def _build_summary(
     overall: str,
     comparison_mode: str,
@@ -36,12 +59,12 @@ def _build_summary(
         return "Input shape mismatch detected. Latency comparison should be interpreted with caution."
 
     if comparison_mode == "cross_precision":
-        if overall == "regression":
+        if overall == "tradeoff_slower":
             return (
                 f"Cross-precision comparison ({precision_pair}) shows slower latency in the new result. "
-                "This may reflect precision trade-offs rather than a same-condition regression."
+                "Interpret this as a precision trade-off outcome rather than a same-condition regression."
             )
-        if overall == "improvement":
+        if overall == "tradeoff_faster":
             return (
                 f"Cross-precision comparison ({precision_pair}) shows faster latency in the new result. "
                 "This is a useful optimization signal, but accuracy trade-offs are not evaluated here."
@@ -72,6 +95,9 @@ def _build_notes(
         notes.append(
             f"This is a cross-precision comparison: {precision_pair}. "
             "Latency differences can be caused by precision changes as well as runtime behavior."
+        )
+        notes.append(
+            "Cross-precision overall status uses trade-off semantics instead of same-condition regression semantics."
         )
         notes.append(
             "A faster INT8 result does not guarantee equivalent model accuracy. "
@@ -113,18 +139,16 @@ def judge_comparison(compare_result: Dict[str, Any]) -> Dict[str, Any]:
     mean_judgement = _judge_delta_pct(metrics["mean_ms"]["delta_pct"])
     p99_judgement = _judge_delta_pct(metrics["p99_ms"]["delta_pct"])
 
-    overall = "neutral"
-
-    if not shape_match:
-        overall = "mismatch"
-    elif mean_judgement == "regression" or p99_judgement == "regression":
-        overall = "regression"
-    elif mean_judgement == "improvement" and p99_judgement in ("improvement", "neutral"):
-        overall = "improvement"
-
     comparison_mode = precision_info["comparison_mode"]
     precision_pair = precision_info["pair"]
     precision_match = precision_info["match"]
+
+    overall = _build_overall(
+        comparison_mode=comparison_mode,
+        shape_match=shape_match,
+        mean_judgement=mean_judgement,
+        p99_judgement=p99_judgement,
+    )
 
     summary = _build_summary(
         overall=overall,
