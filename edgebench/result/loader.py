@@ -59,6 +59,19 @@ def result_identity_key(item: Dict[str, Any]) -> str:
     )
 
 
+def result_identity_key_without_precision(item: Dict[str, Any]) -> str:
+    return "::".join(
+        [
+            str(item.get("model")),
+            str(item.get("engine")),
+            str(item.get("device")),
+            str(item.get("batch")),
+            str(item.get("height")),
+            str(item.get("width")),
+        ]
+    )
+
+
 def latest_comparable_result_paths(pattern: str = "results/*.json") -> List[str]:
     paths = list_result_paths(pattern)
     if len(paths) < 2:
@@ -82,18 +95,20 @@ def latest_comparable_result_paths(pattern: str = "results/*.json") -> List[str]
 
     return list(reversed(matched_paths))
 
+
 def sort_results_by_timestamp(results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return sorted(results, key=lambda item: str(item.get("timestamp") or ""))
 
+
 def filter_results(
-        results: List[Dict[str, Any]],
-        model: str = "",
-        engine: str = "",
-        device: str = "",
-        precision: str = "",
-        batch: int | None = None,
-        height: int | None = None,
-        width: int | None = None,
+    results: List[Dict[str, Any]],
+    model: str = "",
+    engine: str = "",
+    device: str = "",
+    precision: str = "",
+    batch: int | None = None,
+    height: int | None = None,
+    width: int | None = None,
 ) -> List[Dict[str, Any]]:
     filtered = results
 
@@ -120,15 +135,16 @@ def filter_results(
 
     return filtered
 
+
 def select_history_results(
-        pattern: str = "results/*.json",
-        model: str = "",
-        engine: str = "",
-        device: str = "",
-        precision: str = "",
-        batch: int | None = None,
-        height: int | None = None,
-        width: int | None = None,
+    pattern: str = "results/*.json",
+    model: str = "",
+    engine: str = "",
+    device: str = "",
+    precision: str = "",
+    batch: int | None = None,
+    height: int | None = None,
+    width: int | None = None,
 ) -> List[Dict[str, Any]]:
     results = load_results(pattern)
     results = filter_results(
@@ -142,6 +158,7 @@ def select_history_results(
         width=width,
     )
     return sort_results_by_timestamp(results)
+
 
 def latest_comparable_items(results: List[Dict[str, Any]], count: int = 2) -> List[Dict[str, Any]]:
     if len(results) < count:
@@ -162,6 +179,40 @@ def latest_comparable_items(results: List[Dict[str, Any]], count: int = 2) -> Li
     if len(matched_items) < count:
         raise ValueError(
             "같은 조건(model/engine/device/precision/batch/height/width)의 최근 결과 2개를 찾지 못했습니다."
+        )
+
+    return list(reversed(matched_items))
+
+
+def latest_cross_precision_items(results: List[Dict[str, Any]], count: int = 2) -> List[Dict[str, Any]]:
+    if len(results) < count:
+        raise ValueError(f"최소 {count}개의 result 항목이 필요합니다. 현재: {len(results)}개")
+
+    items_desc = list(reversed(sort_results_by_timestamp(results)))
+
+    newest_item = items_desc[0]
+    target_key = result_identity_key_without_precision(newest_item)
+
+    matched_items: List[Dict[str, Any]] = []
+    seen_precisions: set[str] = set()
+
+    for item in items_desc:
+        if result_identity_key_without_precision(item) != target_key:
+            continue
+
+        precision = str(item.get("precision"))
+        if precision in seen_precisions:
+            continue
+
+        matched_items.append(item)
+        seen_precisions.add(precision)
+
+        if len(matched_items) == count:
+            break
+
+    if len(matched_items) < count:
+        raise ValueError(
+            "같은 조건(model/engine/device/batch/height/width)에서 precision이 다른 최근 결과 2개를 찾지 못했습니다."
         )
 
     return list(reversed(matched_items))
