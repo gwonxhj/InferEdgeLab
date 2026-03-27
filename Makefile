@@ -1,4 +1,4 @@
-.PHONY: save demo_deps demo_models demo_profile demo_doc demo_readme demo demo_clean ci_bench ci_guard
+.PHONY: save demo_deps demo_models demo_profile demo_doc demo_readme demo demo_clean ci_bench ci_guard ci_policy_gate
 
 SIZES  ?= 224 320 640
 RUNS   ?= 300
@@ -84,3 +84,12 @@ ci_guard:
 		--metric mean \
 		--max-regress-pct 15 \
 		--allow-missing-keys
+
+ci_policy_gate:
+	@echo "==> Compare policy gate (same_precision)"
+	poetry run python scripts/check_compare_policy.py \
+		--pattern "results/*.json" \
+		--selection-mode same_precision \
+		--model toy224.onnx \
+		--fail-on-same-precision-regression \
+		--fail-on-severe-tradeoff

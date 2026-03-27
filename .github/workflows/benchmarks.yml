@@ -59,6 +59,13 @@ jobs:
             make demo
           fi
 
+      - name: Enforce compare policy gate
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euxo pipefail
+          make ci_policy_gate
+
       # ✅ raw JSON은 커밋하지 않고 artifact로만 보관
       - name: Upload raw reports as artifact
         uses: actions/upload-artifact@v4
