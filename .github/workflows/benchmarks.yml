@@ -66,6 +66,22 @@ jobs:
           set -euxo pipefail
           make ci_policy_gate
 
+      - name: Write compare gate summary
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euxo pipefail
+          poetry run python scripts/check_compare_policy.py \
+            --pattern "results/*.json" \
+            --selection-mode same_precision \
+            --model toy224.onnx \
+            --fail-on-same-precision-regression \
+            --fail-on-severe-tradeoff \
+            --summary-out reports/ci_policy_summary.md \
+            --allow-missing-pair
+  
+          cat reports/ci_policy_summary.md >> "$GITHUB_STEP_SUMMARY"
+
       # ✅ raw JSON은 커밋하지 않고 artifact로만 보관
       - name: Upload raw reports as artifact
         uses: actions/upload-artifact@v4
