@@ -86,10 +86,14 @@ ci_guard:
 		--allow-missing-keys
 
 ci_policy_gate:
-	@echo "==> Compare policy gate (same_precision)"
-	poetry run python scripts/check_compare_policy.py \
-		--pattern "results/*.json" \
-		--selection-mode same_precision \
-		--model toy224.onnx \
-		--fail-on-same-precision-regression \
-		--fail-on-severe-tradeoff
+	@echo "==> Compare policy gate (same_precision, multi-size)"
+	@set -e; \
+	for s in $(SIZES); do \
+		echo "==> Policy gate for toy$${s}.onnx"; \
+		poetry run python scripts/check_compare_policy.py \
+			--pattern "results/*.json" \
+			--selection-mode same_precision \
+			--model toy$${s}.onnx \
+			--fail-on-same-precision-regression \
+			--fail-on-severe-tradeoff; \
+	done
