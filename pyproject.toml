@@ -23,3 +23,12 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 include = ["edgebench*"]
 exclude = ["models*"]
+
+[tool.edgebench.compare]
+latency_improve_threshold = -3.0
+latency_regress_threshold = 3.0
+accuracy_improve_threshold = 0.2
+accuracy_regress_threshold = -0.2
+tradeoff_caution_threshold = -0.3
+tradeoff_risky_threshold = -1.0
+tradeoff_severe_threshold = -2.0
