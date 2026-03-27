@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import glob
+from pathlib import Path
 from typing import Any, Dict, List
 
 import typer
@@ -59,6 +60,45 @@ def _select_pair(
     return latest_cross_precision_items(filtered, count=2)
 
 
+def _build_summary_markdown(
+    *,
+    selection_mode: str,
+    base: Dict[str, Any],
+    new: Dict[str, Any],
+    judgement: Dict[str, Any],
+    failed: bool,
+) -> str:
+    status_emoji = "❌" if failed else "✅"
+    lines: list[str] = []
+
+    lines.append("## CI Compare Policy Gate")
+    lines.append("")
+    lines.append(f"- Status: {status_emoji} **{'failed' if failed else 'passed'}**")
+    lines.append(f"- Selection mode: `{selection_mode}`")
+    lines.append(f"- Overall: **{judgement['overall']}**")
+    lines.append(f"- Trade-off risk: **{judgement['tradeoff_risk']}**")
+    lines.append(f"- Base candidate: `{_fmt_identity(base)}`")
+    lines.append(f"- New candidate: `{_fmt_identity(new)}`")
+    lines.append("")
+    lines.append(f"**Summary**: {judgement['summary']}")
+    lines.append("")
+
+    if judgement.get("notes"):
+        lines.append("### Notes")
+        lines.append("")
+        for note in judgement["notes"]:
+            lines.append(f"- {note}")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def _write_summary(path: str, text: str) -> None:
+    out_path = Path(path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(text + "\n", encoding="utf-8")
+
+
 def main(
     pattern: str = typer.Option("results/*.json", "--pattern", help="structured result glob pattern"),
     selection_mode: str = typer.Option(
@@ -87,6 +127,7 @@ def main(
     tradeoff_caution_threshold: float | None = typer.Option(None, "--tradeoff-caution-threshold"),
     tradeoff_risky_threshold: float | None = typer.Option(None, "--tradeoff-risky-threshold"),
     tradeoff_severe_threshold: float | None = typer.Option(None, "--tradeoff-severe-threshold"),
+    summary_out: str = typer.Option("", "--summary-out", help="write markdown summary to a file"),
 ) -> int:
     selection_mode = _normalize_selection_mode(selection_mode)
     if selection_mode not in {"same_precision", "cross_precision"}:
@@ -154,6 +195,17 @@ def main(
         if fail_on_severe_tradeoff and judgement["tradeoff_risk"] == "severe_tradeoff":
             rprint("[red]Policy failure[/red]: severe trade-off detected.")
             failed = True
+
+    if summary_out:
+        summary_text = _build_summary_markdown(
+            selection_mode=selection_mode,
+            base=base,
+            new=new,
+            judgement=judgement,
+            failed=failed,
+        )
+        _write_summary(summary_out, summary_text)
+        rprint(f"[cyan]Summary written[/cyan]: {summary_out}")
 
     if failed:
         rprint("[red]Compare policy gate failed[/red]")
