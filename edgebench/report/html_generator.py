@@ -24,6 +24,24 @@ def _fmt_pp(v: Optional[float]) -> str:
     return f"{v:+.2f}pp"
 
 
+def _badge_class_for_overall(overall: str) -> str:
+    if overall in {"improvement", "tradeoff_faster"}:
+        return "badge-good"
+    if overall in {"regression", "tradeoff_slower", "mismatch"}:
+        return "badge-bad"
+    return "badge-neutral"
+
+
+def _badge_class_for_risk(risk: str) -> str:
+    if risk in {"acceptable_tradeoff", "not_applicable"}:
+        return "badge-good"
+    if risk in {"caution_tradeoff", "unknown_risk", "no_clear_tradeoff"}:
+        return "badge-warn"
+    if risk in {"risky_tradeoff", "severe_tradeoff", "not_beneficial"}:
+        return "badge-bad"
+    return "badge-neutral"
+
+
 def _table_rows_from_metric_map(metrics: Dict[str, Dict[str, Any]]) -> str:
     rows = []
     for metric_name, values in metrics.items():
@@ -81,12 +99,39 @@ def _notes_to_html(notes: list[str]) -> str:
     return f"<ul>{items}</ul>"
 
 
+def _threshold_rows(thresholds: Dict[str, Any]) -> str:
+    ordered_keys = [
+        "latency_improve_threshold",
+        "latency_regress_threshold",
+        "accuracy_improve_threshold",
+        "accuracy_regress_threshold",
+        "tradeoff_caution_threshold",
+        "tradeoff_risky_threshold",
+        "tradeoff_severe_threshold",
+    ]
+    rows = []
+    for key in ordered_keys:
+        value = thresholds.get(key)
+        suffix = "%" if "latency" in key else "pp"
+        display = "-" if value is None else f"{float(value):+.2f}{suffix}"
+        rows.append(
+            f"""
+            <tr>
+              <td>{escape(key)}</td>
+              <td>{escape(display)}</td>
+            </tr>
+            """
+        )
+    return "\n".join(rows)
+
+
 def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, Any]) -> str:
     base_id = compare_result["base_id"]
     new_id = compare_result["new_id"]
     precision = compare_result["precision"]
     metrics = compare_result["metrics"]
     accuracy = compare_result["accuracy"]
+    thresholds = judgement.get("thresholds", {})
 
     shape_rows = _table_rows_from_diff_map(
         {
@@ -119,6 +164,7 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
     metric_rows = _table_rows_from_metric_map(metrics)
     accuracy_rows = _table_rows_from_accuracy_map(accuracy["metrics"])
     notes_html = _notes_to_html(judgement["notes"])
+    threshold_rows = _threshold_rows(thresholds)
 
     warning_html = ""
     if not judgement["precision_match"]:
@@ -130,6 +176,9 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
           </div>
         </div>
         """
+
+    overall_badge_class = _badge_class_for_overall(str(judgement["overall"]))
+    risk_badge_class = _badge_class_for_risk(str(judgement["tradeoff_risk"]))
 
     return f"""<!doctype html>
 <html lang="en">
@@ -145,18 +194,19 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
     }}
     h1, h2 {{
       color: #111827;
+      margin-bottom: 12px;
     }}
     .meta {{
       background: white;
       border: 1px solid #e5e7eb;
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 16px;
       margin-bottom: 24px;
     }}
     .warning {{
       background: #fff7ed;
       border: 1px solid #fdba74;
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 16px;
       margin-bottom: 24px;
       color: #9a3412;
@@ -166,12 +216,62 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
       line-height: 1.6;
       margin-top: 8px;
     }}
+    .card-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }}
+    .card {{
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }}
+    .card-title {{
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }}
+    .card-value {{
+      font-size: 20px;
+      font-weight: 700;
+      color: #111827;
+    }}
+    .badge {{
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+    }}
+    .badge-good {{
+      background: #dcfce7;
+      color: #166534;
+    }}
+    .badge-warn {{
+      background: #fef3c7;
+      color: #92400e;
+    }}
+    .badge-bad {{
+      background: #fee2e2;
+      color: #991b1b;
+    }}
+    .badge-neutral {{
+      background: #e5e7eb;
+      color: #374151;
+    }}
     table {{
       width: 100%;
       border-collapse: collapse;
       background: white;
       margin-bottom: 24px;
       border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
     }}
     th, td {{
       border: 1px solid #e5e7eb;
@@ -209,19 +309,46 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
 
   {warning_html}
 
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">Overall</div>
+      <div class="card-value"><span class="badge {overall_badge_class}">{escape(str(judgement["overall"]))}</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Trade-off Risk</div>
+      <div class="card-value"><span class="badge {risk_badge_class}">{escape(str(judgement["tradeoff_risk"]))}</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Mean Judgement</div>
+      <div class="card-value">{escape(str(judgement["mean_ms"]))}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Accuracy Judgement</div>
+      <div class="card-value">{escape(str(judgement["accuracy"]))}</div>
+    </div>
+  </div>
+
   <div class="meta">
-    <p><strong>Overall</strong>: <code>{escape(str(judgement["overall"]))}</code></p>
-    {"<p><strong>Overall semantics</strong>: <code>trade-off status, not same-condition regression status</code></p>" if judgement["comparison_mode"] == "cross_precision" else ""}
     <p><strong>Shape match</strong>: <code>{escape(str(judgement["shape_match"]))}</code></p>
     <p><strong>System match</strong>: <code>{escape(str(judgement["system_match"]))}</code></p>
-    <p><strong>Mean judgement</strong>: <code>{escape(str(judgement["mean_ms"]))}</code></p>
     <p><strong>P99 judgement</strong>: <code>{escape(str(judgement["p99_ms"]))}</code></p>
-    <p><strong>Accuracy judgement</strong>: <code>{escape(str(judgement["accuracy"]))}</code></p>
     <p><strong>Accuracy present</strong>: <code>{escape(str(judgement["accuracy_present"]))}</code></p>
-    <p><strong>Trade-off risk</strong>: <code>{escape(str(judgement["tradeoff_risk"]))}</code></p>
     <div class="summary"><strong>Summary</strong>: {escape(str(judgement["summary"]))}</div>
     {notes_html}
   </div>
+
+  <h2>Threshold Policy</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Threshold</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      {threshold_rows}
+    </tbody>
+  </table>
 
   <h2>Latency Comparison</h2>
   <table>

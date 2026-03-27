@@ -36,6 +36,7 @@ def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[st
     shape = compare_result["shape"]
     system_diff = compare_result["system_diff"]
     run_config_diff = compare_result["run_config_diff"]
+    thresholds = judgement.get("thresholds", {})
 
     lines: list[str] = []
 
@@ -87,6 +88,25 @@ def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[st
         for note in judgement["notes"]:
             lines.append(f"- {note}")
         lines.append("")
+
+    lines.append("## Threshold Policy")
+    lines.append("")
+    lines.append("| Threshold | Value |")
+    lines.append("|---|---:|")
+    for key in (
+        "latency_improve_threshold",
+        "latency_regress_threshold",
+        "accuracy_improve_threshold",
+        "accuracy_regress_threshold",
+        "tradeoff_caution_threshold",
+        "tradeoff_risky_threshold",
+        "tradeoff_severe_threshold",
+    ):
+        value = thresholds.get(key)
+        suffix = "%" if "latency" in key else "pp"
+        display = "-" if value is None else f"{float(value):+.2f}{suffix}"
+        lines.append(f"| {key} | {display} |")
+    lines.append("")
 
     lines.append("## Latency Comparison")
     lines.append("")
