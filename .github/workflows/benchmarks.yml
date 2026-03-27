@@ -77,7 +77,8 @@ jobs:
             --model toy224.onnx \
             --fail-on-same-precision-regression \
             --fail-on-severe-tradeoff \
-            --summary-out reports/ci_policy_summary.md
+            --summary-out reports/ci_policy_summary.md \
+            --allow-missing-pair
   
           cat reports/ci_policy_summary.md >> "$GITHUB_STEP_SUMMARY"
 

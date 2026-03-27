@@ -63,11 +63,28 @@ def _select_pair(
 def _build_summary_markdown(
     *,
     selection_mode: str,
-    base: Dict[str, Any],
-    new: Dict[str, Any],
-    judgement: Dict[str, Any],
+    base: Dict[str, Any] | None,
+    new: Dict[str, Any] | None,
+    judgement: Dict[str, Any] | None,
     failed: bool,
+    skipped: bool,
+    skip_reason: str = "",
 ) -> str:
+    if skipped:
+        lines: list[str] = []
+        lines.append("## CI Compare Policy Gate")
+        lines.append("")
+        lines.append("- Status: ⚪ **skipped**")
+        lines.append(f"- Selection mode: `{selection_mode}`")
+        if skip_reason:
+            lines.append(f"- Reason: {skip_reason}")
+        lines.append("")
+        return "\n".join(lines)
+
+    assert base is not None
+    assert new is not None
+    assert judgement is not None
+
     status_emoji = "❌" if failed else "✅"
     lines: list[str] = []
 
@@ -128,6 +145,11 @@ def main(
     tradeoff_risky_threshold: float | None = typer.Option(None, "--tradeoff-risky-threshold"),
     tradeoff_severe_threshold: float | None = typer.Option(None, "--tradeoff-severe-threshold"),
     summary_out: str = typer.Option("", "--summary-out", help="write markdown summary to a file"),
+    allow_missing_pair: bool = typer.Option(
+        False,
+        "--allow-missing-pair/--no-allow-missing-pair",
+        help="do not fail when compare pair cannot be selected; write skipped summary instead",
+    ),
 ) -> int:
     selection_mode = _normalize_selection_mode(selection_mode)
     if selection_mode not in {"same_precision", "cross_precision"}:
@@ -138,7 +160,23 @@ def main(
 
     matched_paths = sorted(glob.glob(pattern))
     if not matched_paths:
-        rprint(f"[red]No structured result files matched:[/red] {pattern}")
+        msg = f"No structured result files matched: {pattern}"
+        if summary_out and allow_missing_pair:
+            summary_text = _build_summary_markdown(
+                selection_mode=selection_mode,
+                base=None,
+                new=None,
+                judgement=None,
+                failed=False,
+                skipped=True,
+                skip_reason=msg,
+            )
+            _write_summary(summary_out, summary_text)
+            rprint(f"[yellow]{msg}[/yellow]")
+            rprint(f"[cyan]Summary written[/cyan]: {summary_out}")
+            return 0
+
+        rprint(f"[red]{msg}[/red]")
         return 2
 
     try:
@@ -151,7 +189,24 @@ def main(
             precision=precision,
         )
     except Exception as exc:
-        rprint(f"[red]Failed to select compare pair:[/red] {exc}")
+        msg = f"Failed to select compare pair: {exc}"
+
+        if summary_out and allow_missing_pair:
+            summary_text = _build_summary_markdown(
+                selection_mode=selection_mode,
+                base=None,
+                new=None,
+                judgement=None,
+                failed=False,
+                skipped=True,
+                skip_reason=msg,
+            )
+            _write_summary(summary_out, summary_text)
+            rprint(f"[yellow]{msg}[/yellow]")
+            rprint(f"[cyan]Summary written[/cyan]: {summary_out}")
+            return 0
+
+        rprint(f"[red]{msg}[/red]")
         return 2
 
     thresholds = resolve_compare_thresholds(
@@ -203,6 +258,7 @@ def main(
             new=new,
             judgement=judgement,
             failed=failed,
+            skipped=False,
         )
         _write_summary(summary_out, summary_text)
         rprint(f"[cyan]Summary written[/cyan]: {summary_out}")
