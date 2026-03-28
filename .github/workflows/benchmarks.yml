@@ -71,6 +71,32 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
+
+          rm -f reports/ci_policy_summary_*.md reports/ci_policy_summary_all.md || true
+  
+          for s in 224 320 640; do
+            poetry run python scripts/check_compare_policy.py \
+              --pattern "results/*.json" \
+              --selection-mode same_precision \
+              --model toy${s}.onnx \
+              --fail-on-same-precision-regression \
+              --fail-on-severe-tradeoff \
+              --summary-out reports/ci_policy_summary_${s}.md \
+              --allow-missing-pair
+          done
+  
+          {
+            echo "# Compare Policy Gate Summary"
+            echo
+            cat reports/ci_policy_summary_224.md
+            echo
+            cat reports/ci_policy_summary_320.md
+            echo
+            cat reports/ci_policy_summary_640.md
+          } > reports/ci_policy_summary_all.md
+  
+          cat reports/ci_policy_summary_all.md >> "$GITHUB_STEP_SUMMARY"
+
           poetry run python scripts/check_compare_policy.py \
             --pattern "results/*.json" \
             --selection-mode same_precision \
