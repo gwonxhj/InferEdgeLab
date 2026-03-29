@@ -1,18 +1,13 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Optional
 import numpy as np
 
 import onnx
 import onnxruntime as ort
 
+from edgebench.engines.base import EngineModelIO, InferenceEngine
 
-@dataclass
-class OrtModelIO:
-    name: str
-    dtype: np.dtype
-    shape: List[Optional[int]]
 
 
 def _onnx_elemtype_to_numpy(elem_type: int) -> np.dtype:
@@ -58,13 +53,13 @@ def _dtype_from_valueinfo(vi: onnx.ValueInfoProto) -> np.dtype:
     return _onnx_elemtype_to_numpy(elem)
 
 
-class OnnxRuntimeCpuEngine:
+class OnnxRuntimeCpuEngine(InferenceEngine):
     name = "onnxruntime"
     device = "cpu"
 
     def __init__(self) -> None:
         self.sess: Optional[ort.InferenceSession] = None
-        self.inputs: List[OrtModelIO] = []
+        self.inputs: List[EngineModelIO] = []
         self.outputs: List[str] = []
 
     def load(self, model_path: str, intra_threads: int = 1, inter_threads: int = 1) -> None:
@@ -82,7 +77,7 @@ class OnnxRuntimeCpuEngine:
         self.inputs = []
         for vi in m.graph.input:
             self.inputs.append(
-                OrtModelIO(
+                EngineModelIO(
                     name=vi.name,
                     dtype=_dtype_from_valueinfo(vi),
                     shape=_shape_from_valueinfo(vi),
