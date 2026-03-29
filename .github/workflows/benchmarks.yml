@@ -71,7 +71,7 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-
+  
           rm -f reports/ci_policy_summary_*.md reports/ci_policy_summary_all.md || true
   
           for s in 224 320 640; do
@@ -82,6 +82,7 @@ jobs:
               --fail-on-same-precision-regression \
               --fail-on-severe-tradeoff \
               --summary-out reports/ci_policy_summary_${s}.md \
+              --summary-label "Same-Precision Gate: toy${s}.onnx" \
               --allow-missing-pair
           done
   
@@ -97,16 +98,40 @@ jobs:
   
           cat reports/ci_policy_summary_all.md >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Enforce cross-precision tradeoff gate
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euxo pipefail
+
           poetry run python scripts/check_compare_policy.py \
             --pattern "results/*.json" \
-            --selection-mode same_precision \
+            --selection-mode cross_precision \
             --model toy224.onnx \
-            --fail-on-same-precision-regression \
             --fail-on-severe-tradeoff \
-            --summary-out reports/ci_policy_summary.md \
             --allow-missing-pair
-  
-          cat reports/ci_policy_summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Write cross-precision gate summary
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euxo pipefail
+    
+          poetry run python scripts/check_compare_policy.py \
+            --pattern "results/*.json" \
+            --selection-mode cross_precision \
+            --model toy224.onnx \
+            --fail-on-severe-tradeoff \
+            --summary-out reports/ci_policy_cross_summary.md \
+            --summary-label "Cross-Precision Gate: toy224.onnx" \
+            --allow-missing-pair
+    
+          {
+            echo
+            echo "# Cross-Precision Tradeoff Summary"
+            echo
+            cat reports/ci_policy_cross_summary.md
+          } >> "$GITHUB_STEP_SUMMARY"            
 
       # ✅ raw JSON은 커밋하지 않고 artifact로만 보관
       - name: Upload raw reports as artifact
