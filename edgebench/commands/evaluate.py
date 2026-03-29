@@ -54,7 +54,8 @@ def evaluate_cmd(
         inter_threads=inter_threads,
     )
 
-    model_input_shape = eval_result.model_input.get("shape") or []
+    actual_input_shape = eval_result.actual_input_shape or []
+    model_input_shape = actual_input_shape or (eval_result.model_input.get("shape") or [])
 
     structured = BenchmarkResult(
         model=os.path.basename(model_path),
@@ -97,6 +98,7 @@ def evaluate_cmd(
             "evaluation": {
                 "task": eval_result.task,
                 "model_input": eval_result.model_input,
+                "actual_input_shape": eval_result.actual_input_shape,
                 "input_format": "npy",
             }
         },

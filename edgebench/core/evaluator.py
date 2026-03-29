@@ -26,6 +26,7 @@ class ClassificationEvalResult:
     metrics: Dict[str, float]
     notes: List[str]
     model_input: Dict[str, Any]
+    actual_input_shape: List[int]
     extra: Dict[str, Any]
 
 
@@ -136,6 +137,7 @@ def evaluate_classification_top1(
     model_input = engine.inputs[0]
 
     correct_count = 0
+    actual_input_shape: Optional[List[int]] = None
 
     for sample in samples:
         if not os.path.isfile(sample.input_path):
@@ -143,6 +145,9 @@ def evaluate_classification_top1(
 
         arr = np.load(sample.input_path)
         arr = _normalize_input_array(arr, model_input)
+
+        if actual_input_shape is None:
+            actual_input_shape = [int(v) for v in arr.shape]
 
         feeds = {
             model_input.name: arr,
@@ -183,6 +188,7 @@ def evaluate_classification_top1(
             "dtype": str(model_input.dtype),
             "shape": model_input.shape,
         },
+        actual_input_shape=actual_input_shape or [],
         extra={
             "input_key": input_key,
             "label_key": label_key,
