@@ -318,7 +318,7 @@ poetry run edgebench profile models/toy224.onnx \
 
 결과:
 - results/*.json 생성
-- latency (maen/p99) 저장
+- latency (mean / p99) 저장
 
 ---
 
@@ -351,6 +351,65 @@ poetry run edgebench compare-latest \
 
 이 과정을 통해 EdgeBench의 핵심 workflow인
 **profile -> structured result -> compare -> judgement**를 체험할 수 있습니다.
+
+---
+
+## 🎯 Accuracy Evaluation Demo
+
+EdgeBench의 `evaluate` 명령은 현재 **classification top-1 accuracy** 평가를 지원합니다.
+
+### Evaluate 입력 형식
+
+현재 evaluator는 아래 조건을 기대합니다:
+
+- 입력 파일 형식: `.npy`
+- dataset manifest 형식: `JSONL`
+- 입력 key 기본값: `input`
+- 정답 label key 기본값: `label`
+- single-input / single-output classification 모델만 지원
+
+manifest 한 줄 예시는 아래와 같습니다.
+
+```json
+{"input": "tmp_eval/sample_000.npy", "label": 0}
+```
+
+---
+
+### Evaluate 실행 예시
+
+```bash
+poetry run edgebench evaluate models/toy224.onnx \
+  --dataset-manifest tmp_eval/manifest.jsonl \
+  --task classification \
+  --precision fp32 \
+  --input-key input \
+  --label-key label
+```
+
+---
+
+### Evaluate 결과
+
+evaluate 실행 시 아래 정보가 structured result로 저장됩니다.
+
+- sample_count
+- correct_count
+- top1_accuracy
+- evaluation_config
+- model_input metadata
+
+또한 results/*.json 안에 run_config.mode = evaluate 형태로 저장되므로,
+이후 compare 또는 compare-latest를 통해 accuracy-aware 비교에 활용할 수 있습니다.
+
+---
+
+### Notes
+
+- 현재 evaluator는 classification만 지원합니다.
+- 현재 evaluator는 .npy 입력과 JSONL manifest를 기대합니다.
+- 현재 evaluator는 single-input / single-output 모델만 지원합니다.
+- accuracy 결과는 latency와 별도로 저장되며, compare 단계에서 함께 해석됩니다.
 
 ---
 
