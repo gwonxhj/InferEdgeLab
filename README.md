@@ -376,6 +376,25 @@ manifest 한 줄 예시는 아래와 같습니다.
 
 ---
 
+### Demo 데이터 생성
+
+아래 스크립트는 evaluate 데모용 `.npy` 입력과 `manifest.jsonl`을 자동 생성합니다.  
+각 샘플의 label은 동일한 ONNX 모델의 예측 결과(argmax)로 기록되므로,
+데모 환경에서는 evaluate 파이프라인이 안정적으로 동작하는지 바로 확인할 수 있습니다.
+
+```bash
+mkdir -p tmp_eval
+
+poetry run python scripts/make_eval_demo_data.py \
+  --model models/toy224.onnx \
+  --out-dir tmp_eval \
+  --count 5 \
+  --height 224 \
+  --width 224
+```
+
+---
+
 ### Evaluate 실행 예시
 
 ```bash
