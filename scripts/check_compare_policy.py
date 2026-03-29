@@ -62,6 +62,7 @@ def _select_pair(
 
 def _build_summary_markdown(
     *,
+    label: str,
     selection_mode: str,
     base: Dict[str, Any] | None,
     new: Dict[str, Any] | None,
@@ -72,7 +73,7 @@ def _build_summary_markdown(
 ) -> str:
     if skipped:
         lines: list[str] = []
-        lines.append("## CI Compare Policy Gate")
+        lines.append(f"## {label}")
         lines.append("")
         lines.append("- Status: ⚪ **skipped**")
         lines.append(f"- Selection mode: `{selection_mode}`")
@@ -88,7 +89,7 @@ def _build_summary_markdown(
     status_emoji = "❌" if failed else "✅"
     lines: list[str] = []
 
-    lines.append("## CI Compare Policy Gate")
+    lines.append(f"## {label}")
     lines.append("")
     lines.append(f"- Status: {status_emoji} **{'failed' if failed else 'passed'}**")
     lines.append(f"- Selection mode: `{selection_mode}`")
@@ -145,6 +146,7 @@ def main(
     tradeoff_risky_threshold: float | None = typer.Option(None, "--tradeoff-risky-threshold"),
     tradeoff_severe_threshold: float | None = typer.Option(None, "--tradeoff-severe-threshold"),
     summary_out: str = typer.Option("", "--summary-out", help="write markdown summary to a file"),
+    summary_label: str = typer.Option("CI Compare Policy Gate", "--summary-label", help="markdown summary section title"),
     allow_missing_pair: bool = typer.Option(
         False,
         "--allow-missing-pair/--no-allow-missing-pair",
@@ -163,6 +165,7 @@ def main(
         msg = f"No structured result files matched: {pattern}"
         if summary_out and allow_missing_pair:
             summary_text = _build_summary_markdown(
+                label=summary_label,
                 selection_mode=selection_mode,
                 base=None,
                 new=None,
@@ -193,6 +196,7 @@ def main(
 
         if summary_out and allow_missing_pair:
             summary_text = _build_summary_markdown(
+                label=summary_label,
                 selection_mode=selection_mode,
                 base=None,
                 new=None,
@@ -253,6 +257,7 @@ def main(
 
     if summary_out:
         summary_text = _build_summary_markdown(
+            label=summary_label,
             selection_mode=selection_mode,
             base=base,
             new=new,
