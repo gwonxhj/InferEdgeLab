@@ -71,6 +71,35 @@ def profile_engine(
         extra=extra,
     )
 
+def profile_model(
+    model_path: str,
+    engine: str = "onnxruntime",
+    warmup: int = 10,
+    runs: int = 100,
+    batch: Optional[int] = None,
+    height: Optional[int] = None,
+    width: Optional[int] = None,
+    intra_threads: int = 1,
+    inter_threads: int = 1,
+) -> ProfileResult:
+    normalized_engine = normalize_engine_name(engine)
+
+    if normalized_engine == "onnxruntime":
+        return profile_onnxruntime_cpu(
+            model_path=model_path,
+            warmup=warmup,
+            runs=runs,
+            batch=batch,
+            height=height,
+            width=width,
+            intra_threads=intra_threads,
+            inter_threads=inter_threads,
+        )
+
+    raise ValueError(
+        f"지원하지 않는 engine입니다: {engine}. 현재 지원: onnxruntime"
+    )
+
 def _latency_stats_ms(samples_ms: np.ndarray) -> Dict[str, float]:
     # IMPORTANT: samples_ms must be 1D float array
     mean = float(samples_ms.mean())
@@ -89,6 +118,15 @@ def _latency_stats_ms(samples_ms: np.ndarray) -> Dict[str, float]:
         "min": mn,
         "max": mx,
     }
+
+def normalize_engine_name(engine: str) -> str:
+    value = str(engine or "").strip().lower()
+    aliases = {
+        "ort": "onnxruntime",
+        "onnxruntime_cpu": "onnxruntime",
+        "onnxruntime": "onnxruntime",
+    }
+    return aliases.get(value, value)
 
 def profile_onnxruntime_cpu(
     model_path: str,
