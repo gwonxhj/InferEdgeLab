@@ -1,33 +1,38 @@
 ## 📌 프로젝트 개요
 
 EdgeBench는 ONNX 기반 모델의 추론 성능을 분석하고,  
-그 결과를 구조화하여 비교·추적·리포트화할 수 있는 CLI 기반 벤치마크 시스템입니다.
+그 결과를 구조화하여 비교·추적·리포트화·CI 검증할 수 있는 CLI 기반 inference validation system입니다.
 
 단순한 1회성 벤치마크가 아니라,  
-지속적인 성능 추적과 회귀(regression) 감지, 그리고 precision-aware 비교 해석이 가능하도록 설계되었습니다.
+지속적인 성능 추적, regression 감지, precision-aware 비교 해석,  
+그리고 latency-accuracy trade-off validation이 가능하도록 설계되었습니다.
 
 - Static analysis (Parameters, FLOPs)
 - Runtime profiling (mean / p99 latency)
+- Accuracy evaluation (top-1 classification)
 - Structured result 저장
 - same-precision / cross-precision 비교
+- trade-off risk classification
 - 최신 comparable pair 자동 선택
 - HTML / Markdown 리포트 생성
-- CI 기반 성능 검증
+- CI 기반 성능 검증 및 policy gate
 
 ---
 
 ## 🎯 문제 정의
 
-Edge 환경에서는 모델의 accuracy보다 latency와 리소스 사용량이 더 중요한 지표입니다.
+Edge 환경에서는 단순 accuracy만으로 모델 배포 적합성을 판단할 수 없습니다.
 
-하지만 기존 방식은 다음과 같은 문제가 있었습니다:
+실제 배포 관점에서는 다음 질문에 답할 수 있어야 합니다:
 
-- 벤치마크 결과가 일회성으로 끝남
-- 이전 결과와 비교가 어려움
-- 성능 변화 추적이 불가능
-- CI 환경에서 자동 검증이 어려움
+- 이 모델이 현재 장비에서 충분히 빠른가?
+- 이전 버전 대비 성능이 나빠지지 않았는가?
+- fp32 -> int8 변경 시 latency 이득이 실제로 의미 있는가?
+- 그 이득이 accuracy 손실을 감수할 만큼 가치가 있는가?
+- 이런 판단을 PR 단계에서 자동 검증할 수 있는가?
 
-즉, "지속적으로 성능을 관리할 수 있는 구조"가 부족했습니다.
+하지만 일반적인 벤치마크 방식은 이러한 질문에 체계적으로 답하지 못했습니다.
+결과 저장 구조, 비교 기준, 정책 기반 해석, CI 연동이 분리되어 있었기 때문입니다.
 
 ---
 
@@ -52,17 +57,20 @@ Edge 환경에서는 모델의 accuracy보다 latency와 리소스 사용량이 
 
 이 문제를 해결하기 위해 다음과 같은 시스템을 설계했습니다:
 
-1. 모든 benchmark 결과를 structured JSON 형태로 저장
-2. model / engine / device / shape / precision 정보를 기준으로 comparable result를 식별
-3. same-precision 비교와 cross-precision 비교를 분리하여 해석
-4. latency 변화량(delta, %) 계산
-5. 최신 comparable pair 자동 선택 (`compare-latest`)
-6. history 기반 성능 추세 추적
-7. HTML / Markdown 리포트 자동 생성
-8. CI에서 regression 자동 감지
+1. 이 문제를 해결하기 위해 EdgeBench를 다음과 같은 validation workflow로 설계했습니다:
 
-이를 통해 단순 벤치마크가 아닌
-**지속적인 성능 관리와 precision trade-off 해석이 가능한 benchmarking system** 을 구축했습니다.
+1. 모든 benchmark / evaluation 결과를 structured JSON 형태로 저장
+2. model / engine / device / shape / precision 기준으로 comparable result 식별
+3. latency와 accuracy를 함께 비교하는 accuracy-aware compare 로직 구축
+4. same-precision compare와 cross-precision compare를 분리 해석
+5. cross-precision 비교에 trade-off risk classification 도입
+6. 최신 comparable pair 자동 선택 (`compare-latest`)
+7. HTML / Markdown 리포트 자동 생성
+8. CI에서 same-precision regression과 cross-precision severe trade-off 자동 검증
+9. GitHub Action step summary로 결과를 PR UI에 바로 노출
+
+이를 통해 EdgeBench는 단순 benchmark runner가 아니라
+**지속적인 inference validation과 precision trade-off 해석이 가능한 시스템**으로 확장되었습니다.
 
 ---
 
@@ -140,15 +148,20 @@ Profile -> JSON 저장 -> Compare -> History -> Report -> CI 검증
 ## 🔧 핵심 기술 포인트
 
 - ONNX Runtime 기반 추론 성능 측정
-- structured result schema 설계 (`model / engine / device / precision / shape / latency / system / run config`)
+- structured result schema 설계 
+  (`model / engine / device / precision / shape / latency / system / run config`)
 - CLI 인터페이스 설계 (Typer)
-- HTML report generation (trend visualization / compare report)
-- Markdown report generation (CI 활용 / compare report)
-- 결과 비교 알고리즘 (delta / % 계산)
-- 동일 조건 자동 매칭 (model / engine / device / precision / shape)
+- HTML / Markdown compare report generation
+- 결과 비교 알고리즘
+  (latency delta / delta % / accuracy delta / delta pp)
+- 동일 조건 자동 매칭
+  (model / engine / device / precision / shape)
 - latest comparable pair 자동 선택 로직
 - same-precision regression semantics / cross-precision trade-off semantics 분리
-- Github Actions 기반 regression guard
+- trade-off risk classification 설계
+- threshold-configurable compare policy
+- Github Actions 기반 regression / trade-off validation gate
+- step summary 기반 PR-level benchmark explainability
 
 ---
 
@@ -159,21 +172,23 @@ Profile -> JSON 저장 -> Compare -> History -> Report -> CI 검증
 - 단일 실행 기반 벤치마크
 - 이전 결과와의 비교가 수작업에 의존
 - precision 차이에 따른 비교 해석 기준이 없음
+- PR 단계에서 성능 변화 자동 검증이 어려움
 
 개선 후:
 
-- 성능을 지속적으로 추적 가능한 시스템 구축
+- 성능을 지속적으로 추적 가능한 structured result system 구축
 - latency 변화 자동 분석
-- regression 자동 감지 가능
-- same-precision regression tracking 지원
-- cross-precision trade-off comparison 지원
+- accuracy-aware compare 지원
+- same-precision regression 자동 감지 가능
+- cross-precision trade-off comparison 및 risk classification 지원
 - 최신 comparable pair 자동 선택 기능 구현
-- CI 기반 성능 검증 파이프라인 구축
+- multi-size benchmark summary 제공
+- CI 기반 성능 검증 및 Github Actions summary 연동
 
 결과적으로:
 
 > 모델 성능을 단순 측정하는 수준을 넘어,
-> **비교·추적·해석까지 가능한 benchmarking workflow** 를 구현했습니다.
+> **비교·추적·해석·정책판단·CI 검증까지 가능한 inference validation workflow**를 구현했습니다.
 
 ---
 
