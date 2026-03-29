@@ -5,7 +5,10 @@
 # EdgeBench
 
 > Edge AI Inference Profiling Framework  
-> EdgeBench is a CLI-based framework for profiling, comparing, and tracking AI inference performance across edge environments.
+> EdgeBench is a CLI-based framework for profiling, evaluating, comparing, and validating AI inference behavior across edge environments.
+
+EdgeBench는 단순 Benchmark 실행 도구가 아니라,
+**latency 측정 + accuracy 비교 + precision trade-off 해석 + CI policy gate**까지 연결되는 **inference validation workflow**를 목표로 설계된 프로젝트입니다.
 
 ---
 
@@ -18,11 +21,12 @@
 ## 📌 프로젝트 개요
 
 EdgeBench는 엣지 환경에서 AI 모델을 배포하기 전에  
-모델의 구조적 특성과 실제 추론 성능을 분석하고,  
-그 결과를 **저장·비교·추적·리포트화**할 수 있는 CLI 기반 도구입니다.
+모델의 구조적 특성, 실제 추론 latency, accuracy 변화, precision trade-off를 함께 분석하고,
+그 결과를 **저장·비교·추적·리포트화·CI 검증**할 수 있는 CLI 기반 시스템입니다.
 
 정확도(Accuracy)만으로는 모델의 배포 가능성을 판단할 수 없습니다.
-실제 배포 관점에서는 latency, shape consistency, execution environment, precision(fp32 / int8 등) 차이까지 함께 봐야 합니다.
+실제 배포 관점에서는 latency, shape consistency, execution environment, precision(fp32 / int8 등),
+그리고 precision 변경 시 accuracy 손실 허용 여부까지 함께 봐야 합니다.
 
 EdgeBench는 다음을 제공합니다:
 
@@ -41,7 +45,7 @@ EdgeBench는 다음을 제공합니다:
 ## ⚡ 핵심 기능
 
 EdgeBench는 단순한 벤치마크 도구가 아니라  
-**모델 성능을 정량적으로 측정하고, 비교하고, 추적하는 시스템**입니다.
+**모델 성능을 측정하고, 비교하고, 해석하고, CI에서 검증하는 시스템**입니다.
 
 - 📊 Static Analysis  
   - Parameters, FLOPs, Model size 분석
@@ -49,21 +53,25 @@ EdgeBench는 단순한 벤치마크 도구가 아니라
 - ⚡ Runtime Profiling  
   - ONNX Runtime 기반 실제 latency 측정 (mean / p99)
 
+- 🎯 Accuracy Evaluation  
+  - classification manifest 기반 top-1 accuracy 평가
+  - accuracy 결과를 structured result에 함께 저장
+
 - 🧱 Structured Result System  
   - 모든 결과를 JSON 스키마로 저장
-  - 이후 비교 및 히스토리 추적 가능
+  - 이후 비교 / 히스토리 추적 / 정책 판정에 재사용 가능
 
-- 🔍 Result Comparison  
-  - 두 structured result를 직접 비교 (delta / % 변화)
+- 🔍 Accuracy-Aware Comparison  
+  - 두 structured result를 직접 비교 (latency delta / % 변화 / accuracy delta / delta pp)
   - same-precision 비교에서는 regression / improvement / neutral 판단
-  - cross-precision 비교에서는 precision trade-off 관점의 judgement 제공
+  - cross-precision 비교에서는 trade-off semantics와 trade-off risk classification 제공
   - precision mismatch를 Markdown / HTML report에 명시적으로 표시
 
 - 🎯 Precision-Aware Compare Workflow
   - fp32 / int8 등 precision 정보를 result schema에 저장
   - `compare-latest` 에서 same_precision / cross_precision selection mode 지원
   - cross-precision 비교 시 latest compatible pair를 자동 선택
-  - 단순 regression이 아닌 trade-off semantics로 결과 해석
+  - same-condition regression과 precision trade-off를 분리해서 해석
 
 - 🕓 History Tracking  
   - 같은 조건의 과거 benchmark 결과를 누적 조회
@@ -72,10 +80,17 @@ EdgeBench는 단순한 벤치마크 도구가 아니라
 - 📄 Report Generation  
   - Markdown / HTML 리포트 자동 생성
   - compare / history 결과를 문서로 저장 가능
+  - compare threshold와 trade-off risk를 리포트에 반영
 
-- 🤖 CI Benchmark Pipeline  
-  - PR마다 자동 벤치마크 실행
-  - 성능 회귀(regression) 자동 감지
+- 🤖 CI Validation Pipeline  
+  - PR마다 자동 benchmark 실행
+  - same-precision regression 자동 감지
+  - cross-precision severe trade-off 자동 감시
+  - GitHub Actions step summary로 gate 결과 가시화
+
+- ⚙️ Threshold-Configurable Policy  
+  - compare threshold를 pyproject 기반으로 관리 가능
+  - CLI override를 통해 실험/정책 기준 조정 가능
 
 ---
 
@@ -103,6 +118,8 @@ CLI 기반 구조:
 
 현재 지원:
 - ONNX Runtime CPU
+- Classification accuracy evaluation
+- CI compare policy gate (same-precision / cross-precision)
 
 향후 확장 예정:
 - TensorRT
@@ -147,8 +164,9 @@ EdgeBench는 benchmark 결과를 단순 출력에 그치지 않고
 
 - `compare`  
   - 두 structured result를 직접 비교
-  - latency delta / delta % / shape / system / run config 비교
+  - latency delta / delta % / accuracy delta / accuracy delta pp / shape / system / run config 비교
   - precision mismatch를 감지하고 compare context에 반영
+  - threshold 기반 judgement와 trade-off risk classification 제공
   - cross-precision 비교에서는 same-condition regression이 아닌 trade-off semantics 사용
 
 - `compare-latest`  
@@ -171,11 +189,17 @@ EdgeBench는 benchmark 결과를 단순 출력에 그치지 않고
 - Same-precision compare
   - 회귀(regression) 추적에 적합
   - `overall`: improvement / neutral / regression
+  - accuracy가 함께 있을 경우 latency와 accuracy를 함께 반영하여 판정
 
 - Cross-precision compare
   - fp32 <-> int8 같은 precision trade-off 비교에 적합
   - `overall` status: `tradeoff_faster` / `tradeoff_neutral` / `tradeoff_slower`
-  - accuracy / quality 평가는 별도 검증 필요
+  - `tradeoff_risk`: `acceptable_tradeoff` / `caution_tradeoff` / `risky_tradeoff` / `severe_tradeoff`
+  - precision 변경에 따른 latency 이득과 accuracy 손실을 함께 해석
+
+- Threshold policy
+  - latency / accuracy / trade-off threshold는 기본 정책값을 사용
+  - 필요 시 CLI 옵션 또는 pyproject 설정으로 override 가능
 
 ### Example: Compare Latest
 
@@ -261,22 +285,27 @@ edgebench history-report --model toy640.onnx --html-out history_toy640.html --ma
 
 ---
 
-## 🤖 CI Benchmark & Regression Guard
+## 🤖 CI Benchmark & Validation Gate
 
 EdgeBench는 GitHub Actions 기반 CI에서 자동으로:
 
 1. toy benchmark 모델 생성
 2. profiling 수행
 3. benchmark artifact 저장
-4. baseline과 비교하여 성능 변화 분석
+4. same-precision compare policy gate 실행
+5. cross-precision trade-off gate 실행
+6. GitHub Actions step summary에 compare 결과 게시
 
-이를 통해:
+이를 통해 다음이 가능합니다:
 
 - PR마다 benchmark 자동 실행
-- regression 허용 범위 기반 성능 감시
-- README benchmark 블록 자동 갱신(main 기준)
+- same-precision regression 자동 감지
+- cross-precision severe trade-off 자동 감시
+- multi-size(224 / 320 / 640) benchmark summary 자동 표시
+- compare policy 결과를 PR UI에서 바로 확인
 
-이 가능합니다.
+즉 EdgeBench의 CI는 단순 benchmark runner가 아니라,
+**performance regression + precision trade-off validation pipeline** 으로 동작합니다.
 
 ---
 
