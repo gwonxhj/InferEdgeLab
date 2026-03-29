@@ -10,6 +10,8 @@ import numpy as np
 from edgebench.engines.base import EngineModelIO
 from edgebench.engines.onnxruntime_cpu import OnnxRuntimeCpuEngine
 
+
+
 @dataclass
 class ClassificationSample:
     input_path: str

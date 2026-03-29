@@ -6,6 +6,7 @@ import time
 
 import numpy as np
 
+from edgebench.engines.base import InferenceEngine
 from edgebench.engines.onnxruntime_cpu import OnnxRuntimeCpuEngine
 
 @dataclass
@@ -16,6 +17,88 @@ class ProfileResult:
     runs: int
     latency_ms: Dict[str, float]
     extra: Dict[str, Any]
+
+def profile_engine(
+    engine: InferenceEngine,
+    model_path: str,
+    warmup: int = 10,
+    runs: int = 100,
+    batch: Optional[int] = None,
+    height: Optional[int] = None,
+    width: Optional[int] = None,
+    load_kwargs: Optional[Dict[str, Any]] = None,
+) -> ProfileResult:
+    if warmup < 0 or runs <= 0:
+        raise ValueError("warmup은 0 이상, runs는 1 이상이어야 합니다.")
+
+    load_kwargs = load_kwargs or {}
+    engine.load(model_path, **load_kwargs)
+
+    feeds = engine.make_dummy_inputs(
+        batch_override=batch,
+        height_override=height,
+        width_override=width,
+    )
+
+    input_names = list(feeds.keys())
+
+    for _ in range(warmup):
+        engine.run(feeds)
+
+    samples = np.empty((runs,), dtype=np.float64)
+    for i in range(runs):
+        t0 = time.perf_counter()
+        engine.run(feeds)
+        t1 = time.perf_counter()
+        samples[i] = (t1 - t0) * 1000.0
+
+    stats = _latency_stats_ms(samples)
+
+    extra = {
+        "batch": batch if batch is not None else 1,
+        "input_names": input_names,
+        "height": height,
+        "width": width,
+        "load_kwargs": load_kwargs,
+    }
+
+    return ProfileResult(
+        engine=engine.name,
+        device=engine.device,
+        warmup=warmup,
+        runs=runs,
+        latency_ms=stats,
+        extra=extra,
+    )
+
+def profile_model(
+    model_path: str,
+    engine: str = "onnxruntime",
+    warmup: int = 10,
+    runs: int = 100,
+    batch: Optional[int] = None,
+    height: Optional[int] = None,
+    width: Optional[int] = None,
+    intra_threads: int = 1,
+    inter_threads: int = 1,
+) -> ProfileResult:
+    normalized_engine = normalize_engine_name(engine)
+
+    if normalized_engine == "onnxruntime":
+        return profile_onnxruntime_cpu(
+            model_path=model_path,
+            warmup=warmup,
+            runs=runs,
+            batch=batch,
+            height=height,
+            width=width,
+            intra_threads=intra_threads,
+            inter_threads=inter_threads,
+        )
+
+    raise ValueError(
+        f"지원하지 않는 engine입니다: {engine}. 현재 지원: onnxruntime"
+    )
 
 def _latency_stats_ms(samples_ms: np.ndarray) -> Dict[str, float]:
     # IMPORTANT: samples_ms must be 1D float array
@@ -36,6 +119,15 @@ def _latency_stats_ms(samples_ms: np.ndarray) -> Dict[str, float]:
         "max": mx,
     }
 
+def normalize_engine_name(engine: str) -> str:
+    value = str(engine or "").strip().lower()
+    aliases = {
+        "ort": "onnxruntime",
+        "onnxruntime_cpu": "onnxruntime",
+        "onnxruntime": "onnxruntime",
+    }
+    return aliases.get(value, value)
+
 def profile_onnxruntime_cpu(
     model_path: str,
     warmup: int = 10,
@@ -46,48 +138,22 @@ def profile_onnxruntime_cpu(
     intra_threads: int = 1,
     inter_threads: int = 1,
 ) -> ProfileResult:
-    if warmup < 0 or runs <= 0:
-        raise ValueError("warmup은 0 이상, runs는 1 이상이어야 합니다.")
-
     engine = OnnxRuntimeCpuEngine()
-    engine.load(model_path, intra_threads=intra_threads, inter_threads=inter_threads)
 
-    feeds = engine.make_dummy_inputs(
-        batch_override=batch,
-        height_override=height,
-        width_override=width,
-    )
-
-    input_names = list(feeds.keys())
-
-    #warmup
-    for _ in range(warmup):
-        engine.run(feeds)
-
-    # timed runs
-    samples = np.empty((runs,), dtype=np.float64)
-    for i in range(runs):
-        t0 = time.perf_counter()
-        engine.run(feeds)
-        t1 = time.perf_counter()
-        samples[i] = (t1 - t0) * 1000.0 # ms
-
-    stats = _latency_stats_ms(samples)
-
-    extra = {
-        "batch": batch if batch is not None else 1,
-        "input_names": input_names,
-        "intra_threads": intra_threads,
-        "inter_threads": inter_threads,
-        "height": height,
-        "width": width,
-    }
-
-    return ProfileResult(
-        engine=engine.name,
-        device=engine.device,
+    result = profile_engine(
+        engine=engine,
+        model_path=model_path,
         warmup=warmup,
         runs=runs,
-        latency_ms=stats,
-        extra=extra,
+        batch=batch,
+        height=height,
+        width=width,
+        load_kwargs={
+            "intra_threads": intra_threads,
+            "inter_threads": inter_threads,
+        },
     )
+
+    result.extra["intra_threads"] = intra_threads
+    result.extra["inter_threads"] = inter_threads
+    return result
