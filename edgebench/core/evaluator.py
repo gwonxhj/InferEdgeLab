@@ -7,8 +7,8 @@ import os
 
 import numpy as np
 
-from edgebench.engines.onnxruntime_cpu import OnnxRuntimeCpuEngine, OrtModelIO
-
+from edgebench.engines.base import EngineModelIO
+from edgebench.engines.onnxruntime_cpu import OnnxRuntimeCpuEngine
 
 @dataclass
 class ClassificationSample:
@@ -67,7 +67,7 @@ def load_classification_manifest(
     return samples
 
 
-def _normalize_input_array(arr: np.ndarray, model_input: OrtModelIO) -> np.ndarray:
+def _normalize_input_array(arr: np.ndarray, model_input: EngineModelIO) -> np.ndarray:
     expected_rank = len(model_input.shape)
 
     # 모델 입력 rank보다 1 작으면 batch 차원이 빠졌다고 보고 앞에 1을 추가
