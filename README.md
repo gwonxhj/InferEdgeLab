@@ -423,6 +423,48 @@ evaluate 실행 시 아래 정보가 structured result로 저장됩니다.
 
 ---
 
+### Accuracy Compare Demo
+
+아래 스크립트는 기존 manifest를 기반으로 일부 label을 의도적으로 변경한
+variant manifest를 생성합니다.
+이렇게 하면 동일한 입력 `.npy`를 사용하더라도 accuracy가 달라지는 evaluate result를 만들 수 있습니다.
+
+```bash
+poetry run python scripts/make_eval_variant_manifest.py \
+  --src tmp_eval/manifest.jsonl \
+  --out tmp_eval/manifest_variant.jsonl \
+  --flip-count 2 \
+  --num-classes 10 \
+  --delta 1
+```
+
+그다음 variant manifest로 evaluate를 한 번 더 실행합니다.
+
+```bash
+poetry run edgebench evaluate models/toy224.onnx \
+  --dataset-manifest tmp_eval/manifest_variant.jsonl \
+  --task classification \
+  --precision fp32 \
+  --input-key input \
+  --label-key label
+```
+
+이후 같은 조건의 최신 evaluate result 2개를 비교하면
+accuracy delta / delta pp가 포함된 accuracy-aware compare 결과를 확인할 수 있습니다.
+
+```bash
+poetry run edgebench compare-latest \
+  --model toy224.onnx \
+  --engine onnxruntime \
+  --device cpu \
+  --precision fp32
+```
+
+이 흐름을 통해 EdgeBench가 단순 latency benchmark 도구가 아니라
+**accuracy-aware inference validation workflow**로 동작함을 확인할 수 있습니다.
+
+---
+
 ### Notes
 
 - 현재 evaluator는 classification만 지원합니다.

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import typer
+from typer.models import OptionInfo
 from rich import print as rprint
 from rich.table import Table
 
@@ -32,6 +33,11 @@ def _fmt_pp(v):
     if v is None:
         return "-"
     return f"{v:+.2f}pp"
+
+def _normalize_optional_float(value):
+    if isinstance(value, OptionInfo):
+        return None
+    return value
 
 
 def compare_cmd(
@@ -69,6 +75,14 @@ def compare_cmd(
 
     if base.get("legacy_result") or new.get("legacy_result"):
         rprint("[yellow]Warning[/yellow]: one or both result files are legacy format. Some fields may be missing.")
+
+    latency_improve_threshold = _normalize_optional_float(latency_improve_threshold)
+    latency_regress_threshold = _normalize_optional_float(latency_regress_threshold)
+    accuracy_improve_threshold = _normalize_optional_float(accuracy_improve_threshold)
+    accuracy_regress_threshold = _normalize_optional_float(accuracy_regress_threshold)
+    tradeoff_caution_threshold = _normalize_optional_float(tradeoff_caution_threshold)
+    tradeoff_risky_threshold = _normalize_optional_float(tradeoff_risky_threshold)
+    tradeoff_severe_threshold = _normalize_optional_float(tradeoff_severe_threshold)
 
     thresholds = resolve_compare_thresholds(
         latency_improve_threshold=latency_improve_threshold,
