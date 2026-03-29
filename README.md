@@ -395,6 +395,20 @@ poetry run python scripts/make_eval_demo_data.py \
 
 ---
 
+### Accuracy Compare Example
+
+아래는 동일한 모델에 대해 label을 일부 변형한 dataset으로 evaluate를 수행한 후,
+accuracy-aware compare를 실행한 결과입니다.
+
+- Base accuracy: 1.0000
+- New accuracy: 0.6000
+- Accuracy delta: -40.00pp
+- Overall judgement: regression
+
+![accuracy-compare example](assets/images/accuracy-compare-demo.png)
+
+---
+
 ### Evaluate 실행 예시
 
 ```bash
