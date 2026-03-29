@@ -7,7 +7,8 @@ import time
 import numpy as np
 
 from edgebench.engines.base import InferenceEngine
-from edgebench.engines.onnxruntime_cpu import OnnxRuntimeCpuEngine
+from edgebench.engines.registry import create_engine, normalize_engine_name
+
 
 @dataclass
 class ProfileResult:
@@ -17,6 +18,26 @@ class ProfileResult:
     runs: int
     latency_ms: Dict[str, float]
     extra: Dict[str, Any]
+
+
+def _latency_stats_ms(samples_ms: np.ndarray) -> Dict[str, float]:
+    mean = float(samples_ms.mean())
+    std = float(samples_ms.std(ddof=0))
+    p50 = float(np.percentile(samples_ms, 50))
+    p90 = float(np.percentile(samples_ms, 90))
+    p99 = float(np.percentile(samples_ms, 99))
+    mn = float(samples_ms.min())
+    mx = float(samples_ms.max())
+    return {
+        "mean": mean,
+        "std": std,
+        "p50": p50,
+        "p90": p90,
+        "p99": p99,
+        "min": mn,
+        "max": mx,
+    }
+
 
 def profile_engine(
     engine: InferenceEngine,
@@ -71,6 +92,7 @@ def profile_engine(
         extra=extra,
     )
 
+
 def profile_model(
     model_path: str,
     engine: str = "onnxruntime",
@@ -83,50 +105,22 @@ def profile_model(
     inter_threads: int = 1,
 ) -> ProfileResult:
     normalized_engine = normalize_engine_name(engine)
+    engine_instance = create_engine(normalized_engine)
 
-    if normalized_engine == "onnxruntime":
-        return profile_onnxruntime_cpu(
-            model_path=model_path,
-            warmup=warmup,
-            runs=runs,
-            batch=batch,
-            height=height,
-            width=width,
-            intra_threads=intra_threads,
-            inter_threads=inter_threads,
-        )
-
-    raise ValueError(
-        f"지원하지 않는 engine입니다: {engine}. 현재 지원: onnxruntime"
+    return profile_engine(
+        engine=engine_instance,
+        model_path=model_path,
+        warmup=warmup,
+        runs=runs,
+        batch=batch,
+        height=height,
+        width=width,
+        load_kwargs={
+            "intra_threads": intra_threads,
+            "inter_threads": inter_threads,
+        },
     )
 
-def _latency_stats_ms(samples_ms: np.ndarray) -> Dict[str, float]:
-    # IMPORTANT: samples_ms must be 1D float array
-    mean = float(samples_ms.mean())
-    std = float(samples_ms.std(ddof=0))
-    p50 = float(np.percentile(samples_ms, 50))
-    p90 = float(np.percentile(samples_ms, 90))
-    p99 = float(np.percentile(samples_ms, 99))
-    mn = float(samples_ms.min())
-    mx = float(samples_ms.max())
-    return {
-        "mean": mean,
-        "std": std,
-        "p50": p50,
-        "p90": p90,
-        "p99": p99,
-        "min": mn,
-        "max": mx,
-    }
-
-def normalize_engine_name(engine: str) -> str:
-    value = str(engine or "").strip().lower()
-    aliases = {
-        "ort": "onnxruntime",
-        "onnxruntime_cpu": "onnxruntime",
-        "onnxruntime": "onnxruntime",
-    }
-    return aliases.get(value, value)
 
 def profile_onnxruntime_cpu(
     model_path: str,
@@ -138,7 +132,7 @@ def profile_onnxruntime_cpu(
     intra_threads: int = 1,
     inter_threads: int = 1,
 ) -> ProfileResult:
-    engine = OnnxRuntimeCpuEngine()
+    engine = create_engine("onnxruntime")
 
     result = profile_engine(
         engine=engine,

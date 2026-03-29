@@ -9,7 +9,7 @@ from rich import print as rprint
 from edgebench.utils.system_info import collect_system_snapshot
 
 from edgebench.core.analyzer import analyze_onnx, collect_package_versions, collect_system_info
-from edgebench.core.profiler import profile_model, normalize_engine_name
+from edgebench.core.profiler import profile_model
 from edgebench.core.report import (
     EdgeBenchReport,
     ModelInfo,
@@ -18,6 +18,7 @@ from edgebench.core.report import (
     RuntimeProfile,
     utc_now_iso,
 )
+from edgebench.engines.registry import normalize_engine_name, supported_engines
 from edgebench.result.schema import BenchmarkResult
 from edgebench.result.saver import save_result
 
@@ -48,9 +49,11 @@ def profile_cmd(
         raise typer.BadParameter("--precision must be one of: fp32, fp16, int8")
 
     engine = normalize_engine_name(engine)
-    allowed_engines = {"onnxruntime"}
+    allowed_engines = supported_engines()
     if engine not in allowed_engines:
-        raise typer.BadParameter("--engine must be one of: onnxruntime")
+        raise typer.BadParameter(
+            f"--engine must be one of: {', '.join(sorted(allowed_engines))}"
+        )
 
     result = analyze_onnx(
         model_path,
