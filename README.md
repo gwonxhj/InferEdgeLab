@@ -5,10 +5,7 @@
 # EdgeBench
 
 <<<<<<< HEAD
-> Edge AI Inference Validation Framework  
-=======
-> Edge AI Inference Profiling Framework  
->>>>>>> origin/main
+> Edge AI Inference Validation Framework   
 > EdgeBench is a CLI-based framework for profiling, evaluating, comparing, and validating AI inference behavior across edge environments.
 
 EdgeBench는 단순 Benchmark 실행 도구가 아니라,
