@@ -11,10 +11,10 @@ from edgebench.commands.compare_latest import compare_latest_cmd
 from edgebench.commands.list_results import list_results_cmd
 from edgebench.commands.history_report import history_report_cmd
 
-app = typer.Typer(help="EdgeBench CLI - Edge AI Profiling Tool")
+app = typer.Typer(help="EdgeBench CLI - Edge AI Inference Validation Tool")
 
 app.command("analyze", help="Static analysis (params/IO/FLOPs)")(analyze_cmd)
-app.command("profile", help="Runtime profiling (onnxruntime cpu)")(profile_cmd)
+app.command("profile", help="Runtime profiling with selectable engine backend")(profile_cmd)
 app.command("evaluate", help="Accuracy evaluation for classification manifest inputs")(evaluate_cmd)
 app.command("summarize", help="Summarize EdgeBench JSON reports")(summarize)
 app.command("compare", help="Compare two structured benchmark result JSON files")(compare_cmd)

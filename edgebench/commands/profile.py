@@ -9,7 +9,7 @@ from rich import print as rprint
 from edgebench.utils.system_info import collect_system_snapshot
 
 from edgebench.core.analyzer import analyze_onnx, collect_package_versions, collect_system_info
-from edgebench.core.profiler import profile_onnxruntime_cpu
+from edgebench.core.profiler import profile_model, normalize_engine_name
 from edgebench.core.report import (
     EdgeBenchReport,
     ModelInfo,
@@ -31,6 +31,11 @@ def profile_cmd(
     width: int = typer.Option(0, "--width", help="입력 width override(0이면 사용 안 함)"),
     intra_threads: int = typer.Option(1, "--intra-threads", help="ONNX Runtime intra_op_num_threads"),
     inter_threads: int = typer.Option(1, "--inter-threads", help="ONNX Runtime inter_op_num_threads"),
+    engine: str = typer.Option(
+        "onnxruntime",
+        "--engine",
+        help="추론 엔진 선택 (현재 지원: onnxruntime)",
+    ),
     precision: str = typer.Option("fp32", "--precision", help="precision 메타데이터 (fp32, fp16, int8)"),
     output: str = typer.Option("", "--output", "-o", help="JSON 리포트 저장 경로(미지정 시 자동 파일명)"),
     no_hash: bool = typer.Option(True, "--no-hash/--hash", help="profile 시 해시 계산(기본 off)"),
@@ -42,6 +47,11 @@ def profile_cmd(
     if precision not in allowed_precisions:
         raise typer.BadParameter("--precision must be one of: fp32, fp16, int8")
 
+    engine = normalize_engine_name(engine)
+    allowed_engines = {"onnxruntime"}
+    if engine not in allowed_engines:
+        raise typer.BadParameter("--engine must be one of: onnxruntime")
+
     result = analyze_onnx(
         model_path,
         compute_hash=(not no_hash),
@@ -52,8 +62,9 @@ def profile_cmd(
     pkgs = collect_package_versions()
     system_snapshot = collect_system_snapshot()
 
-    prof = profile_onnxruntime_cpu(
-        model_path,
+    prof = profile_model(
+        model_path=model_path,
+        engine=engine,
         warmup=warmup,
         runs=runs,
         batch=batch,
@@ -123,6 +134,7 @@ def profile_cmd(
         source_report_path=output,
         system=system_snapshot,
         run_config={
+            "engine": engine,
             "warmup": warmup,
             "runs": runs,
             "intra_threads": intra_threads,
