@@ -4,7 +4,7 @@
 
 # EdgeBench
 
-> Edge AI Inference Validation Framework  
+> Edge AI Inference Validation Framework
 > EdgeBench is a CLI-based framework for profiling, evaluating, comparing, and validating AI inference behavior across edge environments.
 
 EdgeBench는 단순 Benchmark 실행 도구가 아니라,
@@ -329,11 +329,11 @@ flowchart LR
 ```
 
 이 파이프라인을 통해 EdgeBench는
-**same-precision regression tracking**과 **cross-precision trade-off validation**을 모두 자동화합니다.
+**same-precision tracking**과 **cross-precision trade-off validation**을 모두 자동화합니다.
 
 ### Example: GitHub Actions Step Summary
 
-> Screenshot will be added after capturing a real PR benchmark summary from GitHub Actions.
+![ci-step-summary example](assets/images/ci-step-summary.png)
 
 ## 📈 Benchmarks
 
