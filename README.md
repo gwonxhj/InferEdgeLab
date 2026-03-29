@@ -205,6 +205,14 @@ EdgeBench는 benchmark 결과를 단순 출력에 그치지 않고
 
 ![compare-latest example](assets/images/compare-latest.png)
 
+### Example: Compare Report
+
+Accuracy-aware compare 결과는 Markdown / HTML 리포트로도 저장할 수 있습니다.
+아래 예시는 top-1 accuracy가 `1.0000 -> 0.6000`으로 감소한 evaluate result를
+비교했을 때 생성된 HTML report 화면입니다.
+
+![compare-report example](assets/images/compare-report-html.png)
+
 ### Example: History Report
 
 ![history-report example](assets/images/history-report.png)
