@@ -279,6 +279,81 @@ edgebench history-report --model toy640.onnx --html-out history_toy640.html --ma
 
 ---
 
+## 🚀 Quickstart (3-minute demo)
+
+아래 단계만 따라하면 EdgeBench의 핵심 기능을 바로 실행해볼 수 있습니다.
+
+### 1. 설치
+
+```bash
+git clone https://github.com/gwonxhj/edgebench.git
+cd edgebench
+
+pip install poetry
+poetry install
+```
+
+---
+
+### 2. Toy 모델 생성
+
+```bash
+poetry run python scripts/make_toy_model.py \
+  --height 224 \
+  --width 224 \
+  --out models/toy224.onnx
+```
+
+---
+
+### 3. 모델 프로파일링
+
+```bash
+poetry run edgebench profile models/toy224.onnx \
+  --warmup 10 \
+  --runs 50 \
+  --batch 1 \
+  --height 224 --width 224
+```
+
+결과:
+- results/*.json 생성
+- latency (maen/p99) 저장
+
+---
+
+### 4. 결과 비교
+
+```bash
+poetry run edgebench compare-latest \
+  --model toy224.onnx \
+  --engine onnxruntime \
+  --device cpu \
+  --precision fp32
+```
+
+출력:
+- latency 변화 (delta / %)
+- overall judgement (improvement / regression / neutral)
+- trade-off risk (cross-precision 시)
+
+---
+
+### 5. (선택) Cross-Precision 비교
+
+```bash
+poetry run edgebench compare-latest \
+  --model toy224.onnx \
+  --engine onnxruntime \
+  --device cpu \
+  --selection-mode cross_precision
+```
+
+이 과정을 통해 EdgeBench의 핵심 workflow인
+**profile -> structured result -> compare -> judgement**를 체험할 수 있습니다.
+
+---
+
 ## 🗺 개발 로드맵
 
 자세한 계획은 Roadmap.md 참고
