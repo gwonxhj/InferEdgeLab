@@ -8,7 +8,7 @@ import os
 import numpy as np
 
 from edgebench.engines.base import EngineModelIO
-from edgebench.engines.onnxruntime_cpu import OnnxRuntimeCpuEngine
+from edgebench.engines.registry import create_engine, normalize_engine_name
 
 
 
@@ -117,14 +117,17 @@ def evaluate_classification_top1(
     label_key: str = "label",
     intra_threads: int = 1,
     inter_threads: int = 1,
+    engine_name: str = "onnxruntime",
 ) -> ClassificationEvalResult:
+    engine_name = normalize_engine_name(engine_name)
+
     samples = load_classification_manifest(
         manifest_path=manifest_path,
         input_key=input_key,
         label_key=label_key,
     )
 
-    engine = OnnxRuntimeCpuEngine()
+    engine = create_engine(engine_name)
     engine.load(
         model_path,
         intra_threads=intra_threads,
