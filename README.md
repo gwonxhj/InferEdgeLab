@@ -121,6 +121,24 @@ CLI 기반 구조:
 - Classification accuracy evaluation
 - CI compare policy gate (same-precision / cross-precision)
 
+### TensorRT Backend Status
+
+- `tensorrt` backend name is registered in the CLI and engine registry.
+- The current TensorRT backend is a placeholder/skeleton for future Jetson work.
+- Current runtime behavior is intentional: TensorRT profiling requires `--engine-path`, then exits with a clear runtime message unless a Jetson TensorRT runtime implementation is added.
+
+`model_path` vs `engine_path`:
+
+- `model_path`: original ONNX source path used for static analysis, reporting, and result provenance
+- `engine_path`: compiled TensorRT engine artifact path intended for runtime execution on Jetson
+
+Planned Jetson implementation path:
+
+- keep ONNX analysis and report generation based on `model_path`
+- load and deserialize the TensorRT engine from `engine_path`
+- create execution context / bindings on Jetson
+- run inference through TensorRT while preserving the existing result/report structure
+
 향후 확장 예정:
 - TensorRT
 - RKNN
@@ -240,6 +258,20 @@ edgebench profile model.onnx \
   --batch 1 \
   --height 320 --width 320
 ```
+
+TensorRT placeholder example:
+
+```bash
+poetry run edgebench profile model.onnx \
+  --engine tensorrt \
+  --engine-path build/model.engine \
+  --warmup 10 \
+  --runs 100
+```
+
+- `model.onnx` is still the ONNX source path for analysis/reporting.
+- `build/model.engine` is the compiled TensorRT engine artifact for future Jetson runtime execution.
+- Today this command validates the contract, then exits with a clear Jetson-runtime-required message because the TensorRT backend is still a skeleton.
 
 ---
 
@@ -583,5 +615,4 @@ EdgeBench는 정적 지표(FLOPs, Parameters)와 동적 지표(Latency)를 하�
 MIT License
 
 ---
-
 
