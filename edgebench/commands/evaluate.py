@@ -40,7 +40,7 @@ def evaluate_cmd(
     engine: str = typer.Option(
         "onnxruntime",
         "--engine",
-        help="추론 엔진 선택 (현재 지원: onnxruntime)",
+        help="추론 엔진 선택 (현재 지원: onnxruntime, tensorrt)",
     ),
     out_dir: str = typer.Option("results", "--out-dir", help="structured result 저장 디렉토리"),
 ):
