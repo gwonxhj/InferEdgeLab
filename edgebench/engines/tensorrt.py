@@ -12,7 +12,9 @@ class TensorRtEngine(InferenceEngine):
     def __init__(self) -> None:
         self.inputs: List[EngineModelIO] = []
         self.outputs: List[str] = []
+        # model_path stays as the original ONNX source path for analysis/reporting.
         self.engine_path: Optional[str] = None
+        # engine_path is the compiled TensorRT engine artifact used for runtime.
         self.model_path: Optional[str] = None
 
     @staticmethod
@@ -36,6 +38,12 @@ class TensorRtEngine(InferenceEngine):
         if not self.engine_path:
             raise self._missing_engine_path_error()
 
+        # TODO(jetson): Replace this placeholder with Jetson-specific TensorRT runtime setup.
+        # Expected future flow:
+        # 1. Deserialize the compiled engine from engine_path.
+        # 2. Create TensorRT execution context and CUDA bindings.
+        # 3. Populate self.inputs/self.outputs from the runtime engine metadata.
+        # 4. Keep model_path for provenance/reporting, not runtime execution.
         raise self._unsupported_environment_error(self.engine_path)
 
     def make_dummy_inputs(
@@ -46,9 +54,11 @@ class TensorRtEngine(InferenceEngine):
     ) -> Dict[str, Any]:
         if not self.engine_path:
             raise self._missing_engine_path_error()
+        # TODO(jetson): Generate host/device input buffers that match the TensorRT bindings.
         raise self._unsupported_environment_error(self.engine_path)
 
     def run(self, feeds: Dict[str, Any]) -> List[Any]:
         if not self.engine_path:
             raise self._missing_engine_path_error()
+        # TODO(jetson): Copy feeds into bindings, execute the context, and return outputs.
         raise self._unsupported_environment_error(self.engine_path)
