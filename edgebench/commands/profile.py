@@ -43,6 +43,11 @@ def profile_cmd(
         help="추론 엔진 선택 (현재 지원: onnxruntime, tensorrt)",
     ),
     precision: str = typer.Option("fp32", "--precision", help="precision 메타데이터 (fp32, fp16, int8)"),
+    engine_path: str = typer.Option(
+        "",
+        "--engine-path",
+        help="엔진 파일 경로 (예: TensorRT compiled engine). tensorrt 사용 시 필수",
+    ),
     output: str = typer.Option("", "--output", "-o", help="JSON 리포트 저장 경로(미지정 시 자동 파일명)"),
     no_hash: bool = typer.Option(True, "--no-hash/--hash", help="profile 시 해시 계산(기본 off)"),
 ):
@@ -59,6 +64,9 @@ def profile_cmd(
         raise typer.BadParameter(
             f"--engine must be one of: {', '.join(sorted(allowed_engines))}"
         )
+    
+    if engine == "tensorrt" and not engine_path.strip():
+        raise typer.BadParameter("--engine-path is required when --engine tensorrt is used")
 
     result = analyze_onnx(
         model_path,
@@ -74,6 +82,7 @@ def profile_cmd(
         prof = profile_model(
             model_path=model_path,
             engine=engine,
+            engine_path=engine_path.strip() or None,
             warmup=warmup,
             runs=runs,
             batch=batch,
@@ -146,6 +155,7 @@ def profile_cmd(
         system=system_snapshot,
         run_config={
             "engine": engine,
+            "engine_path": engine_path.strip() or None,
             "warmup": warmup,
             "runs": runs,
             "intra_threads": intra_threads,
@@ -153,6 +163,7 @@ def profile_cmd(
         },
         extra={
             "input_names": prof.extra.get("input_names"),
+            "runtime_artifact_path": engine_path.strip() or None,
         },
     )
 
