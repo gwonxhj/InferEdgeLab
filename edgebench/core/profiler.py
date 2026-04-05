@@ -96,6 +96,7 @@ def profile_engine(
 def profile_model(
     model_path: str,
     engine: str = "onnxruntime",
+    engine_path: Optional[str] = None,
     warmup: int = 10,
     runs: int = 100,
     batch: Optional[int] = None,
@@ -107,6 +108,13 @@ def profile_model(
     normalized_engine = normalize_engine_name(engine)
     engine_instance = create_engine(normalized_engine)
 
+    load_kwargs: Dict[str, Any] = {
+        "intra_threads": intra_threads,
+        "inter_threads": inter_threads,
+    }
+    if engine_path is not None:
+        load_kwargs["engine_path"] = engine_path
+
     return profile_engine(
         engine=engine_instance,
         model_path=model_path,
@@ -115,10 +123,7 @@ def profile_model(
         batch=batch,
         height=height,
         width=width,
-        load_kwargs={
-            "intra_threads": intra_threads,
-            "inter_threads": inter_threads,
-        },
+        load_kwargs=load_kwargs,
     )
 
 

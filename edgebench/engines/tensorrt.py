@@ -12,16 +12,31 @@ class TensorRtEngine(InferenceEngine):
     def __init__(self) -> None:
         self.inputs: List[EngineModelIO] = []
         self.outputs: List[str] = []
+        self.engine_path: Optional[str] = None
+        self.model_path: Optional[str] = None
 
     @staticmethod
-    def _unsupported_environment_error() -> RuntimeError:
+    def _missing_engine_path_error() -> RuntimeError:
+        return RuntimeError(
+            "TensorRT profiling requires --engine-path to point to a compiled TensorRT engine file."
+        )
+
+    @staticmethod
+    def _unsupported_environment_error(engine_path: str) -> RuntimeError:
         return RuntimeError(
             "TensorRT backend requires a Jetson environment with the TensorRT runtime. "
+            f"Received engine artifact: {engine_path}. "
             "The TensorRT runtime is not implemented for this EdgeBench environment yet."
         )
 
     def load(self, model_path: str, **kwargs) -> None:
-        raise self._unsupported_environment_error()
+        self.model_path = model_path
+        self.engine_path = kwargs.get("engine_path")
+
+        if not self.engine_path:
+            raise self._missing_engine_path_error()
+
+        raise self._unsupported_environment_error(self.engine_path)
 
     def make_dummy_inputs(
         self,
@@ -29,7 +44,11 @@ class TensorRtEngine(InferenceEngine):
         height_override: Optional[int] = None,
         width_override: Optional[int] = None,
     ) -> Dict[str, Any]:
-        raise self._unsupported_environment_error()
+        if not self.engine_path:
+            raise self._missing_engine_path_error()
+        raise self._unsupported_environment_error(self.engine_path)
 
     def run(self, feeds: Dict[str, Any]) -> List[Any]:
-        raise self._unsupported_environment_error()
+        if not self.engine_path:
+            raise self._missing_engine_path_error()
+        raise self._unsupported_environment_error(self.engine_path)
