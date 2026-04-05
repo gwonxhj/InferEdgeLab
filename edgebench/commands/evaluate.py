@@ -10,6 +10,11 @@ from edgebench.core.evaluator import evaluate_classification_top1
 from edgebench.result.schema import BenchmarkResult
 from edgebench.result.saver import save_result
 from edgebench.utils.system_info import collect_system_snapshot
+from edgebench.engines.registry import (
+    normalize_engine_name,
+    supported_engines,
+    supported_engines_display,
+)
 
 
 def _resolve_shape_dim(shape: list[object], index: int) -> int:
@@ -32,6 +37,11 @@ def evaluate_cmd(
     label_key: str = typer.Option("label", "--label-key", help="manifest에서 정답 라벨 키 이름"),
     intra_threads: int = typer.Option(1, "--intra-threads", help="ONNX Runtime intra_op_num_threads"),
     inter_threads: int = typer.Option(1, "--inter-threads", help="ONNX Runtime inter_op_num_threads"),
+    engine: str = typer.Option(
+        "onnxruntime",
+        "--engine",
+        help="추론 엔진 선택 (현재 지원: onnxruntime)",
+    ),
     out_dir: str = typer.Option("results", "--out-dir", help="structured result 저장 디렉토리"),
 ):
     rprint(f"[bold]Evaluating[/bold]: {model_path}")
@@ -45,6 +55,13 @@ def evaluate_cmd(
     if precision not in allowed_precisions:
         raise typer.BadParameter("--precision must be one of: fp32, fp16, int8")
 
+    engine = normalize_engine_name(engine)
+    allowed_engines = supported_engines()
+    if engine not in allowed_engines:
+        raise typer.BadParameter(
+            f"--engine must be one of: {supported_engines_display()}"
+        )
+
     eval_result = evaluate_classification_top1(
         model_path=model_path,
         manifest_path=dataset_manifest,
@@ -52,6 +69,7 @@ def evaluate_cmd(
         label_key=label_key,
         intra_threads=intra_threads,
         inter_threads=inter_threads,
+        engine_name=engine,
     )
 
     actual_input_shape = eval_result.actual_input_shape or []
@@ -73,6 +91,7 @@ def evaluate_cmd(
         run_config={
             "mode": "evaluate",
             "task": task,
+            "engine": engine,
             "intra_threads": intra_threads,
             "inter_threads": inter_threads,
         },
