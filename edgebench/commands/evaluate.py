@@ -17,6 +17,10 @@ from edgebench.engines.registry import (
 )
 
 
+def _exit_with_runtime_error(message: str) -> None:
+    rprint(f"[red]{message}[/red]")
+    raise typer.Exit(code=1)
+
 def _resolve_shape_dim(shape: list[object], index: int) -> int:
     if index >= len(shape):
         return 0
@@ -62,15 +66,18 @@ def evaluate_cmd(
             f"--engine must be one of: {supported_engines_display()}"
         )
 
-    eval_result = evaluate_classification_top1(
-        model_path=model_path,
-        manifest_path=dataset_manifest,
-        input_key=input_key,
-        label_key=label_key,
-        intra_threads=intra_threads,
-        inter_threads=inter_threads,
-        engine_name=engine,
-    )
+    try:
+        eval_result = evaluate_classification_top1(
+            model_path=model_path,
+            manifest_path=dataset_manifest,
+            input_key=input_key,
+            label_key=label_key,
+            intra_threads=intra_threads,
+            inter_threads=inter_threads,
+            engine_name=engine,
+        )
+    except RuntimeError as exc:
+        _exit_with_runtime_error(str(exc))
 
     actual_input_shape = eval_result.actual_input_shape or []
     model_input_shape = actual_input_shape or (eval_result.model_input.get("shape") or [])

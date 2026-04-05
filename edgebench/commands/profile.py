@@ -23,6 +23,11 @@ from edgebench.result.schema import BenchmarkResult
 from edgebench.result.saver import save_result
 
 
+
+def _exit_with_runtime_error(message: str) -> None:
+    rprint(f"[red]{message}[/red]")
+    raise typer.Exit(code=1)
+
 def profile_cmd(
     model_path: str = typer.Argument(..., help="프로파일링할 ONNX 모델 경로"),
     warmup: int = typer.Option(10, "--warmup", help="워밍업 반복 횟수"),
@@ -65,17 +70,20 @@ def profile_cmd(
     pkgs = collect_package_versions()
     system_snapshot = collect_system_snapshot()
 
-    prof = profile_model(
-        model_path=model_path,
-        engine=engine,
-        warmup=warmup,
-        runs=runs,
-        batch=batch,
-        height=height if height > 0 else None,
-        width=width if width > 0 else None,
-        intra_threads=intra_threads,
-        inter_threads=inter_threads,
-    )
+    try:
+        prof = profile_model(
+            model_path=model_path,
+            engine=engine,
+            warmup=warmup,
+            runs=runs,
+            batch=batch,
+            height=height if height > 0 else None,
+            width=width if width > 0 else None,
+            intra_threads=intra_threads,
+            inter_threads=inter_threads,
+        )
+    except RuntimeError as exc:
+        _exit_with_runtime_error(str(exc))
 
     report = EdgeBenchReport(
         schema_version="0.1",
