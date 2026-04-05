@@ -35,7 +35,7 @@ def profile_cmd(
     engine: str = typer.Option(
         "onnxruntime",
         "--engine",
-        help="추론 엔진 선택 (현재 지원: onnxruntime)",
+        help="추론 엔진 선택 (현재 지원: onnxruntime, tensorrt)",
     ),
     precision: str = typer.Option("fp32", "--precision", help="precision 메타데이터 (fp32, fp16, int8)"),
     output: str = typer.Option("", "--output", "-o", help="JSON 리포트 저장 경로(미지정 시 자동 파일명)"),
