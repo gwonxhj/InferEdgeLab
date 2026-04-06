@@ -110,6 +110,14 @@ class TensorRtEngine(InferenceEngine):
             "Check that the .engine file matches the target Jetson/TensorRT environment."
         )
 
+    @staticmethod
+    def _execution_context_creation_error(engine_path: str) -> RuntimeError:
+        return RuntimeError(
+            "TensorRT execution context creation failed. "
+            f"Received engine artifact: {engine_path}. "
+            "Check that the deserialized engine is valid for the target Jetson/TensorRT environment."
+        )
+
 
     def _load_runtime_bindings(self) -> None:
         """
@@ -190,7 +198,17 @@ class TensorRtEngine(InferenceEngine):
                 "TensorRT engine is not deserialized yet. "
                 "Complete _deserialize_engine_artifact() before creating the execution context."
             )
-        raise self._unsupported_environment_error(self.runtime_paths.runtime_artifact_path or "unknown")
+        engine_path = self.runtime_paths.runtime_artifact_path or "unknown"
+
+        try:
+            context = self.engine.create_execution_context()
+        except Exception as exc:
+            raise self._execution_context_creation_error(engine_path) from exc
+
+        if context is None:
+            raise self._execution_context_creation_error(engine_path)
+
+        self.context = context
 
     def _build_engine_io_metadata(self) -> None:
         """
@@ -271,6 +289,21 @@ class TensorRtEngine(InferenceEngine):
         """
         if not self.runtime_paths.runtime_artifact_path:
             raise self._missing_engine_path_error()
+        if self.runtime is None:
+            raise RuntimeError(
+                "TensorRT runtime is not initialized. "
+                "Call _load_runtime_bindings() before using the runtime."
+            )
+        if self.engine is None:
+            raise RuntimeError(
+                "TensorRT engine is not deserialized. "
+                "Call _deserialize_engine_artifact() before using the runtime."
+            )
+        if self.context is None:
+            raise RuntimeError(
+                "TensorRT execution context is not created. "
+                "Call _create_execution_context() before using the runtime."
+            )
 
 
     def load(self, model_path: str, **kwargs) -> None:
@@ -283,8 +316,6 @@ class TensorRtEngine(InferenceEngine):
         self._load_runtime_bindings()
         self._deserialize_engine_artifact()
         self._create_execution_context()
-        self._build_engine_io_metadata()
-        self._allocate_runtime_buffers()
 
 
     def make_dummy_inputs(
