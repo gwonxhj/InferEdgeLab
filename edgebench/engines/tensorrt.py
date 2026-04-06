@@ -52,12 +52,16 @@ class TensorRtEngine(InferenceEngine):
         self.runtime_paths = EngineRuntimePaths()
 
         # Jetson implementation placeholders:
+        # - trt: lazily imported TensorRT Python module
+        # - logger: TensorRT logger instance
         # - runtime: TensorRT runtime object
         # - engine: deserialized TensorRT engine
         # - context: execution context created from the engine
         # - stream: CUDA stream used for enqueue/execute
         # - binding_index_map: tensor/binding name to binding index mapping
         # - host_buffers/device_buffers: staged buffers for inputs/outputs
+        self.trt: Any = None
+        self.logger: Any = None
         self.runtime: Any = None
         self.engine: Any = None
         self.context: Any = None
@@ -89,7 +93,30 @@ class TensorRtEngine(InferenceEngine):
         - import tensorrt as trt
         - logger/runtime 초기화
         """
-        raise self._unsupported_environment_error(self.runtime_paths.runtime_artifact_path or "unknown")
+        try:
+            import tensorrt as trt
+        except ImportError as exc:
+            raise RuntimeError(
+                "TensorRT Python bindings are unavailable in this environment. "
+                "Install the Jetson-compatible TensorRT Python package to use the TensorRT backend."
+            ) from exc
+
+        try:
+            logger = trt.Logger(trt.Logger.WARNING)
+            runtime = trt.Runtime(logger)
+        except Exception as exc:
+            raise RuntimeError(
+                "TensorRT runtime initialization failed after importing the Python bindings."
+            ) from exc
+
+        if runtime is None:
+            raise RuntimeError(
+                "TensorRT runtime initialization failed: trt.Runtime(...) returned None."
+            )
+
+        self.trt = trt
+        self.logger = logger
+        self.runtime = runtime
 
     def _deserialize_engine_artifact(self) -> None:
         """
