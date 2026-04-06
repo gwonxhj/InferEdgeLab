@@ -174,11 +174,74 @@ poetry run python scripts/check_jetson_tensorrt_env.py \
 4. 그 다음 단계에서 engine deserialize와 metadata 추출 경로를 구현합니다.
 5. 마지막으로 execution context, buffer 관리, warmup, timed run 순서로 runtime 경로를 확장합니다.
 
+
+
+Planned Jetson implementation path:
+- `engine_path`: Jetson에서 runtime 실행에 사용할 compiled TensorRT engine artifact path
+- `model_path` 기준의 ONNX analysis와 report 생성 유지
+- `engine_path` 에서 TensorRT engine load 및 deserialize 수행
+- Jetson에서 execution context / bindings 생성
+- 기존 result/report 구조를 유지하면서 TensorRT로 inference 실행
+
 향후 확장 예정:
 - TensorRT
 - RKNN
 - Jetson CUDA Backend
 - C++ 추론 엔진
+
+---
+
+### Jetson TensorRT Bring-up Checklist
+
+Jetson에서 TensorRT runtime 구현을 시작하기 전, 아래 항목을 먼저 확인합니다.
+
+- Jetson 보드 모델 확인 (예: Jetson Orin Nano / Jetson AGX Orin)
+- JetPack 버전 확인
+- Python 실행 환경 확인
+- TensorRT Python binding import 가능 여부 확인
+- CUDA 사용 가능 여부 확인
+- profiling에 사용할 `.onnx` 원본 모델 준비
+- TensorRT runtime용 `.engine` artifact 준비
+- EdgeBench `profile --engine tensorrt --engine-path ...` 계약 유지 확인
+
+권장 점검 순서:
+
+1. Jetson에서 Python으로 TensorRT import 확인
+2. `.engine` 파일 경로 접근 가능 여부 확인
+3. EdgeBench에서 `--engine tensorrt --engine-path ...` 명령 실행
+4. 초기에는 toy model 기준으로 최소 경로 검증
+5. 이후 입력/출력 metadata 추출 → context 실행 → latency 측정 순으로 확장
+
+### Jetson TensorRT First-run Validation Sequence
+
+Jetson에서 TensorRT runtime을 처음 연결할 때는 아래 순서로 검증하는 것이 안전합니다.
+
+1. Jetson 환경에서 `python -c "import tensorrt"` 가 정상 동작하는지 확인합니다.
+2. ONNX 원본 모델과 대응되는 `.engine` artifact가 모두 준비되었는지 확인합니다.
+3. 작은 toy 모델로 `poetry run edgebench profile ... --engine tensorrt --engine-path ...` 를 실행합니다.
+4. 초기 구현 단계에서는 먼저 engine deserialize 성공 여부만 확인합니다.
+5. 그다음 binding metadata 추출과 `self.inputs` / `self.outputs` 구성까지 확인합니다.
+6. 이후 dummy input 생성 경로를 연결하고 shape override가 예상대로 반영되는지 확인합니다.
+7. 마지막으로 context execution, warmup, timed run 순서로 profiling 경로를 완성합니다.
+
+권장 첫 실행 예시:
+
+```bash
+poetry run edgebench profile models/toy224.onnx \
+  --engine tensorrt \
+  --engine-path build/toy224.engine \
+  --warmup 5 \
+  --runs 20 \
+  --batch 1 \
+  --height 224 \
+  --width 224
+```
+
+검증 포인트:
+
+- `model_path` 는 계속 ONNX source path로 유지되어야 합니다.
+- `engine_path` 는 compiled TensorRT engine artifact path로만 사용되어야 합니다.
+- 첫 구현 단계에서는 실패하더라도 traceback 대신 TensorRT bring-up 단계가 어디까지 진행되었는지 확인 가능한 로그/에러 문구가 중요합니다.
 
 ---
 
@@ -317,6 +380,17 @@ poetry run python scripts/check_jetson_tensorrt_env.py \
 - `model.onnx` 는 analysis/reporting에 사용하는 ONNX source path입니다.
 - `build/model.engine` 는 향후 Jetson runtime execution에 사용할 compiled TensorRT engine artifact입니다.
 - 현재는 TensorRT backend가 아직 skeleton 상태이므로, 이 명령은 계약을 검증한 뒤 명확한 Jetson-runtime-required 메시지를 출력하고 종료합니다.
+- `model.onnx` 는 analysis/reporting에 사용하는 ONNX source path입니다.
+- `build/model.engine` 는 향후 Jetson runtime execution에 사용할 compiled TensorRT engine artifact입니다.
+- 현재는 TensorRT backend가 아직 skeleton 상태이므로, 이 명령은 계약을 검증한 뒤 명확한 Jetson-runtime-required 메시지를 출력하고 종료합니다.
+
+Jetson first-run plan:
+
+1. toy ONNX model과 대응되는 compiled TensorRT engine artifact를 준비합니다.
+2. `--engine tensorrt --engine-path ...` 옵션으로 EdgeBench를 실행합니다.
+3. 먼저 engine deserialization과 binding metadata extraction이 되는지 확인합니다.
+4. 그 다음 단계에서 real inference execution과 latency measurement를 연결합니다.
+5. placeholder runtime path를 교체하더라도 기존 result/report schema는 그대로 유지합니다.
 
 ---
 
