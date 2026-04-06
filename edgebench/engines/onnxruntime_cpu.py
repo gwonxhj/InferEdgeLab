@@ -6,7 +6,10 @@ import numpy as np
 import onnx
 import onnxruntime as ort
 
-from edgebench.engines.base import EngineModelIO, InferenceEngine
+from edgebench.engines.base import (
+    EngineModelIO,
+    InferenceEngine,
+)
 
 
 
@@ -103,19 +106,12 @@ class OnnxRuntimeCpuEngine(InferenceEngine):
 
         feeds: Dict[str, Any] = {}
         for inp in self.inputs:
-            shape = []
-            for i, d in enumerate(inp.shape):
-                if d is None:
-                    if i == 0:
-                        shape.append(int(batch_override) if batch_override is not None else 1)
-                    elif i == 2 and height_override is not None:
-                        shape.append(int(height_override))
-                    elif i == 3 and width_override is not None:
-                        shape.append(int(width_override))
-                    else:
-                        shape.append(1)
-                else:
-                    shape.append(int(d))
+            shape = self._resolve_input_shape(
+                inp,
+                batch_override=batch_override,
+                height_override=height_override,
+                width_override=width_override,
+            )
             arr = np.random.rand(*shape).astype(inp.dtype, copy=False)
             feeds[inp.name] = arr
         return feeds

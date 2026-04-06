@@ -29,11 +29,13 @@ class TensorRtEngine(InferenceEngine):
         self.host_buffers: Dict[str, Any] = {}
         self.device_buffers: Dict[str, Any] = {}
 
+
     @staticmethod
     def _missing_engine_path_error() -> RuntimeError:
         return RuntimeError(
             "TensorRT profiling requires --engine-path to point to a compiled TensorRT engine file."
         )
+
 
     @staticmethod
     def _unsupported_environment_error(engine_path: str) -> RuntimeError:
@@ -43,6 +45,75 @@ class TensorRtEngine(InferenceEngine):
             "The TensorRT runtime is not implemented for this EdgeBench environment yet."
         )
 
+    def _load_runtime_bindings(self) -> None:
+        """
+        Jetson 환경에서 TensorRT Python runtime bindings를 import/prepare 한다.
+        예:
+        - import tensorrt as trt
+        - logger/runtime 초기화
+        """
+        raise self._unsupported_environment_error(self.runtime_paths.runtime_artifact_path or "unknown")
+
+    def _deserialize_engine_artifact(self) -> None:
+        """
+        runtime_artifact_path(.engine)를 열고 TensorRT engine을 deserialize 한다.
+        결과는 self.engine에 보관한다.
+        """
+        raise self._unsupported_environment_error(self.runtime_paths.runtime_artifact_path or "unknown")
+
+    def _create_execution_context(self) -> None:
+        """
+        deserialized TensorRT engine에서 execution context를 생성하고
+        필요 시 CUDA stream 준비를 연결한다.
+        """
+        raise self._unsupported_environment_error(self.runtime_paths.runtime_artifact_path or "unknown")
+
+    def _build_engine_io_metadata(self) -> None:
+        """
+        TensorRT binding/tensor metadata를 읽어 self.inputs / self.outputs를 구성한다.
+
+        목표:
+        - self.inputs: List[EngineModelIO]
+        - self.outputs: List[str]
+        - binding_index_map 채우기
+        """
+        raise self._unsupported_environment_error(self.runtime_paths.runtime_artifact_path or "unknown")
+
+    def _allocate_runtime_buffers(self) -> None:
+        """
+        host/device buffer를 준비한다.
+        초기 구현에서는 warmup/timed run 동안 재사용 가능한 구조를 목표로 한다.
+        """
+        raise self._unsupported_environment_error(self.runtime_paths.runtime_artifact_path or "unknown")
+
+    def _make_dummy_inputs_impl(
+        self,
+        batch_override: Optional[int] = None,
+        height_override: Optional[int] = None,
+        width_override: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """
+        self.inputs metadata를 기준으로 override 계약을 적용한
+        host-side dummy input 생성을 담당한다.
+        """
+        raise self._unsupported_environment_error(self.runtime_paths.runtime_artifact_path or "unknown")
+
+    def _run_impl(self, feeds: Dict[str, Any]) -> List[Any]:
+        """
+        feeds를 TensorRT binding에 연결하고 실행한 뒤
+        EdgeBench 공통 출력 형식(List[Any])으로 반환한다.
+        """
+        raise self._unsupported_environment_error(self.runtime_paths.runtime_artifact_path or "unknown")
+
+    def _ensure_runtime_ready(self) -> None:
+        """
+        run() / make_dummy_inputs() 전에 runtime 필수 상태가 준비되었는지 확인한다.
+        향후에는 self.engine, self.context, self.inputs 등을 검증하는 용도로 확장한다.
+        """
+        if not self.runtime_paths.runtime_artifact_path:
+            raise self._missing_engine_path_error()
+
+
     def load(self, model_path: str, **kwargs) -> None:
         self.runtime_paths.model_path = model_path
         self.runtime_paths.runtime_artifact_path = kwargs.get("engine_path")
@@ -50,20 +121,12 @@ class TensorRtEngine(InferenceEngine):
         if not self.runtime_paths.runtime_artifact_path:
             raise self._missing_engine_path_error()
 
-        # TODO(jetson): Replace this placeholder with Jetson-specific TensorRT runtime setup.
-        # Expected future flow:
-        # 1. Import TensorRT runtime bindings in the Jetson environment.
-        # 2. Open engine_path and deserialize the compiled engine artifact.
-        # 3. Create self.runtime, self.engine, and self.context.
-        # 4. Build binding_index_map and allocate/reuse host/device buffers as needed.
-        # 5. Inspect TensorRT bindings / tensor metadata and populate self.inputs/self.outputs.
-        # 6. Create or attach a CUDA stream for repeated profile runs.
-        # 7. Warmup and timed runs should reuse the same context/buffers where possible.
-        # 8. Preserve model_path for provenance/reporting and engine_path for runtime execution.
-        # 9. Keep the current profile command contract unchanged:
-        #    - model_path: ONNX source path
-        #    - engine_path: compiled TensorRT runtime artifact
-        raise self._unsupported_environment_error(self.runtime_paths.runtime_artifact_path)
+        self._load_runtime_bindings()
+        self._deserialize_engine_artifact()
+        self._create_execution_context()
+        self._build_engine_io_metadata()
+        self._allocate_runtime_buffers()
+
 
     def make_dummy_inputs(
         self,
@@ -71,18 +134,16 @@ class TensorRtEngine(InferenceEngine):
         height_override: Optional[int] = None,
         width_override: Optional[int] = None,
     ) -> Dict[str, Any]:
-        if not self.runtime_paths.runtime_artifact_path:
-            raise self._missing_engine_path_error()
-        # TODO(jetson): Generate placeholder host input buffers that match TensorRT binding specs.
-        # This helper should continue to support the existing profile flow, even if actual device
-        # buffers are allocated later during runtime execution. Dynamic shape handling should be
-        # derived from binding metadata plus batch/height/width overrides from the profile command.
-        raise self._unsupported_environment_error(self.runtime_paths.runtime_artifact_path)
+        self._ensure_runtime_ready()
+
+        return self._make_dummy_inputs_impl(
+            batch_override=batch_override,
+            height_override=height_override,
+            width_override=width_override,
+        )
+
 
     def run(self, feeds: Dict[str, Any]) -> List[Any]:
-        if not self.runtime_paths.runtime_artifact_path:
-            raise self._missing_engine_path_error()
-        # TODO(jetson): Map feeds to TensorRT bindings, copy host->device as needed,
-        # execute the TensorRT context on the configured stream, synchronize, collect outputs,
-        # and return them in EdgeBench format.
-        raise self._unsupported_environment_error(self.runtime_paths.runtime_artifact_path)
+        self._ensure_runtime_ready()
+
+        return self._run_impl(feeds)
