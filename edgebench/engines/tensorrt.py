@@ -28,9 +28,21 @@ def _tensorrt_dtype_to_numpy_dtype(dtype: Any) -> np.dtype:
     if isinstance(dtype, np.dtype):
         return dtype
 
+    dtype_name = str(dtype).lower()
+    if "float32" in dtype_name or dtype_name.endswith(".float") or dtype_name == "float":
+        return np.dtype(np.float32)
+    if "float16" in dtype_name or "half" in dtype_name:
+        return np.dtype(np.float16)
+    if dtype_name.endswith(".int8") or dtype_name == "int8":
+        return np.dtype(np.int8)
+    if dtype_name.endswith(".int32") or dtype_name == "int32":
+        return np.dtype(np.int32)
+    if dtype_name.endswith(".bool") or dtype_name == "bool":
+        return np.dtype(np.bool_)
+
     try:
         return np.dtype(dtype)
-    except TypeError:
+    except (TypeError, ValueError):
         # Placeholder fallback until TensorRT dtype enum mapping is implemented.
         return np.dtype(np.float32)
 
@@ -116,6 +128,14 @@ class TensorRtEngine(InferenceEngine):
             "TensorRT execution context creation failed. "
             f"Received engine artifact: {engine_path}. "
             "Check that the deserialized engine is valid for the target Jetson/TensorRT environment."
+        )
+
+    @staticmethod
+    def _metadata_extraction_error(engine_path: str) -> RuntimeError:
+        return RuntimeError(
+            "TensorRT metadata extraction failed. "
+            f"Received engine artifact: {engine_path}. "
+            "Check that the deserialized engine exposes valid IO metadata for this TensorRT environment."
         )
 
 
@@ -210,6 +230,46 @@ class TensorRtEngine(InferenceEngine):
 
         self.context = context
 
+    def _iter_engine_io_metadata(self):
+        if self.engine is None:
+            raise RuntimeError(
+                "TensorRT engine is not deserialized yet. "
+                "Complete _deserialize_engine_artifact() before extracting metadata."
+            )
+
+        trt = self.trt
+        tensor_io_mode_input = getattr(getattr(trt, "TensorIOMode", None), "INPUT", None)
+
+        if hasattr(self.engine, "num_io_tensors") and hasattr(self.engine, "get_tensor_name"):
+            num_io_tensors = int(self.engine.num_io_tensors)
+            for binding_index in range(num_io_tensors):
+                name = self.engine.get_tensor_name(binding_index)
+                dtype = self.engine.get_tensor_dtype(name)
+                shape = self.engine.get_tensor_shape(name)
+                tensor_mode = self.engine.get_tensor_mode(name)
+                is_input = (
+                    tensor_mode == tensor_io_mode_input
+                    if tensor_io_mode_input is not None
+                    else str(tensor_mode).upper().endswith("INPUT")
+                )
+                yield binding_index, name, dtype, shape, bool(is_input)
+            return
+
+        if hasattr(self.engine, "num_bindings") and hasattr(self.engine, "get_binding_name"):
+            num_bindings = int(self.engine.num_bindings)
+            for binding_index in range(num_bindings):
+                name = self.engine.get_binding_name(binding_index)
+                dtype = self.engine.get_binding_dtype(binding_index)
+                shape = self.engine.get_binding_shape(binding_index)
+                is_input = self.engine.binding_is_input(binding_index)
+                yield binding_index, name, dtype, shape, bool(is_input)
+            return
+
+        raise RuntimeError(
+            "TensorRT engine does not expose a supported IO metadata API. "
+            "Expected either tensor-based or binding-based metadata accessors."
+        )
+
     def _build_engine_io_metadata(self) -> None:
         """
         TensorRT binding/tensor metadata를 읽어 self.inputs / self.outputs를 구성한다.
@@ -219,30 +279,49 @@ class TensorRtEngine(InferenceEngine):
         - self.outputs: List[str]
         - binding_index_map 채우기
         """
-        # Future Jetson flow:
-        # 1. Iterate TensorRT bindings/tensors from self.engine without importing
-        #    TensorRT at module import time.
-        # 2. Read binding index, tensor name, TensorRT dtype, TensorRT shape,
-        #    and input/output role from the runtime engine.
-        # 3. Convert TensorRT dtype/shape into EngineModelIO-compatible values.
-        # 4. Build self.inputs, self.outputs, and binding_index_map in one pass.
-        #
-        # Intended structure:
-        # binding_index_map: Dict[str, int] = {}
-        # inputs: List[EngineModelIO] = []
-        # outputs: List[str] = []
-        #
-        # for binding_index, tensor_name, trt_dtype, trt_shape, is_input in ...:
-        #     binding_index_map[tensor_name] = binding_index
-        #     if is_input:
-        #         inputs.append(_make_engine_model_io(tensor_name, trt_dtype, trt_shape))
-        #     else:
-        #         outputs.append(tensor_name)
-        #
-        # self.binding_index_map = binding_index_map
-        # self.inputs = inputs
-        # self.outputs = outputs
-        raise self._unsupported_environment_error(self.runtime_paths.runtime_artifact_path or "unknown")
+        if self.engine is None:
+            raise RuntimeError(
+                "TensorRT engine is not deserialized yet. "
+                "Complete _deserialize_engine_artifact() before extracting metadata."
+            )
+
+        engine_path = self.runtime_paths.runtime_artifact_path or "unknown"
+
+        try:
+            binding_index_map: Dict[str, int] = {}
+            inputs: List[EngineModelIO] = []
+            outputs: List[str] = []
+            entry_count = 0
+
+            for binding_index, name, dtype, shape, is_input in self._iter_engine_io_metadata():
+                entry_count += 1
+                binding_index_map[name] = binding_index
+                if is_input:
+                    inputs.append(_make_engine_model_io(name, dtype, shape))
+                else:
+                    outputs.append(name)
+        except RuntimeError as exc:
+            message = str(exc)
+            if "not deserialized yet" in message or "supported IO metadata API" in message:
+                raise
+            raise self._metadata_extraction_error(engine_path) from exc
+        except Exception as exc:
+            raise self._metadata_extraction_error(engine_path) from exc
+
+        if entry_count == 0:
+            raise RuntimeError(
+                "TensorRT metadata extraction returned no IO entries. "
+                f"Received engine artifact: {engine_path}."
+            )
+        if not inputs:
+            raise RuntimeError(
+                "TensorRT metadata extraction found no input tensors. "
+                f"Received engine artifact: {engine_path}."
+            )
+
+        self.binding_index_map = binding_index_map
+        self.inputs = inputs
+        self.outputs = outputs
 
     def _allocate_runtime_buffers(self) -> None:
         """
@@ -316,6 +395,7 @@ class TensorRtEngine(InferenceEngine):
         self._load_runtime_bindings()
         self._deserialize_engine_artifact()
         self._create_execution_context()
+        self._build_engine_io_metadata()
 
 
     def make_dummy_inputs(
