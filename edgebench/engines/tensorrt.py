@@ -2,7 +2,44 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
+import numpy as np
+
 from edgebench.engines.base import EngineModelIO, EngineRuntimePaths, InferenceEngine
+
+
+def _tensorrt_dim_to_optional_int(dim: Any) -> Optional[int]:
+    if dim is None:
+        return None
+
+    try:
+        dim_value = int(dim)
+    except (TypeError, ValueError):
+        return None
+
+    return dim_value if dim_value >= 0 else None
+
+
+def _tensorrt_shape_to_model_shape(shape: Any) -> List[Optional[int]]:
+    return [_tensorrt_dim_to_optional_int(dim) for dim in shape]
+
+
+def _tensorrt_dtype_to_numpy_dtype(dtype: Any) -> np.dtype:
+    if isinstance(dtype, np.dtype):
+        return dtype
+
+    try:
+        return np.dtype(dtype)
+    except TypeError:
+        # Placeholder fallback until TensorRT dtype enum mapping is implemented.
+        return np.dtype(np.float32)
+
+
+def _make_engine_model_io(name: str, dtype: Any, shape: Any) -> EngineModelIO:
+    return EngineModelIO(
+        name=name,
+        dtype=_tensorrt_dtype_to_numpy_dtype(dtype),
+        shape=_tensorrt_shape_to_model_shape(shape),
+    )
 
 
 class TensorRtEngine(InferenceEngine):
@@ -77,6 +114,29 @@ class TensorRtEngine(InferenceEngine):
         - self.outputs: List[str]
         - binding_index_map 채우기
         """
+        # Future Jetson flow:
+        # 1. Iterate TensorRT bindings/tensors from self.engine without importing
+        #    TensorRT at module import time.
+        # 2. Read binding index, tensor name, TensorRT dtype, TensorRT shape,
+        #    and input/output role from the runtime engine.
+        # 3. Convert TensorRT dtype/shape into EngineModelIO-compatible values.
+        # 4. Build self.inputs, self.outputs, and binding_index_map in one pass.
+        #
+        # Intended structure:
+        # binding_index_map: Dict[str, int] = {}
+        # inputs: List[EngineModelIO] = []
+        # outputs: List[str] = []
+        #
+        # for binding_index, tensor_name, trt_dtype, trt_shape, is_input in ...:
+        #     binding_index_map[tensor_name] = binding_index
+        #     if is_input:
+        #         inputs.append(_make_engine_model_io(tensor_name, trt_dtype, trt_shape))
+        #     else:
+        #         outputs.append(tensor_name)
+        #
+        # self.binding_index_map = binding_index_map
+        # self.inputs = inputs
+        # self.outputs = outputs
         raise self._unsupported_environment_error(self.runtime_paths.runtime_artifact_path or "unknown")
 
     def _allocate_runtime_buffers(self) -> None:
@@ -96,6 +156,18 @@ class TensorRtEngine(InferenceEngine):
         self.inputs metadata를 기준으로 override 계약을 적용한
         host-side dummy input 생성을 담당한다.
         """
+        # Future Jetson flow:
+        # feeds: Dict[str, Any] = {}
+        # for inp in self.inputs:
+        #     shape = self._resolve_input_shape(
+        #         inp,
+        #         batch_override=batch_override,
+        #         height_override=height_override,
+        #         width_override=width_override,
+        #     )
+        #     # Allocate or populate a host-side buffer using inp.dtype and shape.
+        #     feeds[inp.name] = ...
+        # return feeds
         raise self._unsupported_environment_error(self.runtime_paths.runtime_artifact_path or "unknown")
 
     def _run_impl(self, feeds: Dict[str, Any]) -> List[Any]:
