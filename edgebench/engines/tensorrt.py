@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
+from pathlib import Path
 
 import numpy as np
 
@@ -85,6 +86,30 @@ class TensorRtEngine(InferenceEngine):
             f"Received engine artifact: {engine_path}. "
             "The TensorRT runtime is not implemented for this EdgeBench environment yet."
         )
+    
+
+    @staticmethod
+    def _engine_artifact_not_found_error(engine_path: str) -> RuntimeError:
+        return RuntimeError(
+            f"TensorRT engine artifact was not found: {engine_path}"
+        )
+
+
+    @staticmethod
+    def _engine_artifact_read_error(engine_path: str) -> RuntimeError:
+        return RuntimeError(
+            f"TensorRT engine artifact could not be read: {engine_path}"
+        )
+
+
+    @staticmethod
+    def _engine_deserialize_error(engine_path: str) -> RuntimeError:
+        return RuntimeError(
+            "TensorRT engine deserialization failed. "
+            f"Received engine artifact: {engine_path}. "
+            "Check that the .engine file matches the target Jetson/TensorRT environment."
+        )
+
 
     def _load_runtime_bindings(self) -> None:
         """
@@ -123,13 +148,48 @@ class TensorRtEngine(InferenceEngine):
         runtime_artifact_path(.engine)를 열고 TensorRT engine을 deserialize 한다.
         결과는 self.engine에 보관한다.
         """
-        raise self._unsupported_environment_error(self.runtime_paths.runtime_artifact_path or "unknown")
+        engine_path = self.runtime_paths.runtime_artifact_path
+        if not engine_path:
+            raise self._missing_engine_path_error()
+
+        if self.runtime is None:
+            raise RuntimeError(
+                "TensorRT runtime is not initialized. "
+                "Call _load_runtime_bindings() before deserializing the engine artifact."
+            )
+
+        engine_file = Path(engine_path)
+        if not engine_file.is_file():
+            raise self._engine_artifact_not_found_error(engine_path)
+
+        try:
+            engine_bytes = engine_file.read_bytes()
+        except OSError as exc:
+            raise self._engine_artifact_read_error(engine_path) from exc
+
+        if not engine_bytes:
+            raise self._engine_deserialize_error(engine_path)
+
+        try:
+            engine = self.runtime.deserialize_cuda_engine(engine_bytes)
+        except Exception as exc:
+            raise self._engine_deserialize_error(engine_path) from exc
+
+        if engine is None:
+            raise self._engine_deserialize_error(engine_path)
+
+        self.engine = engine
 
     def _create_execution_context(self) -> None:
         """
         deserialized TensorRT engine에서 execution context를 생성하고
         필요 시 CUDA stream 준비를 연결한다.
         """
+        if self.engine is None:
+            raise RuntimeError(
+                "TensorRT engine is not deserialized yet. "
+                "Complete _deserialize_engine_artifact() before creating the execution context."
+            )
         raise self._unsupported_environment_error(self.runtime_paths.runtime_artifact_path or "unknown")
 
     def _build_engine_io_metadata(self) -> None:
