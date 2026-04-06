@@ -130,10 +130,54 @@ CLI 기반 구조:
 `model_path` vs `engine_path`:
 
 - `model_path`: static analysis, reporting, result provenance에 사용하는 원본 ONNX source path
-- `engine_path`: Jetson에서 runtime 실행에 사용할 compiled TensorRT engine artifact path
+- `engine_path`: Jetson에서 runtime execution에 사용할 compiled TensorRT engine artifact path
 
 Planned Jetson implementation path:
 
+- `model_path` 기준의 ONNX analysis와 report 생성을 유지합니다.
+- `engine_path` 에서 TensorRT engine load 및 deserialize를 수행합니다.
+- Jetson에서 execution context / bindings를 생성합니다.
+- 기존 result/report 구조를 유지하면서 TensorRT inference 경로를 연결합니다.
+
+### Jetson TensorRT 환경 점검 스크립트
+
+Jetson bring-up을 시작하기 전에 `scripts/check_jetson_tensorrt_env.py` 로 기본 환경을 먼저 확인하는 것을 권장합니다.
+이 스크립트는 TensorRT runtime execution을 수행하지 않고, 사전 준비 상태만 점검합니다.
+
+확인 항목:
+
+- Python / platform 정보
+- `tensorrt`, `onnxruntime`, `numpy` import 가능 여부
+- `/etc/nv_tegra_release` 존재 여부
+- 전달한 `model_path`, `engine_path` 경로 존재 여부
+
+사용 예시:
+
+```bash
+poetry run python scripts/check_jetson_tensorrt_env.py \
+  --model-path models/toy224.onnx \
+  --engine-path build/toy224.engine
+```
+
+스크립트 종료 코드:
+
+- 기본 bring-up prerequisites가 충족되면 `0`
+- 필수 항목이 누락되면 `1`
+
+### Jetson TensorRT 권장 bring-up 순서
+
+실제 TensorRT runtime 구현에 들어가기 전에는 아래 순서로 진행하는 것이 안전합니다.
+
+1. `scripts/check_jetson_tensorrt_env.py` 로 Jetson 환경과 기본 의존성을 먼저 확인합니다.
+2. 작은 ONNX 모델과 대응되는 `.engine` artifact를 준비합니다.
+3. `profile --engine tensorrt --engine-path ...` 계약이 의도대로 유지되는지 확인합니다.
+4. 그 다음 단계에서 engine deserialize와 metadata 추출 경로를 구현합니다.
+5. 마지막으로 execution context, buffer 관리, warmup, timed run 순서로 runtime 경로를 확장합니다.
+
+
+
+Planned Jetson implementation path:
+- `engine_path`: Jetson에서 runtime 실행에 사용할 compiled TensorRT engine artifact path
 - `model_path` 기준의 ONNX analysis와 report 생성 유지
 - `engine_path` 에서 TensorRT engine load 및 deserialize 수행
 - Jetson에서 execution context / bindings 생성
@@ -323,6 +367,19 @@ poetry run edgebench profile model.onnx \
   --runs 100
 ```
 
+사전 환경 점검 예시:
+
+```bash
+poetry run python scripts/check_jetson_tensorrt_env.py \
+  --model-path model.onnx \
+  --engine-path build/model.engine
+```
+
+- 먼저 환경 점검 스크립트로 Jetson / TensorRT 사전 준비 상태를 확인합니다.
+- 그 다음 `edgebench profile ... --engine tensorrt --engine-path ...` 순서로 계약 검증을 진행합니다.
+- `model.onnx` 는 analysis/reporting에 사용하는 ONNX source path입니다.
+- `build/model.engine` 는 향후 Jetson runtime execution에 사용할 compiled TensorRT engine artifact입니다.
+- 현재는 TensorRT backend가 아직 skeleton 상태이므로, 이 명령은 계약을 검증한 뒤 명확한 Jetson-runtime-required 메시지를 출력하고 종료합니다.
 - `model.onnx` 는 analysis/reporting에 사용하는 ONNX source path입니다.
 - `build/model.engine` 는 향후 Jetson runtime execution에 사용할 compiled TensorRT engine artifact입니다.
 - 현재는 TensorRT backend가 아직 skeleton 상태이므로, 이 명령은 계약을 검증한 뒤 명확한 Jetson-runtime-required 메시지를 출력하고 종료합니다.
