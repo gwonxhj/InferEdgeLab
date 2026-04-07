@@ -24,6 +24,16 @@ def _tensorrt_shape_to_model_shape(shape: Any) -> List[Optional[int]]:
     return [_tensorrt_dim_to_optional_int(dim) for dim in shape]
 
 
+def _tensorrt_shape_to_runtime_shape(shape: Any) -> List[int]:
+    concrete_shape: List[int] = []
+
+    for dim in shape:
+        resolved_dim = _tensorrt_dim_to_optional_int(dim)
+        concrete_shape.append(resolved_dim if resolved_dim is not None and resolved_dim > 0 else 1)
+
+    return concrete_shape
+
+
 def _tensorrt_dtype_to_numpy_dtype(dtype: Any) -> np.dtype:
     if isinstance(dtype, np.dtype):
         return dtype
@@ -136,6 +146,13 @@ class TensorRtEngine(InferenceEngine):
             "TensorRT metadata extraction failed. "
             f"Received engine artifact: {engine_path}. "
             "Check that the deserialized engine exposes valid IO metadata for this TensorRT environment."
+        )
+
+    @staticmethod
+    def _runtime_buffer_allocation_error(engine_path: str) -> RuntimeError:
+        return RuntimeError(
+            "TensorRT runtime buffer allocation failed. "
+            f"Received engine artifact: {engine_path}."
         )
 
 
@@ -328,7 +345,93 @@ class TensorRtEngine(InferenceEngine):
         host/device buffer를 준비한다.
         초기 구현에서는 warmup/timed run 동안 재사용 가능한 구조를 목표로 한다.
         """
-        raise self._unsupported_environment_error(self.runtime_paths.runtime_artifact_path or "unknown")
+        engine_path = self.runtime_paths.runtime_artifact_path or "unknown"
+
+        if self.engine is None:
+            raise RuntimeError(
+                "TensorRT engine is not deserialized yet. "
+                "Complete _deserialize_engine_artifact() before allocating runtime buffers."
+            )
+        if self.context is None:
+            raise RuntimeError(
+                "TensorRT execution context is not created yet. "
+                "Complete _create_execution_context() before allocating runtime buffers."
+            )
+        if not self.inputs:
+            raise RuntimeError(
+                "TensorRT input metadata is empty. "
+                "Complete _build_engine_io_metadata() before allocating runtime buffers."
+            )
+        if not self.binding_index_map:
+            raise RuntimeError(
+                "TensorRT binding index map is empty. "
+                "Complete _build_engine_io_metadata() before allocating runtime buffers."
+            )
+
+        try:
+            host_buffers: Dict[str, Any] = {}
+            device_buffers: Dict[str, Any] = {}
+
+            for inp in self.inputs:
+                input_shape = self._resolve_input_shape(inp)
+                host_buffer = np.empty(input_shape, dtype=inp.dtype)
+                host_buffers[inp.name] = host_buffer
+                device_buffers[inp.name] = {
+                    "name": inp.name,
+                    "dtype": inp.dtype,
+                    "shape": input_shape,
+                    "nbytes": int(host_buffer.nbytes),
+                    "binding_index": self.binding_index_map[inp.name],
+                    "device_allocation": None,
+                }
+
+            output_metadata: Dict[str, Dict[str, Any]] = {}
+            for binding_index, name, dtype, shape, is_input in self._iter_engine_io_metadata():
+                if is_input:
+                    continue
+                output_metadata[name] = {
+                    "binding_index": binding_index,
+                    "dtype": _tensorrt_dtype_to_numpy_dtype(dtype),
+                    "shape": _tensorrt_shape_to_runtime_shape(shape),
+                }
+
+            missing_outputs = [output_name for output_name in self.outputs if output_name not in output_metadata]
+            if missing_outputs:
+                raise RuntimeError(
+                    "TensorRT output metadata could not be matched for declared outputs: "
+                    + ", ".join(missing_outputs)
+                )
+
+            for output_name in self.outputs:
+                metadata = output_metadata[output_name]
+                output_shape = metadata["shape"]
+                output_dtype = metadata["dtype"]
+                host_buffer = np.empty(output_shape, dtype=output_dtype)
+                host_buffers[output_name] = host_buffer
+                device_buffers[output_name] = {
+                    "name": output_name,
+                    "dtype": output_dtype,
+                    "shape": output_shape,
+                    "nbytes": int(host_buffer.nbytes),
+                    "binding_index": metadata["binding_index"],
+                    "device_allocation": None,
+                }
+        except RuntimeError as exc:
+            message = str(exc)
+            if (
+                "not deserialized yet" in message
+                or "not created yet" in message
+                or "metadata is empty" in message
+                or "index map is empty" in message
+                or "could not be matched for declared outputs" in message
+            ):
+                raise
+            raise self._runtime_buffer_allocation_error(engine_path) from exc
+        except Exception as exc:
+            raise self._runtime_buffer_allocation_error(engine_path) from exc
+
+        self.host_buffers = host_buffers
+        self.device_buffers = device_buffers
 
     def _make_dummy_inputs_impl(
         self,
@@ -383,6 +486,16 @@ class TensorRtEngine(InferenceEngine):
                 "TensorRT execution context is not created. "
                 "Call _create_execution_context() before using the runtime."
             )
+        if not self.host_buffers:
+            raise RuntimeError(
+                "TensorRT host buffers are not allocated. "
+                "Call _allocate_runtime_buffers() before using the runtime."
+            )
+        if not self.device_buffers:
+            raise RuntimeError(
+                "TensorRT device buffers are not allocated. "
+                "Call _allocate_runtime_buffers() before using the runtime."
+            )
 
 
     def load(self, model_path: str, **kwargs) -> None:
@@ -396,6 +509,7 @@ class TensorRtEngine(InferenceEngine):
         self._deserialize_engine_artifact()
         self._create_execution_context()
         self._build_engine_io_metadata()
+        self._allocate_runtime_buffers()
 
 
     def make_dummy_inputs(
