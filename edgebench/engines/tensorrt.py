@@ -89,9 +89,12 @@ class TensorRtEngine(InferenceEngine):
         self.engine: Any = None
         self.context: Any = None
         self.stream: Any = None
+        self.cuda: Any = None
+        self.cuda_context: Any = None
         self.binding_index_map: Dict[str, int] = {}
         self.host_buffers: Dict[str, Any] = {}
         self.device_buffers: Dict[str, Any] = {}
+        self.binding_device_ptrs: List[int] = []
 
 
     @staticmethod
@@ -155,6 +158,34 @@ class TensorRtEngine(InferenceEngine):
             f"Received engine artifact: {engine_path}."
         )
 
+    @staticmethod
+    def _device_allocation_error(engine_path: str) -> RuntimeError:
+        return RuntimeError(
+            "TensorRT device allocation failed. "
+            f"Received engine artifact: {engine_path}."
+        )
+
+    @staticmethod
+    def _host_to_device_copy_error(engine_path: str) -> RuntimeError:
+        return RuntimeError(
+            "TensorRT host to device copy failed. "
+            f"Received engine artifact: {engine_path}."
+        )
+
+    @staticmethod
+    def _device_to_host_copy_error(engine_path: str) -> RuntimeError:
+        return RuntimeError(
+            "TensorRT device to host copy failed. "
+            f"Received engine artifact: {engine_path}."
+        )
+
+    @staticmethod
+    def _execution_error(engine_path: str) -> RuntimeError:
+        return RuntimeError(
+            "TensorRT execution failed. "
+            f"Received engine artifact: {engine_path}."
+        )
+
 
     def _load_runtime_bindings(self) -> None:
         """
@@ -187,6 +218,92 @@ class TensorRtEngine(InferenceEngine):
         self.trt = trt
         self.logger = logger
         self.runtime = runtime
+
+    def _load_cuda_driver(self) -> Any:
+        if self.cuda is not None and self.cuda_context is not None:
+            return self.cuda
+
+        try:
+            from cuda.bindings import driver as cuda
+        except ImportError as exc:
+            raise RuntimeError(
+                "CUDA driver bindings are unavailable in this environment. "
+                "Install the Jetson-compatible cuda-python package to use TensorRT device allocation."
+            ) from exc
+
+        try:
+            init_result = cuda.cuInit(0)
+        except Exception as exc:
+            raise RuntimeError(
+                "CUDA driver initialization failed while preparing a CUDA context for TensorRT device allocation."
+            ) from exc
+
+        if isinstance(init_result, tuple):
+            init_status = init_result[0]
+        else:
+            init_status = init_result
+
+        if int(init_status) != 0:
+            raise RuntimeError(
+                "CUDA driver initialization failed while preparing a CUDA context for TensorRT device allocation."
+            )
+
+        try:
+            device_result = cuda.cuDeviceGet(0)
+        except Exception as exc:
+            raise RuntimeError(
+                "CUDA device discovery failed while preparing a CUDA context for TensorRT device allocation."
+            ) from exc
+
+        if not isinstance(device_result, tuple) or len(device_result) < 2:
+            raise RuntimeError(
+                "CUDA device discovery failed while preparing a CUDA context for TensorRT device allocation."
+            )
+
+        device_status, device = device_result[0], device_result[1]
+        if int(device_status) != 0:
+            raise RuntimeError(
+                "CUDA device discovery failed while preparing a CUDA context for TensorRT device allocation."
+            )
+
+        try:
+            context_result = cuda.cuDevicePrimaryCtxRetain(device)
+        except Exception as exc:
+            raise RuntimeError(
+                "CUDA primary context acquisition failed while preparing TensorRT device allocation."
+            ) from exc
+
+        if not isinstance(context_result, tuple) or len(context_result) < 2:
+            raise RuntimeError(
+                "CUDA primary context acquisition failed while preparing TensorRT device allocation."
+            )
+
+        context_status, cuda_context = context_result[0], context_result[1]
+        if int(context_status) != 0 or cuda_context is None:
+            raise RuntimeError(
+                "CUDA primary context acquisition failed while preparing TensorRT device allocation."
+            )
+
+        try:
+            set_current_result = cuda.cuCtxSetCurrent(cuda_context)
+        except Exception as exc:
+            raise RuntimeError(
+                "CUDA context activation failed while preparing TensorRT device allocation."
+            ) from exc
+
+        if isinstance(set_current_result, tuple):
+            set_current_status = set_current_result[0]
+        else:
+            set_current_status = set_current_result
+
+        if int(set_current_status) != 0:
+            raise RuntimeError(
+                "CUDA context activation failed while preparing TensorRT device allocation."
+            )
+
+        self.cuda = cuda
+        self.cuda_context = cuda_context
+        return self.cuda
 
     def _deserialize_engine_artifact(self) -> None:
         """
@@ -340,6 +457,47 @@ class TensorRtEngine(InferenceEngine):
         self.inputs = inputs
         self.outputs = outputs
 
+    def _allocate_device_buffer(
+        self,
+        name: str,
+        host_buffer: np.ndarray,
+        binding_index: int,
+    ) -> Dict[str, Any]:
+        engine_path = self.runtime_paths.runtime_artifact_path or "unknown"
+        cuda = self._load_cuda_driver()
+
+        try:
+            allocation_result = cuda.cuMemAlloc(int(host_buffer.nbytes))
+            if not isinstance(allocation_result, tuple) or len(allocation_result) < 2:
+                raise RuntimeError(
+                    f"CUDA device allocation did not return an allocation handle for binding: {name}"
+                )
+
+            status, device_allocation = allocation_result[0], allocation_result[1]
+            if int(status) != 0:
+                raise RuntimeError(
+                    f"CUDA device allocation returned status {int(status)} for binding: {name}"
+                )
+
+            device_ptr = int(device_allocation)
+        except RuntimeError as exc:
+            message = str(exc)
+            if "CUDA " in message:
+                raise
+            raise self._device_allocation_error(engine_path) from exc
+        except Exception as exc:
+            raise self._device_allocation_error(engine_path) from exc
+
+        return {
+            "name": name,
+            "dtype": host_buffer.dtype,
+            "shape": [int(dim) for dim in host_buffer.shape],
+            "nbytes": int(host_buffer.nbytes),
+            "binding_index": binding_index,
+            "device_allocation": device_allocation,
+            "device_ptr": device_ptr,
+        }
+
     def _allocate_runtime_buffers(self) -> None:
         """
         host/device buffer를 준비한다.
@@ -371,22 +529,20 @@ class TensorRtEngine(InferenceEngine):
         try:
             host_buffers: Dict[str, Any] = {}
             device_buffers: Dict[str, Any] = {}
+            metadata_entries = list(self._iter_engine_io_metadata())
 
             for inp in self.inputs:
                 input_shape = self._resolve_input_shape(inp)
                 host_buffer = np.empty(input_shape, dtype=inp.dtype)
                 host_buffers[inp.name] = host_buffer
-                device_buffers[inp.name] = {
-                    "name": inp.name,
-                    "dtype": inp.dtype,
-                    "shape": input_shape,
-                    "nbytes": int(host_buffer.nbytes),
-                    "binding_index": self.binding_index_map[inp.name],
-                    "device_allocation": None,
-                }
+                device_buffers[inp.name] = self._allocate_device_buffer(
+                    name=inp.name,
+                    host_buffer=host_buffer,
+                    binding_index=self.binding_index_map[inp.name],
+                )
 
             output_metadata: Dict[str, Dict[str, Any]] = {}
-            for binding_index, name, dtype, shape, is_input in self._iter_engine_io_metadata():
+            for binding_index, name, dtype, shape, is_input in metadata_entries:
                 if is_input:
                     continue
                 output_metadata[name] = {
@@ -408,14 +564,31 @@ class TensorRtEngine(InferenceEngine):
                 output_dtype = metadata["dtype"]
                 host_buffer = np.empty(output_shape, dtype=output_dtype)
                 host_buffers[output_name] = host_buffer
-                device_buffers[output_name] = {
-                    "name": output_name,
-                    "dtype": output_dtype,
-                    "shape": output_shape,
-                    "nbytes": int(host_buffer.nbytes),
-                    "binding_index": metadata["binding_index"],
-                    "device_allocation": None,
-                }
+                device_buffers[output_name] = self._allocate_device_buffer(
+                    name=output_name,
+                    host_buffer=host_buffer,
+                    binding_index=metadata["binding_index"],
+                )
+
+            binding_device_ptrs = [0] * len(metadata_entries)
+            for name, binding_index in self.binding_index_map.items():
+                if binding_index < 0 or binding_index >= len(binding_device_ptrs):
+                    raise RuntimeError(
+                        f"TensorRT binding index is out of range while preparing device pointers: {name}"
+                    )
+
+                device_ptr = device_buffers.get(name, {}).get("device_ptr")
+                if not isinstance(device_ptr, int) or device_ptr <= 0:
+                    raise RuntimeError(
+                        f"TensorRT binding device pointer could not be prepared for binding: {name}"
+                    )
+
+                binding_device_ptrs[binding_index] = device_ptr
+
+            if any(device_ptr <= 0 for device_ptr in binding_device_ptrs):
+                raise RuntimeError(
+                    "TensorRT binding device pointers are incomplete after runtime buffer allocation."
+                )
         except RuntimeError as exc:
             message = str(exc)
             if (
@@ -424,6 +597,12 @@ class TensorRtEngine(InferenceEngine):
                 or "metadata is empty" in message
                 or "index map is empty" in message
                 or "could not be matched for declared outputs" in message
+                or "CUDA driver bindings are unavailable" in message
+                or "CUDA driver initialization failed" in message
+                or "TensorRT device allocation failed" in message
+                or "binding index is out of range" in message
+                or "binding device pointer could not be prepared" in message
+                or "binding device pointers are incomplete" in message
             ):
                 raise
             raise self._runtime_buffer_allocation_error(engine_path) from exc
@@ -432,6 +611,39 @@ class TensorRtEngine(InferenceEngine):
 
         self.host_buffers = host_buffers
         self.device_buffers = device_buffers
+        self.binding_device_ptrs = binding_device_ptrs
+
+    def _copy_host_to_device(self, name: str, host_array: np.ndarray, device_ptr: int) -> None:
+        engine_path = self.runtime_paths.runtime_artifact_path or "unknown"
+
+        try:
+            memcpy_result = self.cuda.cuMemcpyHtoD(
+                device_ptr,
+                int(host_array.ctypes.data),
+                int(host_array.nbytes),
+            )
+        except Exception as exc:
+            raise self._host_to_device_copy_error(engine_path) from exc
+
+        memcpy_status = memcpy_result[0] if isinstance(memcpy_result, tuple) else memcpy_result
+        if int(memcpy_status) != 0:
+            raise self._host_to_device_copy_error(engine_path)
+
+    def _copy_device_to_host(self, name: str, device_ptr: int, host_array: np.ndarray) -> None:
+        engine_path = self.runtime_paths.runtime_artifact_path or "unknown"
+
+        try:
+            memcpy_result = self.cuda.cuMemcpyDtoH(
+                int(host_array.ctypes.data),
+                device_ptr,
+                int(host_array.nbytes),
+            )
+        except Exception as exc:
+            raise self._device_to_host_copy_error(engine_path) from exc
+
+        memcpy_status = memcpy_result[0] if isinstance(memcpy_result, tuple) else memcpy_result
+        if int(memcpy_status) != 0:
+            raise self._device_to_host_copy_error(engine_path)
 
     def _make_dummy_inputs_impl(
         self,
@@ -443,26 +655,105 @@ class TensorRtEngine(InferenceEngine):
         self.inputs metadata를 기준으로 override 계약을 적용한
         host-side dummy input 생성을 담당한다.
         """
-        # Future Jetson flow:
-        # feeds: Dict[str, Any] = {}
-        # for inp in self.inputs:
-        #     shape = self._resolve_input_shape(
-        #         inp,
-        #         batch_override=batch_override,
-        #         height_override=height_override,
-        #         width_override=width_override,
-        #     )
-        #     # Allocate or populate a host-side buffer using inp.dtype and shape.
-        #     feeds[inp.name] = ...
-        # return feeds
-        raise self._unsupported_environment_error(self.runtime_paths.runtime_artifact_path or "unknown")
+        feeds: Dict[str, Any] = {}
+
+        for inp in self.inputs:
+            shape = self._resolve_input_shape(
+                inp,
+                batch_override=batch_override,
+                height_override=height_override,
+                width_override=width_override,
+            )
+            host_buffer = self.host_buffers[inp.name]
+
+            if list(host_buffer.shape) != shape:
+                raise RuntimeError(
+                    "TensorRT dummy input shape does not match the preallocated host buffer. "
+                    f"Input: {inp.name}, resolved shape: {shape}, allocated shape: {list(host_buffer.shape)}."
+                )
+
+            if np.issubdtype(inp.dtype, np.floating):
+                dummy_data = np.random.random_sample(shape).astype(inp.dtype, copy=False)
+            elif np.issubdtype(inp.dtype, np.integer):
+                dummy_data = np.random.randint(0, 10, size=shape, dtype=inp.dtype)
+            elif np.issubdtype(inp.dtype, np.bool_):
+                dummy_data = np.random.randint(0, 2, size=shape).astype(inp.dtype, copy=False)
+            else:
+                dummy_data = np.zeros(shape, dtype=inp.dtype)
+            np.copyto(host_buffer, dummy_data)
+            feeds[inp.name] = host_buffer
+
+        return feeds
 
     def _run_impl(self, feeds: Dict[str, Any]) -> List[Any]:
         """
         feeds를 TensorRT binding에 연결하고 실행한 뒤
         EdgeBench 공통 출력 형식(List[Any])으로 반환한다.
         """
-        raise self._unsupported_environment_error(self.runtime_paths.runtime_artifact_path or "unknown")
+        engine_path = self.runtime_paths.runtime_artifact_path or "unknown"
+
+        for inp in self.inputs:
+            if inp.name not in feeds:
+                raise RuntimeError(f"TensorRT input feed is missing required input: {inp.name}")
+
+            feed_array = np.asarray(feeds[inp.name])
+            host_buffer = self.host_buffers[inp.name]
+            expected_shape = list(host_buffer.shape)
+
+            if list(feed_array.shape) != expected_shape:
+                raise RuntimeError(
+                    "TensorRT input shape does not match the preallocated host buffer. "
+                    f"Input: {inp.name}, feed shape: {list(feed_array.shape)}, allocated shape: {expected_shape}."
+                )
+
+            if feed_array.dtype != inp.dtype:
+                feed_array = feed_array.astype(inp.dtype, copy=False)
+
+            np.copyto(host_buffer, feed_array)
+            self._copy_host_to_device(
+                inp.name,
+                host_buffer,
+                int(self.device_buffers[inp.name]["device_ptr"]),
+            )
+
+        try:
+            if hasattr(self.context, "set_tensor_address"):
+                for name, buffer_info in self.device_buffers.items():
+                    set_result = self.context.set_tensor_address(name, int(buffer_info["device_ptr"]))
+                    if set_result is False:
+                        raise self._execution_error(engine_path)
+
+                if hasattr(self.context, "execute_async_v3"):
+                    execute_result = self.context.execute_async_v3(0)
+                elif hasattr(self.context, "execute_v3"):
+                    execute_result = self.context.execute_v3()
+                else:
+                    raise self._execution_error(engine_path)
+            elif hasattr(self.context, "execute_v2"):
+                execute_result = self.context.execute_v2(self.binding_device_ptrs)
+            elif hasattr(self.context, "execute_async_v2"):
+                execute_result = self.context.execute_async_v2(self.binding_device_ptrs, 0)
+            else:
+                raise self._execution_error(engine_path)
+        except RuntimeError:
+            raise
+        except Exception as exc:
+            raise self._execution_error(engine_path) from exc
+
+        if execute_result is False:
+            raise self._execution_error(engine_path)
+
+        outputs: List[Any] = []
+        for output_name in self.outputs:
+            host_buffer = self.host_buffers[output_name]
+            self._copy_device_to_host(
+                output_name,
+                int(self.device_buffers[output_name]["device_ptr"]),
+                host_buffer,
+            )
+            outputs.append(host_buffer.copy())
+
+        return outputs
 
     def _ensure_runtime_ready(self) -> None:
         """
@@ -494,6 +785,11 @@ class TensorRtEngine(InferenceEngine):
         if not self.device_buffers:
             raise RuntimeError(
                 "TensorRT device buffers are not allocated. "
+                "Call _allocate_runtime_buffers() before using the runtime."
+            )
+        if not self.binding_device_ptrs:
+            raise RuntimeError(
+                "TensorRT binding device pointers are not prepared. "
                 "Call _allocate_runtime_buffers() before using the runtime."
             )
 
