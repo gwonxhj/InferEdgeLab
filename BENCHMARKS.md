@@ -20,10 +20,23 @@
 
 ## Jetson TensorRT Validation Notes
 
-이 섹션은 CI auto-generated CPU benchmark table과 별도로 관리하는 Jetson TensorRT 검증 메모입니다.
+이 섹션은 위의 CI auto-generated CPU benchmark table과 별도로 관리하는 Jetson TensorRT 검증 메모입니다.
+위 표는 CI/`make demo` 기준 CPU 결과이고, 아래 내용은 Jetson 실기 validation 상태를 설명합니다.
 
-- Jetson 환경에서 `resnet18` TensorRT runtime validation이 성공했습니다.
-- Jetson 환경에서 `yolov8n` TensorRT runtime validation이 성공했습니다.
-- 검증 범위에는 engine deserialize, IO metadata extraction, CUDA device buffer allocation, dummy input generation, TensorRT execution, CLI profile 연동이 포함됩니다.
-- TensorRT 결과는 structured result JSON으로 저장되며, `engine=tensorrt`, `device=gpu`, `precision=fp16` 메타데이터를 포함합니다.
-- 현재 경로는 Jetson 실기 기준의 experimental first working path이며, production runtime 고도화 단계는 별도로 진행될 수 있습니다.
+현재 검증 성공 범위:
+
+- Jetson 환경에서 `resnet18` TensorRT runtime validation 성공
+- Jetson 환경에서 `yolov8n` TensorRT runtime validation 성공
+- engine deserialize, IO metadata extraction, CUDA device buffer allocation, dummy input generation, TensorRT execution, CLI profile 연동 확인
+- TensorRT 결과를 structured result JSON으로 저장하고, `engine=tensorrt`, `device=gpu`, `precision=fp16` 메타데이터 기록 확인
+
+현재 상태:
+
+- Jetson TensorRT first working path는 구현 및 실기 검증이 완료된 상태입니다.
+- compare/report/documentation workflow에서도 TensorRT GPU result를 재사용할 수 있습니다.
+
+남은 production-grade 고도화 범위:
+
+- runtime lifecycle 정리
+- stream / memory management polish
+- 운영 관점 robustness / observability 강화
