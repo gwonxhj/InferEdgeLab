@@ -18,3 +18,12 @@
 | toy320.onnx | onnxruntime | cpu | 1 | 320x320 | 258,048,640 | 0.908 | 0.943 | 2026-02-27T07:05:50Z |
 | toy640.onnx | onnxruntime | cpu | 1 | 640x640 | 1,032,192,640 | 4.250 | 5.423 | 2026-02-27T07:05:53Z |
 
+## Jetson TensorRT Validation Notes
+
+이 섹션은 CI auto-generated CPU benchmark table과 별도로 관리하는 Jetson TensorRT 검증 메모입니다.
+
+- Jetson 환경에서 `resnet18` TensorRT runtime validation이 성공했습니다.
+- Jetson 환경에서 `yolov8n` TensorRT runtime validation이 성공했습니다.
+- 검증 범위에는 engine deserialize, IO metadata extraction, CUDA device buffer allocation, dummy input generation, TensorRT execution, CLI profile 연동이 포함됩니다.
+- TensorRT 결과는 structured result JSON으로 저장되며, `engine=tensorrt`, `device=gpu`, `precision=fp16` 메타데이터를 포함합니다.
+- 현재 경로는 Jetson 실기 기준의 experimental first working path이며, production runtime 고도화 단계는 별도로 진행될 수 있습니다.
