@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import torch
 import torchvision.models as models
 from ultralytics import YOLO
@@ -25,9 +27,20 @@ def export_resnet18():
 
 def export_yolov8():
     print("Exporting YOLOv8...")
+    models_dir = Path("models")
+    models_dir.mkdir(parents=True, exist_ok=True)
+
+    exported_path = Path("yolov8n.onnx")
+    target_path = models_dir / "yolov8n.onnx"
+
     model = YOLO("yolov8n.pt")
     model.export(format="onnx", imgsz=640)
-    print("yolov8n.onnx export 완료")
+
+    if not exported_path.exists():
+        raise FileNotFoundError("Expected exported file was not created: yolov8n.onnx")
+
+    exported_path.replace(target_path)
+    print("models/yolov8n.onnx 생성 완료")
 
 
 if __name__ == "__main__":
