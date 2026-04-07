@@ -91,6 +91,8 @@ class TensorRtEngine(InferenceEngine):
         self.stream: Any = None
         self.cuda: Any = None
         self.cuda_context: Any = None
+        self.cuda_stream: Any = None
+        self.cuda_stream_handle: int = 0
         self.binding_index_map: Dict[str, int] = {}
         self.host_buffers: Dict[str, Any] = {}
         self.device_buffers: Dict[str, Any] = {}
@@ -303,7 +305,39 @@ class TensorRtEngine(InferenceEngine):
 
         self.cuda = cuda
         self.cuda_context = cuda_context
+        self._create_cuda_stream()
         return self.cuda
+    
+    def _create_cuda_stream(self) -> None:
+        if self.cuda is None:
+            raise RuntimeError(
+                "CUDA driver is not initialized. "
+                "Call _load_cuda_driver() before creating a CUDA stream."
+            )
+
+        if self.cuda_stream is not None and self.cuda_stream_handle:
+            return
+
+        try:
+            stream_result = self.cuda.cuStreamCreate(0)
+        except Exception as exc:
+            raise RuntimeError(
+                "CUDA stream creation failed while preparing TensorRT execution."
+            ) from exc
+
+        if not isinstance(stream_result, tuple) or len(stream_result) < 2:
+            raise RuntimeError(
+                "CUDA stream creation failed while preparing TensorRT execution."
+            )
+
+        stream_status, cuda_stream = stream_result[0], stream_result[1]
+        if int(stream_status) != 0 or cuda_stream is None:
+            raise RuntimeError(
+                "CUDA stream creation failed while preparing TensorRT execution."
+            )
+
+        self.cuda_stream = cuda_stream
+        self.cuda_stream_handle = int(cuda_stream)
 
     def _deserialize_engine_artifact(self) -> None:
         """
@@ -616,11 +650,15 @@ class TensorRtEngine(InferenceEngine):
     def _copy_host_to_device(self, name: str, host_array: np.ndarray, device_ptr: int) -> None:
         engine_path = self.runtime_paths.runtime_artifact_path or "unknown"
 
+        if self.cuda is None or self.cuda_stream is None or not self.cuda_stream_handle:
+            raise self._host_to_device_copy_error(engine_path)
+
         try:
-            memcpy_result = self.cuda.cuMemcpyHtoD(
+            memcpy_result = self.cuda.cuMemcpyHtoDAsync(
                 device_ptr,
                 int(host_array.ctypes.data),
                 int(host_array.nbytes),
+                self.cuda_stream,
             )
         except Exception as exc:
             raise self._host_to_device_copy_error(engine_path) from exc
@@ -631,12 +669,15 @@ class TensorRtEngine(InferenceEngine):
 
     def _copy_device_to_host(self, name: str, device_ptr: int, host_array: np.ndarray) -> None:
         engine_path = self.runtime_paths.runtime_artifact_path or "unknown"
+        if self.cuda is None or self.cuda_stream is None or not self.cuda_stream_handle:
+            raise self._device_to_host_copy_error(engine_path)
 
         try:
-            memcpy_result = self.cuda.cuMemcpyDtoH(
+            memcpy_result = self.cuda.cuMemcpyDtoHAsync(
                 int(host_array.ctypes.data),
                 device_ptr,
                 int(host_array.nbytes),
+                self.cuda_stream,
             )
         except Exception as exc:
             raise self._device_to_host_copy_error(engine_path) from exc
@@ -691,6 +732,8 @@ class TensorRtEngine(InferenceEngine):
         EdgeBench 공통 출력 형식(List[Any])으로 반환한다.
         """
         engine_path = self.runtime_paths.runtime_artifact_path or "unknown"
+        if self.cuda is None or self.cuda_stream is None or not self.cuda_stream_handle:
+            raise self._execution_error(engine_path)
 
         for inp in self.inputs:
             if inp.name not in feeds:
@@ -724,15 +767,18 @@ class TensorRtEngine(InferenceEngine):
                         raise self._execution_error(engine_path)
 
                 if hasattr(self.context, "execute_async_v3"):
-                    execute_result = self.context.execute_async_v3(0)
+                    execute_result = self.context.execute_async_v3(self.cuda_stream_handle)
                 elif hasattr(self.context, "execute_v3"):
                     execute_result = self.context.execute_v3()
                 else:
                     raise self._execution_error(engine_path)
+            elif hasattr(self.context, "execute_async_v2"):
+                execute_result = self.context.execute_async_v2(
+                    self.binding_device_ptrs,
+                    self.cuda_stream_handle,
+                )
             elif hasattr(self.context, "execute_v2"):
                 execute_result = self.context.execute_v2(self.binding_device_ptrs)
-            elif hasattr(self.context, "execute_async_v2"):
-                execute_result = self.context.execute_async_v2(self.binding_device_ptrs, 0)
             else:
                 raise self._execution_error(engine_path)
         except RuntimeError:
@@ -741,6 +787,15 @@ class TensorRtEngine(InferenceEngine):
             raise self._execution_error(engine_path) from exc
 
         if execute_result is False:
+            raise self._execution_error(engine_path)
+
+        try:
+            sync_result = self.cuda.cuStreamSynchronize(self.cuda_stream)
+        except Exception as exc:
+            raise self._execution_error(engine_path) from exc
+
+        sync_status = sync_result[0] if isinstance(sync_result, tuple) else sync_result
+        if int(sync_status) != 0:
             raise self._execution_error(engine_path)
 
         outputs: List[Any] = []
@@ -791,6 +846,11 @@ class TensorRtEngine(InferenceEngine):
             raise RuntimeError(
                 "TensorRT binding device pointers are not prepared. "
                 "Call _allocate_runtime_buffers() before using the runtime."
+            )
+        if self.cuda_stream is None or not self.cuda_stream_handle:
+            raise RuntimeError(
+                "TensorRT CUDA stream is not prepared. "
+                "Call _load_cuda_driver() before using the runtime."
             )
 
 
