@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Dict
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10 fallback
+    import tomli as tomllib
 
 
 DEFAULT_COMPARE_THRESHOLDS: Dict[str, float] = {
