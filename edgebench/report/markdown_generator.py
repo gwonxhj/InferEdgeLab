@@ -35,6 +35,7 @@ def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[st
     accuracy_metric = accuracy["metrics"]["top1_accuracy"]
     shape = compare_result["shape"]
     shape_context = compare_result["shape_context"]
+    runtime_provenance = compare_result["runtime_provenance"]
     system_diff = compare_result["system_diff"]
     run_config_diff = compare_result["run_config_diff"]
     thresholds = judgement.get("thresholds", {})
@@ -89,6 +90,21 @@ def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[st
         for note in judgement["notes"]:
             lines.append(f"- {note}")
         lines.append("")
+
+    lines.append("## Runtime Provenance Summary")
+    lines.append("")
+    lines.append("| Field | Base | New |")
+    lines.append("|---|---|---|")
+    for field in (
+        "runtime_artifact_path",
+        "primary_input_name",
+        "requested_shape_summary",
+        "effective_shape_summary",
+    ):
+        lines.append(
+            f"| {field} | {_fmt_num(runtime_provenance['base'].get(field))} | {_fmt_num(runtime_provenance['new'].get(field))} |"
+        )
+    lines.append("")
 
     lines.append("## Threshold Policy")
     lines.append("")

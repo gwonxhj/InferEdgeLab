@@ -28,6 +28,13 @@ def _normalize_precision(value: Any) -> str:
     return str(value).strip().lower()
 
 
+def _shape_summary(batch: Any, height: Any, width: Any) -> str:
+    batch_text = batch if batch is not None else "-"
+    height_text = height if height is not None else "-"
+    width_text = width if width is not None else "-"
+    return f"b{batch_text} / h{height_text} / w{width_text}"
+
+
 def compare_results(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]:
     """
     structured result 두 개를 비교해서 핵심 차이를 정리한다.
@@ -152,6 +159,36 @@ def compare_results(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]
                 "effective_width": (new.get("extra") or {}).get("effective_width"),
                 "primary_input_name": (new.get("extra") or {}).get("primary_input_name"),
                 "resolved_input_shapes": (new.get("extra") or {}).get("resolved_input_shapes"),
+            },
+        },
+        "runtime_provenance": {
+            "base": {
+                "runtime_artifact_path": (base.get("extra") or {}).get("runtime_artifact_path"),
+                "primary_input_name": (base.get("extra") or {}).get("primary_input_name"),
+                "requested_shape_summary": _shape_summary(
+                    base_run.get("requested_batch"),
+                    base_run.get("requested_height"),
+                    base_run.get("requested_width"),
+                ),
+                "effective_shape_summary": _shape_summary(
+                    (base.get("extra") or {}).get("effective_batch"),
+                    (base.get("extra") or {}).get("effective_height"),
+                    (base.get("extra") or {}).get("effective_width"),
+                ),
+            },
+            "new": {
+                "runtime_artifact_path": (new.get("extra") or {}).get("runtime_artifact_path"),
+                "primary_input_name": (new.get("extra") or {}).get("primary_input_name"),
+                "requested_shape_summary": _shape_summary(
+                    new_run.get("requested_batch"),
+                    new_run.get("requested_height"),
+                    new_run.get("requested_width"),
+                ),
+                "effective_shape_summary": _shape_summary(
+                    (new.get("extra") or {}).get("effective_batch"),
+                    (new.get("extra") or {}).get("effective_height"),
+                    (new.get("extra") or {}).get("effective_width"),
+                ),
             },
         },
         "system_diff": {
