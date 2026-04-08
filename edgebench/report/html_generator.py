@@ -132,6 +132,7 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
     metrics = compare_result["metrics"]
     accuracy = compare_result["accuracy"]
     thresholds = judgement.get("thresholds", {})
+    shape_context = compare_result["shape_context"]
 
     shape_rows = _table_rows_from_diff_map(
         {
@@ -146,6 +147,43 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
             "width": {
                 "base": compare_result["shape"]["base"]["width"],
                 "new": compare_result["shape"]["new"]["width"],
+            },
+        }
+    )
+
+    provenance_rows = _table_rows_from_diff_map(
+        {
+            "requested_batch": {
+                "base": shape_context["base"].get("requested_batch"),
+                "new": shape_context["new"].get("requested_batch"),
+            },
+            "requested_height": {
+                "base": shape_context["base"].get("requested_height"),
+                "new": shape_context["new"].get("requested_height"),
+            },
+            "requested_width": {
+                "base": shape_context["base"].get("requested_width"),
+                "new": shape_context["new"].get("requested_width"),
+            },
+            "effective_batch": {
+                "base": shape_context["base"].get("effective_batch"),
+                "new": shape_context["new"].get("effective_batch"),
+            },
+            "effective_height": {
+                "base": shape_context["base"].get("effective_height"),
+                "new": shape_context["new"].get("effective_height"),
+            },
+            "effective_width": {
+                "base": shape_context["base"].get("effective_width"),
+                "new": shape_context["new"].get("effective_width"),
+            },
+            "primary_input_name": {
+                "base": shape_context["base"].get("primary_input_name"),
+                "new": shape_context["new"].get("primary_input_name"),
+            },
+            "resolved_input_shapes": {
+                "base": str(shape_context["base"].get("resolved_input_shapes")),
+                "new": str(shape_context["new"].get("resolved_input_shapes")),
             },
         }
     )
@@ -410,6 +448,20 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
     </thead>
     <tbody>
       {shape_rows}
+    </tbody>
+  </table>
+
+  <h2>Input Shape Provenance</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Field</th>
+        <th>Base</th>
+        <th>New</th>
+      </tr>
+    </thead>
+    <tbody>
+      {provenance_rows}
     </tbody>
   </table>
 

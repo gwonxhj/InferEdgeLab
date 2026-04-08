@@ -231,6 +231,32 @@ def compare_cmd(
 
     rprint(shape_table)
 
+    shape_context = result["shape_context"]
+    provenance_table = Table(title="Input Shape Provenance")
+    provenance_table.add_column("Field")
+    provenance_table.add_column("Base", justify="right")
+    provenance_table.add_column("New", justify="right")
+
+    for field in (
+        "requested_batch",
+        "requested_height",
+        "requested_width",
+        "effective_batch",
+        "effective_height",
+        "effective_width",
+        "primary_input_name",
+        "resolved_input_shapes",
+    ):
+        base_value = shape_context["base"].get(field)
+        new_value = shape_context["new"].get(field)
+        provenance_table.add_row(
+            field,
+            str(base_value) if isinstance(base_value, (dict, list)) else _fmt_num(base_value),
+            str(new_value) if isinstance(new_value, (dict, list)) else _fmt_num(new_value),
+        )
+
+    rprint(provenance_table)
+
     system_diff = result["system_diff"]
     system_table = Table(title="System Info")
     system_table.add_column("Field")
