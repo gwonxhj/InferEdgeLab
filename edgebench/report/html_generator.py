@@ -133,6 +133,7 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
     accuracy = compare_result["accuracy"]
     thresholds = judgement.get("thresholds", {})
     shape_context = compare_result["shape_context"]
+    runtime_provenance = compare_result["runtime_provenance"]
 
     shape_rows = _table_rows_from_diff_map(
         {
@@ -184,6 +185,27 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
             "resolved_input_shapes": {
                 "base": str(shape_context["base"].get("resolved_input_shapes")),
                 "new": str(shape_context["new"].get("resolved_input_shapes")),
+            },
+        }
+    )
+
+    runtime_provenance_rows = _table_rows_from_diff_map(
+        {
+            "runtime_artifact_path": {
+                "base": runtime_provenance["base"].get("runtime_artifact_path"),
+                "new": runtime_provenance["new"].get("runtime_artifact_path"),
+            },
+            "primary_input_name": {
+                "base": runtime_provenance["base"].get("primary_input_name"),
+                "new": runtime_provenance["new"].get("primary_input_name"),
+            },
+            "requested_shape_summary": {
+                "base": runtime_provenance["base"].get("requested_shape_summary"),
+                "new": runtime_provenance["new"].get("requested_shape_summary"),
+            },
+            "effective_shape_summary": {
+                "base": runtime_provenance["base"].get("effective_shape_summary"),
+                "new": runtime_provenance["new"].get("effective_shape_summary"),
             },
         }
     )
@@ -374,6 +396,20 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
     <div class="summary"><strong>Summary</strong>: {escape(str(judgement["summary"]))}</div>
     {notes_html}
   </div>
+
+  <h2>Runtime Provenance Summary</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Field</th>
+        <th>Base</th>
+        <th>New</th>
+      </tr>
+    </thead>
+    <tbody>
+      {runtime_provenance_rows}
+    </tbody>
+  </table>
 
   <h2>Threshold Policy</h2>
   <table>

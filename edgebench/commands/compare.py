@@ -124,6 +124,26 @@ def compare_cmd(
     rprint(f"Trade-off risk   : {judgement['tradeoff_risk']}")
     rprint(f"Summary          : {judgement['summary']}")
 
+    runtime_provenance = result["runtime_provenance"]
+    runtime_table = Table(title="Runtime Provenance Summary")
+    runtime_table.add_column("Field")
+    runtime_table.add_column("Base", justify="right")
+    runtime_table.add_column("New", justify="right")
+
+    for field in (
+        "runtime_artifact_path",
+        "primary_input_name",
+        "requested_shape_summary",
+        "effective_shape_summary",
+    ):
+        runtime_table.add_row(
+            field,
+            _fmt_num(runtime_provenance["base"].get(field)),
+            _fmt_num(runtime_provenance["new"].get(field)),
+        )
+
+    rprint(runtime_table)
+
     rprint("[bold]Thresholds[/bold]")
     rprint(f"Latency improve threshold : {thresholds['latency_improve_threshold']:+.2f}%")
     rprint(f"Latency regress threshold : {thresholds['latency_regress_threshold']:+.2f}%")
