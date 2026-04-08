@@ -39,6 +39,33 @@ def _latency_stats_ms(samples_ms: np.ndarray) -> Dict[str, float]:
     }
 
 
+def _summarize_effective_input_shapes(feeds: Dict[str, Any]) -> Dict[str, Any]:
+    resolved_input_shapes: Dict[str, Any] = {}
+    primary_input_name = next(iter(feeds), None)
+    effective_batch = None
+    effective_height = None
+    effective_width = None
+
+    for name, value in feeds.items():
+        resolved_input_shapes[name] = list(np.asarray(value).shape)
+
+    if primary_input_name is not None:
+        primary_shape = resolved_input_shapes.get(primary_input_name, [])
+        if len(primary_shape) >= 1:
+            effective_batch = primary_shape[0]
+        if len(primary_shape) >= 4:
+            effective_height = primary_shape[2]
+            effective_width = primary_shape[3]
+
+    return {
+        "resolved_input_shapes": resolved_input_shapes,
+        "primary_input_name": primary_input_name,
+        "effective_batch": effective_batch,
+        "effective_height": effective_height,
+        "effective_width": effective_width,
+    }
+
+
 def profile_engine(
     engine: InferenceEngine,
     model_path: str,
@@ -64,6 +91,7 @@ def profile_engine(
         )
 
         input_names = list(feeds.keys())
+        effective_shape_summary = _summarize_effective_input_shapes(feeds)
 
         for _ in range(warmup):
             engine.run(feeds)
@@ -78,11 +106,16 @@ def profile_engine(
         stats = _latency_stats_ms(samples)
 
         extra = {
-            "batch": batch if batch is not None else 1,
             "input_names": input_names,
-            "height": height,
-            "width": width,
             "load_kwargs": load_kwargs,
+            "requested_batch": batch,
+            "requested_height": height,
+            "requested_width": width,
+            "resolved_input_shapes": effective_shape_summary["resolved_input_shapes"],
+            "primary_input_name": effective_shape_summary["primary_input_name"],
+            "effective_batch": effective_shape_summary["effective_batch"],
+            "effective_height": effective_shape_summary["effective_height"],
+            "effective_width": effective_shape_summary["effective_width"],
         }
 
         return ProfileResult(

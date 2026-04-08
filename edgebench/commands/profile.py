@@ -94,6 +94,18 @@ def profile_cmd(
     except RuntimeError as exc:
         _exit_with_runtime_error(str(exc))
 
+    effective_batch = prof.extra.get("effective_batch")
+    if effective_batch is None:
+        effective_batch = batch if batch is not None else 1
+
+    effective_height = prof.extra.get("effective_height")
+    if effective_height is None:
+        effective_height = height if height > 0 else 0
+
+    effective_width = prof.extra.get("effective_width")
+    if effective_width is None:
+        effective_width = width if width > 0 else 0
+
     report = EdgeBenchReport(
         schema_version="0.1",
         timestamp=utc_now_iso(),
@@ -134,7 +146,7 @@ def profile_cmd(
         model_name = os.path.splitext(os.path.basename(model_path))[0]
         output = os.path.join(
             "reports",
-            f"{model_name}__{prof.engine}_{prof.device}__b{batch}__h{height or 0}w{width or 0}__r{runs}__{ts}.json",
+            f"{model_name}__{prof.engine}_{prof.device}__b{effective_batch}__h{effective_height}w{effective_width}__r{runs}__{ts}.json",
         )
 
     report.write_json(output)
@@ -145,9 +157,9 @@ def profile_cmd(
         engine=prof.engine,
         device=prof.device,
         precision=precision,
-        batch=batch,
-        height=height if height > 0 else 0,
-        width=width if width > 0 else 0,
+        batch=effective_batch,
+        height=effective_height,
+        width=effective_width,
         mean_ms=prof.latency_ms.get("mean"),
         p99_ms=prof.latency_ms.get("p99"),
         timestamp=ts,
@@ -160,10 +172,18 @@ def profile_cmd(
             "runs": runs,
             "intra_threads": intra_threads,
             "inter_threads": inter_threads,
+            "requested_batch": batch,
+            "requested_height": height if height > 0 else None,
+            "requested_width": width if width > 0 else None,
         },
         extra={
             "input_names": prof.extra.get("input_names"),
             "runtime_artifact_path": engine_path.strip() or None,
+            "primary_input_name": prof.extra.get("primary_input_name"),
+            "resolved_input_shapes": prof.extra.get("resolved_input_shapes"),
+            "effective_batch": effective_batch,
+            "effective_height": effective_height,
+            "effective_width": effective_width,
         },
     )
 
