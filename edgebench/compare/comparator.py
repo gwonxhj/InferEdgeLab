@@ -132,6 +132,28 @@ def compare_results(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]
                 "width": new.get("width"),
             },
         },
+        "shape_context": {
+            "base": {
+                "requested_batch": base_run.get("requested_batch"),
+                "requested_height": base_run.get("requested_height"),
+                "requested_width": base_run.get("requested_width"),
+                "effective_batch": (base.get("extra") or {}).get("effective_batch"),
+                "effective_height": (base.get("extra") or {}).get("effective_height"),
+                "effective_width": (base.get("extra") or {}).get("effective_width"),
+                "primary_input_name": (base.get("extra") or {}).get("primary_input_name"),
+                "resolved_input_shapes": (base.get("extra") or {}).get("resolved_input_shapes"),
+            },
+            "new": {
+                "requested_batch": new_run.get("requested_batch"),
+                "requested_height": new_run.get("requested_height"),
+                "requested_width": new_run.get("requested_width"),
+                "effective_batch": (new.get("extra") or {}).get("effective_batch"),
+                "effective_height": (new.get("extra") or {}).get("effective_height"),
+                "effective_width": (new.get("extra") or {}).get("effective_width"),
+                "primary_input_name": (new.get("extra") or {}).get("primary_input_name"),
+                "resolved_input_shapes": (new.get("extra") or {}).get("resolved_input_shapes"),
+            },
+        },
         "system_diff": {
             "os": {
                 "base": base_system.get("os"),

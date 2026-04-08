@@ -34,6 +34,7 @@ def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[st
     accuracy = compare_result["accuracy"]
     accuracy_metric = accuracy["metrics"]["top1_accuracy"]
     shape = compare_result["shape"]
+    shape_context = compare_result["shape_context"]
     system_diff = compare_result["system_diff"]
     run_config_diff = compare_result["run_config_diff"]
     thresholds = judgement.get("thresholds", {})
@@ -143,6 +144,29 @@ def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[st
         lines.append(
             f"| {field} | {_fmt_num(shape['base'].get(field))} | {_fmt_num(shape['new'].get(field))} |"
         )
+    lines.append("")
+
+    lines.append("## Input Shape Provenance")
+    lines.append("")
+    lines.append("| Field | Base | New |")
+    lines.append("|---|---:|---:|")
+    for field in (
+        "requested_batch",
+        "requested_height",
+        "requested_width",
+        "effective_batch",
+        "effective_height",
+        "effective_width",
+        "primary_input_name",
+    ):
+        lines.append(
+            f"| {field} | {_fmt_num(shape_context['base'].get(field))} | {_fmt_num(shape_context['new'].get(field))} |"
+        )
+    lines.append("")
+    lines.append("### Resolved Input Shapes")
+    lines.append("")
+    lines.append(f"- Base: `{str(shape_context['base'].get('resolved_input_shapes'))}`")
+    lines.append(f"- New: `{str(shape_context['new'].get('resolved_input_shapes'))}`")
     lines.append("")
 
     lines.append("## System Info")
