@@ -53,44 +53,48 @@ def profile_engine(
         raise ValueError("warmup은 0 이상, runs는 1 이상이어야 합니다.")
 
     load_kwargs = load_kwargs or {}
-    engine.load(model_path, **load_kwargs)
 
-    feeds = engine.make_dummy_inputs(
-        batch_override=batch,
-        height_override=height,
-        width_override=width,
-    )
+    try:
+        engine.load(model_path, **load_kwargs)
 
-    input_names = list(feeds.keys())
+        feeds = engine.make_dummy_inputs(
+            batch_override=batch,
+            height_override=height,
+            width_override=width,
+        )
 
-    for _ in range(warmup):
-        engine.run(feeds)
+        input_names = list(feeds.keys())
 
-    samples = np.empty((runs,), dtype=np.float64)
-    for i in range(runs):
-        t0 = time.perf_counter()
-        engine.run(feeds)
-        t1 = time.perf_counter()
-        samples[i] = (t1 - t0) * 1000.0
+        for _ in range(warmup):
+            engine.run(feeds)
 
-    stats = _latency_stats_ms(samples)
+        samples = np.empty((runs,), dtype=np.float64)
+        for i in range(runs):
+            t0 = time.perf_counter()
+            engine.run(feeds)
+            t1 = time.perf_counter()
+            samples[i] = (t1 - t0) * 1000.0
 
-    extra = {
-        "batch": batch if batch is not None else 1,
-        "input_names": input_names,
-        "height": height,
-        "width": width,
-        "load_kwargs": load_kwargs,
-    }
+        stats = _latency_stats_ms(samples)
 
-    return ProfileResult(
-        engine=engine.name,
-        device=engine.device,
-        warmup=warmup,
-        runs=runs,
-        latency_ms=stats,
-        extra=extra,
-    )
+        extra = {
+            "batch": batch if batch is not None else 1,
+            "input_names": input_names,
+            "height": height,
+            "width": width,
+            "load_kwargs": load_kwargs,
+        }
+
+        return ProfileResult(
+            engine=engine.name,
+            device=engine.device,
+            warmup=warmup,
+            runs=runs,
+            latency_ms=stats,
+            extra=extra,
+        )
+    finally:
+        engine.close()
 
 
 def profile_model(

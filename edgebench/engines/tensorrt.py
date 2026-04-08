@@ -97,6 +97,7 @@ class TensorRtEngine(InferenceEngine):
         self.host_buffers: Dict[str, Any] = {}
         self.device_buffers: Dict[str, Any] = {}
         self.binding_device_ptrs: List[int] = []
+        self._owns_primary_context: bool = False
 
 
     @staticmethod
@@ -305,6 +306,7 @@ class TensorRtEngine(InferenceEngine):
 
         self.cuda = cuda
         self.cuda_context = cuda_context
+        self._owns_primary_context = True
         self._create_cuda_stream()
         return self.cuda
     
@@ -338,6 +340,86 @@ class TensorRtEngine(InferenceEngine):
 
         self.cuda_stream = cuda_stream
         self.cuda_stream_handle = int(cuda_stream)
+
+    def _free_device_buffers(self) -> None:
+        if self.cuda is None or not self.device_buffers:
+            self.device_buffers = {}
+            self.binding_device_ptrs = []
+            return
+
+        for buffer_info in self.device_buffers.values():
+            device_allocation = buffer_info.get("device_allocation")
+            if device_allocation is None:
+                continue
+            try:
+                free_result = self.cuda.cuMemFree(device_allocation)
+                free_status = free_result[0] if isinstance(free_result, tuple) else free_result
+                _ = int(free_status)
+            except Exception:
+                pass
+
+        self.device_buffers = {}
+        self.binding_device_ptrs = []
+
+    def _destroy_cuda_stream(self) -> None:
+        if self.cuda is None or self.cuda_stream is None or not self.cuda_stream_handle:
+            self.cuda_stream = None
+            self.cuda_stream_handle = 0
+            return
+
+        try:
+            destroy_result = self.cuda.cuStreamDestroy(self.cuda_stream)
+            destroy_status = destroy_result[0] if isinstance(destroy_result, tuple) else destroy_result
+            _ = int(destroy_status)
+        except Exception:
+            pass
+
+        self.cuda_stream = None
+        self.cuda_stream_handle = 0
+
+    def _release_cuda_context(self) -> None:
+        if (
+            self.cuda is None
+            or self.cuda_context is None
+            or not self._owns_primary_context
+        ):
+            self.cuda_context = None
+            self._owns_primary_context = False
+            return
+
+        try:
+            device_result = self.cuda.cuDeviceGet(0)
+            if isinstance(device_result, tuple) and len(device_result) >= 2:
+                device_status, device = device_result[0], device_result[1]
+                if int(device_status) == 0:
+                    release_result = self.cuda.cuDevicePrimaryCtxRelease(device)
+                    release_status = (
+                        release_result[0] if isinstance(release_result, tuple) else release_result
+                    )
+                    _ = int(release_status)
+        except Exception:
+            pass
+
+        self.cuda_context = None
+        self._owns_primary_context = False
+
+    def _reset_runtime_state(self) -> None:
+        self.host_buffers = {}
+        self.inputs = []
+        self.outputs = []
+        self.binding_index_map = {}
+        self.context = None
+        self.engine = None
+        self.runtime = None
+        self.logger = None
+        self.trt = None
+        self.cuda = None
+
+    def close(self) -> None:
+        self._free_device_buffers()
+        self._destroy_cuda_stream()
+        self._release_cuda_context()
+        self._reset_runtime_state()
 
     def _deserialize_engine_artifact(self) -> None:
         """
