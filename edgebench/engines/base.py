@@ -99,3 +99,10 @@ class InferenceEngine(ABC):
     @abstractmethod
     def run(self, feeds: Dict[str, Any]) -> List[Any]:
         raise NotImplementedError
+
+    def close(self) -> None:
+        """
+        엔진이 보유한 runtime 자원을 정리한다.
+        기본 구현은 no-op이며, 자원 해제가 필요한 엔진이 override 한다.
+        """
+        return None
