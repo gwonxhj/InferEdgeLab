@@ -21,6 +21,29 @@ EdgeBench는 단순 benchmark 실행 도구가 아니라,
 
 ---
 
+## ⚡ Validation Evidence (Real Edge HW)
+
+### Jetson TensorRT (GPU)
+- resnet18 / yolov8n profiling verified
+- engine=tensorrt, device=gpu, precision=fp16
+- TensorRT execution → structured result → compare / report pipeline 연결
+
+### Odroid RKNN (NPU)
+- YOLOv8n / YOLOv8s detection benchmark (M1 / M2)
+- FP16 → INT8 cross-precision validation
+
+Example (YOLOv8n, Odroid M2):
+
+| Precision | Mean Latency | Accuracy (mAP50) |
+|----------|-------------|------------------|
+| FP16     | ~51 ms      | baseline         |
+| INT8     | ~16 ms      | +1.86 pp         |
+
+👉 EdgeBench는 실제 Edge HW에서 측정된 결과를  
+structured result → compare → report → CI workflow로 재사용합니다.
+
+---
+
 ## 📄 Portfolio Document
 
 👉 [EdgeBench Portfolio (Detailed Design & Architecture)](docs/portfolio/edgebench_portfolio.md)
