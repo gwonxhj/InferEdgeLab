@@ -5,6 +5,8 @@ import json
 import os
 from typing import Any, Dict, List
 
+from edgebench.result.schema import normalize_result_schema
+
 
 def load_result(path: str) -> Dict[str, Any]:
     with open(path, "r", encoding="utf-8") as f:
@@ -13,14 +15,7 @@ def load_result(path: str) -> Dict[str, Any]:
     # legacy compatibility
     has_system = "system" in data
     has_run_config = "run_config" in data
-
-    data.setdefault("system", {})
-    data.setdefault("run_config", {})
-    data.setdefault("extra", {})
-    data.setdefault("precision", "fp32")
-
-    if data.get("accuracy") is None:
-        data["accuracy"] = {}
+    data = normalize_result_schema(data)
     data["legacy_result"] = not (has_system and has_run_config)
 
     return data
