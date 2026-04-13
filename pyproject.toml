@@ -13,6 +13,9 @@ dependencies = [
     "typer"
 ]
 
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
 [project.scripts]
 edgebench = "edgebench.cli:app"
 
@@ -23,6 +26,10 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 include = ["edgebench*"]
 exclude = ["models*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
 
 [tool.edgebench.compare]
 latency_improve_threshold = -3.0
