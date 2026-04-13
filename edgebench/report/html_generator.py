@@ -24,6 +24,22 @@ def _fmt_pp(v: Optional[float]) -> str:
     return f"{v:+.2f}pp"
 
 
+def _ordered_accuracy_metrics(accuracy: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    metrics = accuracy.get("metrics") or {}
+    primary_metric = str(accuracy.get("metric_name") or "")
+
+    ordered: Dict[str, Dict[str, Any]] = {}
+    if primary_metric and primary_metric in metrics:
+        ordered[primary_metric] = metrics[primary_metric]
+
+    for metric_name, values in metrics.items():
+        if metric_name == primary_metric:
+            continue
+        ordered[metric_name] = values
+
+    return ordered
+
+
 def _badge_class_for_overall(overall: str) -> str:
     if overall in {"improvement", "tradeoff_faster"}:
         return "badge-good"
@@ -131,6 +147,7 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
     precision = compare_result["precision"]
     metrics = compare_result["metrics"]
     accuracy = compare_result["accuracy"]
+    primary_accuracy_metric = str(accuracy.get("metric_name") or "unknown")
     thresholds = judgement.get("thresholds", {})
     shape_context = compare_result["shape_context"]
     runtime_provenance = compare_result["runtime_provenance"]
@@ -222,7 +239,7 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
     system_rows = _table_rows_from_diff_map(compare_result["system_diff"])
     run_rows = _table_rows_from_diff_map(compare_result["run_config_diff"])
     metric_rows = _table_rows_from_metric_map(metrics)
-    accuracy_rows = _table_rows_from_accuracy_map(accuracy["metrics"])
+    accuracy_rows = _table_rows_from_accuracy_map(_ordered_accuracy_metrics(accuracy))
     notes_html = _notes_to_html(judgement["notes"])
     threshold_rows = _threshold_rows(thresholds)
 
@@ -443,6 +460,7 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
   <h2>Accuracy Comparison</h2>
   <div class="meta">
     <p><strong>Task</strong>: <code>{escape(str(accuracy.get("task") or "unknown"))}</code></p>
+    <p><strong>Primary metric</strong>: <code>{escape(primary_accuracy_metric)}</code></p>
   </div>
   <table>
     <thead>

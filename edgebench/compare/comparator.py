@@ -42,6 +42,75 @@ def _shape_summary(batch: Any, height: Any, width: Any) -> str:
     return f"b{batch_text} / h{height_text} / w{width_text}"
 
 
+def _is_numeric_metric(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _select_primary_accuracy_metric(
+    task: Any,
+    base_metrics: Dict[str, Any],
+    new_metrics: Dict[str, Any],
+) -> str:
+    task_name = str(task or "").strip().lower()
+    preferred_by_task = {
+        "classification": "top1_accuracy",
+        "detection": "map50",
+    }
+
+    preferred = preferred_by_task.get(task_name)
+    if preferred and (
+        _is_numeric_metric(base_metrics.get(preferred)) or _is_numeric_metric(new_metrics.get(preferred))
+    ):
+        return preferred
+
+    for metric_name in ("top1_accuracy", "map50"):
+        if _is_numeric_metric(base_metrics.get(metric_name)) or _is_numeric_metric(new_metrics.get(metric_name)):
+            return metric_name
+
+    for metric_name in list(base_metrics.keys()) + list(new_metrics.keys()):
+        if _is_numeric_metric(base_metrics.get(metric_name)) or _is_numeric_metric(new_metrics.get(metric_name)):
+            return str(metric_name)
+
+    return preferred or "top1_accuracy"
+
+
+def _build_accuracy_metric_map(
+    base_metrics: Dict[str, Any],
+    new_metrics: Dict[str, Any],
+) -> Dict[str, Dict[str, Optional[float]]]:
+    metric_names: list[str] = []
+
+    for metric_name in base_metrics.keys():
+        if metric_name not in metric_names:
+            metric_names.append(metric_name)
+
+    for metric_name in new_metrics.keys():
+        if metric_name not in metric_names:
+            metric_names.append(metric_name)
+
+    metric_map: Dict[str, Dict[str, Optional[float]]] = {}
+    for metric_name in metric_names:
+        base_value = base_metrics.get(metric_name)
+        new_value = new_metrics.get(metric_name)
+
+        if not _is_numeric_metric(base_value) and not _is_numeric_metric(new_value):
+            continue
+
+        base_num = float(base_value) if _is_numeric_metric(base_value) else None
+        new_num = float(new_value) if _is_numeric_metric(new_value) else None
+        delta = _safe_delta(base_num, new_num)
+
+        metric_map[str(metric_name)] = {
+            "base": base_num,
+            "new": new_num,
+            "delta": delta,
+            "delta_pct": _safe_pct_delta(base_num, new_num),
+            "delta_pp": (delta * 100.0) if delta is not None else None,
+        }
+
+    return metric_map
+
+
 def compare_results(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]:
     """
     structured result 두 개를 비교해서 핵심 차이를 정리한다.
@@ -66,9 +135,16 @@ def compare_results(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]
 
     base_accuracy_metrics = base_accuracy.get("metrics") or {}
     new_accuracy_metrics = new_accuracy.get("metrics") or {}
-
-    base_top1 = base_accuracy_metrics.get("top1_accuracy")
-    new_top1 = new_accuracy_metrics.get("top1_accuracy")
+    accuracy_task = new_accuracy.get("task") or base_accuracy.get("task")
+    primary_metric_name = _select_primary_accuracy_metric(
+        accuracy_task,
+        base_accuracy_metrics,
+        new_accuracy_metrics,
+    )
+    accuracy_metrics = _build_accuracy_metric_map(
+        base_accuracy_metrics,
+        new_accuracy_metrics,
+    )
 
     base_precision = _normalize_precision(base.get("precision"))
     new_precision = _normalize_precision(new.get("precision"))
@@ -76,7 +152,15 @@ def compare_results(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]
     comparison_mode = "same_precision" if precision_match else "cross_precision"
     precision_pair = f"{base_precision}_vs_{new_precision}"
 
-    accuracy_present = (base_top1 is not None) or (new_top1 is not None)
+    primary_metric = accuracy_metrics.get(primary_metric_name) or {}
+    accuracy_present = bool(accuracy_metrics) and (
+        primary_metric.get("base") is not None
+        or primary_metric.get("new") is not None
+        or any(
+            values.get("base") is not None or values.get("new") is not None
+            for values in accuracy_metrics.values()
+        )
+    )
 
     return {
         "base_id": {
@@ -116,25 +200,13 @@ def compare_results(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]
         },
         "accuracy": {
             "present": accuracy_present,
-            "task": new_accuracy.get("task") or base_accuracy.get("task"),
-            "metric_name": "top1_accuracy",
+            "task": accuracy_task,
+            "metric_name": primary_metric_name,
             "sample_count": {
                 "base": base_accuracy.get("sample_count"),
                 "new": new_accuracy.get("sample_count"),
             },
-            "metrics": {
-                "top1_accuracy": {
-                    "base": base_top1,
-                    "new": new_top1,
-                    "delta": _safe_delta(base_top1, new_top1),
-                    "delta_pct": _safe_pct_delta(base_top1, new_top1),
-                    "delta_pp": (
-                        _safe_delta(base_top1, new_top1) * 100.0
-                        if _safe_delta(base_top1, new_top1) is not None
-                        else None
-                    ),
-                }
-            },
+            "metrics": accuracy_metrics,
         },
         "shape": {
             "base": {

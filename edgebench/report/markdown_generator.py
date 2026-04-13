@@ -23,6 +23,22 @@ def _fmt_pp(v: Optional[float]) -> str:
     return f"{v:+.2f}pp"
 
 
+def _sorted_accuracy_metric_items(accuracy: Dict[str, Any]) -> list[tuple[str, Dict[str, Any]]]:
+    metrics = accuracy.get("metrics") or {}
+    primary_metric = str(accuracy.get("metric_name") or "")
+
+    ordered: list[tuple[str, Dict[str, Any]]] = []
+    if primary_metric and primary_metric in metrics:
+        ordered.append((primary_metric, metrics[primary_metric]))
+
+    for metric_name, values in metrics.items():
+        if metric_name == primary_metric:
+            continue
+        ordered.append((metric_name, values))
+
+    return ordered
+
+
 def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[str, Any]) -> str:
     """
     compare_results() 출력 dict를 Markdown 문서 문자열로 변환한다.
@@ -32,7 +48,8 @@ def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[st
     precision = compare_result["precision"]
     metrics = compare_result["metrics"]
     accuracy = compare_result["accuracy"]
-    accuracy_metric = accuracy["metrics"]["top1_accuracy"]
+    accuracy_metric_name = str(accuracy.get("metric_name") or "unknown")
+    accuracy_metric_items = _sorted_accuracy_metric_items(accuracy)
     shape = compare_result["shape"]
     shape_context = compare_result["shape_context"]
     runtime_provenance = compare_result["runtime_provenance"]
@@ -80,6 +97,7 @@ def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[st
     lines.append(f"- P99 judgement: **{judgement['p99_ms']}**")
     lines.append(f"- Accuracy judgement: **{judgement['accuracy']}**")
     lines.append(f"- Accuracy present: **{judgement['accuracy_present']}**")
+    lines.append(f"- Primary accuracy metric: **`{accuracy_metric_name}`**")
     lines.append(f"- Trade-off risk: **{judgement['tradeoff_risk']}**")
     lines.append(f"- Summary: {judgement['summary']}")
     lines.append("")
@@ -138,12 +156,15 @@ def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[st
     lines.append("## Accuracy Comparison")
     lines.append("")
     lines.append(f"- Task: **`{accuracy.get('task') or 'unknown'}`**")
+    lines.append(f"- Primary metric: **`{accuracy_metric_name}`**")
     lines.append("")
     lines.append("| Metric | Base | New | Delta | Delta % | Delta pp |")
     lines.append("|---|---:|---:|---:|---:|---:|")
-    lines.append(
-        f"| top1_accuracy | {_fmt_num(accuracy_metric['base'])} | {_fmt_num(accuracy_metric['new'])} | {_fmt_num(accuracy_metric['delta'])} | {_fmt_pct(accuracy_metric['delta_pct'])} | {_fmt_pp(accuracy_metric['delta_pp'])} |"
-    )
+    for metric_name, values in accuracy_metric_items:
+        metric_label = f"{metric_name} (primary)" if metric_name == accuracy_metric_name else metric_name
+        lines.append(
+            f"| {metric_label} | {_fmt_num(values.get('base'))} | {_fmt_num(values.get('new'))} | {_fmt_num(values.get('delta'))} | {_fmt_pct(values.get('delta_pct'))} | {_fmt_pp(values.get('delta_pp'))} |"
+        )
     lines.append("")
     lines.append("| Field | Base | New |")
     lines.append("|---|---:|---:|")
