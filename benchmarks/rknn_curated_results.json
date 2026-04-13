@@ -1,0 +1,99 @@
+[
+  {
+    "model": "yolov8n",
+    "engine": "rknn",
+    "device": "odroid_m1",
+    "precision": "fp16",
+    "batch": 1,
+    "height": 640,
+    "width": 640,
+    "mean_ms": 120.919,
+    "p99_ms": null,
+    "timestamp": "2026-04-13T00:00:00Z",
+    "accuracy": {
+      "task": "detection",
+      "metrics": {
+        "map50": 0.7752,
+        "f1_score": 0.8104,
+        "precision": 0.8132,
+        "recall": 0.8076
+      }
+    },
+    "extra": {
+      "quantization_mode": "fp16",
+      "quantization_preset": "default",
+      "source": "odroid_report"
+    }
+  },
+  {
+    "model": "yolov8n",
+    "engine": "rknn",
+    "device": "odroid_m2",
+    "precision": "fp16",
+    "batch": 1,
+    "height": 640,
+    "width": 640,
+    "mean_ms": 51.813,
+    "p99_ms": null,
+    "timestamp": "2026-04-13T00:05:00Z",
+    "accuracy": {
+      "task": "detection",
+      "metrics": {
+        "map50": 0.7791
+      }
+    },
+    "extra": {
+      "quantization_mode": "fp16",
+      "quantization_preset": "default",
+      "source": "odroid_report"
+    }
+  },
+  {
+    "model": "yolov8n",
+    "engine": "rknn",
+    "device": "odroid_m2",
+    "precision": "int8",
+    "batch": 1,
+    "height": 640,
+    "width": 640,
+    "mean_ms": 16.289,
+    "p99_ms": null,
+    "timestamp": "2026-04-13T00:10:00Z",
+    "accuracy": {
+      "task": "detection",
+      "metrics": {
+        "map50": 0.7977,
+        "f1_score": 0.8129
+      }
+    },
+    "extra": {
+      "quantization_mode": "hybrid_int8",
+      "quantization_preset": "default",
+      "source": "odroid_report"
+    }
+  },
+  {
+    "model": "yolov8s",
+    "engine": "rknn",
+    "device": "odroid_m2",
+    "precision": "int8",
+    "batch": 1,
+    "height": 640,
+    "width": 640,
+    "mean_ms": 29.155,
+    "p99_ms": null,
+    "timestamp": "2026-04-13T00:15:00Z",
+    "accuracy": {
+      "task": "detection",
+      "metrics": {
+        "map50": 0.8090,
+        "f1_score": 0.8206
+      }
+    },
+    "extra": {
+      "quantization_mode": "hybrid_int8",
+      "quantization_preset": "default",
+      "source": "odroid_report"
+    }
+  }
+]

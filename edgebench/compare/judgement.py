@@ -128,6 +128,7 @@ def _build_summary(
     overall: str,
     comparison_mode: str,
     precision_pair: str,
+    accuracy_metric_name: str,
     mean_judgement: str,
     p99_judgement: str,
     accuracy_judgement: str,
@@ -141,9 +142,9 @@ def _build_summary(
 
     accuracy_text = ""
     if accuracy_present and accuracy_delta_pp is not None:
-        accuracy_text = f" Accuracy delta: {accuracy_delta_pp:+.2f}pp."
+        accuracy_text = f" Primary accuracy metric ({accuracy_metric_name}) delta: {accuracy_delta_pp:+.2f}pp."
     elif accuracy_present:
-        accuracy_text = " Accuracy data is present but partially incomplete."
+        accuracy_text = f" Primary accuracy metric ({accuracy_metric_name}) is present but partially incomplete."
     else:
         accuracy_text = " Accuracy trade-offs are not available in these results."
 
@@ -186,6 +187,7 @@ def _build_notes(
     shape_match: bool,
     system_match: bool,
     accuracy_present: bool,
+    accuracy_metric_name: str,
     accuracy_judgement: str,
     accuracy_delta_pp: Optional[float],
     tradeoff_risk: str,
@@ -215,16 +217,16 @@ def _build_notes(
 
     if accuracy_present:
         notes.append(
-            "Accuracy data is available and is compared using top1_accuracy with percentage-point deltas."
+            f"Accuracy data is available and is compared using {accuracy_metric_name} as the primary metric with percentage-point deltas."
         )
         if accuracy_delta_pp is not None:
-            notes.append(f"Accuracy delta (new - base): {accuracy_delta_pp:+.2f}pp.")
+            notes.append(f"Primary accuracy delta (new - base, {accuracy_metric_name}): {accuracy_delta_pp:+.2f}pp.")
         if accuracy_judgement == "regression":
-            notes.append("The new result shows an accuracy regression.")
+            notes.append(f"The new result shows a primary accuracy regression on {accuracy_metric_name}.")
         elif accuracy_judgement == "improvement":
-            notes.append("The new result shows an accuracy improvement.")
+            notes.append(f"The new result shows a primary accuracy improvement on {accuracy_metric_name}.")
         else:
-            notes.append("The new result shows no strong accuracy change.")
+            notes.append(f"The new result shows no strong primary accuracy change on {accuracy_metric_name}.")
     else:
         notes.append(
             "Accuracy data is not available for one or both results, so trade-off interpretation is latency-only."
@@ -279,7 +281,8 @@ def judge_comparison(
         regress_threshold=latency_regress_threshold,
     )
 
-    accuracy_metric = accuracy["metrics"]["top1_accuracy"]
+    accuracy_metric_name = str(accuracy.get("metric_name") or "top1_accuracy")
+    accuracy_metric = accuracy.get("metrics", {}).get(accuracy_metric_name, {})
     accuracy_delta_pp = accuracy_metric.get("delta_pp")
     accuracy_present = accuracy.get("present", False)
     accuracy_judgement = _judge_accuracy_delta_pp(
@@ -315,6 +318,7 @@ def judge_comparison(
         overall=overall,
         comparison_mode=comparison_mode,
         precision_pair=precision_pair,
+        accuracy_metric_name=accuracy_metric_name,
         mean_judgement=mean_judgement,
         p99_judgement=p99_judgement,
         accuracy_judgement=accuracy_judgement,
@@ -340,6 +344,7 @@ def judge_comparison(
         shape_match=shape_match,
         system_match=system_match,
         accuracy_present=accuracy_present,
+        accuracy_metric_name=accuracy_metric_name,
         accuracy_judgement=accuracy_judgement,
         accuracy_delta_pp=accuracy_delta_pp,
         tradeoff_risk=tradeoff_risk,

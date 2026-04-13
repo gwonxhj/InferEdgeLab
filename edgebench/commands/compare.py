@@ -184,7 +184,8 @@ def compare_cmd(
     rprint(metric_table)
 
     accuracy = result["accuracy"]
-    accuracy_metric = accuracy["metrics"]["top1_accuracy"]
+    accuracy_metric_name = accuracy.get("metric_name") or "top1_accuracy"
+    accuracy_metrics = accuracy.get("metrics") or {}
 
     accuracy_table = Table(title="Accuracy Comparison")
     accuracy_table.add_column("Metric")
@@ -194,14 +195,18 @@ def compare_cmd(
     accuracy_table.add_column("Delta %", justify="right")
     accuracy_table.add_column("Delta pp", justify="right")
 
-    accuracy_table.add_row(
-        "top1_accuracy",
-        _fmt_num(accuracy_metric["base"]),
-        _fmt_num(accuracy_metric["new"]),
-        _fmt_num(accuracy_metric["delta"]),
-        _fmt_pct(accuracy_metric["delta_pct"]),
-        _fmt_pp(accuracy_metric["delta_pp"]),
-    )
+    if accuracy_metrics:
+        for metric_name, values in accuracy_metrics.items():
+            accuracy_table.add_row(
+                str(metric_name),
+                _fmt_num(values.get("base")),
+                _fmt_num(values.get("new")),
+                _fmt_num(values.get("delta")),
+                _fmt_pct(values.get("delta_pct")),
+                _fmt_pp(values.get("delta_pp")),
+            )
+    else:
+        accuracy_table.add_row("-", "-", "-", "-", "-", "-")
 
     rprint(accuracy_table)
 
@@ -216,9 +221,14 @@ def compare_cmd(
         str(accuracy.get("task") or "-"),
     )
     sample_table.add_row(
+        "primary_metric",
+        str(accuracy_metric_name or "-"),
+        str(accuracy_metric_name or "-"),
+    )
+    sample_table.add_row(
         "sample_count",
-        _fmt_num(accuracy["sample_count"]["base"]),
-        _fmt_num(accuracy["sample_count"]["new"]),
+        _fmt_num((accuracy.get("sample_count") or {}).get("base")),
+        _fmt_num((accuracy.get("sample_count") or {}).get("new")),
     )
 
     rprint(sample_table)
