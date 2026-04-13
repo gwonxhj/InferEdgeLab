@@ -104,10 +104,13 @@ def profile_engine(
             samples[i] = (t1 - t0) * 1000.0
 
         stats = _latency_stats_ms(samples)
+        runtime_paths = getattr(engine, "runtime_paths", None)
+        runtime_artifact_path = getattr(runtime_paths, "runtime_artifact_path", None)
 
         extra = {
             "input_names": input_names,
             "load_kwargs": load_kwargs,
+            "runtime_artifact_path": runtime_artifact_path,
             "requested_batch": batch,
             "requested_height": height,
             "requested_width": width,
