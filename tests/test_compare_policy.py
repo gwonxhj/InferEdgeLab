@@ -44,6 +44,9 @@ def write_result(
     mean_ms: float,
     p99_ms: float,
     accuracy: float | None = None,
+    accuracy_task: str = "classification",
+    accuracy_metric_name: str = "top1_accuracy",
+    extra_accuracy_metrics: dict | None = None,
     model: str = "resnet18",
     engine: str = "onnxruntime",
     device: str = "cpu",
@@ -69,13 +72,17 @@ def write_result(
             "cpu_count_logical": 8,
         },
     }
-    if accuracy is not None:
+    if accuracy is not None or extra_accuracy_metrics:
+        metrics = {}
+        if accuracy is not None:
+            metrics[accuracy_metric_name] = accuracy
+        if extra_accuracy_metrics:
+            metrics.update(extra_accuracy_metrics)
+
         data["accuracy"] = {
-            "task": "classification",
+            "task": accuracy_task,
             "sample_count": 100,
-            "metrics": {
-                "top1_accuracy": accuracy,
-            },
+            "metrics": metrics,
         }
 
     path = tmp_path / name
@@ -188,3 +195,86 @@ def test_compare_policy_normal_case_returns_0(tmp_path):
     result = main(pattern=str(tmp_path / "*.json"), selection_mode="same_precision")
 
     assert result == 0
+
+
+def test_compare_policy_cross_precision_detection_caution_tradeoff_returns_0(tmp_path):
+    main = import_check_compare_policy_main()
+
+    write_result(
+        tmp_path,
+        "base.json",
+        timestamp="2026-04-13T09:00:00Z",
+        precision="fp16",
+        mean_ms=51.813,
+        p99_ms=52.0,
+        accuracy=0.7791,
+        accuracy_task="detection",
+        accuracy_metric_name="map50",
+        model="yolov8n",
+        engine="rknn",
+        device="odroid_m2",
+        height=640,
+        width=640,
+    )
+    write_result(
+        tmp_path,
+        "new.json",
+        timestamp="2026-04-13T10:00:00Z",
+        precision="int8",
+        mean_ms=16.289,
+        p99_ms=17.0,
+        accuracy=0.7701,
+        accuracy_task="detection",
+        accuracy_metric_name="map50",
+        extra_accuracy_metrics={"f1_score": 0.8129},
+        model="yolov8n",
+        engine="rknn",
+        device="odroid_m2",
+        height=640,
+        width=640,
+    )
+
+    result = main(pattern=str(tmp_path / "*.json"), selection_mode="cross_precision")
+
+    assert result == 0
+
+
+def test_compare_policy_cross_precision_detection_severe_tradeoff_returns_2(tmp_path):
+    main = import_check_compare_policy_main()
+
+    write_result(
+        tmp_path,
+        "base.json",
+        timestamp="2026-04-13T09:00:00Z",
+        precision="fp16",
+        mean_ms=51.813,
+        p99_ms=52.0,
+        accuracy=0.7791,
+        accuracy_task="detection",
+        accuracy_metric_name="map50",
+        model="yolov8n",
+        engine="rknn",
+        device="odroid_m2",
+        height=640,
+        width=640,
+    )
+    write_result(
+        tmp_path,
+        "new.json",
+        timestamp="2026-04-13T10:00:00Z",
+        precision="int8",
+        mean_ms=16.289,
+        p99_ms=17.0,
+        accuracy=0.7491,
+        accuracy_task="detection",
+        accuracy_metric_name="map50",
+        model="yolov8n",
+        engine="rknn",
+        device="odroid_m2",
+        height=640,
+        width=640,
+    )
+
+    result = main(pattern=str(tmp_path / "*.json"), selection_mode="cross_precision")
+
+    assert result == 2
