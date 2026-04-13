@@ -1,8 +1,8 @@
 [project]
 name = "edgebench"
 version = "0.1.0"
-description = "Edge AI Inference Profiling Framework"
-authors = [{ name = "Your Name" }]
+description = "CLI-based Edge AI inference validation and benchmarking framework"
+authors = [{ name = "HyeokJun Gwon" }]
 readme = "README.md"
 requires-python = ">=3.10,<3.12"
 dependencies = [
