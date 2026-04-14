@@ -3,6 +3,10 @@
 > 현재 이 문서에는 curated hardware validation 결과가 먼저 정리되어 있습니다.
 > CI / auto-generated benchmark summary가 생성되면 동일 문서에 함께 누적됩니다.
 
+이 문서는 CPU auto-generated benchmark 요약과 curated hardware validation 데이터를 함께 관리하는 용도입니다.
+Jetson TensorRT 실기 검증 evidence는 README와 portfolio 문서에서 서술형으로 정리하고,
+이 파일은 표 중심의 benchmark reference 역할에 집중합니다.
+
 ## Curated Hardware Validation
 
 이 섹션은 실제 Odroid RKNN 실험에서 확보한 대표 결과를 EdgeBench result schema로 정리한 표입니다.
@@ -13,6 +17,7 @@
 - Odroid M2 + YOLOv8n 기준 FP16 → INT8 전환 시 mean latency가 약 `22.764 ms → 15.403 ms`로 감소
 - 같은 비교에서 `map50` 기준 accuracy 변화도 함께 추적 가능
 - EdgeBench는 이런 실측 결과를 structured result로 흡수해 동일 compare/report 체계에서 재사용함
+- Jetson TensorRT 실기 검증은 별도 structured result / compare / report evidence로 확보되었으며, 해당 서사는 README와 portfolio 문서에서 함께 정리됨
 
 ### Odroid RKNN Benchmarks
 
