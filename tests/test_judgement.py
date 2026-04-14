@@ -14,6 +14,7 @@ def make_compare_result(
     accuracy_task: str = "classification",
     primary_metric_name: str = "top1_accuracy",
     extra_accuracy_metrics: dict | None = None,
+    run_config_diff: dict | None = None,
 ) -> dict:
     base_metrics: dict = {}
     new_metrics: dict = {}
@@ -99,6 +100,15 @@ def make_compare_result(
             "machine": {"base": "x86_64", "new": "x86_64"},
             "cpu_count_logical": {"base": 8, "new": 8},
         },
+        "run_config_diff": run_config_diff
+        or {
+            "warmup": {"base": 10, "new": 10},
+            "runs": {"base": 100, "new": 100},
+            "intra_threads": {"base": 1, "new": 1},
+            "inter_threads": {"base": 1, "new": 1},
+            "mode": {"base": None, "new": None},
+            "task": {"base": None, "new": None},
+        },
         "precision": {
             "match": comparison_mode == "same_precision",
             "comparison_mode": comparison_mode,
@@ -132,6 +142,37 @@ def test_judge_comparison_same_precision_regression():
 
     assert judgement["overall"] == "regression"
     assert judgement["mean_ms"] == "regression"
+
+
+def test_judge_comparison_same_precision_run_config_mismatch_sets_flag_and_note():
+    judgement = judge_comparison(
+        make_compare_result(
+            comparison_mode="same_precision",
+            run_config_diff={
+                "warmup": {"base": 10, "new": 10},
+                "runs": {"base": 100, "new": 50},
+                "intra_threads": {"base": 1, "new": 1},
+                "inter_threads": {"base": 1, "new": 1},
+                "mode": {"base": None, "new": None},
+                "task": {"base": None, "new": None},
+            },
+        )
+    )
+
+    assert judgement["run_config_match"] is False
+    assert "runs" in judgement["run_config_mismatch_fields"]
+    assert "run_config" in judgement["summary"] or "run_config" in " ".join(judgement["notes"])
+
+
+def test_judge_comparison_same_precision_run_config_match_is_true():
+    judgement = judge_comparison(
+        make_compare_result(
+            comparison_mode="same_precision",
+        )
+    )
+
+    assert judgement["run_config_match"] is True
+    assert judgement["run_config_mismatch_fields"] == []
 
 
 def test_judge_comparison_shape_mismatch_marks_overall_mismatch():

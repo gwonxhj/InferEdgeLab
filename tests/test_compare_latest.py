@@ -54,6 +54,7 @@ def write_result(
     batch: int = 1,
     height: int = 224,
     width: int = 224,
+    run_config: dict | None = None,
 ) -> str:
     path = tmp_path / name
     path.write_text(
@@ -69,6 +70,7 @@ def write_result(
                 "mean_ms": 10.0,
                 "p99_ms": 12.0,
                 "timestamp": timestamp,
+                "run_config": run_config or {},
             }
         ),
         encoding="utf-8",
@@ -144,3 +146,37 @@ def test_compare_latest_with_less_than_two_results_and_non_strict_returns(tmp_pa
     monkeypatch.setattr(compare_latest, "compare_cmd", fail_compare_cmd)
 
     assert compare_latest.compare_latest_cmd(pattern=str(tmp_path / "*.json"), strict=False) is None
+
+
+def test_compare_latest_same_precision_warns_when_core_run_config_differs(tmp_path, monkeypatch, capsys):
+    compare_latest = import_compare_latest_module()
+
+    older = write_result(
+        tmp_path,
+        "older.json",
+        timestamp="2026-04-13T09:00:00Z",
+        precision="fp16",
+        run_config={"runs": 100, "warmup": 10, "intra_threads": 1, "inter_threads": 1, "mode": None, "task": None},
+    )
+    newer = write_result(
+        tmp_path,
+        "newer.json",
+        timestamp="2026-04-13T10:00:00Z",
+        precision="fp16",
+        run_config={"runs": 50, "warmup": 10, "intra_threads": 1, "inter_threads": 1, "mode": None, "task": None},
+    )
+
+    captured = {}
+
+    def fake_compare_cmd(**kwargs):
+        captured.update(kwargs)
+
+    monkeypatch.setattr(compare_latest, "compare_cmd", fake_compare_cmd)
+
+    compare_latest.compare_latest_cmd(pattern=str(tmp_path / "*.json"), selection_mode="same_precision")
+    out = capsys.readouterr().out
+
+    assert "run_config" in out
+    assert "runs" in out
+    assert captured["base_path"] == older
+    assert captured["new_path"] == newer

@@ -18,6 +18,14 @@ def _normalize_selection_mode(value: str) -> str:
     return str(value or "").strip().lower().replace("-", "_")
 
 
+def _core_run_config_mismatch_fields(base_item, new_item) -> list[str]:
+    base_run_config = base_item.get("run_config") or {}
+    new_run_config = new_item.get("run_config") or {}
+    core_fields = ("warmup", "runs", "intra_threads", "inter_threads", "mode", "task")
+
+    return [field for field in core_fields if base_run_config.get(field) != new_run_config.get(field)]
+
+
 def _handle_error_or_warning(message: str, strict: bool) -> None:
     if strict:
         rprint(f"[red]{message}[/red]")
@@ -133,6 +141,14 @@ def compare_latest_cmd(
     rprint(f"New candidate : {new.get('timestamp')} / {new.get('precision')}")
     rprint(f"Base path: {base_path}")
     rprint(f"New path : {new_path}")
+
+    run_config_mismatch_fields = _core_run_config_mismatch_fields(base, new)
+    if selection_mode == "same_precision" and run_config_mismatch_fields:
+        mismatch_fields = ", ".join(run_config_mismatch_fields)
+        rprint(
+            "[yellow]Warning: same-precision latest pair was selected, but core run_config differs "
+            f"({mismatch_fields}). Direct regression tracking should be interpreted with caution.[/yellow]"
+        )
 
     compare_cmd(
         base_path=base_path,
