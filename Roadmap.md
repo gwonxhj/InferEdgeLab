@@ -1,6 +1,6 @@
 # EdgeBench Roadmap
 
-## 🚀 Phase 1 – MVP (macOS, CPU 기반)
+## 🚀 Phase 1 – MVP (macOS, CPU 기반) ✅ (Completed)
 
 목표:  
 CLI 환경에서 ONNX 모델의 구조 분석과 CPU 기반 추론 성능을 정량적으로 측정할 수 있는 최소 기능 구현
@@ -16,7 +16,7 @@ CLI 환경에서 ONNX 모델의 구조 분석과 CPU 기반 추론 성능을 정
 
 ---
 
-## 🧠 Phase 2 – 엔진 추상화 계층 설계
+## 🧠 Phase 2 – 엔진 추상화 계층 설계 🟡 In Progress
 
 목표:  
 추론 엔진을 교체 가능하도록 구조를 일반화
@@ -30,7 +30,7 @@ CLI 환경에서 ONNX 모델의 구조 분석과 CPU 기반 추론 성능을 정
 
 ---
 
-## 📊 Phase 3 – 성능 분석 확장
+## 📊 Phase 3 – 성능 분석 확장 🟡 In Progress
 
 목표:  
 단일 실행 결과가 아닌 통계 기반 성능 분석 제공
@@ -44,7 +44,7 @@ CLI 환경에서 ONNX 모델의 구조 분석과 CPU 기반 추론 성능을 정
 
 ---
 
-## 🔥 Phase 4 – 고급 엣지 디바이스 지원
+## 🔥 Phase 4 – 고급 엣지 디바이스 지원 🟡 In Progress (Jetson validation ongoing)
 
 목표:  
 실제 엣지 환경에서의 성능 비교 및 최적화 분석
@@ -62,7 +62,7 @@ CLI 환경에서 ONNX 모델의 구조 분석과 CPU 기반 추론 성능을 정
 
 ---
 
-## 🧩 Phase 5 – 개발자 경험(Developer Experience) 강화
+## 🧩 Phase 5 – 개발자 경험(Developer Experience) 강화 ⬜ Planned
 
 목표:  
 도구의 사용성 향상 및 브랜딩 확장
