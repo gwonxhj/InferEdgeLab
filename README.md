@@ -251,6 +251,26 @@ Jetson TensorRT 실기 검증 절차는 [docs/validation/jetson_tensorrt_validat
 문서에는 preflight check → repeated profiling → `compare-latest` → Markdown / HTML report 저장 순서의 재현 절차를 기록했습니다.
 실제 검증 예시로는 `resnet18` same-precision regression 사례와 `yolov8n` same-precision neutral 사례를 포함합니다.
 
+### Validation Artifacts (Jetson)
+
+Jetson 디바이스에서 실행한 validation 결과 예시는 아래 경로에 저장됩니다:
+
+- reports/examples/jetson/
+
+## 📌 포함되는 결과
+
+- Markdown 형태의 비교 리포트
+- HTML 기반 시각화 리포트
+- Structured benchmark 결과(JSON 기반)
+
+## ⚙️ 생성 방법
+
+다음 스크립트를 통해 자동 생성됩니다:
+
+scripts/run_jetson_tensorrt_validation.py
+
+> 해당 결과는 실제 TensorRT 기반 추론 환경에서의 성능 및 정확도 변화를 검증하기 위한 자료입니다.
+
 ---
 
 ## ⚠️ Current Limitations & Environment Notes
