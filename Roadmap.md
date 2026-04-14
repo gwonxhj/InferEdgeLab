@@ -52,6 +52,8 @@ CLI 환경에서 ONNX 모델의 구조 분석과 CPU 기반 추론 성능을 정
 ### 구현 항목
 
 - [x] Jetson GPU 실측 검증 경로 지원 (TensorRT Jetson first working path)
+- [x] Jetson TensorRT validation runbook 문서화
+- [x] repeated profiling / compare-latest / report 재사용 검증
 - [x] 양자화 모델(INT8 등) 성능 비교
 - [x] precision trade-off 분석 및 compare judgement
 - [x] RKNN / Odroid curated hardware validation result import
@@ -79,6 +81,7 @@ CLI 환경에서 ONNX 모델의 구조 분석과 CPU 기반 추론 성능을 정
 - [x] ONNX model parsing / params / file size / FLOPs / CPU profiling / structured JSON result
 - [x] Engine base / ONNX Runtime CPU backend
 - [x] TensorRT Jetson first working path
+- [x] Jetson TensorRT repeated validation + compare/report reuse documentation
 - [x] warmup / batch / mean / p99 기반 profiling
 - [x] quantized compare / precision trade-off analysis
 - [x] Rich CLI / HTML report / CI benchmark system
