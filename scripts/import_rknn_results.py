@@ -23,7 +23,10 @@ REQUIRED_KEYS = {
 }
 
 
-def load_curated_results(path: Path = CURATED_RESULTS_PATH) -> list[dict[str, Any]]:
+def load_curated_results(path: Path | None = None) -> list[dict[str, Any]]:
+    if path is None:
+        path = CURATED_RESULTS_PATH
+
     with path.open("r", encoding="utf-8") as f:
         data = json.load(f)
 
