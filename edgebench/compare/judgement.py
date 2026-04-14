@@ -3,6 +3,19 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 
 
+def _collect_core_run_config_mismatch_fields(compare_result: Dict[str, Any]) -> list[str]:
+    run_config_diff = compare_result.get("run_config_diff", {}) or {}
+    core_fields = ("warmup", "runs", "intra_threads", "inter_threads", "mode", "task")
+    mismatched_fields: list[str] = []
+
+    for field in core_fields:
+        field_diff = run_config_diff.get(field, {}) or {}
+        if field_diff.get("base") != field_diff.get("new"):
+            mismatched_fields.append(field)
+
+    return mismatched_fields
+
+
 def _judge_delta_pct(
     delta_pct: Optional[float],
     improve_threshold: float,
@@ -136,6 +149,8 @@ def _build_summary(
     accuracy_present: bool,
     tradeoff_risk: str,
     shape_match: bool,
+    run_config_match: bool,
+    run_config_mismatch_fields: list[str],
 ) -> str:
     if not shape_match:
         return "Input shape mismatch detected. Comparison should be interpreted with caution."
@@ -147,6 +162,14 @@ def _build_summary(
         accuracy_text = f" Primary accuracy metric ({accuracy_metric_name}) is present but partially incomplete."
     else:
         accuracy_text = " Accuracy trade-offs are not available in these results."
+
+    run_config_text = ""
+    if comparison_mode == "same_precision" and not run_config_match:
+        mismatch_fields = ", ".join(run_config_mismatch_fields)
+        run_config_text = (
+            " Core run_config differs between the two results "
+            f"({mismatch_fields}), so same-precision regression confidence is reduced."
+        )
 
     if comparison_mode == "cross_precision":
         risk_text = f" Trade-off risk: {tradeoff_risk}."
@@ -167,18 +190,21 @@ def _build_summary(
         )
 
     if overall == "regression":
-        return f"Same-precision comparison indicates a regression in the new result.{accuracy_text}"
+        return f"Same-precision comparison indicates a regression in the new result.{accuracy_text}{run_config_text}"
 
     if overall == "improvement":
-        return f"Same-precision comparison indicates an improvement in the new result.{accuracy_text}"
+        return f"Same-precision comparison indicates an improvement in the new result.{accuracy_text}{run_config_text}"
 
     if mean_judgement == "unknown" or p99_judgement == "unknown":
-        return f"Some latency metrics are missing, so the comparison result is partially inconclusive.{accuracy_text}"
+        return (
+            "Some latency metrics are missing, so the comparison result is partially inconclusive."
+            f"{accuracy_text}{run_config_text}"
+        )
 
     if accuracy_judgement == "unknown" and accuracy_present:
-        return f"Latency change is limited, but accuracy comparison is partially inconclusive.{accuracy_text}"
+        return f"Latency change is limited, but accuracy comparison is partially inconclusive.{accuracy_text}{run_config_text}"
 
-    return f"Same-precision comparison indicates no significant overall change.{accuracy_text}"
+    return f"Same-precision comparison indicates no significant overall change.{accuracy_text}{run_config_text}"
 
 
 def _build_notes(
@@ -192,6 +218,8 @@ def _build_notes(
     accuracy_delta_pp: Optional[float],
     tradeoff_risk: str,
     thresholds: Dict[str, float],
+    run_config_match: bool,
+    run_config_mismatch_fields: list[str],
 ) -> list[str]:
     notes: list[str] = []
 
@@ -214,6 +242,12 @@ def _build_notes(
         notes.append(
             "This is a same-precision comparison, so latency deltas are more suitable for regression tracking."
         )
+        if not run_config_match:
+            mismatch_fields = ", ".join(run_config_mismatch_fields)
+            notes.append(
+                "Core run_config differs between the two results "
+                f"({mismatch_fields}), so direct regression tracking should be interpreted with caution."
+            )
 
     if accuracy_present:
         notes.append(
@@ -294,6 +328,8 @@ def judge_comparison(
     comparison_mode = precision_info["comparison_mode"]
     precision_pair = precision_info["pair"]
     precision_match = precision_info["match"]
+    run_config_mismatch_fields = _collect_core_run_config_mismatch_fields(compare_result)
+    run_config_match = len(run_config_mismatch_fields) == 0
 
     tradeoff_risk = _classify_tradeoff_risk(
         comparison_mode=comparison_mode,
@@ -326,6 +362,8 @@ def judge_comparison(
         accuracy_present=accuracy_present,
         tradeoff_risk=tradeoff_risk,
         shape_match=shape_match,
+        run_config_match=run_config_match,
+        run_config_mismatch_fields=run_config_mismatch_fields,
     )
 
     thresholds = {
@@ -349,6 +387,8 @@ def judge_comparison(
         accuracy_delta_pp=accuracy_delta_pp,
         tradeoff_risk=tradeoff_risk,
         thresholds=thresholds,
+        run_config_match=run_config_match,
+        run_config_mismatch_fields=run_config_mismatch_fields,
     )
 
     return {
@@ -356,6 +396,8 @@ def judge_comparison(
         "shape_match": shape_match,
         "system_match": system_match,
         "precision_match": precision_match,
+        "run_config_match": run_config_match,
+        "run_config_mismatch_fields": run_config_mismatch_fields,
         "comparison_mode": comparison_mode,
         "precision_pair": precision_pair,
         "mean_ms": mean_judgement,
