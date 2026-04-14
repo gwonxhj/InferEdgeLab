@@ -12,8 +12,10 @@ def _print_step(title: str) -> None:
     print(f"\n== {title} ==")
 
 
-def _run_command(command: Sequence[str]) -> None:
+def _run_command(command: Sequence[str], dry_run: bool = False) -> None:
     print("+", " ".join(shlex.quote(part) for part in command))
+    if dry_run:
+        return
     subprocess.run(command, check=True)
 
 
@@ -110,6 +112,11 @@ def _parse_args() -> argparse.Namespace:
         action="store_true",
         help="Skip scripts/check_jetson_tensorrt_env.py before profiling.",
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print commands without executing subprocesses.",
+    )
     return parser.parse_args()
 
 
@@ -135,11 +142,11 @@ def main() -> int:
             print("Preflight check was skipped by request.")
         else:
             _print_step("Preflight Check")
-            _run_command(_build_preflight_command(model_path, engine_path))
+            _run_command(_build_preflight_command(model_path, engine_path), dry_run=args.dry_run)
 
         for index in range(args.repeat):
             _print_step(f"Profile Run {index + 1}/{args.repeat}")
-            _run_command(_build_profile_command(args, model_path, engine_path))
+            _run_command(_build_profile_command(args, model_path, engine_path), dry_run=args.dry_run)
 
         _print_step("Compare Latest")
         _run_command(
@@ -148,7 +155,8 @@ def main() -> int:
                 precision=str(args.precision),
                 markdown_out=markdown_out,
                 html_out=html_out,
-            )
+            ),
+            dry_run=args.dry_run,
         )
     except subprocess.CalledProcessError as exc:
         print(f"Validation flow failed with exit code {exc.returncode}.")
@@ -157,6 +165,8 @@ def main() -> int:
     _print_step("Validation Complete")
     print(f"Markdown report: {markdown_out}")
     print(f"HTML report    : {html_out}")
+    if args.dry_run:
+        print("Dry-run mode: commands were not executed.")
     return 0
 
 
