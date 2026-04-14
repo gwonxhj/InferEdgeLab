@@ -215,6 +215,13 @@ Profile -> JSON 저장 -> Compare -> History -> Report -> CI 검증
 > 모델 성능을 단순 측정하는 수준을 넘어,
 > **비교·추적·해석·정책판단·CI 검증까지 가능한 inference validation workflow**를 구현했습니다.
 
+### 수치 기반 Validation Evidence
+
+- Jetson TensorRT 경로에서 `resnet18`, `yolov8n` profiling과 structured result 저장까지 실기 검증
+- Odroid M2 + YOLOv8n 기준 FP16 → INT8 전환 시 mean latency `51.8ms → 16.2ms` 수준의 개선 확인
+- 같은 RKNN detection 결과를 `map50` 중심 accuracy-aware compare에 연결하여,  
+  latency만 빠른 결과가 아니라 **accuracy trade-off까지 함께 해석 가능한 구조**로 확장
+
 ---
 
 ## 🧪 Real Edge Hardware Validation
@@ -253,10 +260,9 @@ Example:
   **실제 deployment 환경에서의 latency-accuracy trade-off 검증 가능**
 - EdgeBench를 통해  
   **Edge inference 최적화 의사결정까지 지원 가능한 구조 완성**
-- classification 중심 compare를 detection-aware compare/report 계층으로 확장하여,
-  RKNN detection 결과에서도 `map50`을 대표 accuracy metric으로 사용하고 `f1_score` 등 보조 metric을 함께 해석할 수 있게 되었습니다.
-- 결과적으로 Edge HW별 backend가 달라도,
-  실측 latency와 accuracy를 같은 judgement/report workflow 안에서 연결해 비교 가능한 validation system으로 정리되었습니다.
+- classification 전용이던 compare/report 계층을 detection-aware 구조로 확장하여,  
+  RKNN detection 결과에서도 `map50`을 대표 accuracy metric으로 사용하고 `f1_score` 등 보조 metric을 함께 해석할 수 있게 했습니다.
+- 그 결과 backend가 달라도, 실측 latency와 accuracy를 같은 judgement / report workflow 안에서 연결해 비교할 수 있는 validation system으로 정리했습니다.
 
 ---
 
