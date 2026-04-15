@@ -367,6 +367,7 @@ EdgeBench는 현재 `Python >=3.10,<3.12` 범위를 기준으로 테스트하고
 - 현재 RKNN은 runtime backend 직접 실행이 아니라, Odroid 실측 결과를 structured result로 import하여 compare/report에 연결하는 방식으로 지원합니다.
 - 즉, EdgeBench 내부에서 RKNN runtime inference를 직접 수행하는 backend는 아직 구현 범위에 포함되지 않습니다.
 - 현재 문서화된 RKNN 예시는 Odroid M1 / M2 실측값을 curated import한 결과를 기준으로 유지합니다.
+- RKNN runtime dependency는 Poetry lock에 포함하지 않으며, Odroid/RK3588 대상 환경에서 별도로 설치하는 것을 전제로 합니다.
 
 ### Evaluate Support
 
