@@ -8,18 +8,42 @@
 > EdgeBench is a CLI-based framework for profiling, evaluating, comparing, and validating AI inference behavior across edge environments.
 
 EdgeBench는 단순 benchmark 실행 도구가 아니라,  
-**latency 측정 + accuracy 비교 + precision trade-off 해석 + CI policy gate**까지 연결되는  
-**inference validation workflow**를 목표로 설계된 프로젝트입니다.
+실제 Jetson GPU와 Odroid NPU에서 얻은 추론 결과를 기반으로 검증된 validation workflow를 제공합니다.
+**실제 Edge 디바이스에서 추론 결과를 저장·비교·해석·리포트화하는 inference validation workflow**를 목표로 설계된 CLI 기반 프로젝트입니다.
+
+특히 Jetson TensorRT와 Odroid RKNN 실측 결과를 같은 structured result schema와 compare/report 흐름으로 연결해,  
+**“숫자를 한 번 찍는 도구”가 아니라 “배포 판단에 재사용할 수 있는 validation system”** 으로 확장한 점이 핵심입니다.
+
+---
+
+## Why EdgeBench
+
+- **실제 Edge HW 검증**: Jetson TensorRT GPU, Odroid RKNN NPU 결과를 같은 validation workflow 안에서 재사용
+- **판정 가능한 benchmark**: same-precision regression / improvement / neutral, cross-precision trade-off risk 해석 지원
+- **재현 가능한 결과 관리**: structured result JSON에 runtime provenance와 실행 조건을 함께 저장
+- **문서화 가능한 산출물**: CLI 결과를 Markdown / HTML report로 바로 변환 가능
+- **CI 연결 가능**: benchmark 결과를 PR 단계의 validation gate로 재사용 가능
+
+---
 
 ## Validation Snapshot
 
 - Jetson Orin Nano 환경에서 TensorRT GPU inference validation 완료
 - `resnet18`, `yolov8n`에 대해 repeated profiling → structured result 저장 → `compare-latest` → Markdown / HTML report 생성까지 검증 완료
-- structured result JSON의 `extra.runtime_artifact_path`, `primary_input_name`, `resolved_input_shapes`, `effective_*` 필드 저장 확인
+- structured result JSON 원문에서 `extra.runtime_artifact_path`, `primary_input_name`, `resolved_input_shapes`, `effective_*` 필드 저장 확인
 - Odroid M1 / M2 환경에서 RKNN NPU curated detection result 흡수 완료
 - FP16 ↔ INT8 cross-precision compare 및 trade-off risk 판정 지원
 - detection-aware accuracy compare/report 지원
-- 실제 Edge HW 결과를 structured result / compare / report / BENCHMARKS workflow에 재사용 가능
+
+---
+
+## What is already proven?
+
+- Jetson TensorRT execution path works on real hardware
+- TensorRT profile results are saved as reusable structured results
+- runtime provenance is preserved in result JSON
+- same-precision compare judgement works on Jetson validation outputs
+- Markdown / HTML validation reports are generated from real device results
 
 ---
 
@@ -76,6 +100,8 @@ EdgeBench는 toy CPU benchmark 예제에 머무르지 않고,
 ---
 
 ## 📄 Portfolio Document
+
+프로젝트 설계 배경, 아키텍처, validation workflow, 실제 Edge HW 검증 의미를 더 자세히 보려면 아래 문서를 참고하세요.
 
 👉 [EdgeBench Portfolio (Detailed Design & Architecture)](docs/portfolio/edgebench_portfolio.md)
 
