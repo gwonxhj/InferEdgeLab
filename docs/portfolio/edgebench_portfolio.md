@@ -221,8 +221,8 @@ Profile -> JSON 저장 -> Compare -> History -> Report -> CI 검증
 - Jetson `resnet18` same-precision compare에서 mean latency `2.9544ms → 2.8265ms`, p99 `3.4980ms → 2.8929ms` 변화가 실제 **improvement** 로 판정되는 것을 확인
 - Jetson `yolov8n` same-precision compare에서 mean latency `14.2246ms → 14.0697ms`, p99 `14.7342ms → 14.7342ms` 결과가 실제 **neutral** 로 판정되는 것을 확인
 - structured result JSON 원문에서 `runtime_artifact_path`, `primary_input_name`, `resolved_input_shapes`, `effective_*` 필드 저장 확인
-- Odroid M2 + YOLOv8n 기준 FP16 → INT8 전환 시 mean latency `22.764ms → 15.403ms` 수준의 개선 확인
-- 같은 RKNN detection 결과를 `map50` 중심 accuracy-aware compare에 연결하여, latency만 빠른 결과가 아니라 **accuracy trade-off까지 함께 해석 가능한 구조**로 확장
+- Odroid M2 + YOLOv8n 기준 FP16 → Hybrid INT8 전환 시 mean latency `51.82ms → 16.29ms` 수준의 개선 확인
+- 같은 RKNN detection 결과를 `map50` 중심 accuracy-aware compare에 연결하여, latency만 빠른 결과가 아니라 **accuracy 유지/개선 여부까지 함께 해석 가능한 구조**로 확장
 
 ---
 
@@ -266,9 +266,9 @@ Example:
   - overall: neutral
 
 - YOLOv8n (Odroid M2)
-  - FP16 → INT8
-  - latency: 22.764ms → 15.403ms
-  - map50: 0.621 → 0.612
+  - FP16 → Hybrid INT8
+  - latency: 51.82ms → 16.29ms
+  - map50: 0.7791 → 0.7977
 
 결과:
 
@@ -278,6 +278,7 @@ Example:
   **Edge inference 최적화 의사결정까지 지원 가능한 구조 완성**
 - classification 전용이던 compare/report 계층을 detection-aware 구조로 확장하여,  
   RKNN detection 결과에서도 `map50`을 대표 accuracy metric으로 사용하고 `f1_score` 등 보조 metric을 함께 해석할 수 있게 했습니다.
+- 특히 Odroid M2 YOLOv8n 사례에서는 Hybrid INT8 전환 시 latency가 크게 줄면서도 `map50`이 유지/개선되는 형태를 확인해, cross-precision compare의 실전 활용 가치를 보여주었습니다.
 - Jetson TensorRT 경로에서는 repeated profiling 이후 same-precision compare 결과를 자동 판정하고,
   structured result JSON 원문에 runtime provenance까지 남기는 흐름을 검증했습니다.
 - 그 결과 backend가 달라도, 실측 latency와 accuracy를 같은 judgement / report workflow 안에서 연결해 비교할 수 있는 validation system으로 정리했습니다.
