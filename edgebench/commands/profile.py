@@ -40,13 +40,13 @@ def profile_cmd(
     engine: str = typer.Option(
         "onnxruntime",
         "--engine",
-        help="추론 엔진 선택 (현재 지원: onnxruntime, tensorrt)",
+        help="추론 엔진 선택 (현재 지원: onnxruntime, tensorrt, rknn)",
     ),
     precision: str = typer.Option("fp32", "--precision", help="precision 메타데이터 (fp32, fp16, int8)"),
     engine_path: str = typer.Option(
         "",
         "--engine-path",
-        help="엔진 파일 경로 (예: TensorRT compiled engine). tensorrt 사용 시 필수",
+        help="엔진 파일 경로 (예: TensorRT .engine 또는 RKNN .rknn). tensorrt/rknn 사용 시 필수",
     ),
     output: str = typer.Option("", "--output", "-o", help="JSON 리포트 저장 경로(미지정 시 자동 파일명)"),
     no_hash: bool = typer.Option(True, "--no-hash/--hash", help="profile 시 해시 계산(기본 off)"),
@@ -65,8 +65,8 @@ def profile_cmd(
             f"--engine must be one of: {', '.join(sorted(allowed_engines))}"
         )
     
-    if engine == "tensorrt" and not engine_path.strip():
-        raise typer.BadParameter("--engine-path is required when --engine tensorrt is used")
+    if engine in {"tensorrt", "rknn"} and not engine_path.strip():
+        raise typer.BadParameter(f"--engine-path is required when --engine {engine} is used")
 
     result = analyze_onnx(
         model_path,

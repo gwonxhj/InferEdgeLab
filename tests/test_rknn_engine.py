@@ -1,0 +1,131 @@
+from __future__ import annotations
+
+import builtins
+import importlib.util
+import sys
+import types
+
+import numpy as np
+import pytest
+
+
+def _install_optional_dependency_stubs() -> None:
+    if importlib.util.find_spec("onnx") is None:
+        onnx_stub = types.ModuleType("onnx")
+        onnx_stub.TensorProto = types.SimpleNamespace(
+            FLOAT=1,
+            FLOAT16=10,
+            DOUBLE=11,
+            INT64=7,
+            INT32=6,
+            UINT8=2,
+            INT8=3,
+        )
+        sys.modules["onnx"] = onnx_stub
+
+    if importlib.util.find_spec("onnxruntime") is None:
+        sys.modules["onnxruntime"] = types.ModuleType("onnxruntime")
+
+
+_install_optional_dependency_stubs()
+
+from edgebench.engines.registry import create_engine, normalize_engine_name, supported_engines
+from edgebench.engines.rknn import RknnEngine
+
+
+class FakeTensorInfo:
+    def __init__(self, name: str, dtype: str, shape: list[int | None]) -> None:
+        self.name = name
+        self.dtype = dtype
+        self.shape = shape
+
+
+class FakeRKNNLite:
+    def __init__(self) -> None:
+        self.loaded_path = ""
+        self.released = False
+
+    def load_rknn(self, path: str) -> int:
+        self.loaded_path = path
+        return 0
+
+    def init_runtime(self) -> int:
+        return 0
+
+    def get_inputs(self):
+        return [FakeTensorInfo("images", "float32", [None, 3, None, None])]
+
+    def get_outputs(self):
+        return [FakeTensorInfo("output0", "float32", [1, 1000])]
+
+    def inference(self, inputs):
+        return [np.asarray(inputs[0]).sum(axis=(1, 2, 3))]
+
+    def release(self) -> None:
+        self.released = True
+
+
+def test_rknn_alias_normalize():
+    assert normalize_engine_name("rknn") == "rknn"
+    assert normalize_engine_name("rknnlite") == "rknn"
+    assert normalize_engine_name("rknn_lite") == "rknn"
+    assert "rknn" in supported_engines()
+
+
+def test_create_engine_rknn():
+    engine = create_engine("rknn")
+
+    assert isinstance(engine, RknnEngine)
+    assert engine.name == "rknn"
+    assert engine.device == "npu"
+
+
+def test_rknn_load_requires_engine_path():
+    engine = RknnEngine()
+
+    with pytest.raises(RuntimeError, match="--engine-path"):
+        engine.load("models/yolov8n.onnx")
+
+
+def test_rknn_missing_runtime_binding_raises_clear_runtime_error(tmp_path, monkeypatch):
+    artifact = tmp_path / "model.rknn"
+    artifact.write_bytes(b"fake-rknn")
+    engine = RknnEngine()
+    original_import = builtins.__import__
+
+    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "rknnlite.api" or name == "rknnlite":
+            raise ImportError("rknnlite is not installed")
+        return original_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    with pytest.raises(RuntimeError, match="RKNN runtime bindings are unavailable"):
+        engine.load("models/yolov8n.onnx", engine_path=str(artifact))
+
+
+def test_rknn_engine_smoke_shape_and_inference(tmp_path, monkeypatch):
+    artifact = tmp_path / "model.rknn"
+    artifact.write_bytes(b"fake-rknn")
+
+    rknnlite_module = types.ModuleType("rknnlite")
+    rknnlite_api_module = types.ModuleType("rknnlite.api")
+    rknnlite_api_module.RKNNLite = FakeRKNNLite
+    rknnlite_module.api = rknnlite_api_module
+
+    monkeypatch.setitem(sys.modules, "rknnlite", rknnlite_module)
+    monkeypatch.setitem(sys.modules, "rknnlite.api", rknnlite_api_module)
+
+    engine = RknnEngine()
+    engine.load("models/yolov8n.onnx", engine_path=str(artifact))
+
+    feeds = engine.make_dummy_inputs(batch_override=2, height_override=320, width_override=320)
+    outputs = engine.run(feeds)
+
+    assert engine.runtime_paths.model_path == "models/yolov8n.onnx"
+    assert engine.runtime_paths.runtime_artifact_path == str(artifact)
+    assert engine.outputs == ["output0"]
+    assert list(feeds.keys()) == ["images"]
+    assert feeds["images"].shape == (2, 3, 320, 320)
+    assert feeds["images"].dtype == np.float32
+    assert len(outputs) == 1
