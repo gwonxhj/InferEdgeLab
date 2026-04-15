@@ -104,11 +104,18 @@ python -m edgebench.cli compare-latest \
 
 | 항목 | Base | New | 해석 |
 |---|---:|---:|---|
-| mean_ms | 3.4644 | 3.6311 | 증가 |
-| p99_ms | 3.5057 | 3.7170 | 증가 |
-| overall | - | regression | same-precision regression |
+| mean_ms | 2.9544 | 2.8265 | 감소 |
+| p99_ms | 3.4980 | 2.8929 | 감소 |
+| overall | - | improvement | same-precision improvement |
 
 실제 검증에서는 `reports/validation/resnet18_tensorrt_latest.md` 와 `reports/validation/resnet18_tensorrt_latest.html` 생성도 확인했다.
+또한 structured result JSON 원문에서 아래 필드가 저장됨을 직접 확인했다.
+
+- `run_config.engine_path = models/resnet18.engine`
+- `extra.runtime_artifact_path = models/resnet18.engine`
+- `extra.primary_input_name = input`
+- `extra.resolved_input_shapes.input = [1, 3, 224, 224]`
+- `extra.effective_batch / effective_height / effective_width = 1 / 224 / 224`
 
 ## 6. YOLOv8n Validation
 
@@ -170,18 +177,27 @@ python -m edgebench.cli compare-latest \
 
 | 항목 | Base | New | 해석 |
 |---|---:|---:|---|
-| mean_ms | 14.2250 | 14.1221 | 소폭 감소 |
-| p99_ms | 15.3181 | 14.9191 | 감소 |
+| mean_ms | 14.2246 | 14.0697 | 소폭 감소 |
+| p99_ms | 14.7342 | 14.7342 | 변화 거의 없음 |
 | overall | - | neutral | same-precision neutral |
+
+실제 검증에서는 `reports/validation/yolov8n_tensorrt_latest.md` 와 `reports/validation/yolov8n_tensorrt_latest.html` 생성도 확인했다.
+또한 structured result JSON 원문에서 아래 필드가 저장됨을 직접 확인했다.
+
+- `run_config.engine_path = models/yolov8n.engine`
+- `extra.runtime_artifact_path = models/yolov8n.engine`
+- `extra.primary_input_name = images`
+- `extra.resolved_input_shapes.images = [1, 3, 640, 640]`
+- `extra.effective_batch / effective_height / effective_width = 1 / 640 / 640`
 
 ## 7. 검증 완료 기준
 
-- [ ] preflight PASS
-- [ ] TensorRT profile 성공
-- [ ] structured result 생성
-- [ ] `compare-latest` 성공
-- [ ] Markdown / HTML report 생성
-- [ ] runtime provenance 필드 확인
+- [x] preflight PASS
+- [x] TensorRT profile 성공
+- [x] structured result 생성
+- [x] `compare-latest` 성공
+- [x] Markdown / HTML report 생성
+- [x] runtime provenance 필드 확인
 
 runtime provenance 확인 시에는 최소한 아래 필드를 함께 본다.
 
@@ -189,12 +205,17 @@ runtime provenance 확인 시에는 최소한 아래 필드를 함께 본다.
 - `primary_input_name`
 - `resolved_input_shapes`
 
+이번 실기 검증에서는 위 항목이 모두 충족되었고,
+structured result JSON 원문에서도 runtime provenance 필드 저장을 직접 확인했다.
+
 ## 8. 해석 시 주의사항
 
 - same-precision compare는 regression tracking 용도로 해석한다.
 - `run_config` 가 다르면 결과 비교 해석에 주의해야 한다.
 - accuracy 없이 수행한 TensorRT profile 결과는 latency 중심으로 해석한다.
 - production-grade robustness 검증은 아직 후속 단계다.
+- TensorRT `.engine` artifact는 디바이스/환경 의존성이 있으므로 가능하면 target Jetson에서 생성한 plan 파일을 사용하는 것이 바람직하다.
+- 실기 검증 중 ONNX Runtime의 device discovery warning이 출력될 수 있으나, 이번 검증에서는 profiling / compare / report 흐름을 깨는 치명적 오류는 아니었다.
 
 ## 9. 관련 문서
 

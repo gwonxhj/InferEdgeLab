@@ -1,16 +1,34 @@
 # Benchmarks
 
-> 현재 이 문서에는 curated hardware validation 결과가 먼저 정리되어 있습니다.
+> 현재 이 문서는 Jetson TensorRT validation reference와 Odroid RKNN curated hardware validation 결과를 먼저 정리합니다.
 > CI / auto-generated benchmark summary가 생성되면 동일 문서에 함께 누적됩니다.
 
-이 문서는 CPU auto-generated benchmark 요약과 curated hardware validation 데이터를 함께 관리하는 용도입니다.
-Jetson TensorRT 실기 검증 evidence는 README와 portfolio 문서에서 서술형으로 정리하고,
-이 파일은 표 중심의 benchmark reference 역할에 집중합니다.
+이 문서는 다음 두 목적을 함께 가집니다.
+
+1. CPU auto-generated benchmark 요약 보관
+2. 실제 Edge HW validation evidence를 표 중심으로 정리하는 benchmark reference
+
+Jetson TensorRT 실기 검증 evidence는 README와 portfolio 문서에서 서술형으로 설명하고,
+이 파일은 그 결과를 빠르게 확인할 수 있는 표 중심 reference 역할에 집중합니다.
 
 ## Curated Hardware Validation
 
 이 섹션은 실제 Odroid RKNN 실험에서 확보한 대표 결과를 EdgeBench result schema로 정리한 표입니다.
 즉, 단순 보고서용 표가 아니라 이후 `compare`, `compare-latest`, report workflow에 재사용되는 validation evidence입니다.
+
+## Jetson TensorRT Validation Reference
+
+이 섹션은 Jetson 실기 검증에서 실제 생성된 structured result / compare-latest 결과를 기준으로 정리한 표입니다.
+즉, 단순 설명용 숫자가 아니라 TensorRT execution → structured result 저장 → compare/report 재사용까지 확인된 validation evidence입니다.
+
+| Model | Engine | Device | Precision | Batch | Input(HxW) | Warmup | Runs | Base Mean (ms) | New Mean (ms) | Base P99 (ms) | New P99 (ms) | Overall | Notes |
+|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---|
+| resnet18.onnx | tensorrt | gpu | fp16 | 1 | 224x224 | 10 | 100 | 2.9544 | 2.8265 | 3.4980 | 2.8929 | improvement | same-precision compare, runtime provenance confirmed |
+| yolov8n.onnx | tensorrt | gpu | fp16 | 1 | 640x640 | 10 | 50 | 14.2246 | 14.0697 | 14.7342 | 14.7342 | neutral | same-precision compare, runtime provenance confirmed |
+
+> 참고:
+> - 위 Jetson 표는 실제 `compare-latest` 결과와 structured result JSON 원문 확인을 기반으로 정리한 값입니다.
+> - `runtime_artifact_path`는 각각 `models/resnet18.engine`, `models/yolov8n.engine`로 저장됨을 확인했습니다.
 
 ### Quick Takeaway
 

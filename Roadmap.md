@@ -44,7 +44,7 @@ CLI 환경에서 ONNX 모델의 구조 분석과 CPU 기반 추론 성능을 정
 
 ---
 
-## 🔥 Phase 4 – 고급 엣지 디바이스 지원 🟡 In Progress (Jetson validation ongoing)
+## 🔥 Phase 4 – 고급 엣지 디바이스 지원 🟡 In Progress
 
 목표:  
 실제 엣지 환경에서의 성능 비교 및 최적화 분석
@@ -54,6 +54,7 @@ CLI 환경에서 ONNX 모델의 구조 분석과 CPU 기반 추론 성능을 정
 - [x] Jetson GPU 실측 검증 경로 지원 (TensorRT Jetson first working path)
 - [x] Jetson TensorRT validation runbook 문서화
 - [x] repeated profiling / compare-latest / report 재사용 검증
+- [x] structured result runtime provenance 확인
 - [x] 양자화 모델(INT8 등) 성능 비교
 - [x] precision trade-off 분석 및 compare judgement
 - [x] RKNN / Odroid curated hardware validation result import
