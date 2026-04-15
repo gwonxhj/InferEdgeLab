@@ -13,9 +13,6 @@ EdgeBench는 단순 benchmark 실행 도구가 아니라,
 Jetson TensorRT와 Odroid RKNN 실측 결과를 같은 structured result schema와 compare/report 흐름으로 연결해,  
 **“숫자를 한 번 찍는 도구”가 아니라 “배포 판단에 재사용할 수 있는 validation system”** 으로 확장한 점이 핵심입니다.
 
-특히 Jetson TensorRT와 Odroid RKNN 실측 결과를 같은 structured result schema와 compare/report 흐름으로 연결해,  
-**“숫자를 한 번 찍는 도구”가 아니라 “배포 판단에 재사용할 수 있는 validation system”** 으로 확장한 점이 핵심입니다.
-
 ---
 
 ## Quick Facts
@@ -112,10 +109,10 @@ profiling 결과의 structured result 저장, `compare-latest` 재사용, Markdo
 
 | Precision | Mean Latency | Accuracy (mAP50) | Interpretation |
 |---|---:|---:|---|
-| FP16 | 22.764 ms | 0.621 | 기준 결과 |
-| INT8 | 15.403 ms | 0.612 | 더 빠르지만 accuracy trade-off 존재 |
+| FP16 | 51.82 ms | 0.7791 | 기준 결과 |
+| Hybrid INT8 | 16.29 ms | 0.7977 | 더 빠르면서 accuracy도 유지/개선 |
 
-이 예시는 cross-precision compare가 “무조건 더 빠르면 더 좋다”가 아니라, latency 이득과 accuracy 변화까지 함께 해석해야 함을 보여줍니다.
+이 예시는 cross-precision compare가 “무조건 더 빠르면 더 좋다”가 아니라, latency 이득과 accuracy 변화를 함께 해석해야 함을 보여줍니다.
 
 👉 자세한 curated hardware validation 표는 `BENCHMARKS.md`에서 확인할 수 있습니다.
 
@@ -155,7 +152,7 @@ EdgeBench는 다음을 제공합니다.
 - ⚡ Runtime Profiling
   - ONNX Runtime 기반 CPU profiling
   - TensorRT 기반 Jetson GPU profiling
-  - RKNN 기반 Odroid NPU benchmark 결과 import 및 validation 지원
+  - RKNN 기반 Odroid NPU curated benchmark 결과 import 및 validation 지원
 - 🎯 Accuracy Evaluation
   - classification manifest 기반 top-1 accuracy 평가
   - accuracy 결과를 structured result에 함께 저장
@@ -284,9 +281,9 @@ poetry run edgebench compare-latest \
 대표 결과 예시:
 
 - YOLOv8n (Odroid M2)
-  - FP16 → INT8
-  - latency: ~51ms → ~16ms
-  - map50: +1.86pp
+  - FP16 → Hybrid INT8
+  - latency: 51.82ms → 16.29ms
+  - map50: 0.7791 → 0.7977
 
 👉 상세 실험 표와 curated validation 데이터는 BENCHMARKS.md 참고.
 
@@ -369,6 +366,7 @@ EdgeBench는 현재 `Python >=3.10,<3.12` 범위를 기준으로 테스트하고
 
 - 현재 RKNN은 runtime backend 직접 실행이 아니라, Odroid 실측 결과를 structured result로 import하여 compare/report에 연결하는 방식으로 지원합니다.
 - 즉, EdgeBench 내부에서 RKNN runtime inference를 직접 수행하는 backend는 아직 구현 범위에 포함되지 않습니다.
+- 현재 문서화된 RKNN 예시는 Odroid M1 / M2 실측값을 curated import한 결과를 기준으로 유지합니다.
 
 ### Evaluate Support
 
