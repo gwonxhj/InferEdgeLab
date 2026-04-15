@@ -15,6 +15,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+rknn = ["rknn-toolkit-lite2==1.6.0"]
 
 [project.scripts]
 edgebench = "edgebench.cli:app"

@@ -4,6 +4,7 @@ from typing import Callable, Dict, Set
 
 from edgebench.engines.base import InferenceEngine
 from edgebench.engines.onnxruntime_cpu import OnnxRuntimeCpuEngine
+from edgebench.engines.rknn import RknnEngine
 from edgebench.engines.tensorrt import TensorRtEngine
 
 
@@ -17,11 +18,15 @@ _ENGINE_ALIASES: Dict[str, str] = {
     "trt": "tensorrt",
     "tensor_rt": "tensorrt",
     "tensorrt": "tensorrt",
+    "rknn": "rknn",
+    "rknnlite": "rknn",
+    "rknn_lite": "rknn",
 }
 
 _ENGINE_FACTORIES: Dict[str, EngineFactory] = {
     "onnxruntime": OnnxRuntimeCpuEngine,
     "tensorrt": TensorRtEngine,
+    "rknn": RknnEngine,
 }
 
 
