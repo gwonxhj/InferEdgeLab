@@ -74,6 +74,24 @@ def _build_enriched_result(base_result: dict, accuracy_payload: dict, accuracy_j
     )
 
 
+def enrich_result_to_path(
+    result_path: str,
+    accuracy_json: str,
+    out_dir: str = "results",
+    overwrite_accuracy: bool = True,
+) -> str:
+    base_result = load_result(result_path)
+    accuracy_payload = _validate_accuracy_payload(_load_json(accuracy_json))
+
+    existing_accuracy = base_result.get("accuracy") or {}
+    if existing_accuracy and not overwrite_accuracy:
+        rprint("[red]The source result already contains accuracy metadata. Use --overwrite-accuracy to replace it.[/red]")
+        raise typer.Exit(code=1)
+
+    enriched = _build_enriched_result(base_result, accuracy_payload, accuracy_json)
+    return save_result(enriched, out_dir=out_dir)
+
+
 def enrich_result_cmd(
     result_path: str = typer.Argument(..., help="Base structured benchmark result JSON path"),
     accuracy_json: str = typer.Option(..., "--accuracy-json", help="External accuracy JSON path"),
@@ -84,14 +102,10 @@ def enrich_result_cmd(
         help="Whether to replace an existing accuracy field in the source result",
     ),
 ):
-    base_result = load_result(result_path)
-    accuracy_payload = _validate_accuracy_payload(_load_json(accuracy_json))
-
-    existing_accuracy = base_result.get("accuracy") or {}
-    if existing_accuracy and not overwrite_accuracy:
-        rprint("[red]The source result already contains accuracy metadata. Use --overwrite-accuracy to replace it.[/red]")
-        raise typer.Exit(code=1)
-
-    enriched = _build_enriched_result(base_result, accuracy_payload, accuracy_json)
-    saved_path = save_result(enriched, out_dir=out_dir)
+    saved_path = enrich_result_to_path(
+        result_path=result_path,
+        accuracy_json=accuracy_json,
+        out_dir=out_dir,
+        overwrite_accuracy=overwrite_accuracy,
+    )
     rprint(f"[cyan]Saved enriched structured result[/cyan]: {saved_path}")
