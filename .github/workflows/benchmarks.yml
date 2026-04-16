@@ -46,6 +46,13 @@ jobs:
           poetry install
           poetry run python -m pip install torch onnxscript
 
+      - name: Validate doc marker contract
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python scripts/check_doc_markers.py
+
       - name: Run benchmark
         shell: bash
         run: |
@@ -58,6 +65,13 @@ jobs:
             echo "Running full demo (includes README/BENCHMARKS)"
             make demo
           fi
+
+      - name: Enforce doc update scope guard
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python scripts/check_doc_update_scope.py
 
       - name: Enforce compare policy gate
         if: github.event_name == 'pull_request'
