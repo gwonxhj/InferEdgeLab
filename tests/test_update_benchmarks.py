@@ -1,163 +1,141 @@
 from __future__ import annotations
 
-import json
+import importlib.util
 from pathlib import Path
 
-from scripts import update_benchmarks
+
+def import_update_benchmarks_module():
+    module_path = Path(__file__).resolve().parents[1] / "scripts" / "update_benchmarks.py"
+    spec = importlib.util.spec_from_file_location("test_update_benchmarks_module", module_path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
-def write_json(path: Path, data) -> None:
-    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+update_benchmarks = import_update_benchmarks_module()
 
 
-def make_curated_item(**overrides):
-    item = {
-        "model": "YOLOv8n",
-        "engine": "rknn",
-        "device": "odroid_m2",
-        "precision": "int8",
-        "batch": 1,
-        "height": 640,
-        "width": 640,
-        "mean_ms": 15.403,
-        "p99_ms": 17.086,
-        "timestamp": "2026-04-13T00:10:00Z",
-        "accuracy": {
-            "task": "detection",
-            "metrics": {
-                "map50": 0.612,
-                "f1_score": 0.581,
-                "precision": 0.635,
-                "recall": 0.537,
-            },
-        },
-        "extra": {
-            "quantization_mode": "hybrid_int8",
-            "quantization_preset": "default",
-            "source": "odroid_report",
-        },
-    }
-    item.update(overrides)
-    return item
-
-
-def test_replace_marked_block_replaces_existing_marker_block():
-    readme = (
-        "# Demo\n\n"
-        f"{update_benchmarks.MARK_START}\n"
-        "old block\n"
-        f"{update_benchmarks.MARK_END}\n"
+def make_readme(text: str = "old summary") -> str:
+    return (
+        "# Demo README\n\n"
+        "Manual intro\n\n"
+        f"{update_benchmarks.README_MARK_START}\n"
+        f"{text}\n"
+        f"{update_benchmarks.README_MARK_END}\n\n"
+        "Manual outro\n"
     )
 
-    replaced = update_benchmarks.replace_marked_block(readme, "new block")
 
-    assert "new block" in replaced
-    assert "old block" not in replaced
+def make_benchmarks(text: str = "old auto summary") -> str:
+    return (
+        "# Benchmarks\n\n"
+        "Manual validation evidence before\n\n"
+        f"{update_benchmarks.BENCHMARKS_MARK_START}\n"
+        f"{text}\n"
+        f"{update_benchmarks.BENCHMARKS_MARK_END}\n\n"
+        "Manual validation evidence after\n"
+    )
 
 
-def test_replace_marked_block_raises_when_marker_missing():
-    readme = "# Demo without markers\n"
+def test_replace_named_marker_block_replaces_readme_marker_block():
+    text = make_readme()
+
+    replaced = update_benchmarks.replace_named_marker_block(
+        text,
+        update_benchmarks.README_MARK_START,
+        update_benchmarks.README_MARK_END,
+        "new summary",
+    )
+
+    assert "new summary" in replaced
+    assert "old summary" not in replaced
+    assert "Manual intro" in replaced
+    assert "Manual outro" in replaced
+
+
+def test_replace_named_marker_block_replaces_benchmarks_marker_block():
+    text = make_benchmarks()
+
+    replaced = update_benchmarks.replace_named_marker_block(
+        text,
+        update_benchmarks.BENCHMARKS_MARK_START,
+        update_benchmarks.BENCHMARKS_MARK_END,
+        "history summary",
+    )
+
+    assert "history summary" in replaced
+    assert "old auto summary" not in replaced
+    assert "Manual validation evidence before" in replaced
+    assert "Manual validation evidence after" in replaced
+
+
+def test_replace_named_marker_block_raises_clear_error_when_readme_marker_missing():
+    text = "# Demo README\nwithout marker\n"
 
     try:
-        update_benchmarks.replace_marked_block(readme, "new block")
-    except SystemExit as exc:
-        assert "marker not found" in str(exc)
+        update_benchmarks.replace_named_marker_block(
+            text,
+            update_benchmarks.README_MARK_START,
+            update_benchmarks.README_MARK_END,
+            "new summary",
+        )
+    except RuntimeError as exc:
+        assert "Marker block is missing" in str(exc)
+        assert update_benchmarks.README_MARK_START in str(exc)
     else:
-        raise AssertionError("SystemExit was not raised")
+        raise AssertionError("RuntimeError was not raised")
 
 
-def test_load_curated_results_returns_empty_when_file_missing(tmp_path):
-    path = tmp_path / "missing.json"
-
-    items = update_benchmarks._load_curated_results(path)
-
-    assert items == []
-
-
-def test_load_curated_results_reads_only_dict_items(tmp_path):
-    path = tmp_path / "curated.json"
-    write_json(path, [make_curated_item(), "bad", make_curated_item(model="YOLOv8s")])
-
-    items = update_benchmarks._load_curated_results(path)
-
-    assert len(items) == 2
-    assert items[0]["model"] == "YOLOv8n"
-    assert items[1]["model"] == "YOLOv8s"
-
-
-def test_build_curated_hardware_validation_markdown_contains_expected_table(tmp_path):
-    path = tmp_path / "curated.json"
-    write_json(
-        path,
-        [
-            make_curated_item(),
-            make_curated_item(model="YOLOv8s", mean_ms=24.917, p99_ms=27.844),
-        ],
-    )
-
-    text = update_benchmarks._build_curated_hardware_validation_markdown(path)
-
-    assert "## Curated Hardware Validation" in text
-    assert "### Odroid RKNN Benchmarks" in text
-    assert "| Model | Engine | Device | Precision |" in text
-    assert "YOLOv8n" in text
-    assert "YOLOv8s" in text
-    assert "hybrid_int8" in text
-    assert "odroid_report" in text
-
-
-def test_has_glob_matches_returns_true_when_files_exist(tmp_path):
-    file_path = tmp_path / "a.json"
-    file_path.write_text("{}", encoding="utf-8")
-
-    assert update_benchmarks._has_glob_matches(str(tmp_path / "*.json")) is True
-    assert update_benchmarks._has_glob_matches(str(tmp_path / "*.md")) is False
-
-
-def test_main_updates_benchmarks_only_when_reports_missing(tmp_path, monkeypatch, capsys):
-    readme_path = tmp_path / "README.md"
-    benchmarks_path = tmp_path / "BENCHMARKS.md"
-    curated_path = tmp_path / "curated.json"
-
-    readme_path.write_text(
-        "# Demo README\n\n"
-        f"{update_benchmarks.MARK_START}\nold\n{update_benchmarks.MARK_END}\n",
-        encoding="utf-8",
-    )
-    write_json(curated_path, [make_curated_item()])
+def test_main_raises_clear_error_when_benchmarks_marker_missing(tmp_path, monkeypatch):
+    (tmp_path / "README.md").write_text(make_readme(), encoding="utf-8")
+    (tmp_path / "BENCHMARKS.md").write_text("# Benchmarks\nmanual only\n", encoding="utf-8")
 
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(update_benchmarks, "CURATED_RESULTS_PATH", curated_path)
+    monkeypatch.setattr(update_benchmarks, "_has_glob_matches", lambda pattern: False)
+
+    try:
+        update_benchmarks.main()
+    except RuntimeError as exc:
+        assert "Marker block is missing" in str(exc)
+        assert update_benchmarks.BENCHMARKS_MARK_START in str(exc)
+    else:
+        raise AssertionError("RuntimeError was not raised")
+
+
+def test_main_when_reports_do_not_exist_preserves_readme_and_updates_benchmarks_fallback(tmp_path, monkeypatch, capsys):
+    readme_path = tmp_path / "README.md"
+    benchmarks_path = tmp_path / "BENCHMARKS.md"
+
+    readme_path.write_text(make_readme(), encoding="utf-8")
+    benchmarks_path.write_text(make_benchmarks(), encoding="utf-8")
+
+    monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(update_benchmarks, "_has_glob_matches", lambda pattern: False)
 
     update_benchmarks.main()
 
     captured = capsys.readouterr()
-    benchmarks_text = benchmarks_path.read_text(encoding="utf-8")
     readme_text = readme_path.read_text(encoding="utf-8")
+    benchmarks_text = benchmarks_path.read_text(encoding="utf-8")
 
-    assert "No auto-generated report summaries are available yet." in benchmarks_text
-    assert "Curated Hardware Validation" in benchmarks_text
-    assert "YOLOv8n" in benchmarks_text
+    assert "old summary" in readme_text
+    assert update_benchmarks.NO_AUTO_SUMMARY_MESSAGE in benchmarks_text
+    assert "Manual validation evidence before" in benchmarks_text
+    assert "Manual validation evidence after" in benchmarks_text
     assert "README marker skipped because no reports matched" in captured.out
-    assert "old" in readme_text
 
 
-def test_main_updates_readme_and_benchmarks_when_reports_exist(tmp_path, monkeypatch, capsys):
+def test_main_when_reports_exist_updates_readme_and_benchmarks_markers_only(tmp_path, monkeypatch, capsys):
     readme_path = tmp_path / "README.md"
     benchmarks_path = tmp_path / "BENCHMARKS.md"
-    curated_path = tmp_path / "curated.json"
 
-    readme_path.write_text(
-        "# Demo README\n\n"
-        f"{update_benchmarks.MARK_START}\nold block\n{update_benchmarks.MARK_END}\n",
-        encoding="utf-8",
-    )
-    write_json(curated_path, [make_curated_item()])
+    readme_path.write_text(make_readme(), encoding="utf-8")
+    benchmarks_path.write_text(make_benchmarks(), encoding="utf-8")
 
-    md_both = "## Auto Summary\n\n| demo |"
-    md_history = "# Benchmarks\n\n## History\n\n| row |"
-
+    md_both = "## Auto Summary\n\n| latest |"
+    md_history = "## History\n\n| history |"
     calls = []
 
     def fake_run(cmd):
@@ -169,20 +147,22 @@ def test_main_updates_readme_and_benchmarks_when_reports_exist(tmp_path, monkeyp
         raise AssertionError(f"Unexpected command: {cmd}")
 
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(update_benchmarks, "CURATED_RESULTS_PATH", curated_path)
     monkeypatch.setattr(update_benchmarks, "_has_glob_matches", lambda pattern: True)
     monkeypatch.setattr(update_benchmarks, "run", fake_run)
 
     update_benchmarks.main()
 
     captured = capsys.readouterr()
-    benchmarks_text = benchmarks_path.read_text(encoding="utf-8")
     readme_text = readme_path.read_text(encoding="utf-8")
+    benchmarks_text = benchmarks_path.read_text(encoding="utf-8")
 
     assert len(calls) == 2
-    assert "## History" in benchmarks_text
-    assert "Curated Hardware Validation" in benchmarks_text
-    assert "YOLOv8n" in benchmarks_text
-    assert "## Auto Summary" in readme_text
-    assert "old block" not in readme_text
-    assert "Updated README.md (marker block) + BENCHMARKS.md" in captured.out
+    assert md_both in readme_text
+    assert "old summary" not in readme_text
+    assert md_history in benchmarks_text
+    assert "old auto summary" not in benchmarks_text
+    assert "Manual intro" in readme_text
+    assert "Manual outro" in readme_text
+    assert "Manual validation evidence before" in benchmarks_text
+    assert "Manual validation evidence after" in benchmarks_text
+    assert "Updated README.md marker block + BENCHMARKS.md auto marker block" in captured.out
