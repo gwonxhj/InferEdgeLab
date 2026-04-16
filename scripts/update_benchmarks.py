@@ -1,17 +1,18 @@
 from __future__ import annotations
 
-import json
+import glob
 import os
 import re
 import subprocess
 import sys
-import glob
 from pathlib import Path
 
 
-MARK_START = "<!-- EDGE_BENCH:START -->"
-MARK_END = "<!-- EDGE_BENCH:END -->"
-CURATED_RESULTS_PATH = Path("benchmarks/rknn_curated_results.json")
+README_MARK_START = "<!-- EDGE_BENCH:START -->"
+README_MARK_END = "<!-- EDGE_BENCH:END -->"
+BENCHMARKS_MARK_START = "<!-- EDGE_BENCH_BENCHMARKS:START -->"
+BENCHMARKS_MARK_END = "<!-- EDGE_BENCH_BENCHMARKS:END -->"
+NO_AUTO_SUMMARY_MESSAGE = "> No auto-generated report summaries are available yet."
 
 
 def run(cmd: list[str]) -> str:
@@ -19,104 +20,33 @@ def run(cmd: list[str]) -> str:
     if p.returncode != 0:
         sys.stderr.write(p.stderr)
         raise SystemExit(p.returncode)
-    # edgebench가 rich 출력/경고 섞을 수 있으니, stdout만 사용
     return p.stdout
 
 
-def replace_marked_block(readme_text: str, block: str) -> str:
-    pat = re.compile(
-        re.escape(MARK_START) + r".*?" + re.escape(MARK_END),
+def replace_named_marker_block(text: str, start_marker: str, end_marker: str, block: str) -> str:
+    pattern = re.compile(
+        re.escape(start_marker) + r".*?" + re.escape(end_marker),
         flags=re.DOTALL,
     )
-    repl = MARK_START + "\n\n" + block.strip() + "\n\n" + MARK_END
-    if not pat.search(readme_text):
-        raise SystemExit("README.md marker not found. Add markers first.")
-    return pat.sub(repl, readme_text)
-
-
-def _fmt_metric(value):
-    if value is None:
-        return "-"
-    if isinstance(value, float):
-        return f"{value:.3f}"
-    return str(value)
-
-
-def _load_curated_results(path: Path) -> list[dict]:
-    if not path.exists():
-        return []
-
-    with path.open("r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    if not isinstance(data, list):
-        raise SystemExit(f"Expected a JSON array in {path}")
-
-    return [item for item in data if isinstance(item, dict)]
+    replacement = start_marker + "\n\n" + block.strip() + "\n\n" + end_marker
+    if not pattern.search(text):
+        raise RuntimeError(f"Marker block is missing: {start_marker} ... {end_marker}")
+    return pattern.sub(replacement, text)
 
 
 def _has_glob_matches(pattern: str) -> bool:
     return bool(glob.glob(pattern))
 
 
-def _build_curated_hardware_validation_markdown(path: Path) -> str:
-    items = _load_curated_results(path)
-    if not items:
-        return ""
-
-    lines: list[str] = []
-    lines.append("## Curated Hardware Validation")
-    lines.append("")
-    lines.append("### Odroid RKNN Benchmarks")
-    lines.append("")
-    lines.append(
-        "These entries are curated hardware validation results imported from documented "
-        "Odroid RKNN experiments, separate from the CI-generated CPU benchmark tables above."
-    )
-    lines.append("")
-    lines.append("")
-    lines.append("| Model | Engine | Device | Precision | Batch | Input(HxW) | Mean (ms) | P99 (ms) | mAP50 | F1 | Precision | Recall | Quantization | Preset | Source | Timestamp (UTC) |")
-    lines.append("|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---|---|---|")
-
-    for item in items:
-        accuracy = item.get("accuracy") or {}
-        metrics = accuracy.get("metrics") or {}
-        extra = item.get("extra") or {}
-        quantization = extra.get("quantization_mode") or "-"
-        preset = extra.get("quantization_preset") or "-"
-        source = extra.get("source") or "-"
-
-        lines.append(
-            "| "
-            + " | ".join(
-                [
-                    str(item.get("model", "-")),
-                    str(item.get("engine", "-")),
-                    str(item.get("device", "-")),
-                    str(item.get("precision", "-")),
-                    str(item.get("batch", "-")),
-                    f"{item.get('height', '-')}x{item.get('width', '-')}",
-                    _fmt_metric(item.get("mean_ms")),
-                    _fmt_metric(item.get("p99_ms")),
-                    _fmt_metric(metrics.get("map50")),
-                    _fmt_metric(metrics.get("f1_score")),
-                    _fmt_metric(metrics.get("precision")),
-                    _fmt_metric(metrics.get("recall")),
-                    str(quantization),
-                    str(preset),
-                    str(source),
-                    str(item.get("timestamp", "-")),
-                ]
-            )
-            + " |"
-        )
-
-    lines.append("")
-    return "\n".join(lines)
+def _write_text(path: Path, text: str) -> None:
+    path.write_text(text, encoding="utf-8")
 
 
-def main():
+def main() -> None:
     reports_pattern = "reports/*.json"
+    readme_path = Path("README.md")
+    benchmarks_path = Path("BENCHMARKS.md")
+
     has_reports = _has_glob_matches(reports_pattern)
 
     if has_reports:
@@ -151,31 +81,29 @@ def main():
         )
     else:
         md_both = ""
-        md_history = (
-            "# Benchmarks\n\n"
-            "> No auto-generated report summaries are available yet.\n"
-        )
+        md_history = NO_AUTO_SUMMARY_MESSAGE
 
-    curated_section = _build_curated_hardware_validation_markdown(CURATED_RESULTS_PATH)
-    benchmarks_body = md_history.rstrip() + "\n"
-    if curated_section:
-        benchmarks_body += "\n" + curated_section
-
-    with open("BENCHMARKS.md", "w", encoding="utf-8") as f:
-        f.write(benchmarks_body)
+    benchmarks_text = benchmarks_path.read_text(encoding="utf-8")
+    updated_benchmarks = replace_named_marker_block(
+        benchmarks_text,
+        BENCHMARKS_MARK_START,
+        BENCHMARKS_MARK_END,
+        md_history,
+    )
+    _write_text(benchmarks_path, updated_benchmarks)
 
     if md_both:
-        with open("README.md", "r", encoding="utf-8") as f:
-            readme = f.read()
-
-        readme2 = replace_marked_block(readme, md_both)
-
-        with open("README.md", "w", encoding="utf-8") as f:
-            f.write(readme2)
-
-        print("✅ Updated README.md (marker block) + BENCHMARKS.md")
+        readme_text = readme_path.read_text(encoding="utf-8")
+        updated_readme = replace_named_marker_block(
+            readme_text,
+            README_MARK_START,
+            README_MARK_END,
+            md_both,
+        )
+        _write_text(readme_path, updated_readme)
+        print("✅ Updated README.md marker block + BENCHMARKS.md auto marker block")
     else:
-        print("✅ Updated BENCHMARKS.md (curated section only; README marker skipped because no reports matched)")
+        print("✅ Updated BENCHMARKS.md auto marker block (README marker skipped because no reports matched)")
 
 
 if __name__ == "__main__":
