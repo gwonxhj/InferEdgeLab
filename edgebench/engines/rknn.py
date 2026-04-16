@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import numpy as np
+import onnx
 
 from edgebench.engines.base import EngineModelIO, EngineRuntimePaths, InferenceEngine
 
@@ -46,6 +47,43 @@ def _rknn_dtype_to_numpy_dtype(dtype: Any) -> np.dtype:
         return np.dtype(dtype)
     except (TypeError, ValueError):
         return np.dtype(np.float32)
+
+
+def _onnx_elemtype_to_numpy(elem_type: int) -> np.dtype:
+    if elem_type == onnx.TensorProto.FLOAT:
+        return np.dtype(np.float32)
+    if elem_type == onnx.TensorProto.FLOAT16:
+        return np.dtype(np.float16)
+    if elem_type == onnx.TensorProto.INT8:
+        return np.dtype(np.int8)
+    if elem_type == onnx.TensorProto.UINT8:
+        return np.dtype(np.uint8)
+    if elem_type == onnx.TensorProto.INT32:
+        return np.dtype(np.int32)
+    return np.dtype(np.float32)
+
+
+def _shape_from_valueinfo(vi: Any) -> List[Optional[int]]:
+    if not vi.type.HasField("tensor_type"):
+        return []
+
+    tensor_type = vi.type.tensor_type
+    if not tensor_type.HasField("shape"):
+        return []
+
+    shape: List[Optional[int]] = []
+    for dim in tensor_type.shape.dim:
+        if dim.HasField("dim_value"):
+            shape.append(int(dim.dim_value))
+        else:
+            shape.append(None)
+    return shape
+
+
+def _dtype_from_valueinfo(vi: Any) -> np.dtype:
+    if not vi.type.HasField("tensor_type"):
+        return np.dtype(np.float32)
+    return _onnx_elemtype_to_numpy(vi.type.tensor_type.elem_type)
 
 
 class RknnEngine(InferenceEngine):
@@ -94,10 +132,10 @@ class RknnEngine(InferenceEngine):
         )
 
     @staticmethod
-    def _metadata_error(engine_path: str) -> RuntimeError:
+    def _metadata_error(model_path: str) -> RuntimeError:
         return RuntimeError(
-            f"RKNN IO metadata extraction failed: {engine_path}. "
-            "Check that the RKNN model exposes valid input/output metadata."
+            f"ONNX source model metadata extraction failed: {model_path}. "
+            "Check that the ONNX source model exposes valid input/output metadata."
         )
 
     @staticmethod
@@ -136,35 +174,37 @@ class RknnEngine(InferenceEngine):
             raise self._runtime_init_error(target)
 
     def _build_io_metadata(self) -> None:
-        engine_path = self.runtime_paths.runtime_artifact_path or "unknown"
+        model_path = self.runtime_paths.model_path
+        if not model_path:
+            raise RuntimeError("RKNN ONNX source model path is missing. Call load() with a valid model_path.")
+
+        source_model = Path(model_path)
+        if not source_model.is_file():
+            raise self._metadata_error(model_path)
 
         try:
-            raw_inputs = getattr(self.runtime, "get_inputs", lambda: None)()
-            raw_outputs = getattr(self.runtime, "get_outputs", lambda: None)()
+            model = onnx.load(str(source_model))
         except Exception as exc:
-            raise self._metadata_error(engine_path) from exc
-
-        if not raw_inputs:
-            raise self._metadata_error(engine_path)
+            raise self._metadata_error(model_path) from exc
 
         inputs: List[EngineModelIO] = []
-        for index, item in enumerate(raw_inputs):
+        for index, item in enumerate(model.graph.input):
             name = getattr(item, "name", None) or f"input_{index}"
-            dtype = getattr(item, "dtype", "float32")
-            shape = getattr(item, "shape", None)
             inputs.append(
                 EngineModelIO(
                     name=name,
-                    dtype=_rknn_dtype_to_numpy_dtype(dtype),
-                    shape=_rknn_shape_to_model_shape(shape),
+                    dtype=_dtype_from_valueinfo(item),
+                    shape=_shape_from_valueinfo(item),
                 )
             )
 
-        outputs: List[str] = []
-        if raw_outputs:
-            for index, item in enumerate(raw_outputs):
-                name = getattr(item, "name", None) or f"output_{index}"
-                outputs.append(name)
+        if not inputs:
+            raise self._metadata_error(model_path)
+
+        outputs = [
+            getattr(item, "name", None) or f"output_{index}"
+            for index, item in enumerate(model.graph.output)
+        ]
 
         self.inputs = inputs
         self.outputs = outputs
