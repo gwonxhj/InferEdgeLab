@@ -1,7 +1,7 @@
 # Benchmarks
 
-> 현재 이 문서는 Jetson TensorRT validation reference와 Odroid RKNN curated hardware validation 결과를 먼저 정리합니다.
-> CI / auto-generated benchmark summary가 생성되면 동일 문서에 함께 누적됩니다.
+> 현재 이 문서는 auto-generated benchmark summary와 Jetson TensorRT / RKNN validation reference를 함께 정리합니다.
+> 수동 validation evidence 섹션은 유지하고, auto-generated summary만 marker block으로 갱신합니다.
 
 이 문서는 다음 두 목적을 함께 가집니다.
 
@@ -10,6 +10,19 @@
 
 Jetson TensorRT 실기 검증 evidence는 README와 portfolio 문서에서 서술형으로 설명하고,
 이 파일은 그 결과를 빠르게 확인할 수 있는 표 중심 reference 역할에 집중합니다.
+
+---
+
+## Auto-Generated Benchmark Summary
+
+이 섹션은 `scripts/update_benchmarks.py` 와 `scripts/update_readme.py` 가 사용하는 auto-generated summary 구간입니다.
+수동 validation evidence 섹션은 아래 marker 바깥에서 별도로 유지됩니다.
+
+<!-- EDGE_BENCH_BENCHMARKS:START -->
+
+> No auto-generated report summaries are available yet.
+
+<!-- EDGE_BENCH_BENCHMARKS:END -->
 
 ---
 
