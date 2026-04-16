@@ -1,4 +1,4 @@
-.PHONY: save demo_deps demo_models demo_profile demo_doc demo_readme demo demo_clean ci_bench ci_guard ci_policy_gate
+.PHONY: save demo_deps demo_models demo_profile demo_doc demo_readme demo demo_clean ci_bench ci_guard ci_policy_gate enrich_demo ci_enrich_smoke
 
 SIZES  ?= 224 320 640
 RUNS   ?= 300
@@ -12,6 +12,11 @@ CI     ?= 0
 RECENT ?= 30
 
 BENCH_DOC ?= BENCHMARKS.md
+BASE_RESULT ?=
+NEW_RESULT ?=
+BASE_ACCURACY_JSON ?=
+NEW_ACCURACY_JSON ?=
+ENRICH_OUT_DIR ?= results_enriched
 
 save:
 	git add -A
@@ -97,3 +102,14 @@ ci_policy_gate:
 			--fail-on-same-precision-regression \
 			--fail-on-severe-tradeoff; \
 	done
+
+enrich_demo:
+	poetry run python scripts/run_enriched_accuracy_demo.py \
+		--base-result "$(BASE_RESULT)" \
+		--base-accuracy-json "$(BASE_ACCURACY_JSON)" \
+		--new-result "$(NEW_RESULT)" \
+		--new-accuracy-json "$(NEW_ACCURACY_JSON)" \
+		--out-dir "$(ENRICH_OUT_DIR)"
+
+ci_enrich_smoke:
+	poetry run pytest tests/test_run_enriched_accuracy_demo.py -q
