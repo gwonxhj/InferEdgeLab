@@ -225,6 +225,8 @@ Profile -> JSON 저장 -> Compare -> History -> Report -> CI 검증
 - 같은 RKNN detection 결과를 `map50` 중심 accuracy-aware compare에 연결하여, latency만 빠른 결과가 아니라 **accuracy 유지/개선 여부까지 함께 해석 가능한 구조**로 확장
 - Odroid M2 실기 환경에서 `yolov8n.onnx` + `yolov8n_fp16.rknn` 조합의 RKNN runtime profiling 성공
 - 같은 fp16 조건으로 repeated profiling 후 same-precision compare를 수행했고, mean latency `72.4249ms → 71.8846ms`, p99 `73.6221ms → 73.7026ms` 결과가 실제 **neutral** 로 판정되는 것을 확인
+- RKNN runtime cross-precision compare에서 mean latency `71.8846ms → 35.0657ms`, p99 `73.7026ms → 35.6140ms`로 **tradeoff_faster** 가 판정되는 것을 확인
+- 이후 동일 runtime pair에 detection accuracy를 후처리로 부착해 `map50 0.7791 → 0.7977`, **acceptable_tradeoff** 까지 재현 가능한 구조를 확보
 
 ---
 
@@ -286,6 +288,13 @@ Example:
   - overall: tradeoff_faster
   - trade-off risk: unknown_risk
 
+- RKNN runtime enriched pair (Odroid M2, `yolov8n.onnx`, fp16_vs_int8)
+  - base map50: 0.7791
+  - new map50: 0.7977
+  - primary metric: map50
+  - overall: tradeoff_faster
+  - trade-off risk: acceptable_tradeoff
+
 이 검증은 단순 curated import가 아니라,
 실제 Odroid M2에서 RKNNLite runtime / `librknnrt.so` / `rknpu` kernel module을 연결한 뒤
 EdgeBench의 `profile` 명령으로 직접 생성한 structured result를 다시 compare/report 흐름에 연결한 사례입니다.
@@ -296,8 +305,21 @@ EdgeBench의 `profile` 명령으로 직접 생성한 structured result를 다시
 
 다만 해당 runtime cross-precision 검증 pair는 fp16과 int8 모델이 서로 다른 RKNN toolkit/compiler version에서 생성된 artifact를 사용했기 때문에,
 관측된 latency 차이를 오직 precision 변화만의 효과로 단정해서는 안 됩니다.
-따라서 본 결과는 “실기 runtime trade-off signal”로 해석하고,
-동일 toolkit version 기준 pair 확보는 후속 정밀 검증 과제로 남겨두었습니다.
+따라서 base runtime pair 자체는 “실기 runtime trade-off signal”로 해석하는 것이 맞습니다.
+
+대신 이 한계를 accuracy 측면에서는 별도로 보완했습니다.
+즉, runtime profiling으로 생성한 structured result에 외부 detection accuracy JSON을 `enrich-result` / `enrich-pair`로 다시 부착해,
+latency evidence와 accuracy evidence를 같은 schema 안에서 재결합하는 방식을 만들었습니다.
+이 덕분에 runtime-origin result도 curated import 결과와 마찬가지로 `map50` 기반 accuracy-aware compare에 연결할 수 있었고,
+실제로 `acceptable_tradeoff`까지 재현 가능한 workflow로 확장했습니다.
+
+정리하면 EdgeBench는
+1. runtime 측정,
+2. structured result 저장,
+3. 필요 시 accuracy enrichment,
+4. compare/report 재사용
+
+의 4단계를 통해 실기 결과를 더 재현 가능하고 설명 가능한 validation evidence로 전환할 수 있게 되었습니다.
 
 결과:
 
