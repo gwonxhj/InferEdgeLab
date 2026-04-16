@@ -46,7 +46,8 @@ python scripts/check_jetson_tensorrt_env.py \
 PASS 기준:
 
 - 스크립트가 오류 없이 종료된다.
-- Jetson TensorRT 실행에 필요한 환경 점검 항목이 성공으로 표시된다.
+- Jetson marker(`/etc/nv_tegra_release`), `tensorrt` / `onnxruntime` / `numpy`, CUDA Python binding availability, `model_path`, `engine_path` 점검 항목이 성공으로 표시된다.
+- 실패 시에는 Jetson 환경 자체 문제인지, TensorRT/Python module 준비 문제인지, CUDA Python binding 준비 문제인지, model/engine artifact 경로 문제인지 빠르게 분기할 수 있다.
 - 이후 `python -m edgebench.cli profile --engine tensorrt ...` 실행 전제 조건이 충족된 것으로 판단한다.
 
 ## 5. ResNet18 Validation

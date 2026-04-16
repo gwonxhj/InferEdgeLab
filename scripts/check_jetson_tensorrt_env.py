@@ -11,6 +11,21 @@ def _module_available(name: str) -> bool:
     return importlib.util.find_spec(name) is not None
 
 
+def _cuda_python_binding_available() -> tuple[bool, str]:
+    candidates = (
+        "cuda",
+        "cuda.bindings",
+        "cuda.bindings.driver",
+        "cuda.cuda",
+    )
+
+    for module_name in candidates:
+        if _module_available(module_name):
+            return True, f"module import is available via {module_name}"
+
+    return False, "cuda-python binding import is not available"
+
+
 def _print_check(label: str, ok: bool, detail: str) -> None:
     status = "OK" if ok else "MISSING"
     print(f"[{status}] {label}: {detail}")
@@ -57,6 +72,14 @@ def main() -> int:
             "module import is available" if available else "module import is not available",
         )
         checks.append(available)
+
+    cuda_available, cuda_detail = _cuda_python_binding_available()
+    _print_check(
+        "cuda-python binding",
+        cuda_available,
+        cuda_detail,
+    )
+    checks.append(cuda_available)
 
     if args.model_path:
         model_path = Path(args.model_path)
