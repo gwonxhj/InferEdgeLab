@@ -45,12 +45,14 @@ Odroid M2 실기 환경에서 EdgeBench의 RKNN runtime backend를 통해 직접
 |---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---|---|
 | yolov8n.onnx | rknn | npu | fp16_vs_fp16 | 1 | 640x640 | 1 | 5 | 72.4249 | 71.8846 | 73.6221 | 73.7026 | neutral | not_applicable | same-precision compare, runtime provenance confirmed |
 | yolov8n.onnx | rknn | npu | fp16_vs_int8 | 1 | 640x640 | 1 | 5 | 71.8846 | 35.0657 | 73.7026 | 35.6140 | tradeoff_faster | unknown_risk | cross-precision compare, latency-only runtime validation |
+| yolov8n.onnx | rknn | npu | fp16_vs_int8 (enriched) | 1 | 640x640 | 1 | 5 | 71.8846 | 35.0657 | 73.7026 | 35.6140 | tradeoff_faster | acceptable_tradeoff | enriched runtime pair with map50: 0.7791 -> 0.7977 |
 
 > 참고:
 > - 위 표는 Odroid M2에서 실제 `profile` → structured result 저장 → `compare-latest` 실행으로 확인한 값입니다.
 > - fp16 runtime artifact는 `/home/odroid/rise/fp16/yolov8n_fp16.rknn` 입니다.
 > - int8 runtime artifact는 `/home/odroid/rise/int8/yolov8n_hybrid_int8_boxdfl_scorefix.rknn` 입니다.
-> - runtime cross-precision pair에는 accuracy 결과가 함께 저장되지 않아 `trade-off risk = unknown_risk` 로 해석됩니다.
+> - 기본 runtime cross-precision pair에는 accuracy 결과가 함께 저장되지 않아 `trade-off risk = unknown_risk` 로 해석됩니다.
+> - 이후 `enrich-result` / `enrich-pair` 로 detection accuracy JSON을 부착하면 같은 runtime pair를 accuracy-aware compare로 다시 해석할 수 있습니다.
 
 ### Quick Takeaway
 
@@ -61,6 +63,8 @@ Odroid M2 실기 환경에서 EdgeBench의 RKNN runtime backend를 통해 직접
 - cross-precision RKNN runtime compare에서는 mean latency `71.8846 ms → 35.0657 ms`, p99 `73.7026 ms → 35.6140 ms`로 **tradeoff_faster** 판정
 - 해당 runtime cross-precision 결과는 accuracy를 함께 저장하지 않은 latency-only pair이므로 trade-off risk는 `unknown_risk`로 해석됨
 - 즉 EdgeBench는 curated import와 runtime profiling 양쪽 경로에서 RKNN validation evidence를 같은 compare/report workflow로 연결함
+- 또한 `enrich-result` / `enrich-pair`를 통해 runtime-only 결과에 accuracy evidence를 후처리로 연결할 수 있음
+- 그 결과 runtime cross-precision pair도 `unknown_risk`에서 끝나지 않고 `acceptable_tradeoff` 같은 accuracy-aware 판정으로 확장 가능함
 
 ### Odroid RKNN Benchmarks
 
