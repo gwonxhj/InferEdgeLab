@@ -167,7 +167,7 @@ def _latest_per_group(rows: List[Row]) -> List[Row]:
 def summarize(
     pattern: str = typer.Argument(..., help='예: reports/*.json'),
     format: str = typer.Option("md", "--format", help="md"),
-    mode: str = typer.Option("latest", "--mode", help="latest/history (latest=중복 제거, history=전체)"),
+    mode: str = typer.Option("latest", "--mode", help="latest/history/both (latest=중복 제거, history=전체)"),
     sort: str = typer.Option("p99", "--sort", help="p99/mean/flops/time"),
     recent: int = typer.Option(0, "--recent", help="0이면 전체, 아니면 최근 N개(시간 기준)"),
     top: int = typer.Option(0, "--top", help="0이면 전체, 아니면 상위 N개 (sort 기준)"),
@@ -183,24 +183,32 @@ def summarize(
         rows = sorted(rows, key=lambda r: _ts_key(r.ts_iso))
         rows = rows[-recent:]  # newest N
 
-    if mode not in ("latest", "history"):
-        raise typer.BadParameter("--mode must be one of: latest, history")
+    if mode not in ("latest", "history", "both"):
+        raise typer.BadParameter("--mode must be one of: latest, history, both")
 
     if format != "md":
         raise typer.BadParameter("--format currently supports only: md")
 
-    if mode == "latest":
-        rows = _latest_per_group(rows)
-
-    rows = _sort_rows(rows, sort=sort)
+    history_rows = _sort_rows(rows, sort=sort)
+    latest_rows = _sort_rows(_latest_per_group(rows), sort=sort)
 
     if top and top > 0:
-        rows = rows[:top]
+        history_rows = history_rows[:top]
+        latest_rows = latest_rows[:top]
 
     if mode == "latest":
-        text = "## Latest (recommended)\n\n" + _md_table_latest(rows) + "\n"
+        text = "## Latest (recommended)\n\n" + _md_table_latest(latest_rows) + "\n"
+    elif mode == "history":
+        text = "## History (raw)\n\n" + _md_table_history(history_rows) + "\n"
     else:
-        text = "## History (raw)\n\n" + _md_table_history(rows) + "\n"
+        text = (
+            "## Latest (recommended)\n\n"
+            + _md_table_latest(latest_rows)
+            + "\n\n"
+            + "## History (raw)\n\n"
+            + _md_table_history(history_rows)
+            + "\n"
+        )
 
     if output:
         os.makedirs(os.path.dirname(output) or ".", exist_ok=True)
