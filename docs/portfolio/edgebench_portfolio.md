@@ -267,7 +267,7 @@ Example:
   - p99 latency: 14.7342ms → 14.7342ms
   - overall: neutral
 
-- YOLOv8n (Odroid M2)
+- YOLOv8n (Odroid M2, curated validation)
   - FP16 → Hybrid INT8
   - latency: 51.82ms → 16.29ms
   - map50: 0.7791 → 0.7977
@@ -278,13 +278,26 @@ Example:
   - p99 latency: 73.6221ms → 73.7026ms
   - overall: neutral
 
+- RKNN runtime (Odroid M2, `yolov8n.onnx`, fp16_vs_int8)
+  - fp16 runtime artifact: `/home/odroid/rise/fp16/yolov8n_fp16.rknn`
+  - int8 runtime artifact: `/home/odroid/rise/int8/yolov8n_hybrid_int8_boxdfl_scorefix.rknn`
+  - mean latency: 71.8846ms → 35.0657ms
+  - p99 latency: 73.7026ms → 35.6140ms
+  - overall: tradeoff_faster
+  - trade-off risk: unknown_risk
+
 이 검증은 단순 curated import가 아니라,
 실제 Odroid M2에서 RKNNLite runtime / `librknnrt.so` / `rknpu` kernel module을 연결한 뒤
 EdgeBench의 `profile` 명령으로 직접 생성한 structured result를 다시 compare/report 흐름에 연결한 사례입니다.
 
-또한 RKNNLite 1.6.0 환경에서 runtime metadata API 한계를 확인한 뒤,
+또한 RKNNLite runtime metadata API 한계를 확인한 뒤,
 원본 ONNX source metadata를 fallback으로 사용하는 방식으로 backend 호환성을 정리했습니다.
 그 결과 RKNN backend도 TensorRT와 마찬가지로 EdgeBench의 공통 result schema와 report pipeline에 안정적으로 연결할 수 있게 되었습니다.
+
+다만 해당 runtime cross-precision 검증 pair는 fp16과 int8 모델이 서로 다른 RKNN toolkit/compiler version에서 생성된 artifact를 사용했기 때문에,
+관측된 latency 차이를 오직 precision 변화만의 효과로 단정해서는 안 됩니다.
+따라서 본 결과는 “실기 runtime trade-off signal”로 해석하고,
+동일 toolkit version 기준 pair 확보는 후속 정밀 검증 과제로 남겨두었습니다.
 
 결과:
 
