@@ -52,17 +52,63 @@ class FakeRKNNLite:
     def init_runtime(self) -> int:
         return 0
 
-    def get_inputs(self):
-        return [FakeTensorInfo("images", "float32", [None, 3, None, None])]
-
-    def get_outputs(self):
-        return [FakeTensorInfo("output0", "float32", [1, 1000])]
-
     def inference(self, inputs):
         return [np.asarray(inputs[0]).sum(axis=(1, 2, 3))]
 
     def release(self) -> None:
         self.released = True
+
+
+class FakeDim:
+    def __init__(self, dim_value: int | None) -> None:
+        self.dim_value = dim_value
+
+    def HasField(self, name: str) -> bool:
+        return name == "dim_value" and self.dim_value is not None
+
+
+class FakeTensorShape:
+    def __init__(self, dims: list[int | None]) -> None:
+        self.dim = [FakeDim(dim) for dim in dims]
+
+
+class FakeTensorType:
+    def __init__(self, elem_type: int, dims: list[int | None]) -> None:
+        self.elem_type = elem_type
+        self.shape = FakeTensorShape(dims)
+
+    def HasField(self, name: str) -> bool:
+        return name == "shape"
+
+
+class FakeType:
+    def __init__(self, elem_type: int, dims: list[int | None]) -> None:
+        self.tensor_type = FakeTensorType(elem_type, dims)
+
+    def HasField(self, name: str) -> bool:
+        return name == "tensor_type"
+
+
+class FakeValueInfo:
+    def __init__(self, name: str, elem_type: int, dims: list[int | None]) -> None:
+        self.name = name
+        self.type = FakeType(elem_type, dims)
+
+
+class FakeGraph:
+    def __init__(self) -> None:
+        onnx_module = sys.modules["onnx"]
+        self.input = [
+            FakeValueInfo("images", onnx_module.TensorProto.FLOAT, [None, 3, None, None]),
+        ]
+        self.output = [
+            FakeValueInfo("output0", onnx_module.TensorProto.FLOAT, [1, 1000]),
+        ]
+
+
+class FakeOnnxModel:
+    def __init__(self) -> None:
+        self.graph = FakeGraph()
 
 
 def test_rknn_alias_normalize():
@@ -105,7 +151,9 @@ def test_rknn_missing_runtime_binding_raises_clear_runtime_error(tmp_path, monke
 
 
 def test_rknn_engine_smoke_shape_and_inference(tmp_path, monkeypatch):
+    model_path = tmp_path / "model.onnx"
     artifact = tmp_path / "model.rknn"
+    model_path.write_bytes(b"fake-onnx")
     artifact.write_bytes(b"fake-rknn")
 
     rknnlite_module = types.ModuleType("rknnlite")
@@ -115,14 +163,15 @@ def test_rknn_engine_smoke_shape_and_inference(tmp_path, monkeypatch):
 
     monkeypatch.setitem(sys.modules, "rknnlite", rknnlite_module)
     monkeypatch.setitem(sys.modules, "rknnlite.api", rknnlite_api_module)
+    monkeypatch.setattr(sys.modules["onnx"], "load", lambda path: FakeOnnxModel(), raising=False)
 
     engine = RknnEngine()
-    engine.load("models/yolov8n.onnx", engine_path=str(artifact))
+    engine.load(str(model_path), engine_path=str(artifact))
 
     feeds = engine.make_dummy_inputs(batch_override=2, height_override=320, width_override=320)
     outputs = engine.run(feeds)
 
-    assert engine.runtime_paths.model_path == "models/yolov8n.onnx"
+    assert engine.runtime_paths.model_path == str(model_path)
     assert engine.runtime_paths.runtime_artifact_path == str(artifact)
     assert engine.outputs == ["output0"]
     assert list(feeds.keys()) == ["images"]
