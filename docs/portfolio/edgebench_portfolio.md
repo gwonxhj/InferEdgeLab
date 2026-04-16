@@ -223,6 +223,8 @@ Profile -> JSON 저장 -> Compare -> History -> Report -> CI 검증
 - structured result JSON 원문에서 `runtime_artifact_path`, `primary_input_name`, `resolved_input_shapes`, `effective_*` 필드 저장 확인
 - Odroid M2 + YOLOv8n 기준 FP16 → Hybrid INT8 전환 시 mean latency `51.82ms → 16.29ms` 수준의 개선 확인
 - 같은 RKNN detection 결과를 `map50` 중심 accuracy-aware compare에 연결하여, latency만 빠른 결과가 아니라 **accuracy 유지/개선 여부까지 함께 해석 가능한 구조**로 확장
+- Odroid M2 실기 환경에서 `yolov8n.onnx` + `yolov8n_fp16.rknn` 조합의 RKNN runtime profiling 성공
+- 같은 fp16 조건으로 repeated profiling 후 same-precision compare를 수행했고, mean latency `72.4249ms → 71.8846ms`, p99 `73.6221ms → 73.7026ms` 결과가 실제 **neutral** 로 판정되는 것을 확인
 
 ---
 
@@ -269,6 +271,20 @@ Example:
   - FP16 → Hybrid INT8
   - latency: 51.82ms → 16.29ms
   - map50: 0.7791 → 0.7977
+
+- RKNN runtime (Odroid M2, `yolov8n.onnx`, fp16)
+  - runtime artifact: `/home/odroid/rise/fp16/yolov8n_fp16.rknn`
+  - mean latency: 72.4249ms → 71.8846ms
+  - p99 latency: 73.6221ms → 73.7026ms
+  - overall: neutral
+
+이 검증은 단순 curated import가 아니라,
+실제 Odroid M2에서 RKNNLite runtime / `librknnrt.so` / `rknpu` kernel module을 연결한 뒤
+EdgeBench의 `profile` 명령으로 직접 생성한 structured result를 다시 compare/report 흐름에 연결한 사례입니다.
+
+또한 RKNNLite 1.6.0 환경에서 runtime metadata API 한계를 확인한 뒤,
+원본 ONNX source metadata를 fallback으로 사용하는 방식으로 backend 호환성을 정리했습니다.
+그 결과 RKNN backend도 TensorRT와 마찬가지로 EdgeBench의 공통 result schema와 report pipeline에 안정적으로 연결할 수 있게 되었습니다.
 
 결과:
 
