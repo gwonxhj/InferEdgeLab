@@ -139,3 +139,95 @@ def test_cuda_python_binding_check_affects_summary_result(tmp_path, monkeypatch,
 
     assert "[MISSING] cuda-python binding:" in out
     assert "FAIL:" in out
+
+
+def test_cuda_candidate_module_lookup_error_does_not_crash_when_other_candidate_succeeds(tmp_path, monkeypatch, capsys):
+    module = import_check_jetson_tensorrt_env_module()
+    model_path = tmp_path / "model.onnx"
+    engine_path = tmp_path / "model.engine"
+    model_path.write_text("onnx", encoding="utf-8")
+    engine_path.write_text("engine", encoding="utf-8")
+    original_exists = Path.exists
+
+    def fake_exists(path: Path) -> bool:
+        if str(path) == "/etc/nv_tegra_release":
+            return True
+        return original_exists(path)
+
+    def fake_find_spec(name: str):
+        if name in {"tensorrt", "onnxruntime", "numpy"}:
+            return object()
+        if name == "cuda":
+            raise ModuleNotFoundError("cuda parent package is partial")
+        if name == "cuda.bindings":
+            raise ImportError("cuda.bindings lookup failed")
+        if name == "cuda.bindings.driver":
+            return object()
+        if name == "cuda.cuda":
+            return None
+        return None
+
+    monkeypatch.setattr(Path, "exists", fake_exists)
+    monkeypatch.setattr(module.importlib.util, "find_spec", fake_find_spec)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "check_jetson_tensorrt_env.py",
+            "--model-path",
+            str(model_path),
+            "--engine-path",
+            str(engine_path),
+        ],
+    )
+
+    assert module.main() == 0
+    out = capsys.readouterr().out
+
+    assert "[OK] cuda-python binding: module import is available via cuda.bindings.driver" in out
+    assert "PASS:" in out
+
+
+def test_cuda_candidate_lookup_failures_keep_missing_and_fail_summary(tmp_path, monkeypatch, capsys):
+    module = import_check_jetson_tensorrt_env_module()
+    model_path = tmp_path / "model.onnx"
+    engine_path = tmp_path / "model.engine"
+    model_path.write_text("onnx", encoding="utf-8")
+    engine_path.write_text("engine", encoding="utf-8")
+    original_exists = Path.exists
+
+    def fake_exists(path: Path) -> bool:
+        if str(path) == "/etc/nv_tegra_release":
+            return True
+        return original_exists(path)
+
+    def fake_find_spec(name: str):
+        if name in {"tensorrt", "onnxruntime", "numpy"}:
+            return object()
+        if name in {"cuda", "cuda.bindings"}:
+            raise ModuleNotFoundError(f"{name} missing")
+        if name == "cuda.bindings.driver":
+            raise RuntimeError("unexpected namespace lookup failure")
+        if name == "cuda.cuda":
+            return None
+        return None
+
+    monkeypatch.setattr(Path, "exists", fake_exists)
+    monkeypatch.setattr(module.importlib.util, "find_spec", fake_find_spec)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "check_jetson_tensorrt_env.py",
+            "--model-path",
+            str(model_path),
+            "--engine-path",
+            str(engine_path),
+        ],
+    )
+
+    assert module.main() == 1
+    out = capsys.readouterr().out
+
+    assert "[MISSING] cuda-python binding:" in out
+    assert "FAIL:" in out

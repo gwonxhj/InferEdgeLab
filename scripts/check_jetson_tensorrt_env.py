@@ -8,7 +8,10 @@ from pathlib import Path
 
 
 def _module_available(name: str) -> bool:
-    return importlib.util.find_spec(name) is not None
+    try:
+        return importlib.util.find_spec(name) is not None
+    except (ModuleNotFoundError, ImportError, Exception):
+        return False
 
 
 def _cuda_python_binding_available() -> tuple[bool, str]:
