@@ -415,11 +415,38 @@ Jetson TensorRT 실기 검증 절차는 [docs/validation/jetson_tensorrt_validat
 문서에는 preflight check → repeated profiling → `compare-latest` → Markdown / HTML report 저장 순서의 재현 절차를 기록했습니다.
 실제 검증 예시로는 `resnet18` same-precision neutral 사례와 `yolov8n` same-precision neutral 사례를 포함합니다.
 
+실제 생성 산출물 기준으로 보면,
+- repeated profiling으로 생성된 TensorRT structured result는 `results/*.json` 에 저장되고
+- latest pair 비교 결과는 `reports/validation/*.md`, `reports/validation/*.html` 로 저장됩니다.
+
+따라서 README의 Jetson evidence는 “고정 샘플 파일 모음”이라기보다,
+실제 validation machine에서 생성된 runtime artifact를 문서와 표로 요약한 reference라고 보는 것이 맞습니다.
+
 ### Validation Artifacts (Jetson)
 
-Jetson 디바이스에서 실행한 validation 결과 예시는 아래 경로에 저장됩니다:
+Jetson TensorRT 실기 검증 시 생성되는 주요 산출물은 아래 두 종류입니다.
 
-- reports/examples/jetson/
+1. compare / report 산출물
+   - `reports/validation/resnet18_tensorrt_latest.md`
+   - `reports/validation/resnet18_tensorrt_latest.html`
+   - `reports/validation/yolov8n_tensorrt_latest.md`
+   - `reports/validation/yolov8n_tensorrt_latest.html`
+
+2. structured runtime result
+   - `results/resnet18.onnx__tensorrt__gpu__fp16__b1__h224w224__<timestamp>.json`
+   - `results/yolov8n.onnx__tensorrt__gpu__fp16__b1__h640w640__<timestamp>.json`
+
+즉 Jetson validation evidence는 하나의 정적 예제 디렉토리에만 저장되는 구조가 아니라,
+실기 검증 시점의 runtime result와 compare report가 각각 `results/` 와 `reports/validation/` 아래에 생성되는 구조입니다.
+
+이번 검증에서는 `scripts/run_jetson_tensorrt_validation.py` 를 통해
+- repeated profiling으로 latest comparable pair를 만들고
+- `compare-latest` 로 Markdown / HTML report를 생성하고
+- structured result JSON 원문에서 runtime provenance를 확인했습니다.
+
+> 참고:
+> 이 산출물들은 validation을 수행한 Jetson 환경에서 생성되는 evidence이며,
+> README / BENCHMARKS / validation runbook에는 그 결과를 요약한 reference를 유지합니다.
 
 ## 📌 포함되는 결과
 
