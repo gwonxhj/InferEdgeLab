@@ -24,10 +24,17 @@ def _build_validation_command(
     model_path: Path,
     engine_path: Path,
     precision: str,
+    warmup: int,
+    runs: int,
+    batch: int,
+    height: int,
+    width: int,
     repeat: int,
     report_dir: Path,
+    skip_preflight: bool,
+    dry_run: bool,
 ) -> list[str]:
-    return [
+    command = [
         sys.executable,
         "scripts/run_jetson_tensorrt_validation.py",
         "--model-path",
@@ -36,11 +43,28 @@ def _build_validation_command(
         str(engine_path),
         "--precision",
         precision,
+        "--warmup",
+        str(warmup),
+        "--runs",
+        str(runs),
+        "--batch",
+        str(batch),
+        "--height",
+        str(height),
+        "--width",
+        str(width),
         "--repeat",
         str(repeat),
         "--report-dir",
         str(report_dir),
     ]
+
+    if skip_preflight:
+        command.append("--skip-preflight")
+    if dry_run:
+        command.append("--dry-run")
+
+    return command
 
 
 def _build_export_command(
@@ -82,9 +106,16 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--engine-path", required=True)
     parser.add_argument("--label", required=True)
     parser.add_argument("--precision", default="fp16")
+    parser.add_argument("--warmup", type=int, default=10)
+    parser.add_argument("--runs", type=int, default=100)
+    parser.add_argument("--batch", type=int, default=1)
+    parser.add_argument("--height", type=int, default=0)
+    parser.add_argument("--width", type=int, default=0)
     parser.add_argument("--repeat", type=int, default=2)
     parser.add_argument("--report-dir", default="reports/validation")
     parser.add_argument("--evidence-out", default="auto-generated")
+    parser.add_argument("--skip-preflight", action="store_true")
+    parser.add_argument("--dry-run", action="store_true")
     return parser.parse_args()
 
 
@@ -111,8 +142,15 @@ def main() -> int:
             model_path=model_path,
             engine_path=engine_path,
             precision=str(args.precision),
+            warmup=int(args.warmup),
+            runs=int(args.runs),
+            batch=int(args.batch),
+            height=int(args.height),
+            width=int(args.width),
             repeat=int(args.repeat),
             report_dir=report_dir,
+            skip_preflight=bool(args.skip_preflight),
+            dry_run=bool(args.dry_run),
         )
     )
     print("Profile runs done.")
