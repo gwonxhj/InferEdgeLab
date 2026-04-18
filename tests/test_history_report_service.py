@@ -53,6 +53,9 @@ def test_build_history_report_outputs_includes_markdown_and_sorted_history(tmp_p
         include_markdown=True,
     )
 
+    assert set(outputs.keys()) >= {"meta", "data", "rendered", "history", "filters", "html", "markdown"}
+    assert outputs["meta"]["pattern"] == str(tmp_path / "*.json")
+    assert outputs["meta"]["count"] == 2
     assert [item["timestamp"] for item in outputs["history"]] == [
         "2026-04-14T09:00:00Z",
         "2026-04-14T10:00:00Z",
@@ -67,8 +70,12 @@ def test_build_history_report_outputs_includes_markdown_and_sorted_history(tmp_p
         "width": None,
         "pattern": str(tmp_path / "*.json"),
     }
+    assert outputs["meta"]["filters"] == outputs["filters"]
+    assert outputs["data"]["history"] == outputs["history"]
     assert isinstance(outputs["html"], str) and outputs["html"]
     assert isinstance(outputs["markdown"], str) and outputs["markdown"]
+    assert outputs["rendered"]["html"] == outputs["html"]
+    assert outputs["rendered"]["markdown"] == outputs["markdown"]
 
 
 def test_build_history_report_outputs_omits_markdown_when_disabled(tmp_path):
@@ -80,7 +87,9 @@ def test_build_history_report_outputs_omits_markdown_when_disabled(tmp_path):
     )
 
     assert len(outputs["history"]) == 1
+    assert outputs["meta"]["count"] == 1
     assert outputs["markdown"] is None
+    assert outputs["rendered"]["markdown"] is None
     assert isinstance(outputs["html"], str) and outputs["html"]
 
 

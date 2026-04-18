@@ -30,6 +30,10 @@ def build_compare_bundle(
     tradeoff_severe_threshold: float | None = None,
     pyproject_path: str = "pyproject.toml",
 ) -> dict[str, Any]:
+    """
+    Build a compare bundle for API use while preserving legacy top-level fields
+    used by CLI consumers.
+    """
     base = load_result(base_path)
     new = load_result(new_path)
 
@@ -56,16 +60,38 @@ def build_compare_bundle(
         tradeoff_severe_threshold=thresholds["tradeoff_severe_threshold"],
     )
 
+    markdown = generate_compare_markdown(result, judgement)
+    html = generate_compare_html(result, judgement)
+    legacy_warning = bool(base.get("legacy_result") or new.get("legacy_result"))
+    bundle = {
+        "meta": {
+            "base_path": base_path,
+            "new_path": new_path,
+            "legacy_warning": legacy_warning,
+        },
+        "data": {
+            "base": base,
+            "new": new,
+            "result": result,
+            "judgement": judgement,
+        },
+        "rendered": {
+            "markdown": markdown,
+            "html": html,
+        },
+    }
+
     return {
+        **bundle,
         "base": base,
         "new": new,
         "base_path": base_path,
         "new_path": new_path,
         "result": result,
         "judgement": judgement,
-        "markdown": generate_compare_markdown(result, judgement),
-        "html": generate_compare_html(result, judgement),
-        "legacy_warning": bool(base.get("legacy_result") or new.get("legacy_result")),
+        "markdown": markdown,
+        "html": html,
+        "legacy_warning": legacy_warning,
     }
 
 

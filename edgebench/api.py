@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import FastAPI, HTTPException
 
 from edgebench.services.compare_service import build_compare_bundle
@@ -27,7 +29,7 @@ def create_app() -> FastAPI:
         height: int | None = None,
         width: int | None = None,
         legacy_only: bool = False,
-    ) -> dict:
+    ) -> dict[str, Any]:
         try:
             return build_list_results_bundle(
                 pattern=pattern,
@@ -52,7 +54,7 @@ def create_app() -> FastAPI:
         sort: str = "p99",
         recent: int = 0,
         top: int = 0,
-    ) -> dict:
+    ) -> dict[str, Any]:
         try:
             return build_summary_bundle(
                 pattern=pattern,
@@ -76,7 +78,7 @@ def create_app() -> FastAPI:
         height: int | None = None,
         width: int | None = None,
         include_markdown: bool = False,
-    ) -> dict:
+    ) -> dict[str, Any]:
         try:
             return build_history_report_outputs(
                 pattern=pattern,
@@ -96,7 +98,7 @@ def create_app() -> FastAPI:
     def compare(
         base_path: str,
         new_path: str,
-    ) -> dict:
+    ) -> dict[str, Any]:
         try:
             return build_compare_bundle(
                 base_path=base_path,

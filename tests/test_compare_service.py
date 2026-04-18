@@ -81,6 +81,29 @@ def test_build_compare_bundle_returns_compare_artifacts_for_same_precision_pair(
 
     bundle = build_compare_bundle(base_path=base_path, new_path=new_path)
 
+    assert set(bundle.keys()) >= {
+        "meta",
+        "data",
+        "rendered",
+        "base",
+        "new",
+        "base_path",
+        "new_path",
+        "result",
+        "judgement",
+        "markdown",
+        "html",
+        "legacy_warning",
+    }
+    assert bundle["meta"]["base_path"] == base_path
+    assert bundle["meta"]["new_path"] == new_path
+    assert bundle["meta"]["legacy_warning"] is False
+    assert bundle["data"]["base"] == bundle["base"]
+    assert bundle["data"]["new"] == bundle["new"]
+    assert bundle["data"]["result"] == bundle["result"]
+    assert bundle["data"]["judgement"] == bundle["judgement"]
+    assert bundle["rendered"]["markdown"] == bundle["markdown"]
+    assert bundle["rendered"]["html"] == bundle["html"]
     assert bundle["base_path"] == base_path
     assert bundle["new_path"] == new_path
     assert bundle["result"]["precision"]["comparison_mode"] == "same_precision"
