@@ -5,14 +5,7 @@ from typer.models import OptionInfo
 from rich import print as rprint
 from rich.table import Table
 
-from edgebench.config import resolve_compare_thresholds
-from edgebench.result.loader import load_result
-
-from edgebench.compare.comparator import compare_results
-from edgebench.compare.judgement import judge_comparison
-
-from edgebench.report.markdown_generator import generate_compare_markdown
-from edgebench.report.html_generator import generate_compare_html
+from edgebench.services.compare_service import build_compare_bundle
 
 
 def _fmt_num(v):
@@ -70,12 +63,6 @@ def compare_cmd(
     """
     structured benchmark result 두 개를 비교해서 콘솔 표로 출력한다.
     """
-    base = load_result(base_path)
-    new = load_result(new_path)
-
-    if base.get("legacy_result") or new.get("legacy_result"):
-        rprint("[yellow]Warning[/yellow]: one or both result files are legacy format. Some fields may be missing.")
-
     latency_improve_threshold = _normalize_optional_float(latency_improve_threshold)
     latency_regress_threshold = _normalize_optional_float(latency_regress_threshold)
     accuracy_improve_threshold = _normalize_optional_float(accuracy_improve_threshold)
@@ -84,7 +71,9 @@ def compare_cmd(
     tradeoff_risky_threshold = _normalize_optional_float(tradeoff_risky_threshold)
     tradeoff_severe_threshold = _normalize_optional_float(tradeoff_severe_threshold)
 
-    thresholds = resolve_compare_thresholds(
+    bundle = build_compare_bundle(
+        base_path=base_path,
+        new_path=new_path,
         latency_improve_threshold=latency_improve_threshold,
         latency_regress_threshold=latency_regress_threshold,
         accuracy_improve_threshold=accuracy_improve_threshold,
@@ -93,18 +82,15 @@ def compare_cmd(
         tradeoff_risky_threshold=tradeoff_risky_threshold,
         tradeoff_severe_threshold=tradeoff_severe_threshold,
     )
+    base = bundle["base"]
+    new = bundle["new"]
+    result = bundle["result"]
+    judgement = bundle["judgement"]
+    thresholds = judgement["thresholds"]
 
-    result = compare_results(base, new)
-    judgement = judge_comparison(
-        result,
-        latency_improve_threshold=thresholds["latency_improve_threshold"],
-        latency_regress_threshold=thresholds["latency_regress_threshold"],
-        accuracy_improve_threshold=thresholds["accuracy_improve_threshold"],
-        accuracy_regress_threshold=thresholds["accuracy_regress_threshold"],
-        tradeoff_caution_threshold=thresholds["tradeoff_caution_threshold"],
-        tradeoff_risky_threshold=thresholds["tradeoff_risky_threshold"],
-        tradeoff_severe_threshold=thresholds["tradeoff_severe_threshold"],
-    )
+    if bundle["legacy_warning"]:
+        rprint("[yellow]Warning[/yellow]: one or both result files are legacy format. Some fields may be missing.")
+
     precision_info = result["precision"]
 
     rprint("[bold]Compare Results[/bold]")
@@ -318,15 +304,13 @@ def compare_cmd(
     rprint(run_table)
 
     if markdown_out:
-        md_text = generate_compare_markdown(result, judgement)
         with open(markdown_out, "w", encoding="utf-8") as f:
-            f.write(md_text)
+            f.write(bundle["markdown"])
             f.write("\n")
         rprint(f"[green]Saved markdown report[/green]: {markdown_out}")
 
     if html_out:
-        html_text = generate_compare_html(result, judgement)
         with open(html_out, "w", encoding="utf-8") as f:
-            f.write(html_text)
+            f.write(bundle["html"])
             f.write("\n")
         rprint(f"[green]Saved HTML report[/green]: {html_out}")

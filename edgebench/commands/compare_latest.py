@@ -3,27 +3,8 @@ from __future__ import annotations
 import typer
 from rich import print as rprint
 
-from edgebench.result.loader import (
-    load_results,
-    load_result,
-    list_result_paths,
-    filter_results,
-    latest_comparable_items,
-    latest_cross_precision_items,
-)
 from edgebench.commands.compare import compare_cmd
-
-
-def _normalize_selection_mode(value: str) -> str:
-    return str(value or "").strip().lower().replace("-", "_")
-
-
-def _core_run_config_mismatch_fields(base_item, new_item) -> list[str]:
-    base_run_config = base_item.get("run_config") or {}
-    new_run_config = new_item.get("run_config") or {}
-    core_fields = ("warmup", "runs", "intra_threads", "inter_threads", "mode", "task")
-
-    return [field for field in core_fields if base_run_config.get(field) != new_run_config.get(field)]
+from edgebench.services.compare_service import select_latest_compare_pair
 
 
 def _handle_error_or_warning(message: str, strict: bool) -> None:
@@ -31,26 +12,6 @@ def _handle_error_or_warning(message: str, strict: bool) -> None:
         rprint(f"[red]{message}[/red]")
         raise typer.Exit(code=1)
     rprint(f"[yellow]{message}[/yellow]")
-
-
-def _find_path_for_item(pattern: str, target_item):
-    paths = list_result_paths(pattern)
-
-    for path in paths:
-        data = load_result(path)
-        if (
-            str(data.get("model")) == str(target_item.get("model"))
-            and str(data.get("engine")) == str(target_item.get("engine"))
-            and str(data.get("device")) == str(target_item.get("device"))
-            and str(data.get("precision")) == str(target_item.get("precision"))
-            and str(data.get("batch")) == str(target_item.get("batch"))
-            and str(data.get("height")) == str(target_item.get("height"))
-            and str(data.get("width")) == str(target_item.get("width"))
-            and str(data.get("timestamp")) == str(target_item.get("timestamp"))
-        ):
-            return path
-
-    return None
 
 
 def compare_latest_cmd(
@@ -71,64 +32,24 @@ def compare_latest_cmd(
     """
     조건에 맞는 최신 comparable pair를 선택해 비교한다.
     """
-    selection_mode = _normalize_selection_mode(selection_mode)
-    allowed_modes = {"same_precision", "cross_precision"}
-
-    if selection_mode not in allowed_modes:
-        _handle_error_or_warning(
-            f"지원하지 않는 --selection-mode 값입니다: {selection_mode}. "
-            "same_precision 또는 cross_precision 을 사용하세요.",
-            strict,
-        )
-        return
-
-    if selection_mode == "cross_precision" and precision:
-        _handle_error_or_warning(
-            "cross_precision 모드에서는 --precision 필터를 함께 사용할 수 없습니다.",
-            strict,
-        )
-        return
-
-    all_items = load_results(pattern)
-
-    if selection_mode == "same_precision":
-        filtered_items = filter_results(
-            all_items,
+    try:
+        pair = select_latest_compare_pair(
+            pattern=pattern,
             model=model,
             engine=engine,
             device=device,
             precision=precision,
+            selection_mode=selection_mode,
         )
-    else:
-        filtered_items = filter_results(
-            all_items,
-            model=model,
-            engine=engine,
-            device=device,
-        )
-
-    if len(filtered_items) < 2:
-        msg = f"필터 조건에 맞는 result가 2개 미만입니다. 현재: {len(filtered_items)}개"
-        _handle_error_or_warning(msg, strict)
-        return
-
-    try:
-        if selection_mode == "same_precision":
-            matched_items = latest_comparable_items(filtered_items, count=2)
-        else:
-            matched_items = latest_cross_precision_items(filtered_items, count=2)
     except ValueError as exc:
         _handle_error_or_warning(str(exc), strict)
         return
 
-    base, new = matched_items
-
-    base_path = _find_path_for_item(pattern, base)
-    new_path = _find_path_for_item(pattern, new)
-
-    if not base_path or not new_path:
-        rprint("[red]비교 대상 result 파일 경로를 찾지 못했습니다.[/red]")
-        raise typer.Exit(code=1)
+    selection_mode = pair["selection_mode"]
+    base = pair["base"]
+    new = pair["new"]
+    base_path = pair["base_path"]
+    new_path = pair["new_path"]
 
     rprint("[cyan]Comparing latest pair:[/cyan]")
     rprint(f"Selection mode: {selection_mode}")
@@ -142,7 +63,7 @@ def compare_latest_cmd(
     rprint(f"Base path: {base_path}")
     rprint(f"New path : {new_path}")
 
-    run_config_mismatch_fields = _core_run_config_mismatch_fields(base, new)
+    run_config_mismatch_fields = pair["run_config_mismatch_fields"]
     if selection_mode == "same_precision" and run_config_mismatch_fields:
         mismatch_fields = ", ".join(run_config_mismatch_fields)
         rprint(
