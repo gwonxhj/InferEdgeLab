@@ -4,7 +4,7 @@ import typer
 from rich import print as rprint
 from rich.table import Table
 
-from edgebench.result.loader import list_result_paths, load_result
+from edgebench.services.list_results_service import build_list_result_items
 
 
 def _fmt_num(v):
@@ -29,42 +29,26 @@ def list_results_cmd(
     """
     저장된 structured benchmark result 목록을 최신순으로 보여준다.
     """
-    paths = list_result_paths()
+    batch_filter = None if batch < 0 else batch
+    height_filter = None if height < 0 else height
+    width_filter = None if width < 0 else width
 
-    if not paths:
+    all_items = build_list_result_items(limit=0)
+    if not all_items:
         rprint("[yellow]No structured results found in results/[/yellow]")
         return
 
-    paths = list(reversed(paths))
-
-    def _match(item):
-        if model and item.get("model") != model:
-            return False
-        if engine and item.get("engine") != engine:
-            return False
-        if device and item.get("device") != device:
-            return False
-        if precision and item.get("precision") != precision:
-            return False
-        if batch >= 0 and item.get("batch") != batch:
-            return False
-        if height >= 0 and item.get("height") != height:
-            return False
-        if width >= 0 and item.get("width") != width:
-            return False
-        if legacy_only and not item.get("legacy_result"):
-            return False
-        return True
-
-    filtered_items = []
-
-    for path in paths:
-        item = load_result(path)
-        if _match(item):
-            filtered_items.append(item)
-
-    if limit > 0:
-        filtered_items = filtered_items[:limit]
+    filtered_items = build_list_result_items(
+        limit=limit,
+        model=model,
+        engine=engine,
+        device=device,
+        precision=precision,
+        batch=batch_filter,
+        height=height_filter,
+        width=width_filter,
+        legacy_only=legacy_only,
+    )
 
     if not filtered_items:
         rprint("[yellow]No results matched given filters[/yellow]")
