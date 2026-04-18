@@ -34,7 +34,10 @@ def test_list_results_endpoint_returns_service_bundle_and_passes_args(monkeypatc
     app = api.create_app()
     endpoint = _get_route_endpoint(app, "/api/list-results")
     captured = {}
-    expected = {"meta": {"count": 1}, "data": {"items": [{"model": "resnet18"}]}}
+    expected = {
+        "meta": {"count": 1, "limit": 5, "filters": {"model": "resnet18"}},
+        "data": {"items": [{"model": "resnet18"}]},
+    }
 
     def fake_build_list_results_bundle(**kwargs):
         captured.update(kwargs)
@@ -74,7 +77,11 @@ def test_summarize_endpoint_returns_service_bundle_and_passes_args(monkeypatch):
     app = api.create_app()
     endpoint = _get_route_endpoint(app, "/api/summarize")
     captured = {}
-    expected = {"meta": {"mode": "latest"}, "data": {"rows": []}, "rendered": {"markdown": "## Latest"}}
+    expected = {
+        "meta": {"mode": "both", "sort": "time"},
+        "data": {"rows": [], "latest_rows": [], "history_rows": []},
+        "rendered": {"markdown": "## Latest"},
+    }
 
     def fake_build_summary_bundle(**kwargs):
         captured.update(kwargs)
@@ -120,6 +127,26 @@ def test_history_report_endpoint_converts_value_error_to_http_400(monkeypatch):
         raise AssertionError("HTTPException was not raised")
 
 
+def test_history_report_endpoint_returns_bundle(monkeypatch):
+    app = api.create_app()
+    endpoint = _get_route_endpoint(app, "/api/history-report")
+    expected = {
+        "meta": {"pattern": "results/*.json", "count": 1, "filters": {"model": "toy224.onnx"}},
+        "data": {"history": [{"timestamp": "2026-04-14T09:00:00Z"}]},
+        "rendered": {"html": "<html></html>", "markdown": None},
+    }
+
+    def fake_build_history_report_outputs(**kwargs):
+        return expected
+
+    monkeypatch.setattr(api, "build_history_report_outputs", fake_build_history_report_outputs)
+
+    result = endpoint(model="toy224.onnx")
+
+    assert result == expected
+    assert set(result.keys()) == {"meta", "data", "rendered"}
+
+
 def test_compare_endpoint_converts_value_error_to_http_400(monkeypatch):
     app = api.create_app()
     endpoint = _get_route_endpoint(app, "/api/compare")
@@ -136,3 +163,35 @@ def test_compare_endpoint_converts_value_error_to_http_400(monkeypatch):
         assert exc.detail == "bad compare request"
     else:
         raise AssertionError("HTTPException was not raised")
+
+
+def test_compare_endpoint_returns_bundle(monkeypatch):
+    app = api.create_app()
+    endpoint = _get_route_endpoint(app, "/api/compare")
+    expected = {
+        "meta": {
+            "base_path": "base.json",
+            "new_path": "new.json",
+            "legacy_warning": False,
+        },
+        "data": {
+            "base": {"model": "resnet18"},
+            "new": {"model": "resnet18"},
+            "result": {"precision": {"comparison_mode": "same_precision"}},
+            "judgement": {"overall": "improvement"},
+        },
+        "rendered": {
+            "markdown": "# report",
+            "html": "<html></html>",
+        },
+    }
+
+    def fake_build_compare_bundle(**kwargs):
+        return expected
+
+    monkeypatch.setattr(api, "build_compare_bundle", fake_build_compare_bundle)
+
+    result = endpoint(base_path="base.json", new_path="new.json")
+
+    assert result == expected
+    assert set(result.keys()) == {"meta", "data", "rendered"}
