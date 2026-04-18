@@ -5,7 +5,7 @@ from typing import Any
 from edgebench.result.loader import list_result_paths, load_result
 
 
-def build_list_result_items(
+def build_list_results_bundle(
     pattern: str = "results/*.json",
     limit: int = 10,
     model: str = "",
@@ -16,7 +16,7 @@ def build_list_result_items(
     height: int | None = None,
     width: int | None = None,
     legacy_only: bool = False,
-) -> list[dict[str, Any]]:
+) -> dict[str, Any]:
     paths = list(reversed(list_result_paths(pattern)))
     items: list[dict[str, Any]] = []
 
@@ -43,5 +43,52 @@ def build_list_result_items(
         items.append(item)
 
     if limit > 0:
-        return items[:limit]
-    return items
+        items = items[:limit]
+
+    return {
+        "meta": {
+            "pattern": pattern,
+            "limit": limit,
+            "filters": {
+                "model": model,
+                "engine": engine,
+                "device": device,
+                "precision": precision,
+                "batch": batch,
+                "height": height,
+                "width": width,
+                "legacy_only": legacy_only,
+            },
+            "count": len(items),
+        },
+        "data": {
+            "items": items,
+        },
+    }
+
+
+def build_list_result_items(
+    pattern: str = "results/*.json",
+    limit: int = 10,
+    model: str = "",
+    engine: str = "",
+    device: str = "",
+    precision: str = "",
+    batch: int | None = None,
+    height: int | None = None,
+    width: int | None = None,
+    legacy_only: bool = False,
+) -> list[dict[str, Any]]:
+    bundle = build_list_results_bundle(
+        pattern=pattern,
+        limit=limit,
+        model=model,
+        engine=engine,
+        device=device,
+        precision=precision,
+        batch=batch,
+        height=height,
+        width=width,
+        legacy_only=legacy_only,
+    )
+    return list(bundle["data"]["items"])

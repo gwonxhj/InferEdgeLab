@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import glob
 import json
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from typing import Any
 
@@ -144,14 +144,18 @@ def _latest_per_group(rows: list[Row]) -> list[Row]:
     return list(best.values())
 
 
-def build_summary_markdown(
+def _row_to_dict(row: Row) -> dict[str, Any]:
+    return asdict(row)
+
+
+def build_summary_bundle(
     pattern: str,
     format: str = "md",
     mode: str = "latest",
     sort: str = "p99",
     recent: int = 0,
     top: int = 0,
-) -> str:
+) -> dict[str, Any]:
     paths = sorted(glob.glob(pattern))
     if not paths:
         raise ValueError(f"no files matched: {pattern}")
@@ -176,14 +180,53 @@ def build_summary_markdown(
         latest_rows = latest_rows[:top]
 
     if mode == "latest":
-        return "## Latest (recommended)\n\n" + _md_table_latest(latest_rows) + "\n"
-    if mode == "history":
-        return "## History (raw)\n\n" + _md_table_history(history_rows) + "\n"
-    return (
-        "## Latest (recommended)\n\n"
-        + _md_table_latest(latest_rows)
-        + "\n\n"
-        + "## History (raw)\n\n"
-        + _md_table_history(history_rows)
-        + "\n"
+        markdown = "## Latest (recommended)\n\n" + _md_table_latest(latest_rows) + "\n"
+    elif mode == "history":
+        markdown = "## History (raw)\n\n" + _md_table_history(history_rows) + "\n"
+    else:
+        markdown = (
+            "## Latest (recommended)\n\n"
+            + _md_table_latest(latest_rows)
+            + "\n\n"
+            + "## History (raw)\n\n"
+            + _md_table_history(history_rows)
+            + "\n"
+        )
+
+    return {
+        "meta": {
+            "pattern": pattern,
+            "format": format,
+            "mode": mode,
+            "sort": sort,
+            "recent": recent,
+            "top": top,
+        },
+        "data": {
+            "rows": [_row_to_dict(row) for row in rows],
+            "latest_rows": [_row_to_dict(row) for row in latest_rows],
+            "history_rows": [_row_to_dict(row) for row in history_rows],
+        },
+        "rendered": {
+            "markdown": markdown,
+        },
+    }
+
+
+def build_summary_markdown(
+    pattern: str,
+    format: str = "md",
+    mode: str = "latest",
+    sort: str = "p99",
+    recent: int = 0,
+    top: int = 0,
+) -> str:
+    bundle = build_summary_bundle(
+        pattern=pattern,
+        format=format,
+        mode=mode,
+        sort=sort,
+        recent=recent,
+        top=top,
     )
+    return str(bundle["rendered"]["markdown"])
