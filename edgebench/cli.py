@@ -12,6 +12,7 @@ from edgebench.commands.enrich_pair import enrich_pair_cmd
 from edgebench.commands.enrich_result import enrich_result_cmd
 from edgebench.commands.list_results import list_results_cmd
 from edgebench.commands.history_report import history_report_cmd
+from edgebench.commands.serve import serve_cmd
 
 app = typer.Typer(help="EdgeBench CLI - Edge AI Inference Validation Tool")
 
@@ -25,6 +26,7 @@ app.command("enrich-pair", help="Attach accuracy metadata to a base/new structur
 app.command("enrich-result", help="Attach accuracy metadata to an existing structured benchmark result")(enrich_result_cmd)
 app.command("list-results", help="List recent structured benchmark results")(list_results_cmd)
 app.command("history-report", help="Generate HTML history report from structured benchmark results")(history_report_cmd)
+app.command("serve", help="Run EdgeBench FastAPI server")(serve_cmd)
 
 if __name__ == "__main__":
     app()
