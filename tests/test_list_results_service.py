@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 
-from edgebench.services.list_results_service import build_list_result_items
+from edgebench.services.list_results_service import build_list_result_items, build_list_results_bundle
 
 
 def write_result(
@@ -115,3 +115,51 @@ def test_build_list_result_items_returns_empty_list_when_no_match(tmp_path):
     items = build_list_result_items(pattern=str(tmp_path / "*.json"), limit=0, model="mobilenet")
 
     assert items == []
+
+
+def test_build_list_results_bundle_returns_meta_and_data_contract(tmp_path):
+    write_result(tmp_path, "one.json", timestamp="2026-04-16T09:00:00Z", precision="fp32", mtime=100)
+    write_result(tmp_path, "two.json", timestamp="2026-04-16T10:00:00Z", precision="fp16", mtime=200)
+
+    bundle = build_list_results_bundle(
+        pattern=str(tmp_path / "*.json"),
+        limit=1,
+        model="resnet18",
+        precision="fp16",
+    )
+    items = build_list_result_items(
+        pattern=str(tmp_path / "*.json"),
+        limit=1,
+        model="resnet18",
+        precision="fp16",
+    )
+
+    assert set(bundle.keys()) == {"meta", "data"}
+    assert bundle["meta"]["pattern"] == str(tmp_path / "*.json")
+    assert bundle["meta"]["limit"] == 1
+    assert bundle["meta"]["filters"] == {
+        "model": "resnet18",
+        "engine": "",
+        "device": "",
+        "precision": "fp16",
+        "batch": None,
+        "height": None,
+        "width": None,
+        "legacy_only": False,
+    }
+    assert bundle["data"]["items"] == items
+    assert bundle["meta"]["count"] == len(bundle["data"]["items"]) == 1
+
+
+def test_build_list_results_bundle_empty_items_keeps_empty_contract(tmp_path):
+    bundle = build_list_results_bundle(
+        pattern=str(tmp_path / "*.json"),
+        limit=5,
+        model="missing",
+        legacy_only=True,
+    )
+
+    assert bundle["data"]["items"] == []
+    assert bundle["meta"]["count"] == 0
+    assert bundle["meta"]["filters"]["model"] == "missing"
+    assert bundle["meta"]["filters"]["legacy_only"] is True

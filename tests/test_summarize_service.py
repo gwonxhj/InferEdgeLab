@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from edgebench.services.summarize_service import build_summary_markdown
+from edgebench.services.summarize_service import build_summary_bundle, build_summary_markdown
 
 
 def write_report(
@@ -163,3 +163,83 @@ def test_build_summary_markdown_recent_limits_to_latest_n_before_grouping(tmp_pa
     assert "2026-04-16T08:00:00Z" not in text
     assert "2026-04-16T09:00:00Z" in text
     assert "2026-04-16T10:00:00Z" in text
+
+
+def test_build_summary_bundle_returns_meta_data_rendered_contract(tmp_path):
+    write_report(
+        tmp_path,
+        "older.json",
+        model_name="toy224.onnx",
+        mean_ms=0.500,
+        p99_ms=0.600,
+        timestamp="2026-04-16T09:00:00Z",
+    )
+    write_report(
+        tmp_path,
+        "newer.json",
+        model_name="toy224.onnx",
+        mean_ms=0.450,
+        p99_ms=0.488,
+        timestamp="2026-04-16T10:00:00Z",
+    )
+
+    bundle = build_summary_bundle(pattern=str(tmp_path / "*.json"), mode="latest", sort="p99")
+    markdown = build_summary_markdown(pattern=str(tmp_path / "*.json"), mode="latest", sort="p99")
+
+    assert set(bundle.keys()) == {"meta", "data", "rendered"}
+    assert bundle["meta"]["pattern"] == str(tmp_path / "*.json")
+    assert bundle["meta"]["format"] == "md"
+    assert bundle["meta"]["mode"] == "latest"
+    assert bundle["meta"]["sort"] == "p99"
+    assert bundle["meta"]["recent"] == 0
+    assert bundle["meta"]["top"] == 0
+    assert isinstance(bundle["data"]["rows"], list)
+    assert isinstance(bundle["data"]["latest_rows"], list)
+    assert isinstance(bundle["data"]["history_rows"], list)
+    assert isinstance(bundle["data"]["rows"][0], dict)
+    assert isinstance(bundle["data"]["latest_rows"][0], dict)
+    assert isinstance(bundle["data"]["history_rows"][0], dict)
+    assert bundle["rendered"]["markdown"] == markdown
+
+
+def test_build_summary_bundle_recent_and_top_are_reflected_in_data(tmp_path):
+    write_report(
+        tmp_path,
+        "first.json",
+        model_name="toy224.onnx",
+        mean_ms=0.700,
+        p99_ms=0.800,
+        timestamp="2026-04-16T08:00:00Z",
+    )
+    write_report(
+        tmp_path,
+        "second.json",
+        model_name="toy224.onnx",
+        mean_ms=0.500,
+        p99_ms=0.600,
+        timestamp="2026-04-16T09:00:00Z",
+    )
+    write_report(
+        tmp_path,
+        "third.json",
+        model_name="toy320.onnx",
+        mean_ms=0.450,
+        p99_ms=0.488,
+        timestamp="2026-04-16T10:00:00Z",
+    )
+
+    bundle = build_summary_bundle(
+        pattern=str(tmp_path / "*.json"),
+        mode="both",
+        sort="time",
+        recent=2,
+        top=1,
+    )
+
+    assert bundle["meta"]["recent"] == 2
+    assert bundle["meta"]["top"] == 1
+    assert len(bundle["data"]["rows"]) == 2
+    assert len(bundle["data"]["history_rows"]) == 1
+    assert len(bundle["data"]["latest_rows"]) == 1
+    assert bundle["data"]["rows"][0]["ts_iso"] == "2026-04-16T09:00:00Z"
+    assert bundle["data"]["rows"][1]["ts_iso"] == "2026-04-16T10:00:00Z"
