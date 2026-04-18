@@ -10,7 +10,9 @@ dependencies = [
     "onnxruntime",
     "numpy",
     "rich",
-    "typer"
+    "typer",
+    "fastapi",
+    "uvicorn"
 ]
 
 [project.optional-dependencies]
