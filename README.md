@@ -818,70 +818,25 @@ edgebench history-report \
 
 ## 🌐 API Server Usage
 
-EdgeBench는 CLI 도구로만 사용하는 것이 아니라,  
-FastAPI 기반 read-only API로도 같은 service layer를 재사용할 수 있습니다.
+EdgeBench는 CLI-first 도구이지만, 같은 service layer를 FastAPI 기반 read-only API로도 재사용할 수 있습니다.
 
-### 1. API 서버 실행
+- 실행: `poetry run edgebench serve`
+- 주요 endpoint: `/health`, `/api/list-results`, `/api/summarize`, `/api/history-report`, `/api/compare`
+- 역할: business logic를 새로 구현하지 않고 service layer를 HTTP adapter로 노출
 
-기본 실행:
-
-```bash
-poetry run edgebench serve
-```
-
-host / port 지정 실행:
+예:
 
 ```bash
-poetry run edgebench serve --host 0.0.0.0 --port 8000
+poetry run edgebench serve --host 127.0.0.1 --port 8000
 ```
-
-개발 중 auto-reload 실행:
-
-```bash
-poetry run edgebench serve --host 127.0.0.1 --port 8000 --reload
-```
-
-### 2. 기본 health check
 
 ```bash
 curl "http://127.0.0.1:8000/health"
 ```
 
-예상 응답:
+전체 실행 예시, `curl` 샘플, response 구조는 아래 문서에 정리했습니다.
 
-```json
-{"status":"ok","service":"edgebench-api"}
-```
-
-### 3. list-results API 예시
-
-```bash
-curl "http://127.0.0.1:8000/api/list-results?limit=5"
-```
-
-### 4. summarize API 예시
-
-```bash
-curl "http://127.0.0.1:8000/api/summarize?pattern=reports/*.json&mode=latest&sort=p99"
-```
-
-### 5. history-report API 예시
-
-```bash
-curl "http://127.0.0.1:8000/api/history-report?model=toy224.onnx&include_markdown=true"
-```
-
-### 6. compare API 예시
-
-```bash
-curl "http://127.0.0.1:8000/api/compare?base_path=results/base.json&new_path=results/new.json"
-```
-
-### Notes
-
-- 현재 API는 **read-only adapter layer** 입니다.
-- business logic는 CLI가 아니라 service layer에 있고, API는 그 service를 HTTP로 노출하는 얇은 계층입니다.
-- 현재 제공 endpoint는 `/health`, `/api/list-results`, `/api/summarize`, `/api/history-report`, `/api/compare` 입니다.
+👉 [EdgeBench FastAPI API Usage Guide](docs/api/api_usage.md)
 
 ---
 
@@ -986,6 +941,7 @@ poetry run edgebench serve --host 127.0.0.1 --port 8000
 ```
 
 이렇게 하면 `compare`, `history-report`, `summarize`, `list-results` service를 FastAPI endpoint로도 호출할 수 있습니다.
+전체 API 사용 예시는 [docs/api/api_usage.md](docs/api/api_usage.md) 를 참고하세요.
 
 ---
 

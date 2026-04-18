@@ -123,7 +123,7 @@ flowchart LR
 이 CI 파이프라인을 통해 EdgeBench는 단순 benchmark 실행을 넘어서,
 **회귀(regression) 검증과 precision trade-off 검증을 PR 단계에서 자동화**합니다.
 
-### CLI 중심 모듈 구조
+### CLI / Service 중심 모듈 구조
 
 ```mermaid
 flowchart TB
@@ -167,6 +167,40 @@ flowchart TB
 
 Profile -> JSON 저장 -> Compare -> History -> Report -> CI 검증
 
+### Service / API Adapter 구조 확장
+
+초기 EdgeBench는 CLI command 중심으로 기능을 연결하는 구조에 가까웠습니다.  
+하지만 compare, history-report, summarize, list-results 기능을 반복해서 확장하면서,  
+도메인 로직을 CLI에 직접 묶어두는 방식은 이후 API화와 SaaS 확장에 불리하다는 문제가 드러났습니다.
+
+이 문제를 해결하기 위해 최근 구조를 아래처럼 정리했습니다.
+
+```mermaid
+flowchart TB
+    CLI[CLI Commands] --> Service[Service Layer]
+    API[FastAPI Read-only Adapter] --> Service
+    Service --> Loader[Result Loader]
+    Service --> CompareDomain[Compare Domain]
+    Service --> HistoryDomain[History Report Domain]
+    Service --> SummaryDomain[Summarize Domain]
+    Service --> ListDomain[List Results Domain]
+    CompareDomain --> Render[Markdown / HTML Rendering]
+    HistoryDomain --> Render
+    SummaryDomain --> Render
+```
+
+이 구조의 핵심은 다음과 같습니다.
+
+- CLI는 입력 파라미터 처리와 출력만 담당
+- 실제 도메인 로직은 service layer에 집중
+- FastAPI adapter는 같은 service를 HTTP endpoint로 노출
+- 향후 Web UI / SaaS에서도 동일 service를 재사용 가능
+
+즉, EdgeBench는 단순한 CLI 툴이 아니라
+CLI → service → API adapter로 확장 가능한 inference validation platform 구조로 진화했습니다.
+
+실제 API 실행 방법과 endpoint usage 예시는 [docs/api/api_usage.md](../api/api_usage.md) 에 별도로 정리했습니다.
+
 ---
 
 ## 🔧 핵심 기술 포인트
@@ -187,6 +221,10 @@ Profile -> JSON 저장 -> Compare -> History -> Report -> CI 검증
 - threshold-configurable compare policy
 - Github Actions 기반 regression / trade-off validation gate
 - step summary 기반 PR-level benchmark explainability
+- compare / history-report / summarize / list-results 도메인의 service layer 분리
+- CLI layer와 domain logic 분리
+- FastAPI read-only adapter layer 추가
+- API-ready bundle contract 설계 (`meta / data / rendered`)
 
 ---
 
@@ -209,6 +247,9 @@ Profile -> JSON 저장 -> Compare -> History -> Report -> CI 검증
 - 최신 comparable pair 자동 선택 기능 구현
 - multi-size benchmark summary 제공
 - CI 기반 성능 검증 및 Github Actions summary 연동
+- compare / history / summarize / list 기능의 service 재사용 구조 확보
+- FastAPI read-only adapter를 통해 같은 validation logic을 HTTP API로 재사용 가능하게 정리
+- `edgebench serve` 기반 API 실행 진입점까지 연결
 
 결과적으로:
 
@@ -345,3 +386,5 @@ latency evidence와 accuracy evidence를 같은 schema 안에서 재결합하는
 - CLI UX, 리포트, CI summary까지 포함해야 개발자 경험(DevEx)이 좋아진다는 점을 이해
 - CI와 정책 기반 판단을 결합하면 benchmarking tool이 **실제 검증 시스템**으로 발전할 수 있다는 점을 확인
 - benchmarking 도구를 실제 검증 시스템으로 발전시키려면, 측정 로직뿐 아니라 **정책(gate), 결과 표현(summary), 자동화(CI)**까지 함께 설계해야 한다는 점을 익힘
+- 기능이 늘어날수록 CLI command 안에 로직을 쌓는 방식은 확장성이 급격히 떨어진다는 점을 배움
+- 따라서 **도메인 로직(service)과 입출력 인터페이스(CLI / API)를 분리하는 설계**가 장기적으로 훨씬 중요하다는 점을 실감함
