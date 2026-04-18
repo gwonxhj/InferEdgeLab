@@ -1,0 +1,210 @@
+# EdgeBench FastAPI Read-Only Adapter Usage Guide
+
+## Purpose
+
+EdgeBench API layer is a thin FastAPI adapter over the existing service layer.
+
+- It exposes EdgeBench read-only workflows over HTTP
+- It keeps business logic in reusable services, not in the API layer
+- It provides a practical bridge toward future Web UI and SaaS expansion
+
+This means the current API is intended to reuse the same validation flow already available from the CLI, not to replace it with a separate implementation.
+
+---
+
+## CLI, Service, API Adapter Relationship
+
+EdgeBench currently follows this boundary:
+
+- CLI: argument parsing, file saving, console rendering, command entrypoints
+- Service layer: domain orchestration for compare, history-report, summarize, list-results
+- API adapter: HTTP parameter binding and service response exposure
+
+In short:
+
+```text
+CLI / HTTP API -> Service Layer -> Existing domain logic / loaders / renderers
+```
+
+The FastAPI layer is intentionally thin. It reuses the same service-layer logic used by the CLI, so compare/history/summarize/list-results behavior stays aligned across interfaces.
+
+---
+
+## Run the Server
+
+Basic launch:
+
+```bash
+poetry run edgebench serve
+```
+
+Custom host and port:
+
+```bash
+poetry run edgebench serve --host 0.0.0.0 --port 8000
+```
+
+Development mode with auto-reload:
+
+```bash
+poetry run edgebench serve --host 127.0.0.1 --port 8000 --reload
+```
+
+By default, the API runs on `127.0.0.1:8000`.
+
+---
+
+## Endpoints
+
+Current read-only endpoints:
+
+- `GET /health`
+- `GET /api/list-results`
+- `GET /api/summarize`
+- `GET /api/history-report`
+- `GET /api/compare`
+
+---
+
+## Health Check
+
+Request:
+
+```bash
+curl "http://127.0.0.1:8000/health"
+```
+
+Response:
+
+```json
+{"status":"ok","service":"edgebench-api"}
+```
+
+---
+
+## List Results
+
+Purpose:
+
+- Returns recent structured result items
+- Reuses the `list-results` service bundle contract
+
+Example:
+
+```bash
+curl "http://127.0.0.1:8000/api/list-results?limit=5"
+```
+
+Example with filters:
+
+```bash
+curl "http://127.0.0.1:8000/api/list-results?model=toy224.onnx&engine=onnxruntime&device=cpu&precision=fp32"
+```
+
+Response structure:
+
+- `meta`
+  - request metadata such as `pattern`, `limit`, `filters`, `count`
+- `data`
+  - `items`: structured result item list
+
+---
+
+## Summarize
+
+Purpose:
+
+- Builds summary bundle data and rendered Markdown
+- Reuses the same summarize service used by CLI output generation
+
+Example:
+
+```bash
+curl "http://127.0.0.1:8000/api/summarize?pattern=reports/*.json&mode=latest&sort=p99"
+```
+
+Example with recent/top:
+
+```bash
+curl "http://127.0.0.1:8000/api/summarize?pattern=reports/*.json&mode=both&sort=time&recent=5&top=3"
+```
+
+Response structure:
+
+- `meta`
+  - request metadata such as `pattern`, `format`, `mode`, `sort`, `recent`, `top`
+- `data`
+  - `rows`, `latest_rows`, `history_rows`
+- `rendered`
+  - `markdown`
+
+---
+
+## History Report
+
+Purpose:
+
+- Selects history results with filters
+- Produces HTML and optional Markdown report content
+
+Example:
+
+```bash
+curl "http://127.0.0.1:8000/api/history-report?model=toy224.onnx&include_markdown=true"
+```
+
+Example with shape filters:
+
+```bash
+curl "http://127.0.0.1:8000/api/history-report?engine=onnxruntime&device=cpu&batch=1&height=224&width=224"
+```
+
+Response structure:
+
+- `history`
+  - matched structured result history
+- `filters`
+  - applied history filters
+- `html`
+  - rendered HTML report text
+- `markdown`
+  - rendered Markdown report text or `null`
+
+---
+
+## Compare
+
+Purpose:
+
+- Compares two structured result files
+- Returns compare result data, judgement, rendered Markdown/HTML, and legacy warning state
+
+Example:
+
+```bash
+curl "http://127.0.0.1:8000/api/compare?base_path=results/base.json&new_path=results/new.json"
+```
+
+Response structure:
+
+- `base`, `new`
+  - loaded structured result payloads
+- `base_path`, `new_path`
+  - compared file paths
+- `result`
+  - compare metrics and context
+- `judgement`
+  - overall interpretation and threshold-based semantics
+- `markdown`, `html`
+  - rendered report outputs
+- `legacy_warning`
+  - legacy-format warning flag
+
+---
+
+## Notes
+
+- The current API is read-only.
+- The API layer reuses service-layer logic rather than duplicating benchmark logic inside HTTP handlers.
+- This keeps CLI and API behavior aligned across compare, history-report, summarize, and list-results.
+- The API is intentionally a bridge layer for future Web UI or SaaS-oriented expansion, not a separate product surface yet.
