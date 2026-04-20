@@ -4,7 +4,11 @@ import json
 
 import pytest
 
-from edgebench.services.compare_service import build_compare_bundle, select_latest_compare_pair
+from edgebench.services.compare_service import (
+    build_compare_bundle,
+    build_compare_latest_bundle,
+    select_latest_compare_pair,
+)
 
 
 def write_result(
@@ -145,3 +149,64 @@ def test_select_latest_compare_pair_cross_precision_with_precision_filter_raises
             selection_mode="cross_precision",
             precision="fp16",
         )
+
+
+def test_build_compare_latest_bundle_same_precision_includes_bundle_and_compat_keys(tmp_path):
+    older = write_result(tmp_path, "older.json", timestamp="2026-04-13T09:00:00Z", precision="fp32")
+    newer = write_result(
+        tmp_path,
+        "newer.json",
+        timestamp="2026-04-13T10:00:00Z",
+        precision="fp32",
+        run_config={"runs": 50},
+    )
+
+    bundle = build_compare_latest_bundle(pattern=str(tmp_path / "*.json"), selection_mode="same_precision")
+
+    assert set(bundle.keys()) >= {
+        "meta",
+        "data",
+        "rendered",
+        "pair",
+        "base",
+        "new",
+        "base_path",
+        "new_path",
+        "result",
+        "judgement",
+        "markdown",
+        "html",
+        "legacy_warning",
+        "run_config_mismatch_fields",
+        "selection_mode",
+    }
+    assert bundle["selection_mode"] == "same_precision"
+    assert bundle["base_path"] == older
+    assert bundle["new_path"] == newer
+    assert bundle["run_config_mismatch_fields"] == ["runs"]
+    assert bundle["meta"]["selection_mode"] == "same_precision"
+    assert bundle["meta"]["base_path"] == older
+    assert bundle["meta"]["new_path"] == newer
+    assert bundle["meta"]["run_config_mismatch_fields"] == ["runs"]
+    assert bundle["data"]["pair"] == bundle["pair"]
+    assert bundle["data"]["base"] == bundle["base"]
+    assert bundle["data"]["new"] == bundle["new"]
+    assert bundle["data"]["result"] == bundle["result"]
+    assert bundle["data"]["judgement"] == bundle["judgement"]
+    assert bundle["rendered"]["markdown"] == bundle["markdown"]
+    assert bundle["rendered"]["html"] == bundle["html"]
+
+
+def test_build_compare_latest_bundle_cross_precision_selects_expected_pair(tmp_path):
+    older_fp32 = write_result(tmp_path, "older-fp32.json", timestamp="2026-04-13T09:00:00Z", precision="fp32")
+    write_result(tmp_path, "older-fp16.json", timestamp="2026-04-13T09:10:00Z", precision="fp16")
+    newer_fp16 = write_result(tmp_path, "newer-fp16.json", timestamp="2026-04-13T10:00:00Z", precision="fp16")
+
+    bundle = build_compare_latest_bundle(pattern=str(tmp_path / "*.json"), selection_mode="cross_precision")
+
+    assert bundle["selection_mode"] == "cross_precision"
+    assert bundle["base_path"] == older_fp32
+    assert bundle["new_path"] == newer_fp16
+    assert bundle["meta"]["selection_mode"] == "cross_precision"
+    assert bundle["pair"]["base_path"] == older_fp32
+    assert bundle["pair"]["new_path"] == newer_fp16

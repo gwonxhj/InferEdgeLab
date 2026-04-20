@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 import sys
 import types
 
@@ -28,14 +29,21 @@ def import_compare_latest_module():
         rich_stub.print = print
         sys.modules["rich"] = rich_stub
 
-    if "edgebench.commands.compare" not in sys.modules:
-        compare_stub = types.ModuleType("edgebench.commands.compare")
+    if "rich.table" not in sys.modules:
+        rich_table_stub = types.ModuleType("rich.table")
 
-        def compare_cmd(**kwargs):
-            return None
+        class Table:
+            def __init__(self, *args, **kwargs):
+                self.rows = []
 
-        compare_stub.compare_cmd = compare_cmd
-        sys.modules["edgebench.commands.compare"] = compare_stub
+            def add_column(self, *args, **kwargs):
+                return None
+
+            def add_row(self, *args, **kwargs):
+                self.rows.append(args)
+
+        rich_table_stub.Table = Table
+        sys.modules["rich.table"] = rich_table_stub
 
     from edgebench.commands import compare_latest
 
@@ -78,44 +86,32 @@ def write_result(
     return str(path)
 
 
-def test_compare_latest_selects_latest_same_precision_pair(tmp_path, monkeypatch):
+def test_compare_latest_selects_latest_same_precision_pair(tmp_path, capsys):
     compare_latest = import_compare_latest_module()
 
     older = write_result(tmp_path, "older.json", timestamp="2026-04-13T09:00:00Z", precision="fp32")
     write_result(tmp_path, "other.json", timestamp="2026-04-13T09:30:00Z", precision="fp16")
     newer = write_result(tmp_path, "newer.json", timestamp="2026-04-13T10:00:00Z", precision="fp32")
 
-    captured = {}
-
-    def fake_compare_cmd(**kwargs):
-        captured.update(kwargs)
-
-    monkeypatch.setattr(compare_latest, "compare_cmd", fake_compare_cmd)
-
     compare_latest.compare_latest_cmd(pattern=str(tmp_path / "*.json"), selection_mode="same_precision")
+    out = capsys.readouterr().out
 
-    assert captured["base_path"] == older
-    assert captured["new_path"] == newer
+    assert f"Base path: {older}" in out
+    assert f"New path : {newer}" in out
 
 
-def test_compare_latest_selects_latest_cross_precision_pair(tmp_path, monkeypatch):
+def test_compare_latest_selects_latest_cross_precision_pair(tmp_path, capsys):
     compare_latest = import_compare_latest_module()
 
     older_fp32 = write_result(tmp_path, "older-fp32.json", timestamp="2026-04-13T09:00:00Z", precision="fp32")
     write_result(tmp_path, "older-fp16.json", timestamp="2026-04-13T09:10:00Z", precision="fp16")
     newer_fp16 = write_result(tmp_path, "newer-fp16.json", timestamp="2026-04-13T10:00:00Z", precision="fp16")
 
-    captured = {}
-
-    def fake_compare_cmd(**kwargs):
-        captured.update(kwargs)
-
-    monkeypatch.setattr(compare_latest, "compare_cmd", fake_compare_cmd)
-
     compare_latest.compare_latest_cmd(pattern=str(tmp_path / "*.json"), selection_mode="cross_precision")
+    out = capsys.readouterr().out
 
-    assert captured["base_path"] == older_fp32
-    assert captured["new_path"] == newer_fp16
+    assert f"Base path: {older_fp32}" in out
+    assert f"New path : {newer_fp16}" in out
 
 
 def test_compare_latest_cross_precision_with_precision_filter_strict_raises(tmp_path):
@@ -135,20 +131,15 @@ def test_compare_latest_cross_precision_with_precision_filter_strict_raises(tmp_
     assert exc_info.value.exit_code == 1
 
 
-def test_compare_latest_with_less_than_two_results_and_non_strict_returns(tmp_path, monkeypatch):
+def test_compare_latest_with_less_than_two_results_and_non_strict_returns(tmp_path):
     compare_latest = import_compare_latest_module()
 
     write_result(tmp_path, "only.json", timestamp="2026-04-13T10:00:00Z", precision="fp32")
 
-    def fail_compare_cmd(**kwargs):
-        raise AssertionError("compare_cmd should not be called")
-
-    monkeypatch.setattr(compare_latest, "compare_cmd", fail_compare_cmd)
-
     assert compare_latest.compare_latest_cmd(pattern=str(tmp_path / "*.json"), strict=False) is None
 
 
-def test_compare_latest_same_precision_warns_when_core_run_config_differs(tmp_path, monkeypatch, capsys):
+def test_compare_latest_same_precision_warns_when_core_run_config_differs(tmp_path, capsys):
     compare_latest = import_compare_latest_module()
 
     older = write_result(
@@ -166,17 +157,31 @@ def test_compare_latest_same_precision_warns_when_core_run_config_differs(tmp_pa
         run_config={"runs": 50, "warmup": 10, "intra_threads": 1, "inter_threads": 1, "mode": None, "task": None},
     )
 
-    captured = {}
-
-    def fake_compare_cmd(**kwargs):
-        captured.update(kwargs)
-
-    monkeypatch.setattr(compare_latest, "compare_cmd", fake_compare_cmd)
-
     compare_latest.compare_latest_cmd(pattern=str(tmp_path / "*.json"), selection_mode="same_precision")
     out = capsys.readouterr().out
 
     assert "run_config" in out
     assert "runs" in out
-    assert captured["base_path"] == older
-    assert captured["new_path"] == newer
+    assert f"Base path: {older}" in out
+    assert f"New path : {newer}" in out
+
+
+def test_compare_latest_writes_markdown_and_html_from_bundle(tmp_path):
+    compare_latest = import_compare_latest_module()
+
+    write_result(tmp_path, "older.json", timestamp="2026-04-13T09:00:00Z", precision="fp32")
+    write_result(tmp_path, "newer.json", timestamp="2026-04-13T10:00:00Z", precision="fp32")
+    markdown_out = tmp_path / "compare_latest.md"
+    html_out = tmp_path / "compare_latest.html"
+
+    compare_latest.compare_latest_cmd(
+        pattern=str(tmp_path / "*.json"),
+        selection_mode="same_precision",
+        markdown_out=str(markdown_out),
+        html_out=str(html_out),
+    )
+
+    assert markdown_out.is_file()
+    assert html_out.is_file()
+    assert Path(markdown_out).read_text(encoding="utf-8")
+    assert Path(html_out).read_text(encoding="utf-8")

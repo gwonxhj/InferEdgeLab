@@ -5,6 +5,7 @@ from typing import Any
 from fastapi import FastAPI, HTTPException
 
 from edgebench.services.compare_service import build_compare_bundle
+from edgebench.services.compare_service import build_compare_latest_bundle
 from edgebench.services.history_report_service import build_history_report_outputs
 from edgebench.services.list_results_service import build_list_results_bundle
 from edgebench.services.summarize_service import build_summary_bundle
@@ -103,6 +104,43 @@ def create_app() -> FastAPI:
             return build_compare_bundle(
                 base_path=base_path,
                 new_path=new_path,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.get("/api/compare-latest")
+    def compare_latest(
+        pattern: str = "results/*.json",
+        model: str = "",
+        engine: str = "",
+        device: str = "",
+        precision: str = "",
+        selection_mode: str = "same_precision",
+        latency_improve_threshold: float | None = None,
+        latency_regress_threshold: float | None = None,
+        accuracy_improve_threshold: float | None = None,
+        accuracy_regress_threshold: float | None = None,
+        tradeoff_caution_threshold: float | None = None,
+        tradeoff_risky_threshold: float | None = None,
+        tradeoff_severe_threshold: float | None = None,
+        pyproject_path: str = "pyproject.toml",
+    ) -> dict[str, Any]:
+        try:
+            return build_compare_latest_bundle(
+                pattern=pattern,
+                model=model,
+                engine=engine,
+                device=device,
+                precision=precision,
+                selection_mode=selection_mode,
+                latency_improve_threshold=latency_improve_threshold,
+                latency_regress_threshold=latency_regress_threshold,
+                accuracy_improve_threshold=accuracy_improve_threshold,
+                accuracy_regress_threshold=accuracy_regress_threshold,
+                tradeoff_caution_threshold=tradeoff_caution_threshold,
+                tradeoff_risky_threshold=tradeoff_risky_threshold,
+                tradeoff_severe_threshold=tradeoff_severe_threshold,
+                pyproject_path=pyproject_path,
             )
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
