@@ -4,6 +4,7 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException
 
+from edgebench import __version__
 from edgebench.services.compare_service import build_compare_bundle
 from edgebench.services.compare_service import build_compare_latest_bundle
 from edgebench.services.history_report_service import build_history_report_outputs
@@ -16,7 +17,7 @@ def create_app() -> FastAPI:
 
     @app.get("/health")
     def health() -> dict[str, str]:
-        return {"status": "ok", "service": "edgebench-api"}
+        return {"status": "ok", "service": "edgebench-api", "version": __version__}
 
     @app.get("/api/list-results")
     def list_results(

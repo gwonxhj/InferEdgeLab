@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import HTTPException
 
+import edgebench
 import edgebench.api as api
 
 
@@ -28,7 +29,7 @@ def test_health_endpoint_returns_expected_payload():
     app = api.create_app()
     endpoint = _get_route_endpoint(app, "/health")
 
-    assert endpoint() == {"status": "ok", "service": "edgebench-api"}
+    assert endpoint() == {"status": "ok", "service": "edgebench-api", "version": edgebench.__version__}
 
 
 def test_list_results_endpoint_returns_service_bundle_and_passes_args(monkeypatch):
