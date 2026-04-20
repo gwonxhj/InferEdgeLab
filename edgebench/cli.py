@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import typer
 
+from edgebench import __version__
 from edgebench.commands.analyze import analyze_cmd
 from edgebench.commands.profile import profile_cmd
 from edgebench.commands.evaluate import evaluate_cmd
@@ -16,6 +17,10 @@ from edgebench.commands.serve import serve_cmd
 
 app = typer.Typer(help="EdgeBench CLI - Edge AI Inference Validation Tool")
 
+
+def version_cmd() -> None:
+    typer.echo(__version__)
+
 app.command("analyze", help="Static analysis (params/IO/FLOPs)")(analyze_cmd)
 app.command("profile", help="Runtime profiling with selectable engine backend")(profile_cmd)
 app.command("evaluate", help="Accuracy evaluation for classification manifest inputs")(evaluate_cmd)
@@ -27,6 +32,7 @@ app.command("enrich-result", help="Attach accuracy metadata to an existing struc
 app.command("list-results", help="List recent structured benchmark results")(list_results_cmd)
 app.command("history-report", help="Generate HTML history report from structured benchmark results")(history_report_cmd)
 app.command("serve", help="Run EdgeBench FastAPI server")(serve_cmd)
+app.command("version", help="Show EdgeBench version")(version_cmd)
 
 if __name__ == "__main__":
     app()
