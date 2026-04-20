@@ -95,6 +95,91 @@ def build_compare_bundle(
     }
 
 
+def build_compare_latest_bundle(
+    *,
+    pattern: str = "results/*.json",
+    model: str = "",
+    engine: str = "",
+    device: str = "",
+    precision: str = "",
+    selection_mode: str = "same_precision",
+    latency_improve_threshold: float | None = None,
+    latency_regress_threshold: float | None = None,
+    accuracy_improve_threshold: float | None = None,
+    accuracy_regress_threshold: float | None = None,
+    tradeoff_caution_threshold: float | None = None,
+    tradeoff_risky_threshold: float | None = None,
+    tradeoff_severe_threshold: float | None = None,
+    pyproject_path: str = "pyproject.toml",
+) -> dict[str, Any]:
+    """
+    Build a latest-compare bundle with API-ready structure while preserving
+    convenience top-level fields used by CLI consumers.
+    """
+    pair = select_latest_compare_pair(
+        pattern=pattern,
+        model=model,
+        engine=engine,
+        device=device,
+        precision=precision,
+        selection_mode=selection_mode,
+    )
+    compare_bundle = build_compare_bundle(
+        base_path=pair["base_path"],
+        new_path=pair["new_path"],
+        latency_improve_threshold=latency_improve_threshold,
+        latency_regress_threshold=latency_regress_threshold,
+        accuracy_improve_threshold=accuracy_improve_threshold,
+        accuracy_regress_threshold=accuracy_regress_threshold,
+        tradeoff_caution_threshold=tradeoff_caution_threshold,
+        tradeoff_risky_threshold=tradeoff_risky_threshold,
+        tradeoff_severe_threshold=tradeoff_severe_threshold,
+        pyproject_path=pyproject_path,
+    )
+
+    latest_bundle = {
+        "meta": {
+            "pattern": pattern,
+            "model": model,
+            "engine": engine,
+            "device": device,
+            "precision": precision,
+            "selection_mode": pair["selection_mode"],
+            "base_path": pair["base_path"],
+            "new_path": pair["new_path"],
+            "run_config_mismatch_fields": pair["run_config_mismatch_fields"],
+            "legacy_warning": compare_bundle["legacy_warning"],
+        },
+        "data": {
+            "pair": pair,
+            "base": compare_bundle["base"],
+            "new": compare_bundle["new"],
+            "result": compare_bundle["result"],
+            "judgement": compare_bundle["judgement"],
+        },
+        "rendered": {
+            "markdown": compare_bundle["markdown"],
+            "html": compare_bundle["html"],
+        },
+    }
+
+    return {
+        **latest_bundle,
+        "pair": pair,
+        "base": compare_bundle["base"],
+        "new": compare_bundle["new"],
+        "base_path": pair["base_path"],
+        "new_path": pair["new_path"],
+        "result": compare_bundle["result"],
+        "judgement": compare_bundle["judgement"],
+        "markdown": compare_bundle["markdown"],
+        "html": compare_bundle["html"],
+        "legacy_warning": compare_bundle["legacy_warning"],
+        "run_config_mismatch_fields": pair["run_config_mismatch_fields"],
+        "selection_mode": pair["selection_mode"],
+    }
+
+
 def _normalize_selection_mode(value: str) -> str:
     return str(value or "").strip().lower().replace("-", "_")
 

@@ -21,6 +21,7 @@ def test_create_app_registers_expected_routes():
     assert any(path == "/api/summarize" and "GET" in methods for path, methods in routes)
     assert any(path == "/api/history-report" and "GET" in methods for path, methods in routes)
     assert any(path == "/api/compare" and "GET" in methods for path, methods in routes)
+    assert any(path == "/api/compare-latest" and "GET" in methods for path, methods in routes)
 
 
 def test_health_endpoint_returns_expected_payload():
@@ -195,3 +196,85 @@ def test_compare_endpoint_returns_bundle(monkeypatch):
 
     assert result == expected
     assert set(result.keys()) == {"meta", "data", "rendered"}
+
+
+def test_compare_latest_endpoint_returns_bundle_and_passes_args(monkeypatch):
+    app = api.create_app()
+    endpoint = _get_route_endpoint(app, "/api/compare-latest")
+    captured = {}
+    expected = {
+        "meta": {
+            "selection_mode": "cross_precision",
+            "base_path": "base.json",
+            "new_path": "new.json",
+            "run_config_mismatch_fields": [],
+            "legacy_warning": False,
+        },
+        "data": {
+            "pair": {"selection_mode": "cross_precision"},
+            "base": {"model": "resnet18"},
+            "new": {"model": "resnet18"},
+            "result": {"precision": {"comparison_mode": "cross_precision"}},
+            "judgement": {"overall": "tradeoff_faster"},
+        },
+        "rendered": {"markdown": "# report", "html": "<html></html>"},
+    }
+
+    def fake_build_compare_latest_bundle(**kwargs):
+        captured.update(kwargs)
+        return expected
+
+    monkeypatch.setattr(api, "build_compare_latest_bundle", fake_build_compare_latest_bundle)
+
+    result = endpoint(
+        pattern="results/*.json",
+        model="resnet18",
+        engine="onnxruntime",
+        device="cpu",
+        precision="",
+        selection_mode="cross_precision",
+        latency_improve_threshold=-5.0,
+        latency_regress_threshold=5.0,
+        accuracy_improve_threshold=0.3,
+        accuracy_regress_threshold=-0.3,
+        tradeoff_caution_threshold=-0.4,
+        tradeoff_risky_threshold=-1.2,
+        tradeoff_severe_threshold=-2.5,
+        pyproject_path="pyproject.toml",
+    )
+
+    assert result == expected
+    assert captured == {
+        "pattern": "results/*.json",
+        "model": "resnet18",
+        "engine": "onnxruntime",
+        "device": "cpu",
+        "precision": "",
+        "selection_mode": "cross_precision",
+        "latency_improve_threshold": -5.0,
+        "latency_regress_threshold": 5.0,
+        "accuracy_improve_threshold": 0.3,
+        "accuracy_regress_threshold": -0.3,
+        "tradeoff_caution_threshold": -0.4,
+        "tradeoff_risky_threshold": -1.2,
+        "tradeoff_severe_threshold": -2.5,
+        "pyproject_path": "pyproject.toml",
+    }
+
+
+def test_compare_latest_endpoint_converts_value_error_to_http_400(monkeypatch):
+    app = api.create_app()
+    endpoint = _get_route_endpoint(app, "/api/compare-latest")
+
+    def fake_build_compare_latest_bundle(**kwargs):
+        raise ValueError("bad compare latest request")
+
+    monkeypatch.setattr(api, "build_compare_latest_bundle", fake_build_compare_latest_bundle)
+
+    try:
+        endpoint()
+    except HTTPException as exc:
+        assert exc.status_code == 400
+        assert exc.detail == "bad compare latest request"
+    else:
+        raise AssertionError("HTTPException was not raised")
