@@ -1,7 +1,10 @@
 [project]
-name = "edgebench"
+name = "inferedgelab"
 version = "0.1.0"
 description = "CLI-based Edge AI inference validation and benchmarking framework"
+
+keywords = ["edge-ai", "inference", "benchmark", "validation", "tensorrt", "onnx", "rknn", "mlops"]
+
 authors = [{ name = "HyeokJun Gwon" }]
 readme = "README.md"
 requires-python = ">=3.10,<3.12"
@@ -19,21 +22,22 @@ dependencies = [
 dev = ["pytest>=8.0"]
 
 [project.scripts]
-edgebench = "edgebench.cli:app"
+inferedgelab = "inferedgelab.cli:app"
+edgebench = "inferedgelab.cli:app"
 
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["edgebench*"]
+include = ["inferedgelab*"]
 exclude = ["models*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 
-[tool.edgebench.compare]
+[tool.inferedgelab.compare]
 latency_improve_threshold = -3.0
 latency_regress_threshold = 3.0
 accuracy_improve_threshold = 0.2

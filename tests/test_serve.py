@@ -14,9 +14,23 @@ def import_serve_module():
     if "typer" not in sys.modules:
         typer_stub = types.ModuleType("typer")
 
+        class BadParameter(Exception):
+            pass
+
+        class Exit(Exception):
+            def __init__(self, code: int = 0):
+                super().__init__(code)
+                self.exit_code = code
+
+        def argument(default=None, *args, **kwargs):
+            return default
+
         def option(default=None, *args, **kwargs):
             return default
 
+        typer_stub.BadParameter = BadParameter
+        typer_stub.Exit = Exit
+        typer_stub.Argument = argument
         typer_stub.Option = option
         sys.modules["typer"] = typer_stub
 
@@ -29,7 +43,7 @@ def import_serve_module():
         uvicorn_stub.run = run
         sys.modules["uvicorn"] = uvicorn_stub
 
-    module_path = repo_root / "edgebench" / "commands" / "serve.py"
+    module_path = repo_root / "inferedgelab" / "commands" / "serve.py"
     spec = importlib.util.spec_from_file_location("test_serve_module", module_path)
     assert spec is not None
     assert spec.loader is not None
@@ -54,7 +68,7 @@ def test_serve_cmd_calls_uvicorn_run_with_defaults(monkeypatch):
     serve_module.serve_cmd()
 
     assert captured == {
-        "app": "edgebench.api:app",
+        "app": "inferedgelab.api:app",
         "host": "127.0.0.1",
         "port": 8000,
         "reload": False,
@@ -76,7 +90,7 @@ def test_serve_cmd_calls_uvicorn_run_with_custom_args(monkeypatch):
     serve_module.serve_cmd(host="0.0.0.0", port=9000, reload=True)
 
     assert captured == {
-        "app": "edgebench.api:app",
+        "app": "inferedgelab.api:app",
         "host": "0.0.0.0",
         "port": 9000,
         "reload": True,

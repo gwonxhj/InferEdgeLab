@@ -4,8 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from edgebench.result.saver import save_result
-from edgebench.result.schema import BenchmarkResult
+from inferedgelab.result.saver import save_result
+from inferedgelab.result.schema import BenchmarkResult
 
 
 CURATED_RESULTS_PATH = Path("benchmarks/rknn_curated_results.json")

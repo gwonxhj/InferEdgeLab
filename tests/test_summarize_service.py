@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from edgebench.services.summarize_service import build_summary_bundle, build_summary_markdown
+from inferedgelab.services.summarize_service import build_summary_bundle, build_summary_markdown
 
 
 def write_report(

@@ -3,10 +3,10 @@ from __future__ import annotations
 import argparse
 from typing import Any, Dict
 
-from edgebench.commands.enrich_result import enrich_result_to_path
-from edgebench.compare.comparator import compare_results
-from edgebench.compare.judgement import judge_comparison
-from edgebench.result.loader import load_result
+from inferedgelab.commands.enrich_result import enrich_result_to_path
+from inferedgelab.compare.comparator import compare_results
+from inferedgelab.compare.judgement import judge_comparison
+from inferedgelab.result.loader import load_result
 
 
 def run_enriched_accuracy_demo(

@@ -17,11 +17,15 @@ def import_check_compare_policy_main():
         class BadParameter(Exception):
             pass
 
+        def argument(default=None, *args, **kwargs):
+            return default
+
         def option(default=None, *args, **kwargs):
             return default
 
         typer_stub.Exit = Exit
         typer_stub.BadParameter = BadParameter
+        typer_stub.Argument = argument
         typer_stub.Option = option
         sys.modules["typer"] = typer_stub
 

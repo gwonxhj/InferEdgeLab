@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import importlib
 from pathlib import Path
 import sys
 import types
@@ -9,45 +10,48 @@ import pytest
 
 
 def import_compare_latest_module():
-    if "typer" not in sys.modules:
-        typer_stub = types.ModuleType("typer")
+    for module_name in (
+        "typer",
+        "rich",
+        "rich.table",
+        "inferedgelab.commands.compare_latest",
+    ):
+        sys.modules.pop(module_name, None)
 
-        class Exit(Exception):
-            def __init__(self, code: int = 0):
-                super().__init__(code)
-                self.exit_code = code
+    typer_stub = types.ModuleType("typer")
 
-        def option(default=None, *args, **kwargs):
-            return default
+    class Exit(Exception):
+        def __init__(self, code: int = 0):
+            super().__init__(code)
+            self.exit_code = code
 
-        typer_stub.Exit = Exit
-        typer_stub.Option = option
-        sys.modules["typer"] = typer_stub
+    def option(default=None, *args, **kwargs):
+        return default
 
-    if "rich" not in sys.modules:
-        rich_stub = types.ModuleType("rich")
-        rich_stub.print = print
-        sys.modules["rich"] = rich_stub
+    typer_stub.Exit = Exit
+    typer_stub.Option = option
+    sys.modules["typer"] = typer_stub
 
-    if "rich.table" not in sys.modules:
-        rich_table_stub = types.ModuleType("rich.table")
+    rich_stub = types.ModuleType("rich")
+    rich_stub.print = print
+    sys.modules["rich"] = rich_stub
 
-        class Table:
-            def __init__(self, *args, **kwargs):
-                self.rows = []
+    rich_table_stub = types.ModuleType("rich.table")
 
-            def add_column(self, *args, **kwargs):
-                return None
+    class Table:
+        def __init__(self, *args, **kwargs):
+            self.rows = []
 
-            def add_row(self, *args, **kwargs):
-                self.rows.append(args)
+        def add_column(self, *args, **kwargs):
+            return None
 
-        rich_table_stub.Table = Table
-        sys.modules["rich.table"] = rich_table_stub
+        def add_row(self, *args, **kwargs):
+            self.rows.append(args)
 
-    from edgebench.commands import compare_latest
+    rich_table_stub.Table = Table
+    sys.modules["rich.table"] = rich_table_stub
 
-    return compare_latest
+    return importlib.import_module("inferedgelab.commands.compare_latest")
 
 
 def write_result(

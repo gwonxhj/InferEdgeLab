@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from edgebench.services.history_report_service import build_history_report_outputs
+from inferedgelab.services.history_report_service import build_history_report_outputs
 
 
 def write_result(
