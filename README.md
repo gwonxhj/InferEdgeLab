@@ -6,7 +6,8 @@
 
 > For engineers making deployment decisions on edge devices.  
 > InferEdgeLab turns benchmark runs into reproducible, comparable **deployment-ready validation evidence**.  
-> Validated on Jetson TensorRT and Odroid RKNN.
+> Validated on real hardware: RKNN (Odroid M2) and TensorRT (Jetson) 
+> Cross-precision benchmarking shows up to **50% latency reduction with INT8**, with structured comparison and trade-off classification
 
 InferEdgeLab is designed for workflows where **latency, accuracy, and risk must be evaluated together**.
 
@@ -57,6 +58,29 @@ CLI / API → Service Layer → Structured Result → Compare / Report
 **Service Layer:** reusable validation logic  
 **API Adapter Layer:** FastAPI read-only endpoints  
 **Engine Layer:** ONNX Runtime CPU · TensorRT (Jetson) · RKNN (Odroid)
+
+---
+
+## Key Results (Real Hardware Validation)
+
+InferEdgeLab was validated on real edge hardware using YOLOv8 models.
+
+### Odroid M2 (RKNN)
+
+| Model | Precision | Mean Latency (ms) | P99 (ms) | Observation |
+|---|---|---:|---:|---|
+| YOLOv8n | FP16 | ~70 ms | ~71 ms | baseline |
+| YOLOv8n | INT8 | ~35 ms | ~36 ms | ~50% latency reduction |
+| YOLOv8s | FP16 | ~86 ms | ~107 ms | baseline |
+| YOLOv8s | INT8 | ~49 ms | ~49 ms | ~43% latency reduction |
+| YOLOv8m | FP16 | ~171 ms | ~199 ms | baseline |
+| YOLOv8m | INT8 | ~84 ms | ~86 ms | ~50% latency reduction |
+
+### Interpretation
+
+- INT8 quantization provides **~40–50% latency improvement** on RK3588 NPU
+- Cross-precision comparison classified results as `tradeoff_faster`
+- Accuracy is not attached yet → risk classified as `unknown_risk`
 
 ---
 
