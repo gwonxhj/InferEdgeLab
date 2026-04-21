@@ -144,6 +144,8 @@ def profile_model(
     width: Optional[int] = None,
     intra_threads: int = 1,
     inter_threads: int = 1,
+    rknn_target: Optional[str] = None,
+    device_name: Optional[str] = None,
 ) -> ProfileResult:
     normalized_engine = normalize_engine_name(engine)
     engine_instance = create_engine(normalized_engine)
@@ -154,6 +156,11 @@ def profile_model(
     }
     if engine_path is not None:
         load_kwargs["engine_path"] = engine_path
+    if normalized_engine == "rknn":
+        if rknn_target is not None:
+            load_kwargs["rknn_target"] = rknn_target
+        if device_name is not None:
+            load_kwargs["device_name"] = device_name
 
     return profile_engine(
         engine=engine_instance,
