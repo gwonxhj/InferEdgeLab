@@ -1,14 +1,9 @@
 from __future__ import annotations
 
-from typing import Callable, Dict, Set
+from importlib import import_module
+from typing import Dict, Set
 
 from inferedgelab.engines.base import InferenceEngine
-from inferedgelab.engines.onnxruntime_cpu import OnnxRuntimeCpuEngine
-from inferedgelab.engines.rknn import RknnEngine
-from inferedgelab.engines.tensorrt import TensorRtEngine
-
-
-EngineFactory = Callable[[], InferenceEngine]
 
 
 _ENGINE_ALIASES: Dict[str, str] = {
@@ -23,10 +18,29 @@ _ENGINE_ALIASES: Dict[str, str] = {
     "rknn_lite": "rknn",
 }
 
-_ENGINE_FACTORIES: Dict[str, EngineFactory] = {
-    "onnxruntime": OnnxRuntimeCpuEngine,
-    "tensorrt": TensorRtEngine,
-    "rknn": RknnEngine,
+_ENGINE_TARGETS: Dict[str, str] = {
+    "onnxruntime": "inferedgelab.engines.onnxruntime_cpu:OnnxRuntimeCpuEngine",
+    "tensorrt": "inferedgelab.engines.tensorrt:TensorRtEngine",
+    "rknn": "inferedgelab.engines.rknn:RknnEngine",
+}
+
+
+def _load_engine_class(target: str) -> type[InferenceEngine]:
+    module_path, class_name = target.split(":", 1)
+    module = import_module(module_path)
+    engine_class = getattr(module, class_name)
+    return engine_class
+
+
+def _create_engine_instance(normalized_engine: str) -> InferenceEngine:
+    target = _ENGINE_TARGETS[normalized_engine]
+    engine_class = _load_engine_class(target)
+    return engine_class()
+
+
+_ENGINE_FACTORIES = {
+    engine_name: (lambda engine_name=engine_name: _create_engine_instance(engine_name))
+    for engine_name in _ENGINE_TARGETS
 }
 
 
@@ -36,7 +50,7 @@ def normalize_engine_name(engine: str) -> str:
 
 
 def supported_engines() -> Set[str]:
-    return set(_ENGINE_FACTORIES.keys())
+    return set(_ENGINE_TARGETS.keys())
 
 
 def supported_engines_display() -> str:
