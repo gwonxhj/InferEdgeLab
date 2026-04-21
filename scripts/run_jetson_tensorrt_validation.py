@@ -34,7 +34,7 @@ def _build_profile_command(args: argparse.Namespace, model_path: Path, engine_pa
     return [
         sys.executable,
         "-m",
-        "edgebench.cli",
+        "inferedgelab.cli",
         "profile",
         str(model_path),
         "--engine",
@@ -65,7 +65,7 @@ def _build_compare_latest_command(
     return [
         sys.executable,
         "-m",
-        "edgebench.cli",
+        "inferedgelab.cli",
         "compare-latest",
         "--model",
         model_path.name,

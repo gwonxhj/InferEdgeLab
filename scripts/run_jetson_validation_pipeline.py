@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
-from edgebench.result.loader import latest_comparable_result_paths
+from inferedgelab.result.loader import latest_comparable_result_paths
 
 
 def _print_step(title: str) -> None:

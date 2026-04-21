@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 
-from edgebench.services.list_results_service import build_list_result_items, build_list_results_bundle
+from inferedgelab.services.list_results_service import build_list_result_items, build_list_results_bundle
 
 
 def write_result(

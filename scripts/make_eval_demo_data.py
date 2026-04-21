@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 
-from edgebench.engines.onnxruntime_cpu import OnnxRuntimeCpuEngine
+from inferedgelab.engines.onnxruntime_cpu import OnnxRuntimeCpuEngine
 
 
 def _resolve_input_shape(shape: list[object], height: int, width: int) -> list[int]:

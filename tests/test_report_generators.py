@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from edgebench.report.markdown_generator import generate_compare_markdown
-from edgebench.report.html_generator import generate_compare_html
+from inferedgelab.report.markdown_generator import generate_compare_markdown
+from inferedgelab.report.html_generator import generate_compare_html
 
 
 def make_compare_result(

@@ -7,10 +7,10 @@ from typing import Any, Dict, List
 import typer
 from rich import print as rprint
 
-from edgebench.compare.comparator import compare_results
-from edgebench.compare.judgement import judge_comparison
-from edgebench.config import resolve_compare_thresholds
-from edgebench.result.loader import (
+from inferedgelab.compare.comparator import compare_results
+from inferedgelab.compare.judgement import judge_comparison
+from inferedgelab.config import resolve_compare_thresholds
+from inferedgelab.result.loader import (
     filter_results,
     latest_comparable_items,
     latest_cross_precision_items,

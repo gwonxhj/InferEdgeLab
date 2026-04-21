@@ -54,7 +54,7 @@ def main() -> None:
             [
                 "poetry",
                 "run",
-                "edgebench",
+                "inferedgelab",
                 "summarize",
                 reports_pattern,
                 "--mode",
@@ -70,7 +70,7 @@ def main() -> None:
             [
                 "poetry",
                 "run",
-                "edgebench",
+                "inferedgelab",
                 "summarize",
                 reports_pattern,
                 "--mode",

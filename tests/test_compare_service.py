@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from edgebench.services.compare_service import (
+from inferedgelab.services.compare_service import (
     build_compare_bundle,
     build_compare_latest_bundle,
     select_latest_compare_pair,

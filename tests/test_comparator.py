@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from edgebench.compare.comparator import compare_results
+from inferedgelab.compare.comparator import compare_results
 
 
 def make_result(

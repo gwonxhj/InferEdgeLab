@@ -6,8 +6,8 @@ import types
 
 import pytest
 
-from edgebench.compare.comparator import compare_results
-from edgebench.result.loader import load_result
+from inferedgelab.compare.comparator import compare_results
+from inferedgelab.result.loader import load_result
 
 
 def import_enrich_result_module():
@@ -39,7 +39,7 @@ def import_enrich_result_module():
         rich_stub.print = print
         sys.modules["rich"] = rich_stub
 
-    from edgebench.commands import enrich_result
+    from inferedgelab.commands import enrich_result
 
     return enrich_result
 

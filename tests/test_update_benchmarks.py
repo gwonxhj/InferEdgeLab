@@ -45,7 +45,7 @@ def import_summarize_module():
         rich_stub.print = print
         sys.modules["rich"] = rich_stub
 
-    module_path = Path(__file__).resolve().parents[1] / "edgebench" / "commands" / "summarize.py"
+    module_path = Path(__file__).resolve().parents[1] / "inferedgelab" / "commands" / "summarize.py"
     spec = importlib.util.spec_from_file_location("test_update_benchmarks_summarize_module", module_path)
     assert spec is not None
     assert spec.loader is not None

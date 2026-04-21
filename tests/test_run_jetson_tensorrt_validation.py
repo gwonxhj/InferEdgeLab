@@ -90,7 +90,7 @@ def test_main_runs_preflight_profiles_and_compare_and_creates_report_dir(tmp_pat
         assert command == [
             sys.executable,
             "-m",
-            "edgebench.cli",
+            "inferedgelab.cli",
             "profile",
             str(model_path),
             "--engine",
@@ -114,7 +114,7 @@ def test_main_runs_preflight_profiles_and_compare_and_creates_report_dir(tmp_pat
     assert compare_command == [
         sys.executable,
         "-m",
-        "edgebench.cli",
+        "inferedgelab.cli",
         "compare-latest",
         "--model",
         "resnet18.onnx",

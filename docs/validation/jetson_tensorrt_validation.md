@@ -195,6 +195,66 @@ python -m edgebench.cli compare-latest \
 
 이번 Jetson TensorRT 실기 검증에서 확인한 산출물 종류는 아래와 같다.
 
+### Auto-Synced Validation Evidence
+
+<!-- EDGE_BENCH_JETSON_RUNBOOK_EVIDENCE:START -->
+
+## Jetson TensorRT Validation Evidence - ResNet18
+
+- Model: `resnet18.onnx`
+- Engine: `tensorrt`
+- Device: `gpu`
+- Precision pair: `fp16_vs_fp16`
+- Overall: **neutral**
+
+| Metric | Base | New |
+|---|---:|---:|
+| mean_ms | 2.8647 | 2.8265 |
+| p99_ms | 3.1388 | 3.0620 |
+
+### Runtime Provenance
+- Base runtime_artifact_path: `models/resnet18.engine`
+- New runtime_artifact_path: `models/resnet18.engine`
+- Base primary_input_name: `input`
+- New primary_input_name: `input`
+- Base resolved_input_shapes: `{'input': [1, 3, 224, 224]}`
+- New resolved_input_shapes: `{'input': [1, 3, 224, 224]}`
+
+### Reports
+- Markdown: `reports/validation/resnet18_tensorrt_latest.md`
+- HTML: `reports/validation/resnet18_tensorrt_latest.html`
+
+**Summary**: Same-precision comparison indicates no significant overall change. Accuracy trade-offs are not available in these results.
+
+## Jetson TensorRT Validation Evidence - YOLOv8n
+
+- Model: `yolov8n.onnx`
+- Engine: `tensorrt`
+- Device: `gpu`
+- Precision pair: `fp16_vs_fp16`
+- Overall: **neutral**
+
+| Metric | Base | New |
+|---|---:|---:|
+| mean_ms | 14.4592 | 14.1108 |
+| p99_ms | 15.4154 | 15.2565 |
+
+### Runtime Provenance
+- Base runtime_artifact_path: `models/yolov8n.engine`
+- New runtime_artifact_path: `models/yolov8n.engine`
+- Base primary_input_name: `images`
+- New primary_input_name: `images`
+- Base resolved_input_shapes: `{'images': [1, 3, 640, 640]}`
+- New resolved_input_shapes: `{'images': [1, 3, 640, 640]}`
+
+### Reports
+- Markdown: `reports/validation/yolov8n_tensorrt_latest.md`
+- HTML: `reports/validation/yolov8n_tensorrt_latest.html`
+
+**Summary**: Same-precision comparison indicates no significant overall change. Accuracy trade-offs are not available in these results.
+
+<!-- EDGE_BENCH_JETSON_RUNBOOK_EVIDENCE:END -->
+
 ### ResNet18
 
 - structured runtime result

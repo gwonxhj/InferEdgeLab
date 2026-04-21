@@ -5,9 +5,9 @@ import os
 from pathlib import Path
 from typing import Any, Dict
 
-from edgebench.compare.comparator import compare_results
-from edgebench.compare.judgement import judge_comparison
-from edgebench.result.loader import load_result
+from inferedgelab.compare.comparator import compare_results
+from inferedgelab.compare.judgement import judge_comparison
+from inferedgelab.result.loader import load_result
 
 
 def _fmt_value(value: Any) -> str:

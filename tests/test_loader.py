@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from edgebench.result.loader import load_result
+from inferedgelab.result.loader import load_result
 
 
 def test_load_result_normalizes_legacy_fields_and_defaults(tmp_path):

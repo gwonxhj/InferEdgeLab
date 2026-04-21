@@ -29,8 +29,8 @@ def _install_optional_dependency_stubs() -> None:
 
 _install_optional_dependency_stubs()
 
-from edgebench.engines.registry import create_engine, normalize_engine_name, supported_engines
-from edgebench.engines.rknn import RknnEngine
+from inferedgelab.engines.registry import create_engine, normalize_engine_name, supported_engines
+from inferedgelab.engines.rknn import RknnEngine
 
 
 class FakeTensorInfo:
