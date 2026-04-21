@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import builtins
+import importlib
 import importlib.util
 import sys
 import types
@@ -120,6 +121,42 @@ def test_rknn_alias_normalize():
 
 def test_create_engine_rknn():
     engine = create_engine("rknn")
+
+    assert isinstance(engine, RknnEngine)
+    assert engine.name == "rknn"
+    assert engine.device == "npu"
+
+
+def test_registry_import_does_not_require_onnxruntime_backend_import(monkeypatch):
+    original_import_module = importlib.import_module
+
+    def fake_import_module(name: str, package: str | None = None):
+        if name == "inferedgelab.engines.onnxruntime_cpu":
+            raise AssertionError("onnxruntime backend should not be imported during registry import")
+        return original_import_module(name, package)
+
+    monkeypatch.setattr(importlib, "import_module", fake_import_module)
+    sys.modules.pop("inferedgelab.engines.registry", None)
+
+    registry = importlib.import_module("inferedgelab.engines.registry")
+
+    assert registry.normalize_engine_name("rknn") == "rknn"
+    assert "rknn" in registry.supported_engines()
+
+
+def test_create_engine_rknn_succeeds_without_onnxruntime_dependency(monkeypatch):
+    original_import_module = importlib.import_module
+
+    def fake_import_module(name: str, package: str | None = None):
+        if name == "inferedgelab.engines.onnxruntime_cpu":
+            raise ImportError("onnxruntime is unavailable")
+        return original_import_module(name, package)
+
+    monkeypatch.setattr(importlib, "import_module", fake_import_module)
+    sys.modules.pop("inferedgelab.engines.registry", None)
+    registry = importlib.import_module("inferedgelab.engines.registry")
+
+    engine = registry.create_engine("rknn")
 
     assert isinstance(engine, RknnEngine)
     assert engine.name == "rknn"
