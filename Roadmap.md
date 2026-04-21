@@ -1,8 +1,8 @@
-# EdgeBench Roadmap
+# InferEdgeLab Roadmap
 
 ## 📍 Project Status
 
-EdgeBench is already usable as **a structured inference validation system with CLI, API, and CI integration**.
+InferEdgeLab is already usable as **a structured inference validation system with CLI, API, and CI integration**.
 
 Today, the project already provides:
 
@@ -60,7 +60,7 @@ Move from one-off execution timing to repeatable, statistics-based performance a
 ## 🔥 Phase 4 – Advanced Edge Device Support 🟡 Partially Implemented
 
 Goal:  
-Make EdgeBench useful for real deployment decisions on actual edge hardware.
+Make InferEdgeLab useful for real deployment decisions on actual edge hardware.
 
 ### Achieved / Remaining Capabilities
 

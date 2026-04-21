@@ -2,7 +2,7 @@
 
 ## 1. 목적
 
-이 문서는 Jetson 환경에서 EdgeBench의 TensorRT 실행 경로를 재현 가능한 절차로 검증하기 위한 runbook이다.
+이 문서는 Jetson 환경에서 InferEdgeLab의 TensorRT 실행 경로를 재현 가능한 절차로 검증하기 위한 runbook이다.
 단순 실행 성공만 확인하는 것이 아니라, TensorRT profiling 결과가 structured result로 저장되고 `compare-latest` 및 Markdown / HTML report 흐름에서 다시 재사용되는지까지 확인하는 것을 목표로 한다.
 
 ## 2. 검증 범위
@@ -48,17 +48,17 @@ PASS 기준:
 - 스크립트가 오류 없이 종료된다.
 - Jetson marker(`/etc/nv_tegra_release`), `tensorrt` / `onnxruntime` / `numpy`, CUDA Python binding availability, `model_path`, `engine_path` 점검 항목이 성공으로 표시된다.
 - 실패 시에는 Jetson 환경 자체 문제인지, TensorRT/Python module 준비 문제인지, CUDA Python binding 준비 문제인지, model/engine artifact 경로 문제인지 빠르게 분기할 수 있다.
-- 이후 `python -m edgebench.cli profile --engine tensorrt ...` 실행 전제 조건이 충족된 것으로 판단한다.
+- 이후 `python -m inferedgelab.cli profile --engine tensorrt ...` 실행 전제 조건이 충족된 것으로 판단한다.
 
 ## 5. ResNet18 Validation
 
 ### 5-1. Profiling 2회 실행
 
-실제 검증은 `python -m edgebench.cli` 경로 기준으로 수행했다.
+실제 검증은 `python -m inferedgelab.cli` 경로 기준으로 수행했다.
 아래와 같은 동일 명령을 2회 실행해 latest pair를 만들었다.
 
 ```bash
-python -m edgebench.cli profile models/resnet18.onnx \
+python -m inferedgelab.cli profile models/resnet18.onnx \
   --engine tensorrt \
   --engine-path models/resnet18.engine \
   --precision fp16 \
@@ -70,7 +70,7 @@ python -m edgebench.cli profile models/resnet18.onnx \
 ```
 
 ```bash
-python -m edgebench.cli profile models/resnet18.onnx \
+python -m inferedgelab.cli profile models/resnet18.onnx \
   --engine tensorrt \
   --engine-path models/resnet18.engine \
   --precision fp16 \
@@ -84,7 +84,7 @@ python -m edgebench.cli profile models/resnet18.onnx \
 ### 5-2. Compare Latest
 
 ```bash
-python -m edgebench.cli compare-latest \
+python -m inferedgelab.cli compare-latest \
   --model resnet18.onnx \
   --engine tensorrt \
   --device gpu \
@@ -125,7 +125,7 @@ python -m edgebench.cli compare-latest \
 YOLOv8n도 동일 조건으로 profiling을 반복 실행해 latest pair를 만들었다.
 
 ```bash
-python -m edgebench.cli profile models/yolov8n.onnx \
+python -m inferedgelab.cli profile models/yolov8n.onnx \
   --engine tensorrt \
   --engine-path models/yolov8n.engine \
   --precision fp16 \
@@ -137,7 +137,7 @@ python -m edgebench.cli profile models/yolov8n.onnx \
 ```
 
 ```bash
-python -m edgebench.cli profile models/yolov8n.onnx \
+python -m inferedgelab.cli profile models/yolov8n.onnx \
   --engine tensorrt \
   --engine-path models/yolov8n.engine \
   --precision fp16 \
@@ -151,7 +151,7 @@ python -m edgebench.cli profile models/yolov8n.onnx \
 ### 6-2. Compare Latest
 
 ```bash
-python -m edgebench.cli compare-latest \
+python -m inferedgelab.cli compare-latest \
   --model yolov8n.onnx \
   --engine tensorrt \
   --device gpu \
@@ -162,7 +162,7 @@ python -m edgebench.cli compare-latest \
 ### 6-3. Markdown / HTML Report 저장
 
 ```bash
-python -m edgebench.cli compare-latest \
+python -m inferedgelab.cli compare-latest \
   --model yolov8n.onnx \
   --engine tensorrt \
   --device gpu \

@@ -5,14 +5,14 @@
 # InferEdgeLab
 
 > For engineers making deployment decisions on edge devices.  
-> EdgeBench turns benchmark runs into reproducible, comparable **deployment-ready validation evidence**.  
+> InferEdgeLab turns benchmark runs into reproducible, comparable **deployment-ready validation evidence**.  
 > Validated on Jetson TensorRT and Odroid RKNN.
 
-EdgeBench is designed for workflows where **latency, accuracy, and risk must be evaluated together**.
+InferEdgeLab is designed for workflows where **latency, accuracy, and risk must be evaluated together**.
 
-EdgeBench is a CLI-first validation system that treats benchmarking as a **continuous validation workflow**, not a one-off script.
+InferEdgeLab is a CLI-first validation system that treats benchmarking as a **continuous validation workflow**, not a one-off script.
 
-Instead of a single latency number, EdgeBench answers:
+Instead of a single latency number, InferEdgeLab answers:
 
 - Is the new result actually faster under the **same conditions**?
 - Is INT8 a valid trade-off or a **risky degradation**?
@@ -20,19 +20,19 @@ Instead of a single latency number, EdgeBench answers:
 
 ---
 
-## What EdgeBench Solves
+## What InferEdgeLab Solves
 
 ### 1. Inconsistent Benchmark Comparisons
 
 Most benchmark comparisons silently differ in batch size, input shape, or precision — leading to false improvements and missed regressions.
 
-EdgeBench stores `run_config` and input shape as structured metadata and enforces **same-condition comparison**, explicitly separating `same-precision` and `cross-precision` semantics.
+InferEdgeLab stores `run_config` and input shape as structured metadata and enforces **same-condition comparison**, explicitly separating `same-precision` and `cross-precision` semantics.
 
 ### 2. No Interpretation for Precision Trade-offs
 
 Switching FP32 → INT8 changes both latency and accuracy, but most tools only show raw numbers.
 
-EdgeBench computes latency delta + accuracy delta together and classifies the result:
+InferEdgeLab computes latency delta + accuracy delta together and classifies the result:
 
 - `acceptable_tradeoff`
 - `caution_tradeoff`
@@ -43,7 +43,7 @@ EdgeBench computes latency delta + accuracy delta together and classifies the re
 
 Typical benchmarking is one-time execution with no structured storage.
 
-EdgeBench saves all results as **structured JSON**, enabling `compare`, `compare-latest`, and `history-report` — reused across CLI, FastAPI, and CI pipelines.
+InferEdgeLab saves all results as **structured JSON**, enabling `compare`, `compare-latest`, and `history-report` — reused across CLI, FastAPI, and CI pipelines.
 
 ---
 
@@ -108,7 +108,7 @@ poetry run python scripts/make_toy_model.py \
 ### Profile
 
 ```bash
-poetry run edgebench profile models/toy224.onnx \
+poetry run inferedgelab profile models/toy224.onnx \
   --warmup 10 \
   --runs 50 \
   --batch 1 \
@@ -119,7 +119,7 @@ poetry run edgebench profile models/toy224.onnx \
 ### Compare
 
 ```bash
-poetry run edgebench compare-latest \
+poetry run inferedgelab compare-latest \
   --model toy224.onnx \
   --engine onnxruntime \
   --device cpu
@@ -138,7 +138,7 @@ profile → structured result → compare → report / CI
 ### Run server
 
 ```bash
-poetry run edgebench serve --host 127.0.0.1 --port 8000
+poetry run inferedgelab serve --host 127.0.0.1 --port 8000
 ```
 
 ### Health check
@@ -162,7 +162,7 @@ More details: [FastAPI API usage guide](docs/api/api_usage.md)
 
 ## CI / Benchmarks
 
-EdgeBench integrates benchmarking into CI:
+InferEdgeLab integrates benchmarking into CI:
 
 - structured result reuse
 - compare-based regression detection

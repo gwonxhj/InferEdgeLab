@@ -1,10 +1,10 @@
-# EdgeBench FastAPI Read-Only Adapter Usage Guide
+# InferEdgeLab FastAPI Read-Only Adapter Usage Guide
 
 ## Purpose
 
-EdgeBench API layer is a thin FastAPI adapter over the existing service layer.
+InferEdgeLab API layer is a thin FastAPI adapter over the existing service layer.
 
-- It exposes EdgeBench read-only workflows over HTTP
+- It exposes InferEdgeLab read-only workflows over HTTP
 - It keeps business logic in reusable services, not in the API layer
 - It provides a practical bridge toward future Web UI and SaaS expansion
 
@@ -14,7 +14,7 @@ This means the current API is intended to reuse the same validation flow already
 
 ## CLI, Service, API Adapter Relationship
 
-EdgeBench currently follows this boundary:
+InferEdgeLab currently follows this boundary:
 
 - CLI: argument parsing, file saving, console rendering, command entrypoints
 - Service layer: domain orchestration for compare, history-report, summarize, list-results
@@ -35,19 +35,19 @@ The FastAPI layer is intentionally thin. It reuses the same service-layer logic 
 Basic launch:
 
 ```bash
-poetry run edgebench serve
+poetry run inferedgelab serve
 ```
 
 Custom host and port:
 
 ```bash
-poetry run edgebench serve --host 0.0.0.0 --port 8000
+poetry run inferedgelab serve --host 0.0.0.0 --port 8000
 ```
 
 Development mode with auto-reload:
 
 ```bash
-poetry run edgebench serve --host 127.0.0.1 --port 8000 --reload
+poetry run inferedgelab serve --host 127.0.0.1 --port 8000 --reload
 ```
 
 By default, the API runs on `127.0.0.1:8000`.
@@ -77,7 +77,7 @@ curl "http://127.0.0.1:8000/health"
 Response:
 
 ```json
-{"status":"ok","service":"edgebench-api"}
+{"status":"ok","service":"inferedgelab-api","version":"0.1.0"}
 ```
 
 ---
