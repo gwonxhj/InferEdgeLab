@@ -194,6 +194,14 @@ InferEdgeLab integrates benchmarking into CI:
 - CI validation gate
 - benchmark evidence tracking
 
+### Auto-Generated Benchmark Summary
+
+<!-- EDGE_BENCH:START -->
+
+> No auto-generated report summaries are available yet.
+
+<!-- EDGE_BENCH:END -->
+
 See: [Benchmark reference table](BENCHMARKS.md) · [Project roadmap](Roadmap.md)
 
 ---
