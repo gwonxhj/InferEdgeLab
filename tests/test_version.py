@@ -6,6 +6,7 @@ import sys
 import types
 from contextlib import contextmanager
 from pathlib import Path
+import tomllib
 
 import inferedgelab
 import inferedgelab.api as api
@@ -122,3 +123,14 @@ def test_package_version_matches_pyproject_version():
     match = re.search(r'^version = "([^"]+)"', pyproject_text, re.MULTILINE)
     assert match is not None
     assert inferedgelab.__version__ == match.group(1)
+
+
+def test_pyproject_exposes_inferedgelab_primary_script_and_edgebench_compat_alias():
+    pyproject_path = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    with open(pyproject_path, "rb") as f:
+        data = tomllib.load(f)
+
+    scripts = data["project"]["scripts"]
+
+    assert scripts["inferedgelab"] == "inferedgelab.cli:app"
+    assert scripts["edgebench"] == "inferedgelab.cli:app"

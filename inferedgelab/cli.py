@@ -31,8 +31,8 @@ app.command("enrich-pair", help="Attach accuracy metadata to a base/new structur
 app.command("enrich-result", help="Attach accuracy metadata to an existing structured benchmark result")(enrich_result_cmd)
 app.command("list-results", help="List recent structured benchmark results")(list_results_cmd)
 app.command("history-report", help="Generate HTML history report from structured benchmark results")(history_report_cmd)
-app.command("serve", help="Run EdgeBench FastAPI server")(serve_cmd)
-app.command("version", help="Show EdgeBench version")(version_cmd)
+app.command("serve", help="Run InferEdgeLab FastAPI server")(serve_cmd)
+app.command("version", help="Show InferEdgeLab version")(version_cmd)
 
 if __name__ == "__main__":
     app()
