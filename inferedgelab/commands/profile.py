@@ -48,6 +48,16 @@ def profile_cmd(
         "--engine-path",
         help="엔진 파일 경로 (예: TensorRT .engine 또는 RKNN .rknn). tensorrt/rknn 사용 시 필수",
     ),
+    rknn_target: str = typer.Option(
+        "",
+        "--rknn-target",
+        help="RKNN runtime target device name (e.g. rk3588)",
+    ),
+    device_name: str = typer.Option(
+        "",
+        "--device-name",
+        help="Optional device metadata override stored with the result",
+    ),
     output: str = typer.Option("", "--output", "-o", help="JSON 리포트 저장 경로(미지정 시 자동 파일명)"),
     no_hash: bool = typer.Option(True, "--no-hash/--hash", help="profile 시 해시 계산(기본 off)"),
 ):
@@ -90,6 +100,8 @@ def profile_cmd(
             width=width if width > 0 else None,
             intra_threads=intra_threads,
             inter_threads=inter_threads,
+            rknn_target=rknn_target.strip() or None,
+            device_name=device_name.strip() or None,
         )
     except RuntimeError as exc:
         _exit_with_runtime_error(str(exc))
@@ -168,6 +180,8 @@ def profile_cmd(
         run_config={
             "engine": engine,
             "engine_path": engine_path.strip() or None,
+            "rknn_target": rknn_target.strip() or None,
+            "device_name": device_name.strip() or None,
             "warmup": warmup,
             "runs": runs,
             "intra_threads": intra_threads,
@@ -179,6 +193,8 @@ def profile_cmd(
         extra={
             "input_names": prof.extra.get("input_names"),
             "runtime_artifact_path": engine_path.strip() or None,
+            "rknn_target": rknn_target.strip() or None,
+            "device_name": device_name.strip() or None,
             "primary_input_name": prof.extra.get("primary_input_name"),
             "resolved_input_shapes": prof.extra.get("resolved_input_shapes"),
             "effective_batch": effective_batch,

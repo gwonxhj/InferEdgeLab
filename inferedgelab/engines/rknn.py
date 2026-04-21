@@ -217,7 +217,8 @@ class RknnEngine(InferenceEngine):
             raise self._missing_engine_path_error()
 
         target = kwargs.get("rknn_target")
-        self.device = kwargs.get("device_name") or "npu"
+        device_name = kwargs.get("device_name")
+        self.device = str(device_name).strip() if device_name else "npu"
 
         self._load_runtime_bindings()
         self._load_rknn_artifact()
