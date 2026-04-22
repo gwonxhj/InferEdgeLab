@@ -101,34 +101,37 @@ The values below summarize representative observations from Odroid M2 + RKNN run
 
 | Model | FP16 mean latency | INT8 mean latency | Summary |
 |---|---:|---:|---|
-| `yolov8n` | ~70 ms | ~35 ms | INT8 is reduced to roughly half of FP16 latency |
-| `yolov8s` | ~86 ms | ~49 ms | INT8 shows clear latency improvement |
-| `yolov8m` | ~171 ms | ~84 ms | INT8 improvement remains visible on the larger model |
+| `yolov8n` | 70.4860 ms | 35.1338 ms | INT8 reduces latency by about 50% |
+| `yolov8s` | 86.4330 ms | 49.0504 ms | INT8 shows clear latency improvement |
+| `yolov8m` | 171.5369 ms | 84.6368 ms | INT8 improvement remains clear on the larger model |
 
 ## 6. What This Validation Confirms
 
 - INT8 latency improvement is consistently observed at roughly `40–50%`.
 - Cross-precision comparison is interpreted as `tradeoff_faster` from a latency perspective.
-- When accuracy is not attached, risk interpretation remains incomplete and is classified as `unknown_risk`.
+- Without attached accuracy, the same runtime pair remains classified as `unknown_risk`.
+- After attaching detection accuracy payloads through `enrich-pair`, the same `yolov8n` runtime pair is reclassified as `acceptable_tradeoff`.
+- The enriched comparison uses `map50` as the primary metric and records a `+1.86pp` improvement (`0.7791 → 0.7977`).
 
-In practice, the Odroid RKNN environment shows a clear speed advantage for INT8. However, without accuracy evidence, the workflow should not automatically treat that result as a complete deployment decision.
-
-This validation confirms that InferEdgeLab can capture quantization-driven performance differences and represent them as structured comparison outputs rather than raw logs.
-
-The same workflow can be extended later by attaching accuracy results, enabling full deployment decision validation.
+In practice, the Odroid RKNN environment shows a clear speed advantage for INT8.
+More importantly, InferEdgeLab can convert that observation into a structured and interpretable deployment decision workflow.
 
 This confirms that InferEdgeLab does not treat quantization as a raw speed optimization,
-but as a measurable and interpretable deployment trade-off.
+but as a measurable and accuracy-aware deployment trade-off.
 
 ## 7. Generated Artifacts
 
 The primary reusable artifacts produced in this validation track are:
 
 - `results/*.json`
+- `results_enriched/*.json`
 - `reports/*.md`
 - `reports/*.html`
+- external accuracy payload JSON files used by `enrich-pair`
 
 These artifacts can be reused later in `compare`, `compare-latest`, `history-report`, API adapter, and CI gate workflows.
+
+The enriched validation path is especially important because it proves that a runtime pair can evolve from latency-only evidence to accuracy-aware trade-off evidence without rerunning the full profiling flow.
 
 ## 8. Validation Completion Criteria
 
@@ -138,6 +141,9 @@ Odroid RKNN validation is considered complete when all of the following conditio
 - structured result is generated
 - compare-latest succeeds
 - report is generated
+- enriched results are generated through `enrich-pair`
+- enriched compare report is generated
+- cross-precision trade-off risk is no longer `unknown_risk` after valid accuracy attachment
 
 ## 9. Notes and Limitations
 

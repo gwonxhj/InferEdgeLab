@@ -79,8 +79,10 @@ InferEdgeLab was validated on real edge hardware using YOLOv8 models.
 ### Interpretation
 
 - INT8 quantization provides **~40–50% latency improvement** on RK3588 NPU
-- Cross-precision comparison classified results as `tradeoff_faster`
-- Accuracy is not attached yet → risk classified as `unknown_risk`
+- Initial cross-precision runtime comparison was classified as `tradeoff_faster`
+- Before accuracy attachment, the same runtime pair was classified as `unknown_risk`
+- After attaching detection accuracy payloads through `enrich-pair`, the same pair was reinterpreted as `acceptable_tradeoff`
+- This means InferEdgeLab can move from **latency-only comparison** to **accuracy-aware deployment trade-off validation**
 
 ---
 
@@ -93,6 +95,7 @@ Validated on real edge hardware:
 | ONNX Runtime CPU profiling + structured result | ✅ |
 | Jetson TensorRT repeated validation + report reuse | ✅ |
 | Odroid RKNN curated validation + cross-precision comparison | ✅ |
+| Odroid RKNN enriched validation with accuracy-aware trade-off interpretation | ✅ |
 | FastAPI read-only adapter (service reuse) | ✅ |
 | CI benchmark + validation gate | ✅ |
 
