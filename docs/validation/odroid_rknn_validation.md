@@ -68,6 +68,79 @@ After each profiling run, verify that the following fields are persisted in the 
 - `extra.rknn_target`
 - `extra.device_name`
 
+## 3-4. End-to-End Validation Flow (Reproducible)
+
+The following commands reproduce the full RKNN validation workflow,
+from profiling to accuracy-aware trade-off interpretation.
+
+### Step 1. FP16 Profiling
+
+```bash
+python -m inferedgelab.cli profile models/yolov8n.onnx \
+  --engine rknn \
+  --engine-path models/yolov8n_fp16.rknn \
+  --rknn-target rk3588 \
+  --device-name odroid_m2 \
+  --precision fp16 \
+  --warmup 5 \
+  --runs 10 \
+  --batch 1 \
+  --height 640 \
+  --width 640
+```
+
+### Step 2. INT8 Profiling
+
+```bash
+python -m inferedgelab.cli profile models/yolov8n.onnx \
+  --engine rknn \
+  --engine-path models/yolov8n_int8.rknn \
+  --rknn-target rk3588 \
+  --device-name odroid_m2 \
+  --precision int8 \
+  --warmup 5 \
+  --runs 10 \
+  --batch 1 \
+  --height 640 \
+  --width 640
+```
+
+### Step 3. Cross-Precision Compare (Latency-only)
+
+```bash
+python -m inferedgelab.cli compare-latest \
+  --model yolov8n.onnx \
+  --engine rknn \
+  --device odroid_m2 \
+  --selection-mode cross_precision
+```
+
+### Step 4. Attach Accuracy (Enrich Pair)
+
+```bash
+python -m inferedgelab.cli enrich-pair \
+  --base-result <fp16_result.json> \
+  --base-accuracy-json validation_payloads/yolov8n_fp16_detection_accuracy.json \
+  --new-result <int8_result.json> \
+  --new-accuracy-json validation_payloads/yolov8n_int8_detection_accuracy.json \
+  --out-dir results_enriched
+```
+
+### Step 5. Accuracy-aware Compare
+
+```bash
+python -m inferedgelab.cli compare \
+  <enriched_fp16.json> \
+  <enriched_int8.json>
+```
+
+### Result
+
+- Step 3 produces a latency-only interpretation (tradeoff_faster, unknown_risk)
+- Step 5 produces an accuracy-aware interpretation (acceptable_tradeoff)
+
+> This demonstrates that the same runtime pair can evolve from raw benchmark output into a deployment decision without re-running profiling.
+
 ## 4. Running Compare-Latest
 
 ### 4-1. same-precision (fp16 vs fp16)
