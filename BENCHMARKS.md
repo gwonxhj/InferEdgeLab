@@ -78,29 +78,30 @@ Separate from the curated import results, this section captures validation refer
 
 | Model | Engine | Device | Precision Pair | Batch | Input(HxW) | Warmup | Runs | Base Mean (ms) | New Mean (ms) | Base P99 (ms) | New P99 (ms) | Overall | Trade-off Risk | Notes |
 |---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---|---|
-| yolov8n.onnx | rknn | npu | fp16_vs_fp16 | 1 | 640x640 | 1 | 5 | 72.4249 | 71.8846 | 73.6221 | 73.7026 | neutral | not_applicable | same-precision compare, runtime provenance confirmed |
-| yolov8n.onnx | rknn | npu | fp16_vs_int8 | 1 | 640x640 | 1 | 5 | 71.8846 | 35.0657 | 73.7026 | 35.6140 | tradeoff_faster | unknown_risk | cross-precision compare, latency-only runtime validation |
-| yolov8n.onnx | rknn | npu | fp16_vs_int8 (enriched) | 1 | 640x640 | 1 | 5 | 71.8846 | 35.0657 | 73.7026 | 35.6140 | tradeoff_faster | acceptable_tradeoff | enriched runtime pair with map50: 0.7791 -> 0.7977 |
+| yolov8n.onnx | rknn | odroid_m2 | fp16_vs_fp16 | 1 | 640x640 | 5 | 10 | 70.4464 | 70.4860 | 71.3739 | 71.8033 | neutral | not_applicable | same-precision compare, runtime provenance confirmed |
+| yolov8n.onnx | rknn | odroid_m2 | fp16_vs_int8 | 1 | 640x640 | 5 | 10 | 70.4860 | 35.1338 | 71.8033 | 35.9663 | tradeoff_faster | unknown_risk | cross-precision compare, latency-only runtime validation |
+| yolov8s.onnx | rknn | odroid_m2 | fp16_vs_int8 | 1 | 640x640 | 5 | 10 | 86.4330 | 49.0504 | 107.7857 | 49.6924 | tradeoff_faster | unknown_risk | cross-precision compare, latency-only runtime validation |
+| yolov8m.onnx | rknn | odroid_m2 | fp16_vs_int8 | 1 | 640x640 | 5 | 10 | 171.5369 | 84.6368 | 199.2491 | 86.1068 | tradeoff_faster | unknown_risk | cross-precision compare, latency-only runtime validation |
+| yolov8n.onnx | rknn | odroid_m2 | fp16_vs_int8 (enriched) | 1 | 640x640 | 5 | 10 | 70.4860 | 35.1338 | 71.8033 | 35.9663 | tradeoff_faster | acceptable_tradeoff | enriched runtime pair with map50: 0.7791 -> 0.7977 |
 
 > Notes:
 > - The values above were confirmed through actual `profile` → structured result persistence → `compare-latest` execution on Odroid M2.
-> - The FP16 runtime artifact is `/home/odroid/rise/fp16/yolov8n_fp16.rknn`.
-> - The INT8 runtime artifact is `/home/odroid/rise/int8/yolov8n_hybrid_int8_boxdfl_scorefix.rknn`.
-> - The default runtime cross-precision pair does not include accuracy data, so the trade-off risk is interpreted as `unknown_risk`.
-> - After attaching detection accuracy JSON via `enrich-result` / `enrich-pair`, the same runtime pair can be reinterpreted through an accuracy-aware compare flow.
+> - The enriched pair was generated through `enrich-pair` using external detection accuracy JSON payloads.
+> - The default runtime cross-precision pair does not include accuracy data, so the trade-off risk is first interpreted as `unknown_risk`.
+> - After attaching detection accuracy JSON via `enrich-result` / `enrich-pair`, the same runtime pair is reinterpreted as `acceptable_tradeoff`.
+> - This demonstrates that InferEdgeLab supports both latency-only runtime comparison and accuracy-aware deployment trade-off interpretation on the same hardware validation path.
 
 ### Quick Takeaway
 
-- In curated cross-precision validation on Odroid M2 + YOLOv8n, moving from FP16 to Hybrid INT8 reduces mean latency from `51.82 ms → 16.29 ms`
-- In the same curated comparison, `map50` is maintained or improved from `0.7791 → 0.7977`
-- Separately, direct RKNN runtime profiling on Odroid M2 also confirms successful execution of the `yolov8n.onnx` + `yolov8n_fp16.rknn` combination
-- In same-precision RKNN runtime compare, mean latency `72.4249 ms → 71.8846 ms` and p99 `73.6221 ms → 73.7026 ms` are classified as **neutral**
-- In cross-precision RKNN runtime compare, mean latency `71.8846 ms → 35.0657 ms` and p99 `73.7026 ms → 35.6140 ms` are classified as **tradeoff_faster**
-- Because this runtime cross-precision pair is latency-only and does not store accuracy, the trade-off risk is interpreted as `unknown_risk`
-- InferEdgeLab therefore connects both curated import and runtime profiling paths into the same RKNN validation evidence workflow
-- `enrich-result` / `enrich-pair` can attach accuracy evidence later to runtime-only results
-- As a result, a runtime cross-precision pair does not have to stop at `unknown_risk`; it can be extended to an accuracy-aware classification such as `acceptable_tradeoff`
-- These results are not one-off measurements, but reproducible validation evidence generated via InferEdgeLab workflow (profile → structured result → compare → report)
+- On Odroid M2, RKNN runtime validation confirmed stable same-precision comparison for `yolov8n.onnx` under FP16 with a **neutral** result
+- Cross-precision runtime comparison showed large latency reductions:
+  - `yolov8n`: `70.4860 ms → 35.1338 ms`
+  - `yolov8s`: `86.4330 ms → 49.0504 ms`
+  - `yolov8m`: `171.5369 ms → 84.6368 ms`
+- Before accuracy attachment, the runtime cross-precision pair was interpreted as `tradeoff_faster` with `unknown_risk`
+- After enrichment with detection accuracy payloads, the same `yolov8n` runtime pair was reclassified as `acceptable_tradeoff`
+- The primary metric used in the enriched comparison was `map50`, which improved from `0.7791` to `0.7977` (**+1.86pp**)
+- This proves that InferEdgeLab does not stop at raw speed comparison; it can turn runtime benchmark evidence into an interpretable deployment trade-off decision
 
 ### Odroid RKNN Benchmarks
 
