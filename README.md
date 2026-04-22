@@ -4,7 +4,7 @@
 
 # InferEdgeLab
 
-> For engineers making deployment decisions on edge devices.  
+> InferEdgeLab is an edge AI inference validation CLI that turns raw benchmark results into structured, reproducible, and accuracy-aware deployment decisions across different runtimes and hardware.  
 > InferEdgeLab turns benchmark runs into reproducible, comparable **deployment-ready validation evidence**.  
 > Validated on real hardware: RKNN (Odroid M2) and TensorRT (Jetson) 
 > Cross-precision benchmarking shows up to **50% latency reduction with INT8**, with structured comparison and trade-off classification
@@ -83,6 +83,8 @@ InferEdgeLab was validated on real edge hardware using YOLOv8 models.
 - Before accuracy attachment, the same runtime pair was classified as `unknown_risk`
 - After attaching detection accuracy payloads through `enrich-pair`, the same pair was reinterpreted as `acceptable_tradeoff`
 - This means InferEdgeLab can move from **latency-only comparison** to **accuracy-aware deployment trade-off validation**
+
+> This workflow demonstrates how a latency-only benchmark can be transformed into an accuracy-aware deployment decision without re-running the full profiling process.
 
 ---
 
