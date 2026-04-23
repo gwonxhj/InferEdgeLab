@@ -212,3 +212,7 @@ reprots/
 results/
 .onnx-export-venv/
 *.pt
+
+# Allow validation evidence JSONs
+!validation/
+!validation/**
