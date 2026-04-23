@@ -1,0 +1,70 @@
+{
+  "model": "yolov8n.onnx",
+  "engine": "rknn",
+  "device": "odroid",
+  "precision": "int8",
+  "batch": 1,
+  "height": 640,
+  "width": 640,
+  "mean_ms": 35.419266120043176,
+  "p99_ms": 44.30288798027504,
+  "timestamp": "20260423-035443-648494",
+  "source_report_path": "results/yolov8n_int8_test.json",
+  "system": {
+    "os": "Linux 5.10.0-odroid-arm64",
+    "python": "3.10.20",
+    "machine": "aarch64",
+    "processor": "aarch64",
+    "cpu_count_logical": 8
+  },
+  "run_config": {
+    "engine": "rknn",
+    "engine_path": "/home/odroid/edgebench_runtime_pack/yolov8n_hybrid_int8_presetB.rknn",
+    "rknn_target": null,
+    "device_name": "odroid",
+    "warmup": 5,
+    "runs": 50,
+    "intra_threads": 1,
+    "inter_threads": 1,
+    "requested_batch": 1,
+    "requested_height": null,
+    "requested_width": null
+  },
+  "accuracy": {
+    "task": "detection",
+    "primary_metric": "map50",
+    "sample_count": null,
+    "metrics": {
+      "map50_95": 0.4817,
+      "map50": 0.7977,
+      "f1_score": 0.8129,
+      "precision": 0.7866,
+      "recall": 0.841
+    }
+  },
+  "extra": {
+    "input_names": [
+      "images"
+    ],
+    "runtime_artifact_path": "/home/odroid/edgebench_runtime_pack/yolov8n_hybrid_int8_presetB.rknn",
+    "rknn_target": null,
+    "device_name": "odroid",
+    "primary_input_name": "images",
+    "resolved_input_shapes": {
+      "images": [
+        1,
+        3,
+        640,
+        640
+      ]
+    },
+    "effective_batch": 1,
+    "effective_height": 640,
+    "effective_width": 640,
+    "enrichment": {
+      "source": "enrich_result_cmd",
+      "accuracy_json_path": "validation_payloads/yolov8n_int8_accuracy.json",
+      "replaces_existing_accuracy": false
+    }
+  }
+}
