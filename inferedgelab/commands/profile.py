@@ -23,6 +23,29 @@ from inferedgelab.result.schema import BenchmarkResult
 from inferedgelab.result.saver import save_result
 
 
+def _infer_precision_from_engine_path(
+    engine: str,
+    engine_path: str | None,
+    explicit_precision: str | None,
+) -> str:
+    normalized_precision = (explicit_precision or "").strip().lower()
+    if normalized_precision:
+        return normalized_precision
+
+    if engine != "rknn":
+        return "fp32"
+
+    normalized_engine_path = (engine_path or "").strip()
+    if not normalized_engine_path:
+        return "fp32"
+
+    engine_basename = os.path.basename(normalized_engine_path).lower()
+    if "int8" in engine_basename:
+        return "int8"
+    if "fp16" in engine_basename:
+        return "fp16"
+    return "fp32"
+
 
 def _exit_with_runtime_error(message: str) -> None:
     rprint(f"[red]{message}[/red]")
@@ -42,7 +65,7 @@ def profile_cmd(
         "--engine",
         help="추론 엔진 선택 (현재 지원: onnxruntime, tensorrt, rknn)",
     ),
-    precision: str = typer.Option("fp32", "--precision", help="precision 메타데이터 (fp32, fp16, int8)"),
+    precision: str = typer.Option("", "--precision", help="precision metadata override (fp32, fp16, int8)"),
     engine_path: str = typer.Option(
         "",
         "--engine-path",
@@ -65,7 +88,7 @@ def profile_cmd(
 
     precision = precision.lower().strip()
     allowed_precisions = {"fp32", "fp16", "int8"}
-    if precision not in allowed_precisions:
+    if precision and precision not in allowed_precisions:
         raise typer.BadParameter("--precision must be one of: fp32, fp16, int8")
 
     engine = normalize_engine_name(engine)
@@ -77,6 +100,12 @@ def profile_cmd(
     
     if engine in {"tensorrt", "rknn"} and not engine_path.strip():
         raise typer.BadParameter(f"--engine-path is required when --engine {engine} is used")
+
+    resolved_precision = _infer_precision_from_engine_path(
+        engine=engine,
+        engine_path=engine_path,
+        explicit_precision=precision,
+    )
 
     result = analyze_onnx(
         model_path,
@@ -168,7 +197,7 @@ def profile_cmd(
         model=os.path.basename(model_path),
         engine=prof.engine,
         device=prof.device,
-        precision=precision,
+        precision=resolved_precision,
         batch=effective_batch,
         height=effective_height,
         width=effective_width,

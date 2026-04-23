@@ -29,7 +29,7 @@ def _install_optional_dependency_stubs() -> None:
 
 _install_optional_dependency_stubs()
 
-from inferedgelab.commands.profile import profile_cmd
+from inferedgelab.commands.profile import _infer_precision_from_engine_path, profile_cmd
 from inferedgelab.core.profiler import ProfileResult, profile_model
 
 
@@ -198,6 +198,20 @@ def test_profile_cmd_saves_rknn_runtime_metadata(monkeypatch, tmp_path):
     assert structured.extra["effective_batch"] == 1
     assert structured.extra["effective_height"] == 640
     assert structured.extra["effective_width"] == 640
+
+
+@pytest.mark.parametrize(
+    ("engine", "engine_path", "explicit_precision", "expected"),
+    [
+        ("rknn", "models/yolov8n_fp16.rknn", "", "fp16"),
+        ("rknn", "models/yolov8n_hybrid_int8.rknn", "", "int8"),
+        ("rknn", "models/yolov8n.rknn", "", "fp32"),
+        ("rknn", "models/yolov8n_hybrid_int8.rknn", "fp16", "fp16"),
+        ("onnxruntime", "models/yolov8n_fp16.rknn", "", "fp32"),
+    ],
+)
+def test_infer_precision_from_engine_path(engine, engine_path, explicit_precision, expected):
+    assert _infer_precision_from_engine_path(engine, engine_path, explicit_precision) == expected
 
 
 def test_profile_cmd_rknn_requires_engine_path(tmp_path):
