@@ -1,0 +1,12 @@
+{
+  "task": "detection",
+  "primary_metric": "map50",
+  "sample_count": null,
+  "metrics": {
+    "map50_95": 0.5714,
+    "map50": 0.7840,
+    "f1_score": 0.8281,
+    "precision": 0.8027,
+    "recall": 0.8551
+  }
+}
