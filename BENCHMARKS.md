@@ -80,28 +80,30 @@ Separate from the curated import results, this section captures validation refer
 |---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---|---|
 | yolov8n.onnx | rknn | odroid_m2 | fp16_vs_fp16 | 1 | 640x640 | 5 | 10 | 70.4464 | 70.4860 | 71.3739 | 71.8033 | neutral | not_applicable | same-precision compare, runtime provenance confirmed |
 | yolov8n.onnx | rknn | odroid_m2 | fp16_vs_int8 | 1 | 640x640 | 5 | 10 | 70.4860 | 35.1338 | 71.8033 | 35.9663 | tradeoff_faster | unknown_risk | cross-precision compare, latency-only runtime validation |
-| yolov8s.onnx | rknn | odroid_m2 | fp16_vs_int8 | 1 | 640x640 | 5 | 10 | 86.4330 | 49.0504 | 107.7857 | 49.6924 | tradeoff_faster | unknown_risk | cross-precision compare, latency-only runtime validation |
-| yolov8m.onnx | rknn | odroid_m2 | fp16_vs_int8 | 1 | 640x640 | 5 | 10 | 171.5369 | 84.6368 | 199.2491 | 86.1068 | tradeoff_faster | unknown_risk | cross-precision compare, latency-only runtime validation |
-| yolov8n.onnx | rknn | odroid_m2 | fp16_vs_int8 (enriched) | 1 | 640x640 | 5 | 10 | 70.4860 | 35.1338 | 71.8033 | 35.9663 | tradeoff_faster | acceptable_tradeoff | enriched runtime pair with map50: 0.7791 -> 0.7977 |
+| yolov8n.onnx | rknn | odroid_m2 | fp16_vs_int8 (enriched) | 1 | 640x640 | 5 | 50 | 72.4430 | 35.5771 | 79.1559 | 45.3868 | tradeoff_faster | acceptable_tradeoff | enriched runtime pair with map50: 0.7791 -> 0.7977 |
+| yolov8s.onnx | rknn | odroid_m2 | fp16_vs_int8 (enriched) | 1 | 640x640 | 5 | 50 | 85.8169 | 49.9623 | 109.4198 | 58.6213 | tradeoff_faster | acceptable_tradeoff | enriched runtime pair with map50: 0.7840 -> 0.8090 |
+| yolov8m.onnx | rknn | odroid_m2 | fp16_vs_int8 (enriched) | 1 | 640x640 | 5 | 50 | 171.9906 | 87.8136 | 192.6720 | 111.5943 | tradeoff_faster | acceptable_tradeoff | enriched runtime pair with map50: 0.7856 -> 0.7975 |
 
 > Notes:
-> - The values above were confirmed through actual `profile` → structured result persistence → `compare-latest` execution on Odroid M2.
-> - The enriched pair was generated through `enrich-pair` using external detection accuracy JSON payloads.
-> - The default runtime cross-precision pair does not include accuracy data, so the trade-off risk is first interpreted as `unknown_risk`.
-> - After attaching detection accuracy JSON via `enrich-result` / `enrich-pair`, the same runtime pair is reinterpreted as `acceptable_tradeoff`.
+> - The values above were confirmed through actual `profile` → structured result persistence → `compare` execution on Odroid M2.
+> - The enriched pairs were generated through `enrich-pair` using external detection accuracy JSON payloads.
+> - The default runtime cross-precision comparison does not include accuracy data, so trade-off risk initially appears as `unknown_risk`.
+> - After attaching detection accuracy JSON via `enrich-pair`, the same runtime validation path is reinterpreted as `acceptable_tradeoff`.
 > - This demonstrates that InferEdgeLab supports both latency-only runtime comparison and accuracy-aware deployment trade-off interpretation on the same hardware validation path.
 
 ### Quick Takeaway
 
 - On Odroid M2, RKNN runtime validation confirmed stable same-precision comparison for `yolov8n.onnx` under FP16 with a **neutral** result
-- Cross-precision runtime comparison showed large latency reductions:
-  - `yolov8n`: `70.4860 ms → 35.1338 ms`
-  - `yolov8s`: `86.4330 ms → 49.0504 ms`
-  - `yolov8m`: `171.5369 ms → 84.6368 ms`
-- Before accuracy attachment, the runtime cross-precision pair was interpreted as `tradeoff_faster` with `unknown_risk`
-- After enrichment with detection accuracy payloads, the same `yolov8n` runtime pair was reclassified as `acceptable_tradeoff`
-- The primary metric used in the enriched comparison was `map50`, which improved from `0.7791` to `0.7977` (**+1.86pp**)
-- This proves that InferEdgeLab does not stop at raw speed comparison; it can turn runtime benchmark evidence into an interpretable deployment trade-off decision
+- Cross-precision enriched runtime comparison showed large latency reductions:
+  - `yolov8n`: `72.4430 ms → 35.5771 ms` (**-50.89%**)
+  - `yolov8s`: `85.8169 ms → 49.9623 ms` (**-41.78%**)
+  - `yolov8m`: `171.9906 ms → 87.8136 ms` (**-48.94%**)
+- After enrichment with detection accuracy payloads, all `yolov8n/s/m` runtime pairs were classified as `acceptable_tradeoff`
+- The primary metric used in enriched comparison was `map50`, and it improved across all three models:
+  - `yolov8n`: `0.7791 → 0.7977` (**+1.86pp**)
+  - `yolov8s`: `0.7840 → 0.8090` (**+2.50pp**)
+  - `yolov8m`: `0.7856 → 0.7975` (**+1.19pp**)
+- This proves that InferEdgeLab does not stop at raw speed comparison; it can turn runtime benchmark evidence into an interpretable deployment trade-off decision across multiple model scales
 
 ### Odroid RKNN Benchmarks
 
@@ -113,7 +115,10 @@ These entries are curated hardware validation results imported from documented O
 | YOLOv8n | rknn | odroid_m1 | fp16 | 1 | 640x640 | 151.07 | - | 0.7389 | 0.8066 | 0.8457 | 0.7710 | fp16 | default | odroid_report | 2026-04-13T00:00:00Z |
 | YOLOv8n | rknn | odroid_m2 | fp16 | 1 | 640x640 | 51.82 | - | 0.7791 | 0.8180 | 0.7950 | 0.8424 | fp16 | default | odroid_report | 2026-04-13T00:05:00Z |
 | YOLOv8n | rknn | odroid_m2 | int8 | 1 | 640x640 | 16.29 | - | 0.7977 | 0.8129 | 0.7866 | 0.8410 | hybrid_int8 | default | odroid_report | 2026-04-13T00:10:00Z |
-| YOLOv8s | rknn | odroid_m2 | int8 | 1 | 640x640 | 29.16 | - | 0.8090 | 0.8206 | 0.7880 | 0.8561 | hybrid_int8 | default | odroid_report | 2026-04-13T00:15:00Z |
+| YOLOv8s | rknn | odroid_m2 | fp16 | 1 | 640x640 | 62.27 | - | 0.7840 | 0.8281 | 0.8027 | 0.8551 | fp16 | default | odroid_report | 2026-04-13T00:15:00Z |
+| YOLOv8s | rknn | odroid_m2 | int8 | 1 | 640x640 | 29.16 | - | 0.8090 | 0.8206 | 0.7880 | 0.8561 | hybrid_int8 | default | odroid_report | 2026-04-13T00:20:00Z |
+| YOLOv8m | rknn | odroid_m2 | fp16 | 1 | 640x640 | 141.70 | - | 0.7856 | 0.8317 | 0.8029 | 0.8626 | fp16 | default | odroid_report | 2026-04-13T00:25:00Z |
+| YOLOv8m | rknn | odroid_m2 | int8 | 1 | 640x640 | 63.59 | - | 0.7975 | 0.8095 | 0.7728 | 0.8498 | hybrid_int8 | default | odroid_report | 2026-04-13T00:30:00Z |
 
 > Notes: This table does not come from direct execution through the RKNN runtime backend. It is curated validation data linked from documented Odroid measurements.
 > The values are based on measurements recorded on 2025-02-12, with some display rounding applied for readability.
