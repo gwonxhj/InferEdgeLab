@@ -6,8 +6,8 @@
 
 > InferEdgeLab is an edge AI inference validation CLI that turns raw benchmark results into structured, reproducible, and accuracy-aware deployment decisions across different runtimes and hardware.  
 > InferEdgeLab turns benchmark runs into reproducible, comparable **deployment-ready validation evidence**.  
-> Validated on real hardware: RKNN (Odroid M2) and TensorRT (Jetson) 
-> Cross-precision benchmarking shows up to **50% latency reduction with INT8**, with structured comparison and trade-off classification
+> Validated on real hardware: RKNN (Odroid M2) and TensorRT (Jetson)  
+> Cross-precision benchmarking on RKNN showed up to **~51% latency reduction with INT8**, with structured comparison and `acceptable_tradeoff` classification across YOLOv8n/s/m
 
 InferEdgeLab is designed for workflows where **latency, accuracy, and risk must be evaluated together**.
 
@@ -69,20 +69,24 @@ InferEdgeLab was validated on real edge hardware using YOLOv8 models.
 
 | Model | Precision | Mean Latency (ms) | P99 (ms) | Observation |
 |---|---|---:|---:|---|
-| YOLOv8n | FP16 | ~70 ms | ~71 ms | baseline |
-| YOLOv8n | INT8 | ~35 ms | ~36 ms | ~50% latency reduction |
-| YOLOv8s | FP16 | ~86 ms | ~107 ms | baseline |
-| YOLOv8s | INT8 | ~49 ms | ~49 ms | ~43% latency reduction |
-| YOLOv8m | FP16 | ~171 ms | ~199 ms | baseline |
-| YOLOv8m | INT8 | ~84 ms | ~86 ms | ~50% latency reduction |
+| YOLOv8n | FP16 | 72.4430 | 79.1559 | enriched runtime baseline |
+| YOLOv8n | INT8 | 35.5771 | 45.3868 | -50.89% latency, acceptable_tradeoff |
+| YOLOv8s | FP16 | 85.8169 | 109.4198 | enriched runtime baseline |
+| YOLOv8s | INT8 | 49.9623 | 58.6213 | -41.78% latency, acceptable_tradeoff |
+| YOLOv8m | FP16 | 171.9906 | 192.6720 | enriched runtime baseline |
+| YOLOv8m | INT8 | 87.8136 | 111.5943 | -48.94% latency, acceptable_tradeoff |
 
 ### Interpretation
 
-- INT8 quantization provides **~40–50% latency improvement** on RK3588 NPU
-- Initial cross-precision runtime comparison was classified as `tradeoff_faster`
-- Before accuracy attachment, the same runtime pair was classified as `unknown_risk`
-- After attaching detection accuracy payloads through `enrich-pair`, the same pair was reinterpreted as `acceptable_tradeoff`
-- This means InferEdgeLab can move from **latency-only comparison** to **accuracy-aware deployment trade-off validation**
+- INT8 quantization provided **~42–51% latency improvement** on RK3588 NPU across YOLOv8n/s/m
+- Initial cross-precision runtime comparison is classified as `tradeoff_faster`
+- Before accuracy attachment, the same runtime pair is classified as `unknown_risk`
+- After attaching detection accuracy payloads through `enrich-pair`, the runtime pairs for `yolov8n`, `yolov8s`, and `yolov8m` are all reinterpreted as `acceptable_tradeoff`
+- Primary metric (`map50`) improved across all three enriched pairs:
+  - `yolov8n`: `0.7791 → 0.7977` (**+1.86pp**)
+  - `yolov8s`: `0.7840 → 0.8090` (**+2.50pp**)
+  - `yolov8m`: `0.7856 → 0.7975` (**+1.19pp**)
+- Some secondary metrics such as `map50_95`, `f1_score`, and `precision` may still decline, which shows why deployment decisions should be based on an explicitly chosen primary metric rather than a single raw speed number
 
 > This workflow demonstrates how a latency-only benchmark can be transformed into an accuracy-aware deployment decision without re-running the full profiling process.
 
@@ -97,7 +101,7 @@ Validated on real edge hardware:
 | ONNX Runtime CPU profiling + structured result | ✅ |
 | Jetson TensorRT repeated validation + report reuse | ✅ |
 | Odroid RKNN curated validation + cross-precision comparison | ✅ |
-| Odroid RKNN enriched validation with accuracy-aware trade-off interpretation | ✅ |
+| Odroid RKNN enriched validation with accuracy-aware trade-off interpretation (`yolov8n/s/m`) | ✅ |
 | FastAPI read-only adapter (service reuse) | ✅ |
 | CI benchmark + validation gate | ✅ |
 
