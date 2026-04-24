@@ -40,6 +40,14 @@ class DetectionEvalResult:
     extra: Dict[str, Any]
 
 
+def _as_output_sequence(outputs: Sequence[Any] | Any) -> list[Any]:
+    if isinstance(outputs, dict):
+        return list(outputs.values())
+    if isinstance(outputs, (list, tuple)):
+        return list(outputs)
+    return [outputs]
+
+
 def _require_cv2():
     try:
         import cv2
@@ -87,6 +95,195 @@ def _clip_xyxy(
         min(max(x2, 0.0), float(original_width)),
         min(max(y2, 0.0), float(original_height)),
     )
+
+
+def _safe_array_min_max(array: Any) -> tuple[float | None, float | None]:
+    arr = np.asarray(array)
+    if arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
+        return None, None
+    return float(np.min(arr)), float(np.max(arr))
+
+
+def _array_debug_summary(array: Any) -> dict[str, Any]:
+    arr = np.asarray(array)
+    min_value, max_value = _safe_array_min_max(arr)
+    return {
+        "shape": list(arr.shape),
+        "dtype": str(arr.dtype),
+        "min": min_value,
+        "max": max_value,
+    }
+
+
+def _format_debug_number(value: float | None) -> str:
+    if value is None:
+        return "n/a"
+    return f"{value:.6f}"
+
+
+def _format_xywh(box: tuple[float, float, float, float]) -> str:
+    return f"({box[0]:.2f}, {box[1]:.2f}, {box[2]:.2f}, {box[3]:.2f})"
+
+
+def _score_interpretation(scores: np.ndarray) -> str:
+    min_value, max_value = _safe_array_min_max(scores)
+    if min_value is None or max_value is None:
+        return "unknown"
+    if 0.0 <= min_value and max_value <= 1.0:
+        return "already_probability_like"
+    return "possibly_logits_or_unbounded"
+
+
+def _top_score_samples(
+    boxes: np.ndarray,
+    scores: np.ndarray,
+    *,
+    limit: int = 5,
+) -> list[dict[str, Any]]:
+    candidates: list[dict[str, Any]] = []
+    for index, (box, class_scores) in enumerate(zip(boxes, scores)):
+        class_scores = np.asarray(class_scores).reshape(-1)
+        if class_scores.size == 0:
+            continue
+        class_id = int(np.argmax(class_scores))
+        candidates.append(
+            {
+                "candidate_index": index,
+                "class_id": class_id,
+                "confidence": float(class_scores[class_id]),
+                "box": (
+                    float(box[0]),
+                    float(box[1]),
+                    float(box[2]),
+                    float(box[3]),
+                ),
+            }
+        )
+
+    candidates.sort(key=lambda item: item["confidence"], reverse=True)
+    return candidates[:limit]
+
+
+def _serialize_detections(
+    detections: Sequence[Detection],
+    *,
+    limit: int = 5,
+) -> list[dict[str, Any]]:
+    items = sorted(detections, key=lambda item: item.confidence, reverse=True)
+    return [
+        {
+            "class_id": item.class_id,
+            "confidence": float(item.confidence),
+            "box": tuple(float(value) for value in item.box),
+        }
+        for item in items[:limit]
+    ]
+
+
+def _serialize_ground_truths(
+    ground_truths: Sequence[GroundTruth],
+    *,
+    limit: int = 5,
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "class_id": item.class_id,
+            "box": tuple(float(value) for value in item.box),
+        }
+        for item in ground_truths[:limit]
+    ]
+
+
+def _format_detection_debug_report(
+    *,
+    sample_index: int,
+    image_path: str,
+    original_width: int,
+    original_height: int,
+    scale: float,
+    pad_w: float,
+    pad_h: float,
+    input_name: str,
+    input_summary: dict[str, Any],
+    output_summaries: Sequence[dict[str, Any]],
+    postprocess_debug: dict[str, Any],
+    ground_truths: Sequence[GroundTruth],
+) -> str:
+    lines = [
+        f"[Detection Debug] sample_index={sample_index} image={Path(image_path).name}",
+        f"  original_size               : {original_width}x{original_height}",
+        f"  letterbox                   : scale={scale:.6f}, pad_w={pad_w:.2f}, pad_h={pad_h:.2f}",
+        f"  engine_input_name           : {input_name}",
+        "  input_array                 : "
+        f"shape={input_summary['shape']}, dtype={input_summary['dtype']}, "
+        f"min={_format_debug_number(input_summary['min'])}, max={_format_debug_number(input_summary['max'])}",
+        f"  raw_output_count            : {len(output_summaries)}",
+    ]
+
+    for index, output_summary in enumerate(output_summaries):
+        lines.append(
+            f"  raw_output[{index}]             : shape={output_summary['shape']}, "
+            f"dtype={output_summary['dtype']}, min={_format_debug_number(output_summary['min'])}, "
+            f"max={_format_debug_number(output_summary['max'])}"
+        )
+
+    for field in ("output_mode", "single_output_layout", "boxes_layout", "scores_layout", "score_interpretation"):
+        value = postprocess_debug.get(field)
+        if value:
+            lines.append(f"  {field:<28}: {value}")
+
+    for field in ("boxes_stats", "scores_stats"):
+        summary = postprocess_debug.get(field)
+        if summary:
+            lines.append(
+                f"  {field:<28}: shape={summary['shape']}, dtype={summary['dtype']}, "
+                f"min={_format_debug_number(summary['min'])}, max={_format_debug_number(summary['max'])}"
+            )
+
+    lines.append(
+        f"  pre_nms_detection_count     : {postprocess_debug.get('pre_nms_detection_count', 0)}"
+    )
+    lines.append(
+        f"  post_nms_detection_count    : {postprocess_debug.get('post_nms_detection_count', 0)}"
+    )
+    lines.append(f"  gt_count                    : {len(ground_truths)}")
+
+    score_samples = postprocess_debug.get("top_score_samples", [])
+    lines.append("  top_score_samples           :")
+    if score_samples:
+        for item in score_samples:
+            lines.append(
+                "    - "
+                f"class_id={item['class_id']} confidence={item['confidence']:.4f} "
+                f"box_xywh={_format_xywh(item['box'])}"
+            )
+    else:
+        lines.append("    - (none)")
+
+    top_detections = postprocess_debug.get("top_detections", [])
+    lines.append("  top_detections              :")
+    if top_detections:
+        for item in top_detections:
+            lines.append(
+                "    - "
+                f"class_id={item['class_id']} confidence={item['confidence']:.4f} "
+                f"box_xywh={_format_xywh(item['box'])}"
+            )
+    else:
+        lines.append("    - (none)")
+
+    lines.append("  top_ground_truths           :")
+    top_ground_truths = _serialize_ground_truths(ground_truths, limit=5)
+    if top_ground_truths:
+        for item in top_ground_truths:
+            lines.append(
+                "    - "
+                f"class_id={item['class_id']} box_xywh={_format_xywh(item['box'])}"
+            )
+    else:
+        lines.append("    - (none)")
+
+    return "\n".join(lines)
 
 
 def letterbox(image: np.ndarray, target_size: int = 640, use_rgb: bool = True) -> tuple[np.ndarray, float, float, float]:
@@ -225,7 +422,12 @@ def get_image_files(image_dir: str) -> list[str]:
     return files
 
 
-def _normalize_single_output(output: Any, num_classes: int) -> tuple[np.ndarray, np.ndarray]:
+def _normalize_single_output(
+    output: Any,
+    num_classes: int,
+    *,
+    debug: dict[str, Any] | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
     arr = np.asarray(output)
     if arr.ndim == 3 and arr.shape[0] == 1:
         arr = arr[0]
@@ -235,19 +437,27 @@ def _normalize_single_output(output: Any, num_classes: int) -> tuple[np.ndarray,
     expected_channels = 4 + num_classes
     if arr.shape[0] == expected_channels:
         preds = arr.T
+        layout = "channel_first"
     elif arr.shape[1] == expected_channels:
         preds = arr
+        layout = "channel_last"
     elif arr.shape[0] < arr.shape[1] and arr.shape[0] >= expected_channels:
         preds = arr.T
+        layout = "channel_first_heuristic"
     elif arr.shape[1] < arr.shape[0] and arr.shape[1] >= expected_channels:
         preds = arr
+        layout = "channel_last_heuristic"
     else:
         raise ValueError(f"Could not infer YOLOv8 single-output layout from shape: {arr.shape}")
+
+    if debug is not None:
+        debug["output_mode"] = "single"
+        debug["single_output_layout"] = layout
 
     return preds[:, :4], preds[:, 4 : 4 + num_classes]
 
 
-def _normalize_boxes_output(output: Any) -> np.ndarray:
+def _normalize_boxes_output(output: Any, *, debug: dict[str, Any] | None = None) -> np.ndarray:
     arr = np.asarray(output)
     if arr.ndim == 3 and arr.shape[0] == 1:
         arr = arr[0]
@@ -255,13 +465,22 @@ def _normalize_boxes_output(output: Any) -> np.ndarray:
         raise ValueError(f"Unsupported boxes output rank: {arr.shape}")
 
     if arr.shape[0] == 4:
+        if debug is not None:
+            debug["boxes_layout"] = "channel_first"
         return arr.T
     if arr.shape[1] == 4:
+        if debug is not None:
+            debug["boxes_layout"] = "channel_last"
         return arr
     raise ValueError(f"Could not infer boxes layout from shape: {arr.shape}")
 
 
-def _normalize_scores_output(output: Any, num_classes: int) -> np.ndarray:
+def _normalize_scores_output(
+    output: Any,
+    num_classes: int,
+    *,
+    debug: dict[str, Any] | None = None,
+) -> np.ndarray:
     arr = np.asarray(output)
     if arr.ndim == 3 and arr.shape[0] == 1:
         arr = arr[0]
@@ -269,19 +488,32 @@ def _normalize_scores_output(output: Any, num_classes: int) -> np.ndarray:
         raise ValueError(f"Unsupported scores output rank: {arr.shape}")
 
     if arr.shape[0] == num_classes:
+        if debug is not None:
+            debug["scores_layout"] = "channel_first"
         return arr.T
     if arr.shape[1] == num_classes:
+        if debug is not None:
+            debug["scores_layout"] = "channel_last"
         return arr
     if arr.shape[0] < arr.shape[1] and arr.shape[0] >= num_classes:
+        if debug is not None:
+            debug["scores_layout"] = "channel_first_heuristic"
         return arr.T[:, :num_classes]
     if arr.shape[1] < arr.shape[0] and arr.shape[1] >= num_classes:
+        if debug is not None:
+            debug["scores_layout"] = "channel_last_heuristic"
         return arr[:, :num_classes]
     raise ValueError(f"Could not infer scores layout from shape: {arr.shape}")
 
 
-def _split_yolov8_outputs(outputs: Sequence[Any], num_classes: int) -> tuple[np.ndarray, np.ndarray]:
+def _split_yolov8_outputs(
+    outputs: Sequence[Any],
+    num_classes: int,
+    *,
+    debug: dict[str, Any] | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
     if len(outputs) == 1:
-        return _normalize_single_output(outputs[0], num_classes=num_classes)
+        return _normalize_single_output(outputs[0], num_classes=num_classes, debug=debug)
 
     if len(outputs) != 2:
         raise ValueError(f"Unsupported YOLOv8 output count: {len(outputs)}")
@@ -292,11 +524,11 @@ def _split_yolov8_outputs(outputs: Sequence[Any], num_classes: int) -> tuple[np.
     second_feature_shape = tuple(dim for dim in second.shape if dim not in (1,))
 
     if 4 in first_feature_shape:
-        boxes = _normalize_boxes_output(first)
-        scores = _normalize_scores_output(second, num_classes=num_classes)
+        boxes = _normalize_boxes_output(first, debug=debug)
+        scores = _normalize_scores_output(second, num_classes=num_classes, debug=debug)
     elif 4 in second_feature_shape:
-        boxes = _normalize_boxes_output(second)
-        scores = _normalize_scores_output(first, num_classes=num_classes)
+        boxes = _normalize_boxes_output(second, debug=debug)
+        scores = _normalize_scores_output(first, num_classes=num_classes, debug=debug)
     else:
         raise ValueError("Could not infer boxes/scores outputs from TensorRT output shapes.")
 
@@ -304,6 +536,8 @@ def _split_yolov8_outputs(outputs: Sequence[Any], num_classes: int) -> tuple[np.
         raise ValueError(
             f"YOLOv8 output candidate count mismatch: boxes={boxes.shape}, scores={scores.shape}"
         )
+    if debug is not None:
+        debug["output_mode"] = "split"
     return boxes, scores
 
 
@@ -317,9 +551,16 @@ def postprocess_yolov8(
     num_classes: int,
     conf_threshold: float,
     nms_threshold: float,
+    debug: dict[str, Any] | None = None,
 ) -> list[Detection]:
-    boxes, scores = _split_yolov8_outputs(outputs, num_classes=num_classes)
+    boxes, scores = _split_yolov8_outputs(outputs, num_classes=num_classes, debug=debug)
     original_height, original_width = original_shape
+
+    if debug is not None:
+        debug["boxes_stats"] = _array_debug_summary(boxes)
+        debug["scores_stats"] = _array_debug_summary(scores)
+        debug["score_interpretation"] = _score_interpretation(scores)
+        debug["top_score_samples"] = _top_score_samples(boxes, scores, limit=5)
 
     detections: list[Detection] = []
     for box, class_scores in zip(boxes, scores):
@@ -352,7 +593,16 @@ def postprocess_yolov8(
             )
         )
 
-    return nms(detections, iou_threshold=nms_threshold)
+    if debug is not None:
+        debug["pre_nms_detection_count"] = len(detections)
+
+    kept = nms(detections, iou_threshold=nms_threshold)
+
+    if debug is not None:
+        debug["post_nms_detection_count"] = len(kept)
+        debug["top_detections"] = _serialize_detections(kept, limit=5)
+
+    return kept
 
 
 def _average_precision(recalls: np.ndarray, precisions: np.ndarray) -> float:
@@ -554,6 +804,7 @@ def evaluate_detection_engine(
     iou_threshold: float = 0.5,
     use_rgb: bool = True,
     input_size: int = 640,
+    debug_samples: int = 0,
 ) -> DetectionEvalResult:
     engine_name = normalize_engine_name(engine_name)
     engine = create_engine(engine_name)
@@ -577,7 +828,7 @@ def evaluate_detection_engine(
 
         cv2 = _require_cv2()
 
-        for image_path in image_files:
+        for sample_index, image_path in enumerate(image_files):
             image = cv2.imread(image_path)
             if image is None:
                 raise RuntimeError(f"Failed to read image: {image_path}")
@@ -593,9 +844,10 @@ def evaluate_detection_engine(
                 actual_input_shape = [int(dim) for dim in input_array.shape]
 
             feeds = {model_input.name: input_array}
-            outputs = engine.run(feeds)
+            raw_outputs = _as_output_sequence(engine.run(feeds))
+            postprocess_debug: dict[str, Any] | None = {} if sample_index < debug_samples else None
             detections = postprocess_yolov8(
-                outputs,
+                raw_outputs,
                 original_shape=(original_height, original_width),
                 scale=scale,
                 pad_w=pad_w,
@@ -603,6 +855,7 @@ def evaluate_detection_engine(
                 num_classes=num_classes,
                 conf_threshold=conf_threshold,
                 nms_threshold=nms_threshold,
+                debug=postprocess_debug,
             )
 
             label_path = os.path.join(label_dir, f"{Path(image_path).stem}.txt")
@@ -614,6 +867,24 @@ def evaluate_detection_engine(
 
             predictions_by_image.append(detections)
             ground_truths_by_image.append(ground_truths)
+
+            if postprocess_debug is not None:
+                print(
+                    _format_detection_debug_report(
+                        sample_index=sample_index,
+                        image_path=image_path,
+                        original_width=original_width,
+                        original_height=original_height,
+                        scale=scale,
+                        pad_w=pad_w,
+                        pad_h=pad_h,
+                        input_name=model_input.name,
+                        input_summary=_array_debug_summary(input_array),
+                        output_summaries=[_array_debug_summary(output) for output in raw_outputs],
+                        postprocess_debug=postprocess_debug,
+                        ground_truths=ground_truths,
+                    )
+                )
 
         precision, recall, f1_score = compute_precision_recall_f1(
             predictions_by_image,

@@ -38,6 +38,7 @@ def evaluate_detection_cmd(
     nms_threshold: float = typer.Option(0.45, "--nms-threshold", help="NMS IoU threshold"),
     iou_threshold: float = typer.Option(0.5, "--iou-threshold", help="evaluation IoU threshold"),
     rgb: bool = typer.Option(True, "--rgb/--bgr", help="Use RGB input conversion after OpenCV read"),
+    debug_samples: int = typer.Option(0, "--debug-samples", help="Print internal debug output for the first N images"),
     out_json: str = typer.Option("", "--out-json", help="Accuracy payload 저장 경로"),
     out_dir: str = typer.Option("results", "--out-dir", help="structured result 저장 디렉토리"),
     save_structured_result: bool = typer.Option(
@@ -63,6 +64,10 @@ def evaluate_detection_cmd(
 
     if num_classes <= 0:
         raise typer.BadParameter("--num-classes must be >= 1")
+    if not isinstance(debug_samples, int):
+        debug_samples = int(getattr(debug_samples, "default", 0))
+    if debug_samples < 0:
+        raise typer.BadParameter("--debug-samples must be >= 0")
 
     try:
         eval_result = evaluate_detection_engine(
@@ -77,6 +82,7 @@ def evaluate_detection_cmd(
             iou_threshold=iou_threshold,
             use_rgb=rgb,
             input_size=640,
+            debug_samples=debug_samples,
         )
     except RuntimeError as exc:
         _exit_with_runtime_error(str(exc))
