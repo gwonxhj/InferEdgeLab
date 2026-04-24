@@ -20,6 +20,7 @@ from inferedgelab.core.detection_evaluator import (
     load_ground_truth,
     nms,
     save_accuracy_payload,
+    scale_coords,
 )
 
 
@@ -118,6 +119,19 @@ def test_nms_keeps_highest_confidence_box_for_overlapping_predictions():
     assert len(kept) == 2
     assert kept[0].confidence == 0.95
     assert kept[1].confidence == 0.60
+
+
+def test_scale_coords_clips_xyxy_and_returns_original_image_xywh():
+    scaled = scale_coords(
+        box=(350.0, 300.0, 300.0, 200.0),
+        scale=0.5,
+        pad_w=100.0,
+        pad_h=50.0,
+        original_width=800,
+        original_height=600,
+    )
+
+    assert scaled == pytest.approx((500.0, 450.0, 600.0, 300.0))
 
 
 def test_map50_and_f1_are_one_for_perfect_prediction():
