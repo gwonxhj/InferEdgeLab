@@ -10,6 +10,9 @@ import pytest
 
 
 def import_compare_latest_module():
+    saved_rich = sys.modules.get("rich")
+    saved_rich_table = sys.modules.get("rich.table")
+
     for module_name in (
         "typer",
         "rich",
@@ -25,11 +28,19 @@ def import_compare_latest_module():
             super().__init__(code)
             self.exit_code = code
 
+    class BadParameter(Exception):
+        pass
+
     def option(default=None, *args, **kwargs):
         return default
 
+    def argument(default=None, *args, **kwargs):
+        return default
+
     typer_stub.Exit = Exit
+    typer_stub.BadParameter = BadParameter
     typer_stub.Option = option
+    typer_stub.Argument = argument
     sys.modules["typer"] = typer_stub
 
     rich_stub = types.ModuleType("rich")
@@ -51,7 +62,19 @@ def import_compare_latest_module():
     rich_table_stub.Table = Table
     sys.modules["rich.table"] = rich_table_stub
 
-    return importlib.import_module("inferedgelab.commands.compare_latest")
+    module = importlib.import_module("inferedgelab.commands.compare_latest")
+
+    if saved_rich is None:
+        sys.modules.pop("rich", None)
+    else:
+        sys.modules["rich"] = saved_rich
+
+    if saved_rich_table is None:
+        sys.modules.pop("rich.table", None)
+    else:
+        sys.modules["rich.table"] = saved_rich_table
+
+    return module
 
 
 def write_result(

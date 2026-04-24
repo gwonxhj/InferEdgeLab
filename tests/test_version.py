@@ -34,6 +34,7 @@ def import_cli_module():
         "inferedgelab.commands.analyze": "analyze_cmd",
         "inferedgelab.commands.profile": "profile_cmd",
         "inferedgelab.commands.evaluate": "evaluate_cmd",
+        "inferedgelab.commands.evaluate_detection": "evaluate_detection_cmd",
         "inferedgelab.commands.summarize": "summarize",
         "inferedgelab.commands.compare": "compare_cmd",
         "inferedgelab.commands.compare_latest": "compare_latest_cmd",

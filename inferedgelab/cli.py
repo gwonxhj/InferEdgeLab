@@ -6,6 +6,7 @@ from inferedgelab import __version__
 from inferedgelab.commands.analyze import analyze_cmd
 from inferedgelab.commands.profile import profile_cmd
 from inferedgelab.commands.evaluate import evaluate_cmd
+from inferedgelab.commands.evaluate_detection import evaluate_detection_cmd
 from inferedgelab.commands.summarize import summarize
 from inferedgelab.commands.compare import compare_cmd
 from inferedgelab.commands.compare_latest import compare_latest_cmd
@@ -24,6 +25,7 @@ def version_cmd() -> None:
 app.command("analyze", help="Static analysis (params/IO/FLOPs)")(analyze_cmd)
 app.command("profile", help="Runtime profiling with selectable engine backend")(profile_cmd)
 app.command("evaluate", help="Accuracy evaluation for classification manifest inputs")(evaluate_cmd)
+app.command("evaluate-detection", help="Accuracy evaluation for YOLOv8 detection datasets")(evaluate_detection_cmd)
 app.command("summarize", help="Summarize InferEdgeLab JSON reports")(summarize)
 app.command("compare", help="Compare two structured benchmark result JSON files")(compare_cmd)
 app.command("compare-latest", help="Compare the two most recent structured benchmark results")(compare_latest_cmd)
