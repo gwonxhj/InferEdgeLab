@@ -33,7 +33,7 @@ def replace_named_marker_block(text: str, start_marker: str, end_marker: str, bl
     replacement = start_marker + "\n\n" + block.strip() + "\n\n" + end_marker
     if not pattern.search(text):
         raise RuntimeError(
-            f"Required marker block was not found: {start_marker} ... {end_marker}. "
+            f"Marker block is missing: {start_marker} ... {end_marker}. "
             "Only the auto-generated marker block can be updated."
         )
     return pattern.sub(replacement, text)
@@ -42,6 +42,11 @@ def replace_named_marker_block(text: str, start_marker: str, end_marker: str, bl
 def discover_report_files(pattern: str) -> list[str]:
     """Discover report JSON files that feed the auto-generated benchmark summary."""
     return sorted(glob.glob(pattern))
+
+
+def _has_glob_matches(pattern: str) -> bool:
+    """Compatibility helper for tests and simple report existence checks."""
+    return bool(discover_report_files(pattern))
 
 
 def run_summarize_command(pattern: str, *, mode: str, sort: str = "p99", recent: str | None = None) -> str:
@@ -69,8 +74,7 @@ def fallback_benchmarks_block() -> str:
 
 def build_auto_summary_outputs(reports_pattern: str) -> tuple[str, str]:
     """Build README and BENCHMARKS markdown blocks from the current report set."""
-    report_files = discover_report_files(reports_pattern)
-    if not report_files:
+    if not _has_glob_matches(reports_pattern):
         return "", fallback_benchmarks_block()
 
     md_both = run_summarize_command(
@@ -121,9 +125,9 @@ def main() -> None:
             README_MARK_END,
             md_both,
         )
-        print("Updated BENCHMARKS.md auto marker block and README.md auto marker block.")
+        print("Updated README.md marker block + BENCHMARKS.md auto marker block")
     else:
-        print("Updated BENCHMARKS.md auto marker block. Skipped README.md because no report summaries were generated.")
+        print("Updated BENCHMARKS.md auto marker block (README marker skipped because no reports matched)")
 
 
 if __name__ == "__main__":
