@@ -77,15 +77,15 @@ def _xyxy_to_xywh(box: tuple[float, float, float, float]) -> tuple[float, float,
 
 def _clip_xyxy(
     box: tuple[float, float, float, float],
-    image_width: int,
-    image_height: int,
+    original_width: int,
+    original_height: int,
 ) -> tuple[float, float, float, float]:
     x1, y1, x2, y2 = box
     return (
-        min(max(x1, 0.0), float(image_width)),
-        min(max(y1, 0.0), float(image_height)),
-        min(max(x2, 0.0), float(image_width)),
-        min(max(y2, 0.0), float(image_height)),
+        min(max(x1, 0.0), float(original_width)),
+        min(max(y1, 0.0), float(original_height)),
+        min(max(x2, 0.0), float(original_width)),
+        min(max(y2, 0.0), float(original_height)),
     )
 
 
@@ -131,7 +131,7 @@ def scale_coords(
         (x2 - pad_w) / scale,
         (y2 - pad_h) / scale,
     )
-    clipped = _clip_xyxy(scaled_box, original_width=original_width, image_height=original_height)
+    clipped = _clip_xyxy(scaled_box, original_width=original_width, original_height=original_height)
     return _xyxy_to_xywh(clipped)
 
 
