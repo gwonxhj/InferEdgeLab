@@ -7,7 +7,9 @@ import types
 from contextlib import contextmanager
 from pathlib import Path
 
+import numpy as np
 import pytest
+from typer.testing import CliRunner
 
 from inferedgelab.core.detection_evaluator import (
     Detection,
@@ -17,11 +19,13 @@ from inferedgelab.core.detection_evaluator import (
     calculate_iou,
     compute_average_precision,
     compute_precision_recall_f1,
+    evaluate_detection_engine,
     load_ground_truth,
     nms,
     save_accuracy_payload,
     scale_coords,
 )
+from inferedgelab.engines.base import EngineModelIO
 
 
 @contextmanager
@@ -201,15 +205,9 @@ def test_evaluate_detection_command_writes_accuracy_payload(tmp_path, monkeypatc
 
     captured = {}
 
-    def fake_save_result(result, out_dir="results"):
-        captured["result"] = result
-        captured["out_dir"] = out_dir
-        return str(Path(out_dir) / "saved.json")
-
-    monkeypatch.setattr(
-        evaluate_detection,
-        "evaluate_detection_engine",
-        lambda **kwargs: DetectionEvalResult(
+    def fake_evaluate_detection_engine(**kwargs):
+        captured["engine_kwargs"] = kwargs
+        return DetectionEvalResult(
             task="detection",
             engine="tensorrt",
             device="gpu",
@@ -233,8 +231,14 @@ def test_evaluate_detection_command_writes_accuracy_payload(tmp_path, monkeypatc
                 "rgb": True,
             },
             extra={"runtime_artifact_path": "engine.plan"},
-        ),
-    )
+        )
+
+    def fake_save_result(result, out_dir="results"):
+        captured["result"] = result
+        captured["out_dir"] = out_dir
+        return str(Path(out_dir) / "saved.json")
+
+    monkeypatch.setattr(evaluate_detection, "evaluate_detection_engine", fake_evaluate_detection_engine)
     monkeypatch.setattr(evaluate_detection, "save_result", fake_save_result)
     monkeypatch.setattr(
         evaluate_detection,
@@ -266,6 +270,101 @@ def test_evaluate_detection_command_writes_accuracy_payload(tmp_path, monkeypatc
     assert captured["result"].accuracy["task"] == "detection"
     assert captured["result"].accuracy["metrics"]["map50"] == pytest.approx(0.7791)
     assert captured["result"].run_config["mode"] == "evaluate-detection"
+    assert captured["engine_kwargs"]["debug_samples"] == 0
+
+
+def test_evaluate_detection_engine_debug_path_prints_sample_diagnostics(tmp_path, monkeypatch, capsys):
+    image_dir = tmp_path / "images"
+    label_dir = tmp_path / "labels"
+    image_dir.mkdir()
+    label_dir.mkdir()
+    (image_dir / "sample.jpg").write_bytes(b"fake-image")
+    (label_dir / "sample.txt").write_text("0 0.5 0.5 0.15625 0.15625\n", encoding="utf-8")
+
+    class FakeCv2:
+        INTER_LINEAR = 1
+        COLOR_BGR2RGB = 2
+
+        @staticmethod
+        def imread(path):
+            return np.zeros((640, 640, 3), dtype=np.uint8)
+
+        @staticmethod
+        def resize(image, size, interpolation=None):
+            width, height = size
+            return np.zeros((height, width, 3), dtype=image.dtype)
+
+        @staticmethod
+        def cvtColor(image, code):
+            return image
+
+    class FakeEngine:
+        def __init__(self):
+            self.name = "tensorrt"
+            self.device = "gpu"
+            self.inputs = [EngineModelIO(name="images", dtype=np.dtype(np.float32), shape=[1, 3, 640, 640])]
+            self.runtime_paths = types.SimpleNamespace(runtime_artifact_path="engine.plan")
+
+        def load(self, model_path, **kwargs):
+            return None
+
+        def run(self, feeds):
+            return [
+                np.array(
+                    [[[320.0], [320.0], [100.0], [100.0], [0.95]]],
+                    dtype=np.float32,
+                )
+            ]
+
+        def close(self):
+            return None
+
+    monkeypatch.setattr(
+        "inferedgelab.core.detection_evaluator._require_cv2",
+        lambda: FakeCv2,
+    )
+    monkeypatch.setattr(
+        "inferedgelab.core.detection_evaluator.create_engine",
+        lambda engine_name: FakeEngine(),
+    )
+
+    result = evaluate_detection_engine(
+        model_path="models/onnx/yolov8n.onnx",
+        engine_name="tensorrt",
+        engine_path="builds/model.engine",
+        image_dir=str(image_dir),
+        label_dir=str(label_dir),
+        num_classes=1,
+        conf_threshold=0.2,
+        nms_threshold=0.45,
+        iou_threshold=0.5,
+        use_rgb=True,
+        input_size=640,
+        debug_samples=1,
+    )
+
+    stdout = capsys.readouterr().out
+    assert result.metrics["map50"] == pytest.approx(1.0)
+    assert "sample_index=0" in stdout
+    assert "raw_output_count            : 1" in stdout
+    assert "single_output_layout" in stdout
+    assert "top_score_samples" in stdout
+    assert "gt_count                    : 1" in stdout
+
+
+def test_evaluate_detection_help_shows_debug_samples_option():
+    with _temporary_sys_modules(["typer", "inferedgelab.cli"]):
+        sys.modules.pop("typer", None)
+        sys.modules.pop("inferedgelab.cli", None)
+
+        import importlib
+
+        cli_module = importlib.import_module("inferedgelab.cli")
+        runner = CliRunner()
+        result = runner.invoke(cli_module.app, ["evaluate-detection", "--help"])
+
+        assert result.exit_code == 0
+        assert "--debug-samples" in result.stdout
 
 
 def test_cli_help_registers_evaluate_detection_command():
