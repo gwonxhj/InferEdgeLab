@@ -194,7 +194,126 @@ The following fields were also verified directly in the structured result JSON:
 - `extra.resolved_input_shapes.images = [1, 3, 640, 640]`
 - `extra.effective_batch / effective_height / effective_width = 1 / 640 / 640`
 
-## 7. Generated Artifacts
+## 7. Haeundae YOLOv8n TensorRT Accuracy-Aware Validation
+
+This validation pass is separate from the earlier COCO YOLOv8n TensorRT latency-only records.
+It uses a task-matched Haeundae CCTV detection dataset and a custom YOLOv8n ONNX model, then combines TensorRT latency and detection accuracy through enriched compare outputs.
+
+### 7-1. Validation Context
+
+- Source model: `models/onnx/yolov8n_haeundae.onnx`
+- Source SHA-256: `c99a5563c0c00859d39e2d2c4afc5de7646b96a320ba7e9493d8cc367427d9a5`
+- Dataset image directory: `/home/risenano01/DeepStream-Yolo/datasets/images/val`
+- Dataset label directory: `/home/risenano01/DeepStream-Yolo/datasets/labels/val`
+- Samples: `1657`
+- Task: detection
+- Classes: `1`
+- Input: RGB, `640x640`
+- Confidence threshold: `0.2`
+- NMS threshold: `0.45`
+
+### 7-2. TensorRT Artifacts
+
+| Precision | Engine Path | Artifact SHA-256 |
+|---|---|---|
+| FP16 | `builds/yolov8n_haeundae__jetson__tensorrt__jetson_fp16/model.engine` | `1d2b0791207591007743a3fbbaa988aaf1f9b9fbab92f2037ca0900a13b4a14c` |
+| FP32 | `builds/yolov8n_haeundae__jetson__tensorrt__jetson_fp32/model.engine` | `0ad5eccfc8b1d5602eb9fc5258a20b9139776fc20c75a2987f25d02de4217cb2` |
+
+### 7-3. Workflow Summary
+
+The validation flow was:
+
+1. Build TensorRT FP16 and FP32 engines from `models/onnx/yolov8n_haeundae.onnx`.
+2. Run `run-benchmark` on each TensorRT engine with batch `1` and input shape `640x640`.
+3. Run `evaluate-detection` against the Haeundae validation images and YOLO labels.
+4. Attach detection accuracy payloads to the latency results through `enrich-pair`.
+5. Run cross-precision `compare` on the enriched FP16 and FP32 results.
+
+Representative commands:
+
+```bash
+python -m inferedgelab.cli run-benchmark \
+  models/onnx/yolov8n_haeundae.onnx \
+  --engine tensorrt \
+  --engine-path builds/yolov8n_haeundae__jetson__tensorrt__jetson_fp16/model.engine \
+  --precision fp16 \
+  --batch 1 \
+  --height 640 \
+  --width 640
+```
+
+```bash
+python -m inferedgelab.cli evaluate-detection \
+  models/onnx/yolov8n_haeundae.onnx \
+  --engine tensorrt \
+  --engine-path builds/yolov8n_haeundae__jetson__tensorrt__jetson_fp16/model.engine \
+  --image-dir /home/risenano01/DeepStream-Yolo/datasets/images/val \
+  --label-dir /home/risenano01/DeepStream-Yolo/datasets/labels/val \
+  --num-classes 1 \
+  --precision fp16 \
+  --conf-threshold 0.2 \
+  --nms-threshold 0.45 \
+  --rgb \
+  --out-json accuracy/yolov8n_haeundae_tensorrt_fp16_detection_accuracy.json
+```
+
+```bash
+python -m inferedgelab.cli enrich-pair \
+  --base-result results/yolov8n_haeundae.onnx__tensorrt__gpu__fp16__b1__h640w640__20260425-151440.json \
+  --new-result results/yolov8n_haeundae.onnx__tensorrt__gpu__fp32__b1__h640w640__20260425-152321.json \
+  --base-accuracy-json accuracy/yolov8n_haeundae_tensorrt_fp16_detection_accuracy.json \
+  --new-accuracy-json accuracy/yolov8n_haeundae_tensorrt_fp32_detection_accuracy.json
+```
+
+```bash
+python -m inferedgelab.cli compare \
+  results/yolov8n_haeundae.onnx__tensorrt__gpu__fp16__b1__h640w640__20260425-153017-751881.json \
+  results/yolov8n_haeundae.onnx__tensorrt__gpu__fp32__b1__h640w640__20260425-153017-753457.json \
+  --selection-mode cross_precision
+```
+
+### 7-4. Validation Artifacts
+
+| Precision | Raw Report | Latency Result | Accuracy JSON | Enriched Result |
+|---|---|---|---|---|
+| FP16 | `reports/yolov8n_haeundae__tensorrt_gpu__b1__h640w640__r100__20260425-151440.json` | `results/yolov8n_haeundae.onnx__tensorrt__gpu__fp16__b1__h640w640__20260425-151440.json` | `accuracy/yolov8n_haeundae_tensorrt_fp16_detection_accuracy.json` | `results/yolov8n_haeundae.onnx__tensorrt__gpu__fp16__b1__h640w640__20260425-153017-751881.json` |
+| FP32 | `reports/yolov8n_haeundae__tensorrt_gpu__b1__h640w640__r100__20260425-152321.json` | `results/yolov8n_haeundae.onnx__tensorrt__gpu__fp32__b1__h640w640__20260425-152321.json` | `accuracy/yolov8n_haeundae_tensorrt_fp32_detection_accuracy.json` | `results/yolov8n_haeundae.onnx__tensorrt__gpu__fp32__b1__h640w640__20260425-153017-753457.json` |
+
+### 7-5. Latency Comparison
+
+| Metric | FP16 | FP32 | Delta | Delta % | Judgement |
+|---|---:|---:|---:|---:|---|
+| mean_ms | 8.8819 | 10.2869 | +1.4049 | +15.82% | regression |
+| p99_ms | 13.7437 | 18.1921 | +4.4484 | +32.37% | regression |
+
+### 7-6. Detection Accuracy Comparison
+
+| Metric | FP16 | FP32 | Delta |
+|---|---:|---:|---:|
+| mAP@50 | 0.8037 | 0.8041 | +0.04pp |
+| mAP@50-95 | 0.5519 | 0.5520 | +0.01pp |
+| F1 score | 0.8195 | 0.8197 | +0.02pp |
+| Precision | 0.7983 | 0.7983 | +0.00pp |
+| Recall | 0.8419 | 0.8423 | +0.04pp |
+
+### 7-7. Compare Judgement
+
+| Field | Value |
+|---|---|
+| comparison_mode | `cross_precision` |
+| precision_pair | `fp16_vs_fp32` |
+| overall_judgement | `tradeoff_slower` |
+| mean_judgement | `regression` |
+| p99_judgement | `regression` |
+| accuracy_judge | `neutral` |
+| trade_off_risk | `not_beneficial` |
+
+### 7-8. Conclusion
+
+For this Jetson Orin environment, this Haeundae validation dataset, and this custom YOLOv8n detection model, FP32 provides almost no accuracy benefit while substantially worsening latency.
+FP16 is therefore the selected TensorRT deployment precision for this validation context.
+
+## 8. Generated Artifacts
 
 The artifact types confirmed during this Jetson TensorRT validation are listed below.
 
@@ -283,7 +402,7 @@ In summary, the Jetson validation evidence is composed of two layers:
 
 These artifacts are produced on the Jetson validation machine itself, while the README and BENCHMARKS documents serve as summarized references.
 
-## 8. Validation Completion Criteria
+## 9. Validation Completion Criteria
 
 - [x] preflight PASS
 - [x] TensorRT profiling succeeded
@@ -291,6 +410,7 @@ These artifacts are produced on the Jetson validation machine itself, while the 
 - [x] `compare-latest` succeeded
 - [x] Markdown / HTML reports generated
 - [x] runtime provenance fields verified
+- [x] Haeundae YOLOv8n TensorRT FP16 vs FP32 accuracy-aware comparison completed
 
 At minimum, the following fields should be checked when validating runtime provenance:
 
@@ -300,17 +420,18 @@ At minimum, the following fields should be checked when validating runtime prove
 
 This validation run satisfied all of the above conditions, and the runtime provenance fields were verified directly from the structured result JSON files.
 
-## 9. Interpretation Notes
+## 10. Interpretation Notes
 
 - same-precision compare should be interpreted primarily for regression tracking
 - if `run_config` differs, comparison results should be interpreted with caution
 - TensorRT profiling results collected without accuracy should be interpreted primarily from a latency perspective
+- Haeundae YOLOv8n TensorRT FP16 vs FP32 results should be interpreted only for the recorded Jetson Orin environment, Haeundae validation dataset, and custom YOLOv8n model
 - production-grade robustness validation remains a later phase
 - TensorRT `.engine` artifacts are device- and environment-dependent, so plan files generated on the target Jetson are preferred whenever possible
 - during validation, TensorRT emitted the warning `Using an engine plan file across different models of devices is not recommended`
 - ONNX Runtime may emit a `device_discovery.cc` warning during real-device validation, but in this validation run it did not break the profiling / compare / report workflow
 
-## 10. Related Documents
+## 11. Related Documents
 
 - [README.md](../../README.md)
 - [BENCHMARKS.md](../../BENCHMARKS.md)

@@ -68,6 +68,7 @@ Make InferEdgeLab useful for real deployment decisions on actual edge hardware.
 - [x] Document Jetson TensorRT validation through a dedicated runbook
 - [x] Reuse repeated profiling outputs through `compare-latest` and report generation
 - [x] Preserve runtime provenance in structured results
+- [x] Record an accuracy-aware Jetson TensorRT FP16 vs FP32 validation pass for a task-matched YOLOv8 detection model
 - [x] Compare quantized models such as INT8 against higher-precision baselines
 - [x] Interpret precision trade-offs through compare judgement
 - [x] Import RKNN / Odroid curated hardware validation evidence
@@ -96,6 +97,7 @@ Improve usability, discoverability, and expansion paths beyond the core CLI work
 - [x] Engine abstraction with a working ONNX Runtime CPU backend
 - [x] First validated TensorRT Jetson execution path
 - [x] Jetson TensorRT repeated validation plus compare/report reuse documentation
+- [x] Haeundae YOLOv8n TensorRT accuracy-aware FP16 vs FP32 validation evidence
 - [x] Warmup, batch, mean, and p99-based profiling workflow
 - [x] Quantized compare and precision trade-off interpretation
 - [x] Rich CLI output, HTML reports, and CI validation integration
