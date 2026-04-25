@@ -65,6 +65,12 @@ CLI / API → Service Layer → Structured Result → Compare / Report
 
 InferEdgeLab was validated on real edge hardware using YOLOv8 models.
 
+### Jetson TensorRT (Haeundae YOLOv8n)
+
+Jetson TensorRT validation now includes an accuracy-aware Haeundae YOLOv8n FP16 vs FP32 comparison using a task-matched detection dataset.
+FP16 measured `8.8819ms` mean / `13.7437ms` p99 with `0.8037` mAP@50, while FP32 measured `10.2869ms` mean / `18.1921ms` p99 with `0.8041` mAP@50.
+FP16 is the selected deployment precision for this validation context because FP32 provides negligible accuracy gain while substantially worsening latency.
+
 ### Odroid M2 (RKNN)
 
 | Model | Precision | Mean Latency (ms) | P99 (ms) | Observation |
@@ -100,6 +106,7 @@ Validated on real edge hardware:
 |---|---|
 | ONNX Runtime CPU profiling + structured result | ✅ |
 | Jetson TensorRT repeated validation + report reuse | ✅ |
+| Jetson TensorRT Haeundae YOLOv8n accuracy-aware FP16 vs FP32 validation | ✅ |
 | Odroid RKNN curated validation + cross-precision comparison | ✅ |
 | Odroid RKNN enriched validation with accuracy-aware trade-off interpretation (`yolov8n/s/m`) | ✅ |
 | FastAPI read-only adapter (service reuse) | ✅ |
