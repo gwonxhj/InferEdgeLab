@@ -181,6 +181,12 @@ Runtime results are grouped by `compare_key`, then backend measurements are comp
 poetry run edgebench compare-runtime-dir results/
 ```
 
+To save the same grouped comparison as Markdown:
+
+```bash
+poetry run edgebench compare-runtime-dir results/ --report reports/runtime_compare.md
+```
+
 Example compare-ready Runtime fields:
 
 ```json

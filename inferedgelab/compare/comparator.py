@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 
@@ -60,6 +61,21 @@ def _backend_display_name(backend_key: str) -> str:
         "rknn": "RKNN",
     }
     return known_names.get(backend, backend_key)
+
+
+def _fmt_markdown_float(value: Any) -> str:
+    number = _to_optional_float(value)
+    if number is None:
+        return "-"
+    return f"{number:.4f}"
+
+
+def _fmt_markdown_bool(value: Any) -> str:
+    if isinstance(value, bool):
+        return str(value).lower()
+    if value is None:
+        return "-"
+    return str(value)
 
 
 def _select_primary_accuracy_metric(
@@ -465,3 +481,125 @@ def compare_group(group_results: List[Dict[str, Any]]) -> Optional[Dict[str, Any
         "speedup": speedup,
         "summary": summary,
     }
+
+
+def build_runtime_compare_report(
+    grouped_results: Dict[str, List[Dict[str, Any]]],
+) -> Dict[str, Any]:
+    groups: List[Dict[str, Any]] = []
+    comparable_count = 0
+    skipped_count = 0
+
+    for compare_key in sorted(grouped_results):
+        items = grouped_results[compare_key]
+        comparison = compare_group(items)
+        if comparison is None:
+            skipped_count += 1
+        else:
+            comparable_count += 1
+
+        groups.append(
+            {
+                "compare_key": compare_key,
+                "results": items,
+                "comparison": comparison,
+            }
+        )
+
+    return {
+        "total_compare_groups": len(grouped_results),
+        "comparable_groups_count": comparable_count,
+        "skipped_groups_count": skipped_count,
+        "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "groups": groups,
+    }
+
+
+def render_runtime_compare_markdown(report: Dict[str, Any]) -> str:
+    lines: List[str] = [
+        "# InferEdge Runtime Compare Report",
+        "",
+        "## Summary",
+        "",
+        f"- total compare groups: {report['total_compare_groups']}",
+        f"- comparable groups count: {report['comparable_groups_count']}",
+        f"- skipped groups count: {report['skipped_groups_count']}",
+        f"- generated_at UTC timestamp: {report['generated_at']}",
+        "",
+        "## Compare Groups",
+        "",
+    ]
+
+    if report["total_compare_groups"] == 0:
+        lines.extend(
+            [
+                "No compare-ready runtime results found.",
+                "",
+            ]
+        )
+    else:
+        for group in report["groups"]:
+            comparison = group["comparison"]
+            results = group["results"]
+            ordered_results = sorted(
+                results,
+                key=lambda item: (
+                    str(item.get("backend_key") or ""),
+                    str(item.get("_source_path") or ""),
+                ),
+            )
+
+            if comparison is not None:
+                backend_order = {backend: index for index, backend in enumerate(comparison["backends"])}
+                ordered_results = sorted(
+                    results,
+                    key=lambda item: (
+                        backend_order.get(str(item.get("backend_key") or ""), len(backend_order)),
+                        str(item.get("backend_key") or ""),
+                    ),
+                )
+
+            lines.extend(
+                [
+                    f"## {group['compare_key']}",
+                    "",
+                    "| Backend | Status | Mean ms | P99 ms | FPS | Success |",
+                    "|---|---:|---:|---:|---:|---|",
+                ]
+            )
+            for item in ordered_results:
+                lines.append(
+                    "| "
+                    f"{item.get('backend_key') or '-'} | "
+                    f"{item.get('status') or '-'} | "
+                    f"{_fmt_markdown_float(item.get('mean_ms'))} | "
+                    f"{_fmt_markdown_float(item.get('p99_ms'))} | "
+                    f"{_fmt_markdown_float(item.get('fps_value'))} | "
+                    f"{_fmt_markdown_bool(item.get('success'))} |"
+                )
+
+            lines.append("")
+
+            if comparison is not None:
+                speedup = comparison.get("speedup")
+                speedup_text = f"{speedup:.1f}x" if speedup is not None else "n/a"
+                lines.extend(
+                    [
+                        f"Fastest backend: {comparison['fastest']}  ",
+                        f"Slowest backend: {comparison['slowest']}  ",
+                        f"Speedup ratio: {speedup_text}",
+                        "",
+                    ]
+                )
+
+    lines.extend(
+        [
+            "## Notes",
+            "",
+            "- Runtime metrics are end-to-end latency.",
+            "- TensorRT Runtime latency should not be directly compared with trtexec GPU latency.",
+            "- Runtime generates benchmark JSON; Lab performs comparison/reporting.",
+        ]
+    )
+
+    return "\n".join(lines) + "\n"
