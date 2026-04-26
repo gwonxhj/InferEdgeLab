@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 import glob
 import json
 import os
@@ -29,6 +30,25 @@ def load_results(pattern: str = "results/*.json") -> List[Dict[str, Any]]:
         results.append(load_result(path))
 
     return results
+
+
+def load_results_grouped_by_compare_key(directory: str) -> Dict[str, List[Dict[str, Any]]]:
+    pattern = os.path.join(directory, "*.json")
+    grouped: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+
+    for path in sorted(glob.glob(pattern)):
+        item = load_result(path)
+        if item.get("runtime_role") != "runtime-result":
+            continue
+
+        compare_key = item.get("compare_key")
+        if not compare_key:
+            continue
+
+        item["_source_path"] = path
+        grouped[str(compare_key)].append(item)
+
+    return dict(grouped)
 
 
 def list_result_paths(pattern: str = "results/*.json") -> List[str]:

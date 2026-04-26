@@ -16,6 +16,11 @@ from inferedgelab.commands.list_results import list_results_cmd
 from inferedgelab.commands.history_report import history_report_cmd
 from inferedgelab.commands.serve import serve_cmd
 
+try:
+    from inferedgelab.commands.compare import compare_runtime_dir_cmd
+except ImportError:  # pragma: no cover - compatibility for lightweight CLI import stubs in tests
+    compare_runtime_dir_cmd = None
+
 app = typer.Typer(help="InferEdgeLab CLI - Edge AI Inference Validation Tool")
 
 
@@ -28,6 +33,10 @@ app.command("evaluate", help="Accuracy evaluation for classification manifest in
 app.command("evaluate-detection", help="Accuracy evaluation for YOLOv8 detection datasets")(evaluate_detection_cmd)
 app.command("summarize", help="Summarize InferEdgeLab JSON reports")(summarize)
 app.command("compare", help="Compare two structured benchmark result JSON files")(compare_cmd)
+if compare_runtime_dir_cmd is not None:
+    app.command("compare-runtime-dir", help="Compare InferEdgeRuntime compare-ready results in a directory")(
+        compare_runtime_dir_cmd
+    )
 app.command("compare-latest", help="Compare the two most recent structured benchmark results")(compare_latest_cmd)
 app.command("enrich-pair", help="Attach accuracy metadata to a base/new structured result pair")(enrich_pair_cmd)
 app.command("enrich-result", help="Attach accuracy metadata to an existing structured benchmark result")(enrich_result_cmd)

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from inferedgelab.compare.comparator import compare_results
+import pytest
+
+from inferedgelab.compare.comparator import compare_group, compare_results
 
 
 def make_result(
@@ -262,3 +264,45 @@ def test_compare_results_handles_zero_base_for_pct_delta_as_none():
     assert result["metrics"]["mean_ms"]["delta_pct"] is None
     assert result["metrics"]["p99_ms"]["delta"] == 7.0
     assert result["metrics"]["p99_ms"]["delta_pct"] is None
+
+
+def test_compare_group_selects_fastest_backend_and_speedup():
+    result = compare_group(
+        [
+            {
+                "runtime_role": "runtime-result",
+                "compare_key": "toy224__b1__h224w224__fp32",
+                "backend_key": "onnxruntime__cpu",
+                "mean_ms": 1.4,
+            },
+            {
+                "runtime_role": "runtime-result",
+                "compare_key": "toy224__b1__h224w224__fp32",
+                "backend_key": "tensorrt__jetson",
+                "mean_ms": 5.2,
+            },
+        ]
+    )
+
+    assert result is not None
+    assert result["compare_key"] == "toy224__b1__h224w224__fp32"
+    assert result["backends"] == ["onnxruntime__cpu", "tensorrt__jetson"]
+    assert result["fastest"] == "onnxruntime__cpu"
+    assert result["slowest"] == "tensorrt__jetson"
+    assert result["speedup"] == pytest.approx(3.714285714)
+    assert result["summary"] == "TensorRT is 3.7x slower than ONNX Runtime"
+
+
+def test_compare_group_requires_two_backends():
+    result = compare_group(
+        [
+            {
+                "runtime_role": "runtime-result",
+                "compare_key": "toy224__b1__h224w224__fp32",
+                "backend_key": "onnxruntime__cpu",
+                "mean_ms": 1.4,
+            }
+        ]
+    )
+
+    assert result is None

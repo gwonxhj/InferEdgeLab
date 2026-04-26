@@ -172,6 +172,30 @@ profile → structured result → compare → report / CI
 
 ---
 
+## Runtime Integration
+
+InferEdgeLab can consume compare-ready JSON files produced by InferEdgeRuntime and compare them automatically at the directory level.
+Runtime results are grouped by `compare_key`, then backend measurements are compared by `backend_key` using `mean_ms`.
+
+```bash
+poetry run edgebench compare-runtime-dir results/
+```
+
+Example compare-ready Runtime fields:
+
+```json
+{
+  "runtime_role": "runtime-result",
+  "compare_key": "toy224__b1__h224w224__fp32",
+  "backend_key": "onnxruntime__cpu",
+  "mean_ms": 1.4
+}
+```
+
+If the same `compare_key` also has a `tensorrt__jetson` result, `compare-runtime-dir` prints the grouped backend latencies and the fastest backend ratio.
+
+---
+
 ## API Server Usage
 
 ### Run server
