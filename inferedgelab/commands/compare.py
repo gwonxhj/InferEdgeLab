@@ -5,6 +5,8 @@ from typer.models import OptionInfo
 from rich import print as rprint
 from rich.table import Table
 
+from inferedgelab.compare.comparator import compare_group
+from inferedgelab.result.loader import load_results_grouped_by_compare_key
 from inferedgelab.services.compare_service import build_compare_bundle
 
 
@@ -314,3 +316,42 @@ def compare_cmd(
             f.write(bundle["html"])
             f.write("\n")
         rprint(f"[green]Saved HTML report[/green]: {html_out}")
+
+
+def compare_runtime_dir_cmd(
+    directory: str = typer.Argument(..., help="InferEdgeRuntime compare-ready JSON directory"),
+):
+    """
+    InferEdgeRuntime compare-ready 결과를 compare_key 기준으로 자동 그룹핑해 backend별 mean latency를 비교한다.
+    """
+    grouped = load_results_grouped_by_compare_key(directory)
+    if not grouped:
+        rprint("[yellow]No compare-ready runtime results found.[/yellow]")
+        return
+
+    compared_count = 0
+    skipped_count = 0
+
+    for compare_key in sorted(grouped):
+        comparison = compare_group(grouped[compare_key])
+        if comparison is None:
+            skipped_count += 1
+            continue
+
+        compared_count += 1
+        rprint(f"[bold]Compare Group: {comparison['compare_key']}[/bold]")
+        backend_results = comparison["backend_results"]
+        for backend_key in comparison["backends"]:
+            mean_ms = backend_results[backend_key]["mean_ms"]
+            mean_text = f"{mean_ms:.4f} ms" if mean_ms is not None else "-"
+            rprint(f"  {backend_key}: {mean_text}")
+
+        speedup = comparison["speedup"]
+        speedup_text = f"{speedup:.1f}x" if speedup is not None else "n/a"
+        rprint(f"  -> {comparison['fastest']} faster ({speedup_text})")
+        rprint(f"  Summary: {comparison['summary']}")
+
+    if compared_count == 0:
+        rprint("[yellow]No comparable runtime groups found. At least two backend_key values are required per compare_key.[/yellow]")
+    elif skipped_count:
+        rprint(f"[yellow]Skipped groups without at least two comparable backends: {skipped_count}[/yellow]")

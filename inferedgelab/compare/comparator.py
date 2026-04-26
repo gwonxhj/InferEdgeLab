@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 
 def _safe_pct_delta(base: Optional[float], new: Optional[float]) -> Optional[float]:
@@ -44,6 +44,22 @@ def _shape_summary(batch: Any, height: Any, width: Any) -> str:
 
 def _is_numeric_metric(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _to_optional_float(value: Any) -> Optional[float]:
+    if _is_numeric_metric(value):
+        return float(value)
+    return None
+
+
+def _backend_display_name(backend_key: str) -> str:
+    backend = backend_key.split("__", 1)[0].strip().lower()
+    known_names = {
+        "onnxruntime": "ONNX Runtime",
+        "tensorrt": "TensorRT",
+        "rknn": "RKNN",
+    }
+    return known_names.get(backend, backend_key)
 
 
 def _select_primary_accuracy_metric(
@@ -392,4 +408,60 @@ def compare_results(base: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]
                 "new": new_run.get("task"),
             },
         },
+    }
+
+
+def compare_group(group_results: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    by_backend: Dict[str, Dict[str, Any]] = {}
+
+    for item in group_results:
+        backend_key = item.get("backend_key")
+        mean_ms = _to_optional_float(item.get("mean_ms"))
+        if not backend_key or mean_ms is None:
+            continue
+
+        by_backend[str(backend_key)] = item
+
+    if len(by_backend) < 2:
+        return None
+
+    ordered = sorted(
+        by_backend.items(),
+        key=lambda backend_item: (
+            _to_optional_float(backend_item[1].get("mean_ms")) or float("inf"),
+            backend_item[0],
+        ),
+    )
+    fastest_backend, fastest_result = ordered[0]
+    slowest_backend, slowest_result = ordered[-1]
+    fastest_mean = float(fastest_result["mean_ms"])
+    slowest_mean = float(slowest_result["mean_ms"])
+    speedup = slowest_mean / fastest_mean if fastest_mean > 0 else None
+
+    if speedup is None:
+        summary = f"{fastest_backend} is fastest, but speedup is unavailable"
+    else:
+        summary = (
+            f"{_backend_display_name(slowest_backend)} is {speedup:.1f}x slower than "
+            f"{_backend_display_name(fastest_backend)}"
+        )
+
+    return {
+        "compare_key": str(group_results[0].get("compare_key") or ""),
+        "backends": [backend for backend, _ in ordered],
+        "backend_results": {
+            backend: {
+                "mean_ms": _to_optional_float(item.get("mean_ms")),
+                "p99_ms": _to_optional_float(item.get("p99_ms")),
+                "fps_value": _to_optional_float(item.get("fps_value")),
+                "success": item.get("success"),
+                "status": item.get("status"),
+                "source_path": item.get("_source_path"),
+            }
+            for backend, item in ordered
+        },
+        "fastest": fastest_backend,
+        "slowest": slowest_backend,
+        "speedup": speedup,
+        "summary": summary,
     }
