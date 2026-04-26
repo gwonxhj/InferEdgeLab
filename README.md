@@ -203,6 +203,7 @@ If the same `compare_key` also has a `tensorrt__jetson` result, `compare-runtime
 ### Portfolio Example
 
 See [YOLOv8n Runtime backend comparison](docs/portfolio/runtime_compare_yolov8n.md) for a real example where InferEdgeRuntime produced ONNX Runtime CPU and TensorRT Jetson JSON results, and InferEdgeLab grouped them by `compare_key` and `backend_key` into a Markdown comparison report.
+The YOLOv8n Runtime comparison report now demonstrates both structured Runtime comparison and real OpenCV image-input validation across ONNX Runtime CPU and TensorRT Jetson.
 
 ---
 
