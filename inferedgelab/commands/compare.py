@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import typer
 from typer.models import OptionInfo
 from rich import print as rprint
 from rich.table import Table
 
-from inferedgelab.compare.comparator import compare_group
+from inferedgelab.compare.comparator import build_runtime_compare_report, compare_group, render_runtime_compare_markdown
 from inferedgelab.result.loader import load_results_grouped_by_compare_key
 from inferedgelab.services.compare_service import build_compare_bundle
 
@@ -32,6 +34,12 @@ def _fmt_pp(v):
 def _normalize_optional_float(value):
     if isinstance(value, OptionInfo):
         return None
+    return value
+
+
+def _normalize_optional_string(value):
+    if isinstance(value, OptionInfo):
+        return ""
     return value
 
 
@@ -320,13 +328,19 @@ def compare_cmd(
 
 def compare_runtime_dir_cmd(
     directory: str = typer.Argument(..., help="InferEdgeRuntime compare-ready JSON directory"),
+    report: str = typer.Option("", "--report", help="Save Runtime compare Markdown report"),
 ):
     """
     InferEdgeRuntime compare-ready 결과를 compare_key 기준으로 자동 그룹핑해 backend별 mean latency를 비교한다.
     """
+    report = _normalize_optional_string(report)
     grouped = load_results_grouped_by_compare_key(directory)
+    runtime_report = build_runtime_compare_report(grouped)
+
     if not grouped:
         rprint("[yellow]No compare-ready runtime results found.[/yellow]")
+        if report:
+            _save_runtime_compare_report(report, runtime_report)
         return
 
     compared_count = 0
@@ -355,3 +369,15 @@ def compare_runtime_dir_cmd(
         rprint("[yellow]No comparable runtime groups found. At least two backend_key values are required per compare_key.[/yellow]")
     elif skipped_count:
         rprint(f"[yellow]Skipped groups without at least two comparable backends: {skipped_count}[/yellow]")
+
+    if report:
+        _save_runtime_compare_report(report, runtime_report)
+
+
+def _save_runtime_compare_report(path: str, report: dict) -> None:
+    report_path = Path(path)
+    if report_path.parent != Path("."):
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+
+    report_path.write_text(render_runtime_compare_markdown(report), encoding="utf-8")
+    rprint(f"[green]Saved runtime compare report[/green]: {report_path}")
