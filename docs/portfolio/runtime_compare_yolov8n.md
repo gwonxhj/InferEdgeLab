@@ -32,6 +32,37 @@ The comparison group used here is:
 - Speedup ratio: `3.4x`
 - ONNX Runtime is 3.4x slower than TensorRT.
 
+## Real Image Input Validation
+
+The following validation is based on a real JPEG image input, not dummy input.
+InferEdgeRuntime loaded the image with OpenCV, preprocessed it, and then benchmarked the Runtime backend path end to end.
+
+The image preprocessing path was:
+
+- OpenCV `imread`
+- BGR to RGB
+- resize to `640x640`
+- `float32`
+- normalize to `0.0` to `1.0`
+- NCHW layout
+
+The Runtime JSON recorded `extra.input_mode` as `image` and used `input_preprocess = opencv_bgr_to_rgb_resize_float32_nchw`.
+Both backend results used the same `compare_key`, so InferEdgeLab grouped them together for backend comparison:
+
+- `compare_key`: `yolov8n__b1__h640w640__fp32`
+- `input_mode`: `image`
+- `input_preprocess`: `opencv_bgr_to_rgb_resize_float32_nchw`
+
+| Backend | Input Mode | Mean ms | P99 ms | FPS | Status |
+|---|---|---:|---:|---:|---|
+| tensorrt__jetson | image | 9.9375 | 15.5231 | 100.6293 | success |
+| onnxruntime__cpu | image | 45.4299 | 49.2128 | 22.0119 | success |
+
+- Fastest backend: `tensorrt__jetson`
+- Slowest backend: `onnxruntime__cpu`
+- Speedup ratio: `4.6x`
+- ONNX Runtime is 4.6x slower than TensorRT.
+
 ## Interpretation
 
 The TensorRT Jetson backend showed lower end-to-end runtime latency under this condition.
@@ -40,6 +71,11 @@ This result should not be interpreted as absolute hardware superiority because t
 The value of this report is that it validates the full comparison workflow:
 Forge/Runtime artifacts can produce structured Runtime JSON, and InferEdgeLab can group, compare, and report multi-backend results through `compare_key` and `backend_key`.
 
+The real image input result is an end-to-end Runtime latency comparison using actual image input.
+The TensorRT Jetson measurement includes OpenCV preprocessing followed by TensorRT Runtime execution.
+The ONNX Runtime CPU measurement used the same image input and the same `compare_key`.
+This confirms that the Forge/Runtime/Lab pipeline is connected not only for dummy benchmarks, but also for real-input validation.
+
 ## Benchmark Policy Notes
 
 InferEdgeRuntime latency is end-to-end wall-clock latency.
@@ -47,6 +83,10 @@ It may include host-to-device copy, device-to-host copy, enqueue or launch overh
 
 TensorRT Runtime latency should not be directly compared with `trtexec` GPU latency.
 `trtexec` exposes lower-level timing metrics, while Runtime JSON is designed to reflect deployment-oriented end-to-end cost.
+
+Real image input results should also not be compared directly with `trtexec` GPU latency.
+Before interpreting a Runtime comparison, check whether `input_mode` is `dummy` or `image`.
+Even when results share the same `compare_key`, different `input_mode` values should be interpreted as separate benchmark contexts.
 
 InferEdgeLab compares only results with the same `compare_key`.
 In this validation, both Runtime results used `yolov8n__b1__h640w640__fp32`, so Lab placed them into the same comparison group.
