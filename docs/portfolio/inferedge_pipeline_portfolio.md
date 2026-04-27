@@ -10,6 +10,13 @@ InferEdge is a portfolio project that splits the edge AI inference workflow into
 
 This project demonstrates an end-to-end edge AI inference validation workflow from artifact preparation to runtime benchmarking and result comparison.
 
+## How to Read This Portfolio
+
+Use this document as the project-level overview.
+For the detailed real-input benchmark evidence, read [runtime_compare_yolov8n.md](runtime_compare_yolov8n.md).
+For a compact submission draft, use [inferedge_pipeline_portfolio_pdf.md](inferedge_pipeline_portfolio_pdf.md).
+For measurement interpretation and limitations, read [benchmark_policy.md](../benchmark_policy.md).
+
 ## 2. Problem Definition
 
 In edge AI deployment, converting a model or running one inference command is not enough.
@@ -39,6 +46,15 @@ InferEdgeLab
   -> compare by backend_key
   -> export Markdown report
 ```
+
+```mermaid
+graph LR
+    A["InferEdgeForge<br/>Build / Convert / Manifest"] --> B["InferEdgeRuntime<br/>Run Inference / Benchmark / JSON Export"]
+    B --> C["InferEdgeLab<br/>Group / Compare / Report"]
+    C --> D["Portfolio Report<br/>Markdown / PDF Draft"]
+```
+
+Runtime measures. Lab compares. Portfolio documents explain the evidence.
 
 The responsibility boundary is intentional.
 Runtime focuses on measurement, while Lab focuses on analysis, comparison, and reporting.

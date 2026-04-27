@@ -36,6 +36,51 @@ The full pipeline portfolio summary is available at [docs/portfolio/inferedge_pi
 
 ---
 
+## Reproducible Review Flow
+
+For a quick review, follow this order:
+
+1. Read the pipeline summary: [docs/portfolio/inferedge_pipeline_portfolio.md](docs/portfolio/inferedge_pipeline_portfolio.md)
+2. Check the real benchmark result: [docs/portfolio/runtime_compare_yolov8n.md](docs/portfolio/runtime_compare_yolov8n.md)
+3. Review the PDF-ready draft: [docs/portfolio/inferedge_pipeline_portfolio_pdf.md](docs/portfolio/inferedge_pipeline_portfolio_pdf.md)
+4. Run Lab comparison with `compare-runtime-dir` if local InferEdgeRuntime JSON artifacts are available.
+
+Raw Runtime JSON and generated benchmark reports are intentionally not committed because they are environment-dependent.
+Instead, this README and the portfolio documents preserve validated benchmark numbers as stable review evidence.
+
+```mermaid
+graph LR
+    A["InferEdgeForge<br/>Build / Convert / Manifest"] --> B["InferEdgeRuntime<br/>Run Inference / Benchmark / JSON Export"]
+    B --> C["InferEdgeLab<br/>Group / Compare / Report"]
+    C --> D["Portfolio Report<br/>Markdown / PDF Draft"]
+```
+
+Runtime measures. Lab compares. Portfolio documents explain the evidence.
+
+---
+
+## Sample Runtime Result
+
+This is a compact example of the structured result shape that InferEdgeRuntime exports and InferEdgeLab groups by `compare_key` and `backend_key`.
+
+```json
+{
+  "compare_key": "yolov8n__b1__h640w640__fp32",
+  "backend_key": "tensorrt__jetson",
+  "mean_ms": 9.9375,
+  "p99_ms": 15.5231,
+  "fps_value": 100.6293,
+  "success": true,
+  "status": "success",
+  "extra": {
+    "input_mode": "image",
+    "input_preprocess": "opencv_bgr_to_rgb_resize_float32_nchw"
+  }
+}
+```
+
+---
+
 ## What InferEdgeLab Solves
 
 ### 1. Inconsistent Benchmark Comparisons
