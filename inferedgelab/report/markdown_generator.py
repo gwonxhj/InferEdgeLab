@@ -39,7 +39,34 @@ def _sorted_accuracy_metric_items(accuracy: Dict[str, Any]) -> list[tuple[str, D
     return ordered
 
 
-def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[str, Any]) -> str:
+def _append_guard_analysis(lines: list[str], guard_analysis: Dict[str, Any]) -> None:
+    lines.append("## Guard Analysis")
+    lines.append("")
+    lines.append(f"- status: {guard_analysis.get('status')}")
+
+    if guard_analysis.get("status") == "skipped":
+        lines.append(f"- reason: {guard_analysis.get('reason')}")
+        lines.append("")
+        return
+
+    lines.append(f"- confidence: {guard_analysis.get('confidence')}")
+
+    for field in ("anomalies", "suspected_causes", "recommendations"):
+        lines.append(f"- {field}:")
+        values = guard_analysis.get(field) or []
+        if values:
+            for value in values:
+                lines.append(f"  - {value}")
+        else:
+            lines.append("  - -")
+    lines.append("")
+
+
+def generate_compare_markdown(
+    compare_result: Dict[str, Any],
+    judgement: Dict[str, Any],
+    guard_analysis: Dict[str, Any] | None = None,
+) -> str:
     """
     compare_results() 출력 dict를 Markdown 문서 문자열로 변환한다.
     """
@@ -225,5 +252,8 @@ def generate_compare_markdown(compare_result: Dict[str, Any], judgement: Dict[st
             f"| {field} | {_fmt_num(values['base'])} | {_fmt_num(values['new'])} |"
         )
     lines.append("")
+
+    if guard_analysis is not None:
+        _append_guard_analysis(lines, guard_analysis)
 
     return "\n".join(lines)

@@ -251,6 +251,40 @@ def test_generate_compare_markdown_orders_primary_accuracy_metric_first():
     assert map50_idx < f1_idx
 
 
+def test_generate_compare_markdown_includes_guard_analysis_section():
+    compare_result = make_compare_result()
+    judgement = make_judgement()
+    guard_analysis = {
+        "status": "warning",
+        "confidence": 0.7,
+        "anomalies": ["insufficient_precision_speedup"],
+        "suspected_causes": ["precision_speedup_not_observed"],
+        "recommendations": ["Review runtime provenance."],
+    }
+
+    text = generate_compare_markdown(compare_result, judgement, guard_analysis=guard_analysis)
+
+    assert "## Guard Analysis" in text
+    assert "- status: warning" in text
+    assert "insufficient_precision_speedup" in text
+    assert "Review runtime provenance." in text
+
+
+def test_generate_compare_markdown_includes_skipped_guard_analysis():
+    compare_result = make_compare_result()
+    judgement = make_judgement()
+    guard_analysis = {
+        "status": "skipped",
+        "reason": "inferedge_aiguard is not installed",
+    }
+
+    text = generate_compare_markdown(compare_result, judgement, guard_analysis=guard_analysis)
+
+    assert "## Guard Analysis" in text
+    assert "- status: skipped" in text
+    assert "- reason: inferedge_aiguard is not installed" in text
+
+
 def test_generate_compare_html_includes_primary_metric_summary_and_thresholds():
     compare_result = make_compare_result()
     judgement = make_judgement()
@@ -315,3 +349,21 @@ def test_generate_compare_html_includes_notes_list_items():
 
     assert "<li>Synthetic note 1</li>" in html
     assert "<li>Synthetic note 2</li>" in html
+
+
+def test_generate_compare_html_includes_guard_analysis_section():
+    compare_result = make_compare_result()
+    judgement = make_judgement()
+    guard_analysis = {
+        "status": "warning",
+        "confidence": 0.7,
+        "anomalies": ["insufficient_precision_speedup"],
+        "suspected_causes": ["precision_speedup_not_observed"],
+        "recommendations": ["Review runtime provenance."],
+    }
+
+    html = generate_compare_html(compare_result, judgement, guard_analysis=guard_analysis)
+
+    assert "Guard Analysis" in html
+    assert "insufficient_precision_speedup" in html
+    assert "Review runtime provenance." in html

@@ -43,6 +43,28 @@ def _normalize_optional_string(value):
     return value
 
 
+def _render_guard_analysis(guard_analysis: dict | None) -> None:
+    if not guard_analysis:
+        return
+
+    if guard_analysis.get("status") == "skipped":
+        rprint("[yellow]Warning[/yellow]: InferEdgeAIGuard is not installed. Guard analysis skipped.")
+        return
+
+    rprint("[bold]Guard Analysis[/bold]")
+    rprint(f"- status: {guard_analysis.get('status')}")
+    rprint(f"- confidence: {guard_analysis.get('confidence')}")
+
+    for field in ("anomalies", "suspected_causes", "recommendations"):
+        rprint(f"- {field}:")
+        values = guard_analysis.get(field) or []
+        if values:
+            for value in values:
+                rprint(f"  - {value}")
+        else:
+            rprint("  - -")
+
+
 def compare_cmd(
     base_path: str = typer.Argument(..., help="기준 result JSON 경로"),
     new_path: str = typer.Argument(..., help="비교 대상 result JSON 경로"),
@@ -69,6 +91,7 @@ def compare_cmd(
     ),
     markdown_out: str = typer.Option("", "--markdown-out", help="비교 결과 Markdown 저장 경로"),
     html_out: str = typer.Option("", "--html-out", help="비교 결과 HTML 저장 경로"),
+    with_guard: bool = typer.Option(False, "--with-guard", help="Run InferEdgeAIGuard reasoning on the compare result"),
 ):
     """
     structured benchmark result 두 개를 비교해서 콘솔 표로 출력한다.
@@ -91,6 +114,7 @@ def compare_cmd(
         tradeoff_caution_threshold=tradeoff_caution_threshold,
         tradeoff_risky_threshold=tradeoff_risky_threshold,
         tradeoff_severe_threshold=tradeoff_severe_threshold,
+        with_guard=with_guard,
     )
     base = bundle["base"]
     new = bundle["new"]
@@ -312,6 +336,8 @@ def compare_cmd(
         )
 
     rprint(run_table)
+    if with_guard:
+        _render_guard_analysis(bundle.get("guard_analysis"))
 
     if markdown_out:
         with open(markdown_out, "w", encoding="utf-8") as f:

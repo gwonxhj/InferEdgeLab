@@ -212,3 +212,19 @@ def test_compare_latest_writes_markdown_and_html_from_bundle(tmp_path):
     assert html_out.is_file()
     assert Path(markdown_out).read_text(encoding="utf-8")
     assert Path(html_out).read_text(encoding="utf-8")
+
+
+def test_compare_latest_with_guard_smoke(tmp_path, capsys):
+    compare_latest = import_compare_latest_module()
+
+    write_result(tmp_path, "older.json", timestamp="2026-04-13T09:00:00Z", precision="fp32")
+    write_result(tmp_path, "newer.json", timestamp="2026-04-13T10:00:00Z", precision="fp32")
+
+    compare_latest.compare_latest_cmd(
+        pattern=str(tmp_path / "*.json"),
+        selection_mode="same_precision",
+        with_guard=True,
+    )
+    out = capsys.readouterr().out
+
+    assert "Guard Analysis" in out or "Guard analysis skipped" in out

@@ -227,6 +227,9 @@ poetry run inferedgelab compare-latest \
   --device cpu
 ```
 
+Optional Guard reasoning is available with `compare --with-guard` and `compare-latest --with-guard`.
+InferEdgeAIGuard is an optional dependency; when it is installed, Lab appends Guard Analysis based on the compare result and judgement, and when it is not installed, compare still runs normally.
+
 **Core workflow:**
 
 ```
