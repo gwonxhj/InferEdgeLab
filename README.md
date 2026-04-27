@@ -21,6 +21,21 @@ Instead of a single latency number, InferEdgeLab answers:
 
 ---
 
+## Real Inference Benchmark Result
+
+YOLOv8n was validated with a real OpenCV image-input benchmark: InferEdgeRuntime generated compare-ready JSON results, and InferEdgeLab automatically grouped and compared them by `compare_key` and `backend_key`.
+
+| Backend | Input Mode | Mean ms | P99 ms | FPS |
+|---|---|---:|---:|---:|
+| TensorRT Jetson | image | 9.9375 | 15.5231 | 100.6293 |
+| ONNX Runtime CPU | image | 45.4299 | 49.2128 | 22.0119 |
+
+TensorRT Jetson was 4.6x faster than ONNX Runtime CPU in this real image input benchmark.
+The benchmark uses end-to-end Runtime latency, not trtexec GPU-only latency.
+The full portfolio report is available at [docs/portfolio/runtime_compare_yolov8n.md](docs/portfolio/runtime_compare_yolov8n.md).
+
+---
+
 ## What InferEdgeLab Solves
 
 ### 1. Inconsistent Benchmark Comparisons
@@ -203,7 +218,7 @@ If the same `compare_key` also has a `tensorrt__jetson` result, `compare-runtime
 ### Portfolio Example
 
 See [YOLOv8n Runtime backend comparison](docs/portfolio/runtime_compare_yolov8n.md) for a real example where InferEdgeRuntime produced ONNX Runtime CPU and TensorRT Jetson JSON results, and InferEdgeLab grouped them by `compare_key` and `backend_key` into a Markdown comparison report.
-The YOLOv8n Runtime comparison report now demonstrates both structured Runtime comparison and real OpenCV image-input validation across ONNX Runtime CPU and TensorRT Jetson.
+The YOLOv8n Runtime comparison report demonstrates a real OpenCV image-input benchmark, `compare_key` / `backend_key` automatic grouping, and the role split where Runtime generates JSON while Lab performs comparison and reporting.
 
 ---
 
