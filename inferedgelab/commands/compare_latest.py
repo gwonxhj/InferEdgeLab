@@ -34,6 +34,28 @@ def _fmt_pp(v):
     return f"{v:+.2f}pp"
 
 
+def _render_guard_analysis(guard_analysis: dict | None) -> None:
+    if not guard_analysis:
+        return
+
+    if guard_analysis.get("status") == "skipped":
+        rprint("[yellow]Warning[/yellow]: InferEdgeAIGuard is not installed. Guard analysis skipped.")
+        return
+
+    rprint("[bold]Guard Analysis[/bold]")
+    rprint(f"- status: {guard_analysis.get('status')}")
+    rprint(f"- confidence: {guard_analysis.get('confidence')}")
+
+    for field in ("anomalies", "suspected_causes", "recommendations"):
+        rprint(f"- {field}:")
+        values = guard_analysis.get(field) or []
+        if values:
+            for value in values:
+                rprint(f"  - {value}")
+        else:
+            rprint("  - -")
+
+
 def _render_compare_bundle(bundle: dict, markdown_out: str, html_out: str) -> None:
     result = bundle["result"]
     judgement = bundle["judgement"]
@@ -220,6 +242,8 @@ def _render_compare_bundle(bundle: dict, markdown_out: str, html_out: str) -> No
         run_table.add_row(field, _fmt_num(values["base"]), _fmt_num(values["new"]))
     rprint(run_table)
 
+    _render_guard_analysis(bundle.get("guard_analysis"))
+
     if markdown_out:
         with open(markdown_out, "w", encoding="utf-8") as f:
             f.write(bundle["rendered"]["markdown"])
@@ -247,6 +271,11 @@ def compare_latest_cmd(
     markdown_out: str = typer.Option("", "--markdown-out", help="Markdown 출력 파일"),
     html_out: str = typer.Option("", "--html-out", help="HTML 출력 파일"),
     pattern: str = typer.Option("results/*.json", "--pattern", help="result glob pattern"),
+    with_guard: bool = typer.Option(
+        False,
+        "--with-guard",
+        help="Run InferEdgeAIGuard reasoning on the selected latest compare result",
+    ),
 ):
     """
     조건에 맞는 최신 comparable pair를 선택해 비교한다.
@@ -259,6 +288,7 @@ def compare_latest_cmd(
             device=device,
             precision=precision,
             selection_mode=selection_mode,
+            with_guard=with_guard,
         )
     except ValueError as exc:
         _handle_error_or_warning(str(exc), strict)

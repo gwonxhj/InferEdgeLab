@@ -4,6 +4,7 @@ import json
 
 import pytest
 
+import inferedgelab.services.compare_service as compare_service
 from inferedgelab.services.compare_service import (
     build_compare_bundle,
     build_compare_latest_bundle,
@@ -115,6 +116,138 @@ def test_build_compare_bundle_returns_compare_artifacts_for_same_precision_pair(
     assert isinstance(bundle["markdown"], str) and bundle["markdown"]
     assert isinstance(bundle["html"], str) and bundle["html"]
     assert bundle["legacy_warning"] is False
+    assert "guard_analysis" not in bundle
+    assert "guard_analysis" not in bundle["data"]
+
+
+def test_build_compare_bundle_with_guard_false_preserves_existing_keys(tmp_path):
+    base_path = write_result(
+        tmp_path,
+        "base.json",
+        timestamp="2026-04-13T09:00:00Z",
+        precision="fp32",
+    )
+    new_path = write_result(
+        tmp_path,
+        "new.json",
+        timestamp="2026-04-13T10:00:00Z",
+        precision="fp32",
+    )
+
+    bundle = build_compare_bundle(base_path=base_path, new_path=new_path, with_guard=False)
+
+    assert bundle["data"]["result"] == bundle["result"]
+    assert bundle["data"]["judgement"] == bundle["judgement"]
+    assert bundle["rendered"]["markdown"] == bundle["markdown"]
+    assert bundle["rendered"]["html"] == bundle["html"]
+    assert "guard_analysis" not in bundle
+    assert "guard_analysis" not in bundle["data"]
+
+
+def test_build_compare_bundle_with_guard_runs_optional_reasoning(tmp_path, monkeypatch):
+    def fake_analyze_compare_result(guard_input):
+        assert guard_input["comparison_mode"] == "same_precision"
+        assert guard_input["precision_pair"] == "fp32_vs_fp32"
+        assert guard_input["latency_delta_pct"] == pytest.approx(-10.0)
+        assert guard_input["base_precision"] == "fp32"
+        assert guard_input["candidate_precision"] == "fp32"
+        assert guard_input["accuracy_delta"] == pytest.approx(0.02)
+        assert guard_input["accuracy_delta_pp"] == pytest.approx(2.0)
+        assert "runtime_provenance" in guard_input
+        assert "run_config_diff" in guard_input
+        assert "shape_context" in guard_input
+        return {
+            "status": "ok",
+            "confidence": 0.9,
+            "anomalies": [],
+            "suspected_causes": [],
+            "recommendations": ["Keep tracking same-precision runs."],
+        }
+
+    monkeypatch.setattr(compare_service, "analyze_compare_result", fake_analyze_compare_result)
+    base_path = write_result(
+        tmp_path,
+        "base.json",
+        timestamp="2026-04-13T09:00:00Z",
+        precision="fp32",
+        mean_ms=10.0,
+        accuracy={
+            "task": "classification",
+            "sample_count": 100,
+            "metrics": {"top1_accuracy": 0.90},
+        },
+    )
+    new_path = write_result(
+        tmp_path,
+        "new.json",
+        timestamp="2026-04-13T10:00:00Z",
+        precision="fp32",
+        mean_ms=9.0,
+        accuracy={
+            "task": "classification",
+            "sample_count": 100,
+            "metrics": {"top1_accuracy": 0.92},
+        },
+    )
+
+    bundle = build_compare_bundle(base_path=base_path, new_path=new_path, with_guard=True)
+
+    assert bundle["guard_analysis"]["status"] == "ok"
+    assert "anomalies" in bundle["guard_analysis"]
+    assert "recommendations" in bundle["guard_analysis"]
+    assert bundle["data"]["guard_analysis"] == bundle["guard_analysis"]
+
+
+def test_build_compare_bundle_with_guard_skips_when_aiguard_missing(tmp_path, monkeypatch):
+    monkeypatch.setattr(compare_service, "analyze_compare_result", None)
+    base_path = write_result(tmp_path, "base.json", timestamp="2026-04-13T09:00:00Z", precision="fp32")
+    new_path = write_result(tmp_path, "new.json", timestamp="2026-04-13T10:00:00Z", precision="fp32")
+
+    bundle = build_compare_bundle(base_path=base_path, new_path=new_path, with_guard=True)
+
+    assert bundle["guard_analysis"] == {
+        "status": "skipped",
+        "reason": "inferedge_aiguard is not installed",
+    }
+    assert bundle["data"]["guard_analysis"] == bundle["guard_analysis"]
+    assert "Guard Analysis" in bundle["markdown"]
+
+
+def test_build_compare_bundle_with_guard_cross_precision_low_speedup(tmp_path, monkeypatch):
+    def fake_analyze_compare_result(guard_input):
+        assert guard_input["comparison_mode"] == "cross_precision"
+        assert guard_input["precision_pair"] == "fp32_vs_fp16"
+        assert abs(guard_input["latency_delta_pct"]) < 3.0
+        return {
+            "status": "warning",
+            "confidence": 0.7,
+            "anomalies": ["insufficient_precision_speedup"],
+            "suspected_causes": ["precision_speedup_not_observed"],
+            "recommendations": ["Inspect runtime provenance and run config before promoting the candidate."],
+        }
+
+    monkeypatch.setattr(compare_service, "analyze_compare_result", fake_analyze_compare_result)
+    base_path = write_result(
+        tmp_path,
+        "base-fp32.json",
+        timestamp="2026-04-13T09:00:00Z",
+        precision="fp32",
+        mean_ms=10.0,
+        p99_ms=12.0,
+    )
+    new_path = write_result(
+        tmp_path,
+        "new-fp16.json",
+        timestamp="2026-04-13T10:00:00Z",
+        precision="fp16",
+        mean_ms=9.9,
+        p99_ms=11.9,
+    )
+
+    bundle = build_compare_bundle(base_path=base_path, new_path=new_path, with_guard=True)
+
+    assert "insufficient_precision_speedup" in bundle["guard_analysis"]["anomalies"]
+    assert "Guard Analysis" in bundle["markdown"]
 
 
 def test_select_latest_compare_pair_selects_latest_same_precision_pair(tmp_path):

@@ -141,7 +141,47 @@ def _threshold_rows(thresholds: Dict[str, Any]) -> str:
     return "\n".join(rows)
 
 
-def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, Any]) -> str:
+def _guard_values_to_html(values: Any) -> str:
+    if not values:
+        return "<li>-</li>"
+    if not isinstance(values, list):
+        values = [values]
+    return "\n".join(f"<li>{escape(str(value))}</li>" for value in values)
+
+
+def _guard_analysis_to_html(guard_analysis: Dict[str, Any] | None) -> str:
+    if guard_analysis is None:
+        return ""
+
+    if guard_analysis.get("status") == "skipped":
+        return f"""
+  <h2>Guard Analysis</h2>
+  <div class="meta">
+    <p><strong>status</strong>: <code>{escape(str(guard_analysis.get("status")))}</code></p>
+    <p><strong>reason</strong>: {escape(str(guard_analysis.get("reason")))}</p>
+  </div>
+        """
+
+    return f"""
+  <h2>Guard Analysis</h2>
+  <div class="meta">
+    <p><strong>status</strong>: <code>{escape(str(guard_analysis.get("status")))}</code></p>
+    <p><strong>confidence</strong>: <code>{escape(str(guard_analysis.get("confidence")))}</code></p>
+    <p><strong>anomalies</strong></p>
+    <ul>{_guard_values_to_html(guard_analysis.get("anomalies"))}</ul>
+    <p><strong>suspected_causes</strong></p>
+    <ul>{_guard_values_to_html(guard_analysis.get("suspected_causes"))}</ul>
+    <p><strong>recommendations</strong></p>
+    <ul>{_guard_values_to_html(guard_analysis.get("recommendations"))}</ul>
+  </div>
+    """
+
+
+def generate_compare_html(
+    compare_result: Dict[str, Any],
+    judgement: Dict[str, Any],
+    guard_analysis: Dict[str, Any] | None = None,
+) -> str:
     base_id = compare_result["base_id"]
     new_id = compare_result["new_id"]
     precision = compare_result["precision"]
@@ -242,6 +282,7 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
     accuracy_rows = _table_rows_from_accuracy_map(_ordered_accuracy_metrics(accuracy))
     notes_html = _notes_to_html(judgement["notes"])
     threshold_rows = _threshold_rows(thresholds)
+    guard_analysis_html = _guard_analysis_to_html(guard_analysis)
 
     warning_html = ""
     if not judgement["precision_match"]:
@@ -546,6 +587,7 @@ def generate_compare_html(compare_result: Dict[str, Any], judgement: Dict[str, A
       {run_rows}
     </tbody>
   </table>
+  {guard_analysis_html}
 </body>
 </html>
 """

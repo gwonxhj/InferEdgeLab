@@ -16,6 +16,54 @@ from inferedgelab.result.loader import (
     load_results,
 )
 
+try:
+    from inferedge_aiguard.reasoning import analyze_compare_result
+except ImportError:
+    analyze_compare_result = None
+
+
+def _build_guard_compare_input(result: dict[str, Any], judgement: dict[str, Any]) -> dict[str, Any]:
+    accuracy = result.get("accuracy") or {}
+    primary_metric = accuracy.get("metric_name")
+    primary_accuracy = (accuracy.get("metrics") or {}).get(primary_metric) or {}
+    precision = result.get("precision") or {}
+    metrics = result.get("metrics") or {}
+
+    return {
+        "comparison_mode": judgement.get("comparison_mode"),
+        "precision_pair": judgement.get("precision_pair"),
+        "overall_judgement": judgement.get("overall"),
+        "mean_judgement": judgement.get("mean_ms"),
+        "p99_judgement": judgement.get("p99_ms"),
+        "accuracy_judgement": judgement.get("accuracy"),
+        "tradeoff_risk": judgement.get("tradeoff_risk"),
+        "shape_match": judgement.get("shape_match"),
+        "system_match": judgement.get("system_match"),
+        "run_config_match": judgement.get("run_config_match"),
+        "run_config_mismatch_fields": judgement.get("run_config_mismatch_fields"),
+        "latency_delta_pct": (metrics.get("mean_ms") or {}).get("delta_pct"),
+        "p99_delta_pct": (metrics.get("p99_ms") or {}).get("delta_pct"),
+        "accuracy_present": judgement.get("accuracy_present"),
+        "accuracy_delta": primary_accuracy.get("delta"),
+        "accuracy_delta_pp": primary_accuracy.get("delta_pp"),
+        "base_precision": precision.get("base"),
+        "candidate_precision": precision.get("new"),
+        "runtime_provenance": result.get("runtime_provenance"),
+        "run_config_diff": result.get("run_config_diff"),
+        "shape_context": result.get("shape_context"),
+    }
+
+
+def _run_guard_compare_reasoning(result: dict[str, Any], judgement: dict[str, Any]) -> dict[str, Any]:
+    if analyze_compare_result is None:
+        return {
+            "status": "skipped",
+            "reason": "inferedge_aiguard is not installed",
+        }
+
+    guard_input = _build_guard_compare_input(result, judgement)
+    return analyze_compare_result(guard_input)
+
 
 def build_compare_bundle(
     *,
@@ -29,6 +77,7 @@ def build_compare_bundle(
     tradeoff_risky_threshold: float | None = None,
     tradeoff_severe_threshold: float | None = None,
     pyproject_path: str = "pyproject.toml",
+    with_guard: bool = False,
 ) -> dict[str, Any]:
     """
     Build a compare bundle for API use while preserving legacy top-level fields
@@ -60,8 +109,9 @@ def build_compare_bundle(
         tradeoff_severe_threshold=thresholds["tradeoff_severe_threshold"],
     )
 
-    markdown = generate_compare_markdown(result, judgement)
-    html = generate_compare_html(result, judgement)
+    guard_analysis = _run_guard_compare_reasoning(result, judgement) if with_guard else None
+    markdown = generate_compare_markdown(result, judgement, guard_analysis=guard_analysis)
+    html = generate_compare_html(result, judgement, guard_analysis=guard_analysis)
     legacy_warning = bool(base.get("legacy_result") or new.get("legacy_result"))
     bundle = {
         "meta": {
@@ -80,8 +130,10 @@ def build_compare_bundle(
             "html": html,
         },
     }
+    if with_guard:
+        bundle["data"]["guard_analysis"] = guard_analysis
 
-    return {
+    response = {
         **bundle,
         "base": base,
         "new": new,
@@ -93,6 +145,9 @@ def build_compare_bundle(
         "html": html,
         "legacy_warning": legacy_warning,
     }
+    if with_guard:
+        response["guard_analysis"] = guard_analysis
+    return response
 
 
 def build_compare_latest_bundle(
@@ -111,6 +166,7 @@ def build_compare_latest_bundle(
     tradeoff_risky_threshold: float | None = None,
     tradeoff_severe_threshold: float | None = None,
     pyproject_path: str = "pyproject.toml",
+    with_guard: bool = False,
 ) -> dict[str, Any]:
     """
     Build a latest-compare bundle with API-ready structure while preserving
@@ -135,6 +191,7 @@ def build_compare_latest_bundle(
         tradeoff_risky_threshold=tradeoff_risky_threshold,
         tradeoff_severe_threshold=tradeoff_severe_threshold,
         pyproject_path=pyproject_path,
+        with_guard=with_guard,
     )
 
     latest_bundle = {
@@ -162,8 +219,10 @@ def build_compare_latest_bundle(
             "html": compare_bundle["html"],
         },
     }
+    if with_guard:
+        latest_bundle["data"]["guard_analysis"] = compare_bundle.get("guard_analysis")
 
-    return {
+    response = {
         **latest_bundle,
         "pair": pair,
         "base": compare_bundle["base"],
@@ -178,6 +237,9 @@ def build_compare_latest_bundle(
         "run_config_mismatch_fields": pair["run_config_mismatch_fields"],
         "selection_mode": pair["selection_mode"],
     }
+    if with_guard:
+        response["guard_analysis"] = compare_bundle.get("guard_analysis")
+    return response
 
 
 def _normalize_selection_mode(value: str) -> str:
