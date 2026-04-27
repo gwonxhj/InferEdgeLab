@@ -99,3 +99,9 @@ Runtime latency is measured as end-to-end wall-clock latency and should not be d
 
 I did not simply run YOLOv8n.
 I implemented an end-to-end validation pipeline from real image input inference to JSON export, backend comparison, and Markdown reporting.
+
+### Source Documents
+
+- [Full pipeline summary](inferedge_pipeline_portfolio.md)
+- [YOLOv8n Runtime comparison](runtime_compare_yolov8n.md)
+- [Benchmark policy](../benchmark_policy.md)

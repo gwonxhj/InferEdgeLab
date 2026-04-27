@@ -65,6 +65,12 @@ Both backend results used the same `compare_key`, so InferEdgeLab grouped them t
 - Speedup ratio: `4.6x`
 - ONNX Runtime is 4.6x slower than TensorRT.
 
+### Result Reproducibility Note
+
+Raw Runtime JSON artifacts are not committed to keep the repository clean.
+The benchmark numbers in this document are recorded from validated InferEdgeRuntime and InferEdgeLab runs.
+When equivalent local artifacts are available, `compare_key` and `backend_key` make the comparison reproducible through `compare-runtime-dir`.
+
 ## Interpretation
 
 The TensorRT Jetson backend showed lower end-to-end runtime latency under this condition.
