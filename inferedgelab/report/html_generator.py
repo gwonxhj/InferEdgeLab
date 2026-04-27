@@ -177,10 +177,27 @@ def _guard_analysis_to_html(guard_analysis: Dict[str, Any] | None) -> str:
     """
 
 
+def _deployment_decision_to_html(deployment_decision: Dict[str, Any] | None) -> str:
+    if deployment_decision is None:
+        return ""
+
+    return f"""
+  <h2>Deployment Decision</h2>
+  <div class="meta">
+    <p><strong>decision</strong>: <code>{escape(str(deployment_decision.get("decision")))}</code></p>
+    <p><strong>reason</strong>: {escape(str(deployment_decision.get("reason")))}</p>
+    <p><strong>lab_overall</strong>: <code>{escape(str(deployment_decision.get("lab_overall")))}</code></p>
+    <p><strong>guard_status</strong>: <code>{escape(str(deployment_decision.get("guard_status")))}</code></p>
+    <p><strong>recommended_action</strong>: {escape(str(deployment_decision.get("recommended_action")))}</p>
+  </div>
+    """
+
+
 def generate_compare_html(
     compare_result: Dict[str, Any],
     judgement: Dict[str, Any],
     guard_analysis: Dict[str, Any] | None = None,
+    deployment_decision: Dict[str, Any] | None = None,
 ) -> str:
     base_id = compare_result["base_id"]
     new_id = compare_result["new_id"]
@@ -283,6 +300,7 @@ def generate_compare_html(
     notes_html = _notes_to_html(judgement["notes"])
     threshold_rows = _threshold_rows(thresholds)
     guard_analysis_html = _guard_analysis_to_html(guard_analysis)
+    deployment_decision_html = _deployment_decision_to_html(deployment_decision)
 
     warning_html = ""
     if not judgement["precision_match"]:
@@ -588,6 +606,7 @@ def generate_compare_html(
     </tbody>
   </table>
   {guard_analysis_html}
+  {deployment_decision_html}
 </body>
 </html>
 """

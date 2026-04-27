@@ -7,6 +7,7 @@ from inferedgelab.compare.judgement import judge_comparison
 from inferedgelab.config import resolve_compare_thresholds
 from inferedgelab.report.html_generator import generate_compare_html
 from inferedgelab.report.markdown_generator import generate_compare_markdown
+from inferedgelab.services.deployment_decision import build_deployment_decision
 from inferedgelab.result.loader import (
     filter_results,
     latest_comparable_items,
@@ -110,8 +111,19 @@ def build_compare_bundle(
     )
 
     guard_analysis = _run_guard_compare_reasoning(result, judgement) if with_guard else None
-    markdown = generate_compare_markdown(result, judgement, guard_analysis=guard_analysis)
-    html = generate_compare_html(result, judgement, guard_analysis=guard_analysis)
+    deployment_decision = build_deployment_decision(judgement, guard_analysis=guard_analysis)
+    markdown = generate_compare_markdown(
+        result,
+        judgement,
+        guard_analysis=guard_analysis,
+        deployment_decision=deployment_decision,
+    )
+    html = generate_compare_html(
+        result,
+        judgement,
+        guard_analysis=guard_analysis,
+        deployment_decision=deployment_decision,
+    )
     legacy_warning = bool(base.get("legacy_result") or new.get("legacy_result"))
     bundle = {
         "meta": {
@@ -124,6 +136,7 @@ def build_compare_bundle(
             "new": new,
             "result": result,
             "judgement": judgement,
+            "deployment_decision": deployment_decision,
         },
         "rendered": {
             "markdown": markdown,
@@ -144,6 +157,7 @@ def build_compare_bundle(
         "markdown": markdown,
         "html": html,
         "legacy_warning": legacy_warning,
+        "deployment_decision": deployment_decision,
     }
     if with_guard:
         response["guard_analysis"] = guard_analysis
@@ -213,11 +227,13 @@ def build_compare_latest_bundle(
             "new": compare_bundle["new"],
             "result": compare_bundle["result"],
             "judgement": compare_bundle["judgement"],
+            "deployment_decision": compare_bundle["deployment_decision"],
         },
         "rendered": {
             "markdown": compare_bundle["markdown"],
             "html": compare_bundle["html"],
         },
+        "deployment_decision": compare_bundle["deployment_decision"],
     }
     if with_guard:
         latest_bundle["data"]["guard_analysis"] = compare_bundle.get("guard_analysis")
@@ -236,6 +252,7 @@ def build_compare_latest_bundle(
         "legacy_warning": compare_bundle["legacy_warning"],
         "run_config_mismatch_fields": pair["run_config_mismatch_fields"],
         "selection_mode": pair["selection_mode"],
+        "deployment_decision": compare_bundle["deployment_decision"],
     }
     if with_guard:
         response["guard_analysis"] = compare_bundle.get("guard_analysis")

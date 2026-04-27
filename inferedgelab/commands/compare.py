@@ -65,6 +65,16 @@ def _render_guard_analysis(guard_analysis: dict | None) -> None:
             rprint("  - -")
 
 
+def _render_deployment_decision(deployment_decision: dict | None) -> None:
+    if not deployment_decision:
+        return
+
+    rprint("[bold]Deployment Decision[/bold]")
+    rprint(f"- decision: {deployment_decision.get('decision')}")
+    rprint(f"- reason: {deployment_decision.get('reason')}")
+    rprint(f"- recommended_action: {deployment_decision.get('recommended_action')}")
+
+
 def compare_cmd(
     base_path: str = typer.Argument(..., help="기준 result JSON 경로"),
     new_path: str = typer.Argument(..., help="비교 대상 result JSON 경로"),
@@ -338,6 +348,7 @@ def compare_cmd(
     rprint(run_table)
     if with_guard:
         _render_guard_analysis(bundle.get("guard_analysis"))
+    _render_deployment_decision(bundle.get("deployment_decision"))
 
     if markdown_out:
         with open(markdown_out, "w", encoding="utf-8") as f:

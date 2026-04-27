@@ -99,6 +99,7 @@ def test_build_compare_bundle_returns_compare_artifacts_for_same_precision_pair(
         "markdown",
         "html",
         "legacy_warning",
+        "deployment_decision",
     }
     assert bundle["meta"]["base_path"] == base_path
     assert bundle["meta"]["new_path"] == new_path
@@ -107,6 +108,7 @@ def test_build_compare_bundle_returns_compare_artifacts_for_same_precision_pair(
     assert bundle["data"]["new"] == bundle["new"]
     assert bundle["data"]["result"] == bundle["result"]
     assert bundle["data"]["judgement"] == bundle["judgement"]
+    assert bundle["data"]["deployment_decision"] == bundle["deployment_decision"]
     assert bundle["rendered"]["markdown"] == bundle["markdown"]
     assert bundle["rendered"]["html"] == bundle["html"]
     assert bundle["base_path"] == base_path
@@ -116,6 +118,7 @@ def test_build_compare_bundle_returns_compare_artifacts_for_same_precision_pair(
     assert isinstance(bundle["markdown"], str) and bundle["markdown"]
     assert isinstance(bundle["html"], str) and bundle["html"]
     assert bundle["legacy_warning"] is False
+    assert bundle["deployment_decision"]["decision"] == "unknown"
     assert "guard_analysis" not in bundle
     assert "guard_analysis" not in bundle["data"]
 
@@ -140,6 +143,8 @@ def test_build_compare_bundle_with_guard_false_preserves_existing_keys(tmp_path)
     assert bundle["data"]["judgement"] == bundle["judgement"]
     assert bundle["rendered"]["markdown"] == bundle["markdown"]
     assert bundle["rendered"]["html"] == bundle["html"]
+    assert bundle["data"]["deployment_decision"] == bundle["deployment_decision"]
+    assert bundle["deployment_decision"]["decision"] == "unknown"
     assert "guard_analysis" not in bundle
     assert "guard_analysis" not in bundle["data"]
 
@@ -196,6 +201,8 @@ def test_build_compare_bundle_with_guard_runs_optional_reasoning(tmp_path, monke
     assert "anomalies" in bundle["guard_analysis"]
     assert "recommendations" in bundle["guard_analysis"]
     assert bundle["data"]["guard_analysis"] == bundle["guard_analysis"]
+    assert bundle["data"]["deployment_decision"] == bundle["deployment_decision"]
+    assert bundle["deployment_decision"]["decision"] == "deployable"
 
 
 def test_build_compare_bundle_with_guard_skips_when_aiguard_missing(tmp_path, monkeypatch):
@@ -210,7 +217,10 @@ def test_build_compare_bundle_with_guard_skips_when_aiguard_missing(tmp_path, mo
         "reason": "inferedge_aiguard is not installed",
     }
     assert bundle["data"]["guard_analysis"] == bundle["guard_analysis"]
+    assert bundle["data"]["deployment_decision"] == bundle["deployment_decision"]
+    assert bundle["deployment_decision"]["decision"] == "unknown"
     assert "Guard Analysis" in bundle["markdown"]
+    assert "Deployment Decision" in bundle["markdown"]
 
 
 def test_build_compare_bundle_with_guard_cross_precision_low_speedup(tmp_path, monkeypatch):
@@ -247,6 +257,7 @@ def test_build_compare_bundle_with_guard_cross_precision_low_speedup(tmp_path, m
     bundle = build_compare_bundle(base_path=base_path, new_path=new_path, with_guard=True)
 
     assert "insufficient_precision_speedup" in bundle["guard_analysis"]["anomalies"]
+    assert bundle["deployment_decision"]["decision"] == "review_required"
     assert "Guard Analysis" in bundle["markdown"]
 
 
@@ -312,6 +323,7 @@ def test_build_compare_latest_bundle_same_precision_includes_bundle_and_compat_k
         "legacy_warning",
         "run_config_mismatch_fields",
         "selection_mode",
+        "deployment_decision",
     }
     assert bundle["selection_mode"] == "same_precision"
     assert bundle["base_path"] == older
@@ -326,8 +338,10 @@ def test_build_compare_latest_bundle_same_precision_includes_bundle_and_compat_k
     assert bundle["data"]["new"] == bundle["new"]
     assert bundle["data"]["result"] == bundle["result"]
     assert bundle["data"]["judgement"] == bundle["judgement"]
+    assert bundle["data"]["deployment_decision"] == bundle["deployment_decision"]
     assert bundle["rendered"]["markdown"] == bundle["markdown"]
     assert bundle["rendered"]["html"] == bundle["html"]
+    assert bundle["deployment_decision"]["decision"] == "unknown"
 
 
 def test_build_compare_latest_bundle_cross_precision_selects_expected_pair(tmp_path):
@@ -343,3 +357,4 @@ def test_build_compare_latest_bundle_cross_precision_selects_expected_pair(tmp_p
     assert bundle["meta"]["selection_mode"] == "cross_precision"
     assert bundle["pair"]["base_path"] == older_fp32
     assert bundle["pair"]["new_path"] == newer_fp16
+    assert bundle["data"]["deployment_decision"] == bundle["deployment_decision"]

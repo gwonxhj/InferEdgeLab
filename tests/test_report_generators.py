@@ -285,6 +285,24 @@ def test_generate_compare_markdown_includes_skipped_guard_analysis():
     assert "- reason: inferedge_aiguard is not installed" in text
 
 
+def test_generate_compare_markdown_includes_deployment_decision_section():
+    compare_result = make_compare_result()
+    judgement = make_judgement()
+    deployment_decision = {
+        "decision": "deployable",
+        "reason": "Lab judgement is favorable and Guard analysis passed.",
+        "lab_overall": "improvement",
+        "guard_status": "ok",
+        "recommended_action": "Deployment can proceed with normal rollout monitoring.",
+    }
+
+    text = generate_compare_markdown(compare_result, judgement, deployment_decision=deployment_decision)
+
+    assert "## Deployment Decision" in text
+    assert "- decision: deployable" in text
+    assert "- guard_status: ok" in text
+
+
 def test_generate_compare_html_includes_primary_metric_summary_and_thresholds():
     compare_result = make_compare_result()
     judgement = make_judgement()
@@ -367,3 +385,21 @@ def test_generate_compare_html_includes_guard_analysis_section():
     assert "Guard Analysis" in html
     assert "insufficient_precision_speedup" in html
     assert "Review runtime provenance." in html
+
+
+def test_generate_compare_html_includes_deployment_decision_section():
+    compare_result = make_compare_result()
+    judgement = make_judgement()
+    deployment_decision = {
+        "decision": "deployable",
+        "reason": "Lab judgement is favorable and Guard analysis passed.",
+        "lab_overall": "improvement",
+        "guard_status": "ok",
+        "recommended_action": "Deployment can proceed with normal rollout monitoring.",
+    }
+
+    html = generate_compare_html(compare_result, judgement, deployment_decision=deployment_decision)
+
+    assert "Deployment Decision" in html
+    assert "deployable" in html
+    assert "Deployment can proceed with normal rollout monitoring." in html
