@@ -56,6 +56,16 @@ def _render_guard_analysis(guard_analysis: dict | None) -> None:
             rprint("  - -")
 
 
+def _render_deployment_decision(deployment_decision: dict | None) -> None:
+    if not deployment_decision:
+        return
+
+    rprint("[bold]Deployment Decision[/bold]")
+    rprint(f"- decision: {deployment_decision.get('decision')}")
+    rprint(f"- reason: {deployment_decision.get('reason')}")
+    rprint(f"- recommended_action: {deployment_decision.get('recommended_action')}")
+
+
 def _render_compare_bundle(bundle: dict, markdown_out: str, html_out: str) -> None:
     result = bundle["result"]
     judgement = bundle["judgement"]
@@ -243,6 +253,7 @@ def _render_compare_bundle(bundle: dict, markdown_out: str, html_out: str) -> No
     rprint(run_table)
 
     _render_guard_analysis(bundle.get("guard_analysis"))
+    _render_deployment_decision(bundle.get("deployment_decision"))
 
     if markdown_out:
         with open(markdown_out, "w", encoding="utf-8") as f:

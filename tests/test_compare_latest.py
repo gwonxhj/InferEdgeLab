@@ -125,6 +125,7 @@ def test_compare_latest_selects_latest_same_precision_pair(tmp_path, capsys):
 
     assert f"Base path: {older}" in out
     assert f"New path : {newer}" in out
+    assert "Deployment Decision" in out
 
 
 def test_compare_latest_selects_latest_cross_precision_pair(tmp_path, capsys):
@@ -228,3 +229,4 @@ def test_compare_latest_with_guard_smoke(tmp_path, capsys):
     out = capsys.readouterr().out
 
     assert "Guard Analysis" in out or "Guard analysis skipped" in out
+    assert "Deployment Decision" in out

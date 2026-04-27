@@ -62,10 +62,22 @@ def _append_guard_analysis(lines: list[str], guard_analysis: Dict[str, Any]) -> 
     lines.append("")
 
 
+def _append_deployment_decision(lines: list[str], deployment_decision: Dict[str, Any]) -> None:
+    lines.append("## Deployment Decision")
+    lines.append("")
+    lines.append(f"- decision: {deployment_decision.get('decision')}")
+    lines.append(f"- reason: {deployment_decision.get('reason')}")
+    lines.append(f"- lab_overall: {deployment_decision.get('lab_overall')}")
+    lines.append(f"- guard_status: {deployment_decision.get('guard_status')}")
+    lines.append(f"- recommended_action: {deployment_decision.get('recommended_action')}")
+    lines.append("")
+
+
 def generate_compare_markdown(
     compare_result: Dict[str, Any],
     judgement: Dict[str, Any],
     guard_analysis: Dict[str, Any] | None = None,
+    deployment_decision: Dict[str, Any] | None = None,
 ) -> str:
     """
     compare_results() 출력 dict를 Markdown 문서 문자열로 변환한다.
@@ -255,5 +267,8 @@ def generate_compare_markdown(
 
     if guard_analysis is not None:
         _append_guard_analysis(lines, guard_analysis)
+
+    if deployment_decision is not None:
+        _append_deployment_decision(lines, deployment_decision)
 
     return "\n".join(lines)

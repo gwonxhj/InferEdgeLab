@@ -72,6 +72,7 @@ Make InferEdgeLab useful for real deployment decisions on actual edge hardware.
 - [x] Compare quantized models such as INT8 against higher-precision baselines
 - [x] Interpret precision trade-offs through compare judgement
 - [x] Add optional InferEdgeAIGuard reasoning on top of Lab compare and compare-latest results
+- [x] Add deployment decision layer from Lab judgement and optional Guard status
 - [x] Import RKNN / Odroid curated hardware validation evidence
 - [ ] Complete RKNN runtime backend integration
 - [ ] Improve runtime robustness toward production-grade use
@@ -104,6 +105,7 @@ Improve usability, discoverability, and expansion paths beyond the core CLI work
 - [x] Rich CLI output, HTML reports, and CI validation integration
 - [x] RKNN curated hardware validation import
 - [x] Optional Lab and AIGuard compare reasoning integration
+- [x] Deployment decision output for compare bundles, console, and reports
 - [x] Service-layer and read-only API adapter structure for reuse beyond CLI-only flows
 
 ---
