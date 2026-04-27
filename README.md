@@ -32,7 +32,7 @@ YOLOv8n was validated with a real OpenCV image-input benchmark: InferEdgeRuntime
 
 TensorRT Jetson was 4.6x faster than ONNX Runtime CPU in this real image input benchmark.
 The benchmark uses end-to-end Runtime latency, not trtexec GPU-only latency.
-The full portfolio report is available at [docs/portfolio/runtime_compare_yolov8n.md](docs/portfolio/runtime_compare_yolov8n.md).
+The full pipeline portfolio summary is available at [docs/portfolio/inferedge_pipeline_portfolio.md](docs/portfolio/inferedge_pipeline_portfolio.md), and the detailed Runtime comparison report is available at [docs/portfolio/runtime_compare_yolov8n.md](docs/portfolio/runtime_compare_yolov8n.md).
 
 ---
 
@@ -131,6 +131,8 @@ Validated on real edge hardware:
 ## Start Here
 
 - [Benchmark reference table](BENCHMARKS.md)
+- [InferEdge Pipeline Portfolio Summary](docs/portfolio/inferedge_pipeline_portfolio.md)
+- [YOLOv8n Runtime Comparison Report](docs/portfolio/runtime_compare_yolov8n.md)
 - [Jetson TensorRT validation runbook](docs/validation/jetson_tensorrt_validation.md)
 - [FastAPI API usage guide](docs/api/api_usage.md)
 - [Portfolio design & architecture](docs/portfolio/edgebench_portfolio.md)

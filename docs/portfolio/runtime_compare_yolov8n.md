@@ -1,5 +1,7 @@
 # YOLOv8n Runtime Backend Comparison
 
+For a broader project-level summary, see [InferEdge Pipeline Portfolio Summary](inferedge_pipeline_portfolio.md).
+
 ## Overview
 
 This report summarizes a real InferEdgeRuntime to InferEdgeLab comparison workflow.
