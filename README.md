@@ -176,6 +176,7 @@ Validated on real edge hardware:
 ## Start Here
 
 - [Benchmark reference table](BENCHMARKS.md)
+- [InferEdge pipeline contract](docs/pipeline_contract.md)
 - [InferEdge Pipeline Portfolio Summary](docs/portfolio/inferedge_pipeline_portfolio.md)
 - [InferEdge Pipeline PDF Draft](docs/portfolio/inferedge_pipeline_portfolio_pdf.md)
 - [YOLOv8n Runtime Comparison Report](docs/portfolio/runtime_compare_yolov8n.md)
