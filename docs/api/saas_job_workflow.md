@@ -82,6 +82,22 @@ The current API implementation is an in-memory stub:
 
 This keeps the SaaS workflow contract executable without committing to queue, database, worker, upload, Forge build, or Runtime execution infrastructure.
 
+## Lab-Side Workflow Smoke
+
+The Lab-side smoke coverage verifies the current in-memory workflow boundary:
+
+```text
+POST /api/analyze
+-> queued job
+-> build worker_request from queued job
+-> apply mock worker completed/failed response
+-> validate completed/failed Lab job response
+-> for completed jobs, store result through the dev-only completion path
+-> GET /api/jobs/{job_id}
+```
+
+This smoke test uses mock worker payloads only. It does not run Forge, Runtime, external queues, databases, Redis, Celery, uploads, or background workers.
+
 ## Non-Goals
 
 This contract does not introduce:
@@ -106,5 +122,6 @@ The contract is locked by:
 - `tests/fixtures/worker_completed_response.json`
 - `tests/fixtures/worker_failed_response.json`
 - `tests/test_worker_contract.py`
+- `tests/test_api_worker_workflow.py`
 
 These fixtures prepare InferEdgeLab for a later in-memory `/api/analyze` job stub while keeping infrastructure choices out of scope for this step.
