@@ -1,0 +1,10 @@
+{
+  "job_id": "job_runtime_worker_smoke",
+  "status": "failed",
+  "error": {
+    "code": "runtime_worker_dry_run_failed",
+    "message": "dry-run failure",
+    "stage": "runtime"
+  },
+  "failed_at": "2026-04-28T06:35:30Z"
+}

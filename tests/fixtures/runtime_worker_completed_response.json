@@ -1,0 +1,56 @@
+{
+  "job_id": "job_runtime_worker_smoke",
+  "status": "completed",
+  "forge_metadata": {
+    "backend": "tensorrt",
+    "target": "jetson",
+    "precision": "fp16",
+    "artifact_path": "builds/yolov8n__jetson__tensorrt__jetson_fp16/model.engine",
+    "source_model_path": "models/yolov8n.onnx"
+  },
+  "runtime_result": {
+    "model_path": "builds/yolov8n__jetson__tensorrt__jetson_fp16/model.engine",
+    "engine_backend": "tensorrt",
+    "device_name": "jetson",
+    "precision": "fp16",
+    "batch": 1,
+    "height": 640,
+    "width": 640,
+    "mean_ms": 0.0,
+    "p50_ms": 0.0,
+    "p95_ms": 0.0,
+    "p99_ms": 0.0,
+    "latency_ms": {
+      "mean": 0.0,
+      "p50": 0.0,
+      "p95": 0.0,
+      "p99": 0.0
+    },
+    "run_config": {
+      "batch": 1,
+      "height": 640,
+      "width": 640,
+      "warmup": 5,
+      "runs": 50,
+      "metadata_path": "artifacts/metadata.json",
+      "manifest_path": "artifacts/manifest.json",
+      "dry_run": true
+    },
+    "timestamp": "2026-04-28T06:35:00Z",
+    "extra": {
+      "runtime_artifact_path": "builds/yolov8n__jetson__tensorrt__jetson_fp16/model.engine",
+      "runtime_artifact_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "source_model_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "dry_run": true,
+      "worker_response_mode": "dry_run"
+    }
+  },
+  "guard_analysis": {
+    "status": "ok",
+    "anomalies": [],
+    "suspected_causes": [],
+    "recommendations": [],
+    "confidence": 0.7
+  },
+  "completed_at": "2026-04-28T06:35:30Z"
+}
