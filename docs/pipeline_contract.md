@@ -6,6 +6,8 @@ This document defines the contract that connects InferEdgeForge, InferEdgeRuntim
 
 InferEdgeLab is the final analysis, report, and deployment decision owner. Forge, Runtime, and AIGuard provide build, execution, profiling, and diagnosis evidence that Lab can consume without taking ownership of their implementation details.
 
+For a portfolio-oriented status summary of what is implemented today versus what remains planned, see [InferEdge Pipeline Status](portfolio/inferedge_pipeline_status.md).
+
 ## End-to-End Flow
 
 ```text
