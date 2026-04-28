@@ -67,6 +67,7 @@ Rule + evidence diagnosis layer. Forge summary, Runtime worker_response, Lab res
 - `/api/compare` contract response
 - `/api/analyze` in-memory job workflow
 - Lab worker_request / worker_response boundary
+- Lab -> Runtime dev-only minimal execution smoke with `yolov8n.onnx`
 - Runtime worker_request dry-run validation
 - Runtime worker_response dry-run export
 - Forge metadata/manifest to worker/runtime summary contract
@@ -80,13 +81,16 @@ Rule + evidence diagnosis layer. Forge summary, Runtime worker_response, Lab res
 
 Recent validation evidence:
 
-- InferEdgeLab: `poetry run python3 -m pytest -q` -> 238 passed
+- InferEdgeLab: `poetry run python3 -m pytest -q` -> 245 passed
 - InferEdgeForge: `python -m pytest -q` -> 89 passed
 - InferEdgeRuntime: `python3 tests/test_lab_worker_adapter_contract.py` -> 12 tests passed
 - InferEdgeRuntime: `scripts/smoke_default.sh` -> success
 - InferEdgeAIGuard: `python -m pytest -q` -> 110 passed
 - GitHub Actions: Lab Benchmarks success, Runtime CI success
 - Lab PR #171 기준 1-page architecture summary 문서화 완료
+- Lab -> Runtime manual smoke using `yolov8n.onnx`: `/api/analyze` created job `job_9e2321179256`, Lab invoked the C++ Runtime CLI through the dev-only subprocess path, ONNX Runtime executed the model successfully, and the latency/provenance JSON was ingested back into the Lab job result. The smoke reported ONNX Runtime backend available, benchmark status success, mean latency about 47.97 ms, p50 about 46.95 ms, p95/p99 about 51.80 ms, and about 20.85 FPS.
+
+The direct Runtime execution result includes `deployment_decision`. Its `unknown` value is expected before Lab compare/report because the worker response has not yet been compared by Lab.
 
 The current cross-repository loop is fixture/smoke covered:
 
@@ -101,6 +105,7 @@ Forge summary
 ## 7. Technical Highlights
 
 - **End-to-end pipeline:** Forge, Runtime, Lab, and AIGuard are connected as one validation flow from artifact build to deploy/review/blocked decision.
+- **Real inference execution smoke:** Lab can create an analyze job, call the C++ Runtime CLI through a dev-only subprocess path, execute `yolov8n.onnx` with ONNX Runtime, ingest the result JSON, and complete the job.
 - **C++ Runtime execution layer:** Runtime is implemented as a C++ execution/result export boundary rather than a Python-only benchmark script.
 - **Schema-first contract-based integration:** Lab, Runtime, Forge, and AIGuard communicate through explicit JSON contracts and compatibility fixtures.
 - **Provenance-aware validation:** Artifact/source hash and runtime provenance are treated as first-class deployment evidence.
@@ -115,7 +120,7 @@ Implemented contracts are stable enough for portfolio review, but several produc
 Current planned production work:
 
 - real worker daemon
-- actual Forge/Runtime execution from a Lab worker
+- full automated Forge/Runtime execution from a production Lab worker
 - database, Redis, or queue
 - file upload flow
 - SaaS frontend
