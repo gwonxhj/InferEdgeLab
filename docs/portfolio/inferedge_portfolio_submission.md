@@ -124,6 +124,14 @@ Next practical step:
 - keep the PDF concise enough for recruiter review
 - add diagrams/screenshots only where they clarify the pipeline
 
+PDF export:
+
+```bash
+bash scripts/export_portfolio_pdf.sh
+```
+
+The script reads this Markdown file and writes `artifacts/portfolio/inferedge_portfolio_submission.pdf`. The generated `artifacts/` directory is intentionally ignored by git.
+
 ## 9. Interview Talking Points
 
 - "제가 만든 것은 단순 벤치마크 스크립트가 아니라, edge deployment artifact의 출처와 실행 결과를 연결해 배포 가능 여부까지 판단하는 검증 파이프라인입니다."

@@ -4,7 +4,7 @@
 
 InferEdge is an end-to-end Edge AI inference validation pipeline that builds deployment artifacts, runs edge inference, compares results, diagnoses provenance issues, and produces deployment decisions.
 
-PDF-ready portfolio draft: [InferEdge Portfolio Submission](inferedge_portfolio_submission.md)
+PDF-ready portfolio draft: [InferEdge Portfolio Submission](inferedge_portfolio_submission.md). Local PDF export is available through `bash scripts/export_portfolio_pdf.sh`.
 
 ## Problem
 
