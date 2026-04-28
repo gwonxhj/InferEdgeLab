@@ -8,6 +8,14 @@ InferEdge is not a benchmarking tool, but an end-to-end validation pipeline that
 
 이 프로젝트는 단순 latency benchmark가 아니라 artifact provenance, runtime result compatibility, deployment decision까지 연결한다. 목표는 "빠른 숫자"를 보여주는 것이 아니라, 어떤 모델과 산출물이 어떤 환경에서 실행되었고 그 결과를 배포해도 되는지 검토 가능한 evidence로 남기는 것이다.
 
+채용 포트폴리오용 5줄 요약:
+
+- InferEdgeLab은 Runtime benchmark 결과를 분석해 comparison report, API response, async job result, deployment decision을 생성한다.
+- InferEdge 전체 흐름은 Forge build provenance -> Runtime real execution -> Lab compare/report/API/job/deployment_decision -> optional AIGuard diagnosis evidence로 구성된다.
+- Lab은 InferEdgeForge provenance metadata, InferEdge-Runtime C++ execution output, optional InferEdgeAIGuard diagnostic evidence를 하나의 검증 bundle로 연결한다.
+- `yolov8n.onnx` manual smoke에서 Lab -> C++ Runtime CLI -> ONNX Runtime CPU execution -> Lab job result ingestion 경로가 dev-only minimal Runtime execution path로 검증되었다.
+- 현재 상태는 portfolio-grade pipeline foundation이며, production worker daemon, persistent queue/database, file upload, frontend, auth/billing은 future work로 명확히 분리한다.
+
 Pipeline:
 
 ```text
