@@ -64,9 +64,11 @@ Runtime identity polish: when a Forge manifest is applied, Runtime now preserves
 
 Not implemented yet: real worker daemon, full automated Forge/Runtime execution from production Lab workers, DB/Redis/queue, file upload, SaaS frontend, and production auth/billing/deployment controls.
 
-Portfolio entry points: [portfolio submission draft](docs/portfolio/inferedge_portfolio_submission.md) · [1-page architecture summary](docs/portfolio/inferedge_1page_architecture.md) · [pipeline status](docs/portfolio/inferedge_pipeline_status.md)
+Portfolio entry points: [portfolio submission draft](docs/portfolio/inferedge_portfolio_submission.md) · [resume/interview summary](docs/portfolio/inferedge_resume_interview_summary.md) · [1-page architecture summary](docs/portfolio/inferedge_1page_architecture.md) · [pipeline status](docs/portfolio/inferedge_pipeline_status.md)
 
 Interview one-liner: **InferEdge is an end-to-end inference validation pipeline that converts, runs, compares, diagnoses, and decides whether an edge AI model candidate is ready to deploy.**
+
+Final interview angle: InferEdge has both macOS ONNX Runtime CPU smoke and Jetson Orin Nano TensorRT smoke evidence, while production worker daemon, persistent queue/database, frontend, auth, and billing remain future work.
 
 ---
 
