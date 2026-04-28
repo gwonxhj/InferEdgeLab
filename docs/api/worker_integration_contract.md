@@ -109,6 +109,24 @@ InferEdgeLab maps a queued analyze job into `worker_request` with these rules:
 
 Only `queued` jobs with `input_summary.workflow: analyze` may be converted. Completed, failed, cancelled, running, or non-analyze jobs must not be handed to workers through this helper.
 
+### Forge Summary Ingest Compatibility
+
+InferEdgeForge can emit a compact `worker_runtime_summary` derived from `metadata.json` and `manifest.json`. Lab normalizes that summary into `worker_request.input_summary` with these mappings:
+
+| Forge summary field | Lab input summary field |
+|---|---|
+| `source_model_path` | `model_path` |
+| `artifact_path` | `artifact_path` |
+| `metadata_path` | `metadata_path` |
+| `manifest_path` | `manifest_path` |
+| `backend` | `options.backend` |
+| `target` | `options.target` |
+| `precision` | `options.precision` |
+| `batch`, `height`, `width` | `options.batch`, `options.height`, `options.width` |
+| `source_model_sha256`, `artifact_sha256`, `artifact_type`, `preset_name`, `build_id` | `provenance` and `options.provenance` |
+
+The fixture `tests/fixtures/forge_worker_runtime_summary.json` and worker contract tests verify that Forge summary payloads can become valid Lab worker requests without running Forge, Runtime, queues, databases, Redis, Celery, or external workers.
+
 ## Worker Response Contract
 
 Worker responses are terminal worker-boundary payloads. Lab may convert them into job responses after analysis/report/deployment decision wrapping.
