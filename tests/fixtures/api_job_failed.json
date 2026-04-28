@@ -1,0 +1,26 @@
+{
+  "job_id": "job_20260428_failed",
+  "status": "failed",
+  "created_at": "2026-04-28T04:30:00Z",
+  "updated_at": "2026-04-28T04:31:00Z",
+  "input_summary": {
+    "workflow": "compare",
+    "model": "resnet18",
+    "base_ref": "results/base.json",
+    "new_ref": "results/missing.json",
+    "guard_requested": false
+  },
+  "result": null,
+  "error": {
+    "code": "result_not_found",
+    "message": "new result JSON could not be loaded",
+    "retryable": false
+  },
+  "links": {
+    "self": "/api/jobs/job_20260428_failed"
+  },
+  "next_actions": [
+    "fix_input",
+    "create_new_job"
+  ]
+}

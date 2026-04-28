@@ -239,6 +239,14 @@ The fixture at `tests/fixtures/api_response_bundle.json` locks the external cont
 
 ---
 
+## SaaS Async Job Workflow
+
+Long-running SaaS workflows such as future `/api/analyze` calls should use the async job response contract documented in [saas_job_workflow.md](saas_job_workflow.md).
+
+The contract defines `queued`, `running`, `completed`, `failed`, and `cancelled` job states. Completed jobs carry the existing API response contract bundle in `result`, including Lab-owned `deployment_decision`; failed jobs keep `result` as `null` and include structured `error` details.
+
+---
+
 ## Notes
 
 - The current API is read-only.

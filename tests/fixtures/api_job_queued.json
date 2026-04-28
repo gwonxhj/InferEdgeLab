@@ -1,0 +1,22 @@
+{
+  "job_id": "job_20260428_queued",
+  "status": "queued",
+  "created_at": "2026-04-28T04:30:00Z",
+  "updated_at": "2026-04-28T04:30:00Z",
+  "input_summary": {
+    "workflow": "compare",
+    "model": "resnet18",
+    "base_ref": "results/base.json",
+    "new_ref": "results/new.json",
+    "guard_requested": true
+  },
+  "result": null,
+  "error": null,
+  "links": {
+    "self": "/api/jobs/job_20260428_queued",
+    "cancel": "/api/jobs/job_20260428_queued/cancel"
+  },
+  "next_actions": [
+    "poll_self"
+  ]
+}

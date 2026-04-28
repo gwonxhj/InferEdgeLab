@@ -1,0 +1,86 @@
+{
+  "job_id": "job_20260428_completed",
+  "status": "completed",
+  "created_at": "2026-04-28T04:30:00Z",
+  "updated_at": "2026-04-28T04:31:00Z",
+  "input_summary": {
+    "workflow": "compare",
+    "model": "resnet18",
+    "base_ref": "results/base.json",
+    "new_ref": "results/new.json",
+    "guard_requested": true
+  },
+  "result": {
+    "summary": {
+      "response_type": "compare",
+      "overall": "improvement",
+      "comparison_mode": "same_precision",
+      "precision_pair": "fp32_vs_fp32",
+      "deployment_decision": "deployable",
+      "guard_status": "ok"
+    },
+    "comparison": {
+      "result": {
+        "metrics": {
+          "mean_ms": {
+            "base": 10.0,
+            "new": 9.0,
+            "delta": -1.0,
+            "delta_pct": -10.0
+          }
+        }
+      },
+      "judgement": {
+        "overall": "improvement"
+      },
+      "rendered": {
+        "markdown": "# report",
+        "html": "<html></html>"
+      }
+    },
+    "deployment_decision": {
+      "decision": "deployable",
+      "reason": "Lab judgement is favorable and Guard analysis passed.",
+      "lab_overall": "improvement",
+      "guard_status": "ok",
+      "recommended_action": "Deployment can proceed with normal rollout monitoring."
+    },
+    "guard_analysis": {
+      "status": "ok",
+      "mode": "compare_reasoning",
+      "anomalies": [],
+      "suspected_causes": [],
+      "recommendations": [],
+      "confidence": 0.5
+    },
+    "provenance": {
+      "runtime": {},
+      "shape": {},
+      "run_config_diff": {},
+      "source_bundle": "compare"
+    },
+    "metadata": {
+      "base_path": "results/base.json",
+      "new_path": "results/new.json",
+      "legacy_warning": false
+    },
+    "timestamps": {
+      "base": "2026-04-28T04:29:00Z",
+      "new": "2026-04-28T04:29:30Z"
+    },
+    "execution_info": {
+      "base_path": "results/base.json",
+      "new_path": "results/new.json",
+      "selection_mode": null,
+      "legacy_warning": false
+    }
+  },
+  "error": null,
+  "links": {
+    "self": "/api/jobs/job_20260428_completed",
+    "result": "/api/jobs/job_20260428_completed/result"
+  },
+  "next_actions": [
+    "review_deployment_decision"
+  ]
+}
