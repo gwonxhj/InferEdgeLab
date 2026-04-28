@@ -30,6 +30,9 @@ class InMemoryApiJobStore:
         notes = payload.get("notes")
         if notes is not None and not isinstance(notes, str):
             raise ValueError("notes must be a string when provided")
+        options = payload.get("options")
+        if options is not None and not isinstance(options, dict):
+            raise ValueError("options must be a JSON object when provided")
 
         created_at = _utc_now_iso()
         job_id = f"job_{uuid4().hex[:12]}"
@@ -41,6 +44,8 @@ class InMemoryApiJobStore:
             "manifest_path": manifest_path,
             "notes": notes,
         }
+        if options is not None:
+            input_summary["options"] = dict(options)
         job = build_api_job_response(
             job_id=job_id,
             status="queued",

@@ -71,6 +71,63 @@ def test_runtime_executor_invokes_cli_and_returns_completed_worker_response(monk
     assert "--output" in captured["command"]
 
 
+def test_analyze_preserves_runtime_execution_options():
+    app = api.create_app()
+    analyze_endpoint = _get_route_endpoint(app, "/api/analyze", method="POST")
+
+    queued = analyze_endpoint(
+        payload={
+            "model_path": "models/resnet18.onnx",
+            "options": {
+                "runtime_cli_path": "/opt/inferedge-runtime/bin/inferedge-runtime",
+                "runs": 5,
+                "warmup": 1,
+            },
+        }
+    )
+
+    assert queued["input_summary"]["options"] == {
+        "runtime_cli_path": "/opt/inferedge-runtime/bin/inferedge-runtime",
+        "runs": 5,
+        "warmup": 1,
+    }
+
+
+def test_run_runtime_dev_passes_analyze_options_to_runtime_executor(monkeypatch):
+    app = api.create_app()
+    analyze_endpoint = _get_route_endpoint(app, "/api/analyze", method="POST")
+    run_runtime_endpoint = _get_route_endpoint(
+        app,
+        "/api/jobs/{job_id}/run-runtime-dev",
+        method="POST",
+    )
+    captured: dict[str, object] = {}
+
+    def fake_run_runtime_inference(worker_request):
+        captured["worker_request"] = worker_request
+        return _make_completed_worker_response(worker_request["job_id"])
+
+    monkeypatch.setattr(api, "run_runtime_inference", fake_run_runtime_inference)
+
+    queued = analyze_endpoint(
+        payload={
+            "model_path": "models/resnet18.onnx",
+            "options": {
+                "runtime_cli_path": "/opt/inferedge-runtime/bin/inferedge-runtime",
+                "runs": 7,
+                "warmup": 2,
+            },
+        }
+    )
+    completed = run_runtime_endpoint(job_id=queued["job_id"])
+
+    worker_request = captured["worker_request"]
+    assert completed["status"] == "completed"
+    assert worker_request["options"]["runtime_cli_path"] == "/opt/inferedge-runtime/bin/inferedge-runtime"
+    assert worker_request["options"]["runs"] == 7
+    assert worker_request["options"]["warmup"] == 2
+
+
 def test_runtime_executor_returns_failed_worker_response_on_cli_failure(monkeypatch):
     def fake_run(command, check, capture_output, text):
         return _CompletedProcess(returncode=2, stderr="runtime failed")
@@ -90,6 +147,21 @@ def test_runtime_executor_returns_failed_worker_response_on_cli_failure(monkeypa
     assert worker_response["error"]["code"] == "runtime_cli_failed"
     assert worker_response["error"]["stage"] == "runtime"
     assert "runtime failed" in worker_response["error"]["message"]
+
+
+def test_runtime_executor_returns_unavailable_for_bad_runtime_cli_path():
+    worker_response = runtime_executor.run_runtime_inference(
+        {
+            "job_id": "job_runtime_missing_cli",
+            "input_summary": {"workflow": "analyze", "model_path": "models/resnet18.onnx"},
+            "model_path": "models/resnet18.onnx",
+            "options": {"runtime_cli_path": "/definitely/missing/inferedge-runtime"},
+        }
+    )
+
+    assert worker_response["status"] == "failed"
+    assert worker_response["error"]["code"] == "runtime_cli_unavailable"
+    assert "/definitely/missing/inferedge-runtime" in worker_response["error"]["message"]
 
 
 def test_run_runtime_dev_endpoint_maps_worker_response_to_completed_job(monkeypatch):
