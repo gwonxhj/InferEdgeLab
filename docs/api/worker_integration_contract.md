@@ -139,6 +139,24 @@ Failed responses must not include a completed `runtime_result`.
 
 The fixtures `tests/fixtures/worker_completed_response.json` and `tests/fixtures/worker_failed_response.json` lock the minimum response shapes.
 
+### Worker Response Mapping
+
+InferEdgeLab maps terminal worker responses back into Lab job responses with these rules:
+
+| Worker response | Lab job update |
+|---|---|
+| `job_id` | Must match the existing Lab job `job_id`. |
+| `status: completed` | Sets Lab job `status` to `completed`. |
+| `completed_at` | Becomes Lab job `updated_at`. |
+| `runtime_result` | Is wrapped into the Lab job `result` payload. |
+| `forge_metadata` | Is preserved in result provenance. |
+| optional `guard_analysis` | Is preserved in completed job `result.guard_analysis`. |
+| `status: failed` | Sets Lab job `status` to `failed`. |
+| `failed_at` | Becomes Lab job `updated_at`. |
+| `error` | Becomes Lab job `error`; Lab job `result` remains `null`. |
+
+Only active jobs may accept worker responses. Completed, failed, or cancelled jobs must reject reapplication. Completed Lab job responses must still satisfy the SaaS job contract and include `result.deployment_decision`.
+
 ## Job State Transition
 
 The intended transition model is:
@@ -181,6 +199,6 @@ This contract does not add:
 
 ## Next Implementation Steps
 
-- Add a dev-only worker response ingestion helper that validates worker responses before job completion.
+- Add an end-to-end workflow smoke test for job creation, worker request mapping, worker response mapping, and completed job polling.
 - Later, introduce a worker adapter boundary without committing Lab to a specific queue implementation.
 - Finally, connect real Forge/Runtime execution behind that adapter when artifacts and environments are ready.
