@@ -57,6 +57,15 @@ AIGuard = optional rule + evidence diagnosis
 
 ## 4. Repository Roles
 
+## Repository Map
+
+| Repository | One-line role |
+|---|---|
+| InferEdgeForge | Build provenance and handoff layer for converting ONNX models into edge deployment artifacts. |
+| InferEdge-Runtime | C++ runtime execution and result export layer for ONNX Runtime/TensorRT edge inference validation. |
+| InferEdgeLab | Analysis/API layer for end-to-end Edge AI inference validation, reports, jobs, and deployment decisions. |
+| InferEdgeAIGuard | Optional deterministic diagnosis layer for provenance mismatch and suspicious inference result evidence. |
+
 **InferEdgeForge**  
 Build/provenance layer. ONNX 모델을 TensorRT/RKNN 등 edge deployment artifact로 변환하고, `metadata.json`, `manifest.json`, `worker_runtime_summary`로 source hash, artifact hash, backend, target, precision, shape, preset 정보를 보존한다.
 

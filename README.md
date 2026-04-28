@@ -4,6 +4,10 @@
 
 # InferEdgeLab
 
+**GitHub description:** Analysis/API layer for end-to-end Edge AI inference validation, reports, jobs, and deployment decisions.
+
+InferEdge is an end-to-end Edge AI inference validation pipeline that connects build provenance, C++ runtime execution, Lab analysis/deployment decision, and optional deterministic diagnosis evidence.
+
 ## Portfolio Summary
 
 **한국어 5줄 요약**
