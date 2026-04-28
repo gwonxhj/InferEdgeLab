@@ -177,28 +177,38 @@ Response structure:
 Purpose:
 
 - Compares two structured result files
-- Returns compare result data, judgement, rendered Markdown/HTML, and legacy warning state
+- Returns the SaaS API response contract with compare result data, judgement, rendered Markdown/HTML, deployment decision, provenance, and optional AIGuard evidence
 
-Example:
+Path-based example:
 
 ```bash
 curl "http://127.0.0.1:8000/api/compare?base_path=results/base.json&new_path=results/new.json"
 ```
 
+JSON body example:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/api/compare" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "base_result": {"model": "resnet18", "engine": "onnxruntime", "device": "cpu", "precision": "fp32", "batch": 1, "height": 224, "width": 224, "mean_ms": 10.0, "p99_ms": 12.0, "timestamp": "2026-04-13T09:00:00Z"},
+    "new_result": {"model": "resnet18", "engine": "onnxruntime", "device": "cpu", "precision": "fp32", "batch": 1, "height": 224, "width": 224, "mean_ms": 9.0, "p99_ms": 11.0, "timestamp": "2026-04-13T10:00:00Z"},
+    "guard_analysis": {"status": "ok", "anomalies": [], "suspected_causes": [], "recommendations": [], "confidence": 0.5}
+  }'
+```
+
 Response structure:
 
-- `base`, `new`
-  - loaded structured result payloads
-- `base_path`, `new_path`
-  - compared file paths
-- `result`
+- `summary`
+  - compact response type, comparison mode, overall judgement, deployment decision, and guard status
+- `comparison`
   - compare metrics and context
-- `judgement`
-  - overall interpretation and threshold-based semantics
-- `markdown`, `html`
-  - rendered report outputs
-- `legacy_warning`
-  - legacy-format warning flag
+- `deployment_decision`
+  - Lab-owned deployment decision; always included
+- `guard_analysis`
+  - optional AIGuard evidence; omitted when not provided or not executed
+- `provenance`, `metadata`, `timestamps`, `execution_info`
+  - frontend/SaaS integration context
 
 ---
 

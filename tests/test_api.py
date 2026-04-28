@@ -22,6 +22,7 @@ def test_create_app_registers_expected_routes():
     assert any(path == "/api/summarize" and "GET" in methods for path, methods in routes)
     assert any(path == "/api/history-report" and "GET" in methods for path, methods in routes)
     assert any(path == "/api/compare" and "GET" in methods for path, methods in routes)
+    assert any(path == "/api/compare" and "POST" in methods for path, methods in routes)
     assert any(path == "/api/compare-latest" and "GET" in methods for path, methods in routes)
 
 
@@ -181,10 +182,24 @@ def test_compare_endpoint_returns_bundle(monkeypatch):
             "new": {"model": "resnet18"},
             "result": {"precision": {"comparison_mode": "same_precision"}},
             "judgement": {"overall": "improvement"},
+            "deployment_decision": {
+                "decision": "unknown",
+                "reason": "Guard analysis is unavailable.",
+                "lab_overall": "improvement",
+                "guard_status": None,
+                "recommended_action": "Run compare with --with-guard before deployment decision.",
+            },
         },
         "rendered": {
             "markdown": "# report",
             "html": "<html></html>",
+        },
+        "deployment_decision": {
+            "decision": "unknown",
+            "reason": "Guard analysis is unavailable.",
+            "lab_overall": "improvement",
+            "guard_status": None,
+            "recommended_action": "Run compare with --with-guard before deployment decision.",
         },
     }
 
@@ -195,8 +210,94 @@ def test_compare_endpoint_returns_bundle(monkeypatch):
 
     result = endpoint(base_path="base.json", new_path="new.json")
 
-    assert result == expected
-    assert set(result.keys()) == {"meta", "data", "rendered"}
+    _assert_compare_api_contract(result, guard_expected=False)
+    assert result["deployment_decision"] == expected["deployment_decision"]
+    assert result["comparison"]["result"] == expected["data"]["result"]
+    assert result["comparison"]["judgement"] == expected["data"]["judgement"]
+    assert result["comparison"]["rendered"] == expected["rendered"]
+
+
+def test_compare_json_endpoint_returns_contract_without_guard():
+    app = api.create_app()
+    endpoint = _get_route_endpoint(app, "/api/compare", method="POST")
+    payload = {
+        "base_result": _make_result(
+            timestamp="2026-04-13T09:00:00Z",
+            precision="fp32",
+            mean_ms=10.0,
+        ),
+        "new_result": _make_result(
+            timestamp="2026-04-13T10:00:00Z",
+            precision="fp32",
+            mean_ms=9.0,
+        ),
+    }
+
+    result = endpoint(payload=payload)
+
+    _assert_compare_api_contract(result, guard_expected=False)
+    assert result["summary"]["response_type"] == "compare"
+    assert result["summary"]["deployment_decision"] == "unknown"
+    assert result["deployment_decision"]["decision"] == "unknown"
+    assert "guard_analysis" not in result
+
+
+def test_compare_json_endpoint_preserves_optional_guard_analysis():
+    app = api.create_app()
+    endpoint = _get_route_endpoint(app, "/api/compare", method="POST")
+    guard_analysis = {
+        "status": "warning",
+        "mode": "forge_runtime_provenance_reasoning",
+        "anomalies": [
+            {
+                "type": "shape_mismatch",
+                "severity": "medium",
+                "evidence": {"field": "height", "expected": 640, "observed": 320},
+            }
+        ],
+        "suspected_causes": ["forge_runtime_configuration_mismatch"],
+        "recommendations": ["Review Forge handoff metadata."],
+        "confidence": 0.7,
+    }
+    payload = {
+        "base": _make_result(
+            timestamp="2026-04-13T09:00:00Z",
+            precision="fp32",
+            mean_ms=10.0,
+        ),
+        "new": _make_result(
+            timestamp="2026-04-13T10:00:00Z",
+            precision="fp32",
+            mean_ms=9.0,
+        ),
+        "guard_analysis": guard_analysis,
+        "metadata": {
+            "base_path": "request/base.json",
+            "new_path": "request/new.json",
+        },
+    }
+
+    result = endpoint(payload=payload)
+
+    _assert_compare_api_contract(result, guard_expected=True)
+    assert result["guard_analysis"] == guard_analysis
+    assert result["summary"]["guard_status"] == "warning"
+    assert result["deployment_decision"]["decision"] == "review_required"
+    assert result["execution_info"]["base_path"] == "request/base.json"
+    assert result["execution_info"]["new_path"] == "request/new.json"
+
+
+def test_compare_json_endpoint_rejects_missing_result_payload():
+    app = api.create_app()
+    endpoint = _get_route_endpoint(app, "/api/compare", method="POST")
+
+    try:
+        endpoint(payload={"base_result": _make_result(timestamp="2026-04-13T09:00:00Z")})
+    except HTTPException as exc:
+        assert exc.status_code == 400
+        assert "new_result or new" in exc.detail
+    else:
+        raise AssertionError("HTTPException was not raised")
 
 
 def test_compare_latest_endpoint_returns_bundle_and_passes_args(monkeypatch):
@@ -279,3 +380,76 @@ def test_compare_latest_endpoint_converts_value_error_to_http_400(monkeypatch):
         assert exc.detail == "bad compare latest request"
     else:
         raise AssertionError("HTTPException was not raised")
+
+
+def _make_result(
+    *,
+    timestamp: str,
+    precision: str = "fp32",
+    mean_ms: float = 10.0,
+    p99_ms: float = 12.0,
+) -> dict:
+    return {
+        "model": "resnet18",
+        "engine": "onnxruntime",
+        "device": "cpu",
+        "precision": precision,
+        "batch": 1,
+        "height": 224,
+        "width": 224,
+        "mean_ms": mean_ms,
+        "p99_ms": p99_ms,
+        "timestamp": timestamp,
+        "run_config": {"runs": 50, "warmup": 5},
+        "system": {
+            "os": "Linux",
+            "python": "3.11.0",
+            "machine": "x86_64",
+            "cpu_count_logical": 8,
+        },
+        "accuracy": {
+            "task": "classification",
+            "sample_count": 100,
+            "metrics": {"top1_accuracy": 0.9},
+        },
+        "extra": {
+            "runtime_artifact_path": "artifacts/resnet18.onnx",
+            "resolved_input_shapes": {"input": [1, 3, 224, 224]},
+        },
+    }
+
+
+def _assert_compare_api_contract(response: dict, *, guard_expected: bool) -> None:
+    assert set(response) >= {
+        "summary",
+        "comparison",
+        "deployment_decision",
+        "provenance",
+        "metadata",
+        "timestamps",
+        "execution_info",
+    }
+    assert isinstance(response["summary"], dict)
+    assert isinstance(response["comparison"], dict)
+    assert isinstance(response["deployment_decision"], dict)
+    assert isinstance(response["provenance"], dict)
+    assert isinstance(response["metadata"], dict)
+    assert isinstance(response["timestamps"], dict)
+    assert isinstance(response["execution_info"], dict)
+    assert response["deployment_decision"]["decision"] in {
+        "deployable",
+        "deployable_with_note",
+        "review_required",
+        "blocked",
+        "unknown",
+    }
+    assert response["summary"]["deployment_decision"] == response["deployment_decision"]["decision"]
+    assert set(response["comparison"]) >= {"result", "judgement", "rendered"}
+    assert set(response["comparison"]["rendered"]) >= {"markdown", "html"}
+    assert "source_bundle" in response["provenance"]
+    if guard_expected:
+        assert "guard_analysis" in response
+        assert response["summary"]["guard_status"] == response["guard_analysis"]["status"]
+    else:
+        assert "guard_analysis" not in response
+        assert response["summary"]["guard_status"] is None
