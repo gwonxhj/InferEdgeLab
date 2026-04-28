@@ -38,6 +38,7 @@ ONNX model
 - `/api/compare` contract response
 - `/api/analyze` in-memory job workflow
 - Lab `worker_request` / `worker_response` boundary
+- Lab -> Runtime dev-only minimal execution smoke using `yolov8n.onnx` (ONNX Runtime CPU, success, mean about 47.97 ms, p95 about 51.80 ms, about 20.85 FPS)
 - Runtime `worker_request` validation and `worker_response` dry-run export
 - Forge worker/runtime summary
 - AIGuard provenance mismatch diagnosis
@@ -47,7 +48,7 @@ ONNX model
 ## Current Non-Goals / Planned Production Work
 
 - real worker daemon
-- actual Forge/Runtime execution from a Lab worker
+- full automated Forge/Runtime execution from a production Lab worker
 - database, Redis, or queue
 - file upload
 - frontend

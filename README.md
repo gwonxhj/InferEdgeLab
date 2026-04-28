@@ -42,9 +42,9 @@ Repository roles are deliberately split:
 - **InferEdgeLab:** compare/report/API/job workflow and final deployment decision ownership.
 - **InferEdgeAIGuard:** optional rule + evidence based failure and provenance diagnosis.
 
-Implemented today: Lab API response contract, `/api/compare`, `/api/analyze` in-memory jobs, worker request/response mappings, Runtime dry-run validation/export, Forge worker/runtime summary, AIGuard provenance mismatch diagnosis, and Lab decision/report evidence smoke coverage.
+Implemented today: Lab API response contract, `/api/compare`, `/api/analyze` in-memory jobs, worker request/response mappings, Runtime dry-run validation/export, Forge worker/runtime summary, AIGuard provenance mismatch diagnosis, Lab decision/report evidence smoke coverage, and a dev-only Lab -> Runtime execution smoke using `yolov8n.onnx`.
 
-Not implemented yet: real worker daemon, automatic Forge/Runtime execution from Lab jobs, DB/Redis/queue, file upload, SaaS frontend, and production auth/billing/deployment controls.
+Not implemented yet: real worker daemon, full automated Forge/Runtime execution from production Lab workers, DB/Redis/queue, file upload, SaaS frontend, and production auth/billing/deployment controls.
 
 Portfolio entry points: [portfolio submission draft](docs/portfolio/inferedge_portfolio_submission.md) · [1-page architecture summary](docs/portfolio/inferedge_1page_architecture.md) · [pipeline status](docs/portfolio/inferedge_pipeline_status.md)
 

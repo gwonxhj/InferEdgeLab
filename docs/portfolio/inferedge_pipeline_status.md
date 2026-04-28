@@ -83,6 +83,7 @@ The current cross-repository loop is covered by documentation, fixtures, and smo
 - `/api/analyze` in-memory job stub
 - Lab analyze job to `worker_request` mapping
 - Lab `worker_response` to job result mapping
+- Lab -> Runtime dev-only minimal execution path through `/api/jobs/{job_id}/run-runtime-dev`
 - Runtime Lab `worker_request` dry-run validation
 - Runtime worker completed/failed response dry-run export
 - Forge worker/runtime summary contract
@@ -91,7 +92,9 @@ The current cross-repository loop is covered by documentation, fixtures, and smo
 - AIGuard worker provenance mismatch diagnosis
 - Lab deployment decision/report evidence smoke for AIGuard worker provenance diagnosis
 
-This means the current product boundary is testable without running the real worker infrastructure.
+This means the current product boundary is testable without running the production worker infrastructure.
+
+Manual Runtime execution evidence is also available: a `yolov8n.onnx` smoke created Lab job `job_9e2321179256`, called the C++ Runtime CLI through Lab's dev-only subprocess path, executed ONNX Runtime on CPU with FP32, and ingested the resulting JSON back into the Lab job result. Runtime reported input shape `[1, 3, 640, 640]`, output shape `[1, 84, 8400]`, `warmup=1`, `runs=5`, benchmark status success, mean latency about 47.97 ms, p50 about 46.95 ms, p95/p99 about 51.80 ms, and about 20.85 FPS. The resulting `deployment_decision` was `unknown`, which is expected for direct Runtime execution before Lab compare/report.
 
 ## Implemented vs Planned
 
@@ -105,6 +108,7 @@ This means the current product boundary is testable without running the real wor
 - `/api/compare` response wrapper
 - In-memory async job contract and API stub
 - Worker request and worker response boundary contracts
+- Dev-only Lab -> Runtime execution smoke for a real `yolov8n.onnx` model
 - Cross-repo fixture compatibility across Forge, Runtime, Lab, and AIGuard
 - Rule/evidence based provenance mismatch diagnosis
 
@@ -112,7 +116,7 @@ This means the current product boundary is testable without running the real wor
 
 - real worker daemon
 - real Forge build execution from Lab jobs
-- real Runtime inference execution from Lab jobs
+- full automated Runtime inference execution from production Lab workers
 - database persistence
 - Redis, Celery, or another queue
 - file upload handling
