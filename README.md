@@ -182,6 +182,7 @@ Validated on real edge hardware:
 - [YOLOv8n Runtime Comparison Report](docs/portfolio/runtime_compare_yolov8n.md)
 - [Jetson TensorRT validation runbook](docs/validation/jetson_tensorrt_validation.md)
 - [FastAPI API usage guide](docs/api/api_usage.md)
+- [SaaS async job workflow contract](docs/api/saas_job_workflow.md)
 - [Portfolio design & architecture](docs/portfolio/edgebench_portfolio.md)
 - [Project roadmap](Roadmap.md)
 
