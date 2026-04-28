@@ -8,6 +8,7 @@ import pytest
 from inferedgelab.services.api_job_contract import build_api_job_response
 from inferedgelab.services.worker_contract import (
     WorkerContractError,
+    apply_worker_response_to_job,
     build_worker_request_from_job,
     validate_worker_request,
     validate_worker_response,
@@ -134,11 +135,100 @@ def test_worker_completed_response_fixture_satisfies_contract():
     assert response["guard_analysis"]["status"] == "ok"
 
 
+def test_completed_worker_response_maps_to_completed_job():
+    job = _make_queued_analyze_job(job_id="job_worker_smoke")
+    worker_response = load_fixture("worker_completed_response.json")
+
+    completed = apply_worker_response_to_job(job, worker_response)
+
+    assert completed["job_id"] == job["job_id"]
+    assert completed["status"] == "completed"
+    assert completed["updated_at"] == worker_response["completed_at"]
+    assert completed["error"] is None
+    assert completed["result"]["deployment_decision"]["decision"] == "unknown"
+    assert completed["result"]["comparison"]["result"]["runtime_result"] == worker_response["runtime_result"]
+    assert completed["result"]["provenance"]["forge_metadata"] == worker_response["forge_metadata"]
+    assert completed["next_actions"] == ["review_deployment_decision"]
+
+
+def test_completed_worker_response_preserves_optional_guard_analysis():
+    job = _make_queued_analyze_job(job_id="job_worker_smoke")
+    worker_response = load_fixture("worker_completed_response.json")
+
+    completed = apply_worker_response_to_job(job, worker_response)
+
+    assert completed["result"]["guard_analysis"] == worker_response["guard_analysis"]
+    assert completed["result"]["summary"]["guard_status"] == "ok"
+
+
+def test_completed_worker_response_allows_guard_analysis_absent():
+    job = _make_queued_analyze_job(job_id="job_worker_smoke")
+    worker_response = load_fixture("worker_completed_response.json")
+    worker_response.pop("guard_analysis")
+
+    completed = apply_worker_response_to_job(job, worker_response)
+
+    assert "guard_analysis" not in completed["result"]
+    assert completed["result"]["summary"]["guard_status"] is None
+
+
 def test_worker_failed_response_fixture_satisfies_contract():
     response = validate_worker_response(load_fixture("worker_failed_response.json"))
 
     assert response["status"] == "failed"
     assert response["error"]["code"] == "runtime_result_missing"
+
+
+def test_failed_worker_response_maps_to_failed_job():
+    job = _make_queued_analyze_job(job_id="job_worker_smoke")
+    worker_response = load_fixture("worker_failed_response.json")
+
+    failed = apply_worker_response_to_job(job, worker_response)
+
+    assert failed["job_id"] == job["job_id"]
+    assert failed["status"] == "failed"
+    assert failed["updated_at"] == worker_response["failed_at"]
+    assert failed["result"] is None
+    assert failed["error"] == worker_response["error"]
+    assert failed["next_actions"] == ["inspect_error", "create_new_job"]
+
+
+def test_worker_response_mapping_rejects_job_id_mismatch():
+    job = _make_queued_analyze_job(job_id="job_other")
+    worker_response = load_fixture("worker_completed_response.json")
+
+    with pytest.raises(WorkerContractError, match="job_id"):
+        apply_worker_response_to_job(job, worker_response)
+
+
+def test_worker_response_mapping_rejects_already_completed_job():
+    job = build_api_job_response(
+        job_id="job_worker_smoke",
+        status="completed",
+        created_at="2026-04-28T05:30:00Z",
+        updated_at="2026-04-28T05:31:00Z",
+        input_summary={
+            "workflow": "analyze",
+            "model_path": "models/resnet18.onnx",
+            "artifact_path": None,
+        },
+        result={"deployment_decision": {"decision": "unknown"}},
+        error=None,
+        links={"self": "/api/jobs/job_worker_smoke"},
+        next_actions=["review_deployment_decision"],
+    )
+
+    with pytest.raises(WorkerContractError, match="completed job"):
+        apply_worker_response_to_job(job, load_fixture("worker_completed_response.json"))
+
+
+def test_worker_response_mapping_rejects_invalid_worker_response():
+    job = _make_queued_analyze_job(job_id="job_worker_smoke")
+    worker_response = load_fixture("worker_completed_response.json")
+    worker_response.pop("runtime_result")
+
+    with pytest.raises(WorkerContractError, match="runtime_result"):
+        apply_worker_response_to_job(job, worker_response)
 
 
 def test_worker_completed_response_requires_runtime_result():
@@ -186,10 +276,11 @@ def test_worker_request_rejects_missing_model_or_artifact_path():
 
 def _make_queued_analyze_job(
     *,
+    job_id: str = "job_analyze_queued",
     input_summary: dict | None = None,
 ) -> dict:
     return build_api_job_response(
-        job_id="job_analyze_queued",
+        job_id=job_id,
         status="queued",
         created_at="2026-04-28T05:30:00Z",
         updated_at="2026-04-28T05:30:10Z",
@@ -204,6 +295,6 @@ def _make_queued_analyze_job(
         },
         result=None,
         error=None,
-        links={"self": "/api/jobs/job_analyze_queued"},
+        links={"self": f"/api/jobs/{job_id}"},
         next_actions=["poll_self"],
     )

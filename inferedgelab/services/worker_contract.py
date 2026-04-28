@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from inferedgelab.services.api_job_contract import ApiJobContractError
+from inferedgelab.services.api_job_contract import build_api_job_response
 from inferedgelab.services.api_job_contract import validate_api_job_response
 
 
@@ -45,6 +46,55 @@ def build_worker_request_from_job(
         "options": request_options,
     }
     return validate_worker_request(request)
+
+
+def apply_worker_response_to_job(
+    job: dict[str, Any],
+    worker_response: dict[str, Any],
+) -> dict[str, Any]:
+    """Project a terminal worker response back into a Lab job response."""
+
+    try:
+        validated_job = validate_api_job_response(job)
+    except ApiJobContractError as exc:
+        raise WorkerContractError(str(exc)) from exc
+
+    job_status = validated_job["status"]
+    if job_status in {"completed", "failed", "cancelled"}:
+        raise WorkerContractError(f"{job_status} job cannot accept worker response")
+
+    validated_response = validate_worker_response(worker_response)
+    if validated_response["job_id"] != validated_job["job_id"]:
+        raise WorkerContractError("worker response job_id must match job_id")
+
+    if validated_response["status"] == "completed":
+        result = _build_completed_job_result(validated_response)
+        return build_api_job_response(
+            job_id=validated_job["job_id"],
+            status="completed",
+            created_at=validated_job["created_at"],
+            updated_at=validated_response["completed_at"],
+            input_summary=validated_job["input_summary"],
+            result=result,
+            error=None,
+            links={
+                "self": f"/api/jobs/{validated_job['job_id']}",
+                "result": f"/api/jobs/{validated_job['job_id']}",
+            },
+            next_actions=["review_deployment_decision"],
+        )
+
+    return build_api_job_response(
+        job_id=validated_job["job_id"],
+        status="failed",
+        created_at=validated_job["created_at"],
+        updated_at=validated_response["failed_at"],
+        input_summary=validated_job["input_summary"],
+        result=None,
+        error=validated_response["error"],
+        links={"self": f"/api/jobs/{validated_job['job_id']}"},
+        next_actions=["inspect_error", "create_new_job"],
+    )
 
 
 def validate_worker_request(request: Any) -> dict[str, Any]:
@@ -95,6 +145,77 @@ def validate_worker_response(response: Any) -> dict[str, Any]:
             raise WorkerContractError("failed worker response runtime_result must be null")
 
     return response
+
+
+def _build_completed_job_result(worker_response: dict[str, Any]) -> dict[str, Any]:
+    provided_result = worker_response.get("result")
+    if provided_result is not None:
+        if not isinstance(provided_result, dict):
+            raise WorkerContractError("completed worker response result must be an object")
+        _validate_completed_job_result(provided_result)
+        return provided_result
+
+    runtime_result = worker_response["runtime_result"]
+    guard_analysis = worker_response.get("guard_analysis")
+    deployment_decision = {
+        "decision": "unknown",
+        "reason": "Worker response has not been compared by Lab yet.",
+        "lab_overall": None,
+        "guard_status": (guard_analysis or {}).get("status"),
+        "recommended_action": "Run Lab compare/report before deployment decision.",
+    }
+    result = {
+        "summary": {
+            "response_type": "analyze_worker_result",
+            "overall": None,
+            "comparison_mode": None,
+            "precision_pair": None,
+            "deployment_decision": deployment_decision["decision"],
+            "guard_status": deployment_decision["guard_status"],
+        },
+        "comparison": {
+            "result": {"runtime_result": runtime_result},
+            "judgement": {},
+            "rendered": {"markdown": None, "html": None},
+        },
+        "deployment_decision": deployment_decision,
+        "provenance": {
+            "runtime": runtime_result.get("extra"),
+            "forge_metadata": worker_response.get("forge_metadata"),
+            "source_bundle": "worker_response",
+        },
+        "metadata": {
+            "worker_status": worker_response["status"],
+            "completed_at": worker_response["completed_at"],
+        },
+        "timestamps": {
+            "runtime": runtime_result.get("timestamp"),
+            "completed_at": worker_response["completed_at"],
+        },
+        "execution_info": {
+            "engine": runtime_result.get("engine"),
+            "device": runtime_result.get("device"),
+            "precision": runtime_result.get("precision"),
+            "batch": runtime_result.get("batch"),
+            "height": runtime_result.get("height"),
+            "width": runtime_result.get("width"),
+        },
+    }
+    if guard_analysis is not None:
+        result["guard_analysis"] = guard_analysis
+    _validate_completed_job_result(result)
+    return result
+
+
+def _validate_completed_job_result(result: dict[str, Any]) -> None:
+    deployment_decision = result.get("deployment_decision")
+    if not isinstance(deployment_decision, dict):
+        raise WorkerContractError("completed job result must include deployment_decision")
+    decision = deployment_decision.get("decision")
+    if not isinstance(decision, str) or not decision:
+        raise WorkerContractError(
+            "completed job deployment_decision must include decision"
+        )
 
 
 def _build_worker_options(
