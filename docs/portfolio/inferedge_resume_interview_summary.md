@@ -5,7 +5,7 @@
 - Built InferEdge, an end-to-end Edge AI Inference Validation Pipeline that connects model artifact provenance, real runtime execution, result analysis, diagnosis evidence, and deployment decisions.
 - Implemented InferEdgeLab as the analysis layer that turns Runtime benchmark outputs into comparison reports, API responses, async job results, and Lab-owned deployment decisions.
 - Aligned Forge, Runtime, Lab, and AIGuard through JSON contracts: Forge for build/provenance, Runtime for C++ execution/result export, Lab for analysis/API/job/decision, and AIGuard for optional deterministic diagnosis evidence.
-- Validated a real dev-only Lab -> C++ Runtime -> ONNX Runtime CPU -> Lab job result ingestion smoke with `yolov8n.onnx` (mean about 47.97 ms, p95/p99 about 51.80 ms, about 20.85 FPS).
+- Validated two runtime evidence paths: Lab -> C++ Runtime -> ONNX Runtime CPU -> Lab job result ingestion on macOS with `yolov8n.onnx`, and Jetson Orin Nano TensorRT execution using a Forge manifest plus TensorRT engine artifact.
 - Current scope is a portfolio-grade SaaS API/job/worker contract foundation with dev-only Runtime execution smoke; production worker daemon, persistent queue/database, upload flow, frontend, auth, and billing remain future work.
 
 ## 2. Resume Project Entry: Detailed Version
@@ -16,11 +16,13 @@ InferEdgeForge owns build artifact provenance. It records metadata and manifests
 
 The Lab side includes `/api/compare`, `/api/analyze`, in-memory job stubs, worker request/response mapping, API response contracts, deployment decision bundles, and report evidence preservation. A recent manual smoke validated a real dev-only Runtime execution path using `yolov8n.onnx`: Lab created an analyze job, invoked the C++ Runtime CLI through subprocess, ONNX Runtime CPU executed the model, and the result JSON was ingested back into the Lab job result. The smoke completed successfully with mean latency about 47.97 ms, p95/p99 about 51.80 ms, and about 20.85 FPS.
 
+I also validated a Jetson Orin Nano TensorRT Runtime smoke. On Linux `5.15.148-tegra` / `aarch64`, the C++ Runtime CLI in `~/InferEdge-Runtime` executed a Forge-generated manifest and TensorRT engine artifact from `yolov8n__jetson__tensorrt__jetson_fp16`. The result reported `success: true`, `engine_backend: tensorrt`, `device_name: jetson`, `manifest_applied: true`, input shape `[1, 3, 640, 640]`, output shape `[1, 84, 8400]`, mean latency about 14.00 ms, p99 about 15.50 ms, and about 71.44 FPS.
+
 The project intentionally separates implemented portfolio-grade pipeline foundation from future production SaaS infrastructure. The current implementation demonstrates contracts, smoke coverage, and a dev-only execution path, while production worker daemons, persistent queues/databases, file upload, frontend, auth, and billing are explicitly planned future work.
 
 ## 3. 30-Second Interview Explanation
 
-InferEdge is my end-to-end Edge AI inference validation pipeline. It does more than run a latency benchmark: Forge preserves build provenance, Runtime executes or validates model artifacts through a C++ boundary, Lab compares results and produces reports/API/job outputs plus deployment decisions, and AIGuard optionally adds deterministic diagnosis evidence. Recently I validated a real `yolov8n.onnx` path where Lab created a job, called the C++ Runtime CLI, ONNX Runtime CPU executed the model, and Lab ingested the result back into the job. It is not a fully productionized SaaS yet; it is a portfolio-grade pipeline foundation with API/job/worker contracts and dev-only execution smoke.
+InferEdge is my end-to-end Edge AI inference validation pipeline. It does more than run a latency benchmark: Forge preserves build provenance, Runtime executes or validates model artifacts through a C++ boundary, Lab compares results and produces reports/API/job outputs plus deployment decisions, and AIGuard optionally adds deterministic diagnosis evidence. I validated both a macOS `yolov8n.onnx` Lab-to-ONNX Runtime CPU smoke and a Jetson Orin Nano TensorRT smoke where the C++ Runtime executed a Forge manifest plus TensorRT engine artifact. It is not a fully productionized SaaS yet; it is a portfolio-grade pipeline foundation with API/job/worker contracts and manual/dev smoke evidence.
 
 ## 4. 90-Second Interview Explanation
 
@@ -29,6 +31,8 @@ InferEdge started from a simple edge inference benchmarking problem, but I expan
 I split the system into four repositories with clear responsibilities. InferEdgeForge is the build/provenance layer. It records metadata, manifests, hashes, precision, target, shape, preset, and build id. InferEdgeRuntime is the C++ execution/result export layer. It validates worker request payloads and produces Lab-compatible runtime result or worker response JSON. InferEdgeLab is the analysis and decision owner. It provides compare/report flows, SaaS API response contracts, in-memory job workflow stubs, worker request/response mapping, and deployment decision output. InferEdgeAIGuard remains optional and performs rule/evidence based diagnosis, such as artifact or provenance mismatch detection.
 
 The important recent validation is that this is no longer only contract-level documentation. I ran a manual dev-only smoke using `yolov8n.onnx`: `/api/analyze` created a Lab job, `/api/jobs/{job_id}/run-runtime-dev` invoked the C++ Runtime CLI through subprocess, ONNX Runtime CPU executed the model, and the Runtime JSON was ingested back into the Lab job result. The result completed successfully, with mean latency about 47.97 ms, p95/p99 about 51.80 ms, and about 20.85 FPS. The deployment decision is `unknown` at that direct execution stage because the result has not yet gone through Lab compare/report, which is expected behavior.
+
+Separately, I validated Jetson TensorRT execution on Jetson Orin Nano. Runtime consumed a Forge manifest and the generated `model.engine`, applied the manifest, executed with `engine_backend: tensorrt` and `device_name: jetson`, and exported a successful result with mean latency about 14.00 ms, p99 about 15.50 ms, and about 71.44 FPS. One limitation I documented is that `compare_key` currently comes from the explicit `model.engine` path stem, so preserving the Forge source model identity in Runtime compare naming is future polish.
 
 I am careful not to claim this as a production SaaS platform yet. The production worker daemon, persistent queue/database, file upload flow, frontend, auth, and billing remain future work. What is implemented is the pipeline foundation: schemas, contracts, CLI/API/job boundaries, evidence preservation, and a minimal real Runtime execution path.
 
@@ -46,7 +50,7 @@ InferEdge is not just a benchmark tool because it treats latency as only one pie
 
 A benchmark script usually answers: "How fast did this model run?" InferEdge asks a broader deployment question: "Which model and artifact produced this result, under what backend/precision/shape, how does it compare with previous results, is there any provenance mismatch, and should this candidate be deployed, reviewed, or blocked?"
 
-That is why the project includes build provenance, Lab-compatible Runtime result JSON, compare/report flows, API response contracts, async job workflow contracts, optional AIGuard diagnosis evidence, and Lab-owned deployment decisions. The `yolov8n.onnx` smoke also proves that the Lab-to-Runtime path can execute a real model through ONNX Runtime CPU and ingest the result, not only validate mock payloads.
+That is why the project includes build provenance, Lab-compatible Runtime result JSON, compare/report flows, API response contracts, async job workflow contracts, optional AIGuard diagnosis evidence, and Lab-owned deployment decisions. The `yolov8n.onnx` smoke proves that the Lab-to-Runtime path can execute a real model through ONNX Runtime CPU and ingest the result, while the Jetson smoke proves that a Forge-generated TensorRT engine artifact can be executed by the C++ Runtime CLI on real edge hardware.
 
 ## 7. Answer: SaaS Status and Future Work
 
