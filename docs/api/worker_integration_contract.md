@@ -139,6 +139,17 @@ Failed responses must not include a completed `runtime_result`.
 
 The fixtures `tests/fixtures/worker_completed_response.json` and `tests/fixtures/worker_failed_response.json` lock the minimum response shapes.
 
+### Runtime-Exported Response Compatibility
+
+InferEdgeRuntime can dry-run export completed/failed worker responses for this boundary. Lab keeps compatibility fixtures for that shape:
+
+- `tests/fixtures/runtime_worker_completed_response.json`
+- `tests/fixtures/runtime_worker_failed_response.json`
+
+The completed fixture follows Runtime's dry-run result naming, including `runtime_result.model_path`, `runtime_result.engine_backend`, and `runtime_result.device_name`. Lab treats these as compatible aliases for the generic `model`, `engine`, and `device` fields during worker response validation and job result mapping.
+
+This smoke coverage verifies that Runtime-exported worker responses can be validated and applied to Lab jobs without running the Runtime binary, Forge, queues, databases, Redis, Celery, or external worker processes.
+
 ### Worker Response Mapping
 
 InferEdgeLab maps terminal worker responses back into Lab job responses with these rules:

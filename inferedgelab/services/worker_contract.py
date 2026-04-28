@@ -193,8 +193,8 @@ def _build_completed_job_result(worker_response: dict[str, Any]) -> dict[str, An
             "completed_at": worker_response["completed_at"],
         },
         "execution_info": {
-            "engine": runtime_result.get("engine"),
-            "device": runtime_result.get("device"),
+            "engine": _first_present(runtime_result, ("engine", "engine_backend", "backend")),
+            "device": _first_present(runtime_result, ("device", "device_name", "target")),
             "precision": runtime_result.get("precision"),
             "batch": runtime_result.get("batch"),
             "height": runtime_result.get("height"),
@@ -246,23 +246,36 @@ def _build_worker_options(
 
 def _validate_runtime_result(runtime_result: dict[str, Any]) -> None:
     required = {
-        "model",
-        "engine",
-        "device",
         "precision",
         "batch",
         "height",
         "width",
         "mean_ms",
+        "p50_ms",
         "p95_ms",
         "p99_ms",
         "timestamp",
     }
     missing = sorted(field for field in required if field not in runtime_result)
+    for aliases in (
+        ("model", "model_path"),
+        ("engine", "engine_backend", "backend"),
+        ("device", "device_name", "target"),
+    ):
+        if _first_present(runtime_result, aliases) is None:
+            missing.append("/".join(aliases))
     if missing:
         raise WorkerContractError(
             f"runtime_result missing required field(s): {', '.join(missing)}"
         )
+
+
+def _first_present(data: dict[str, Any], fields: tuple[str, ...]) -> Any:
+    for field in fields:
+        value = data.get(field)
+        if value is not None:
+            return value
+    return None
 
 
 def _require_string(data: dict[str, Any], field: str) -> str:
