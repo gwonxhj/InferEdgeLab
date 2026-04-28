@@ -4,6 +4,7 @@ from fastapi import HTTPException
 
 import inferedgelab
 import inferedgelab.api as api
+from inferedgelab.services.api_job_contract import validate_api_job_response
 
 
 def _get_route_endpoint(app, path: str, method: str = "GET"):
@@ -23,6 +24,8 @@ def test_create_app_registers_expected_routes():
     assert any(path == "/api/history-report" and "GET" in methods for path, methods in routes)
     assert any(path == "/api/compare" and "GET" in methods for path, methods in routes)
     assert any(path == "/api/compare" and "POST" in methods for path, methods in routes)
+    assert any(path == "/api/analyze" and "POST" in methods for path, methods in routes)
+    assert any(path == "/api/jobs/{job_id}" and "GET" in methods for path, methods in routes)
     assert any(path == "/api/compare-latest" and "GET" in methods for path, methods in routes)
 
 
@@ -296,6 +299,73 @@ def test_compare_json_endpoint_rejects_missing_result_payload():
     except HTTPException as exc:
         assert exc.status_code == 400
         assert "new_result or new" in exc.detail
+    else:
+        raise AssertionError("HTTPException was not raised")
+
+
+def test_analyze_endpoint_creates_queued_job():
+    app = api.create_app()
+    endpoint = _get_route_endpoint(app, "/api/analyze", method="POST")
+
+    response = endpoint(
+        payload={
+            "model_path": "models/resnet18.onnx",
+            "metadata_path": "artifacts/metadata.json",
+            "manifest_path": "artifacts/manifest.json",
+            "notes": "smoke job",
+        }
+    )
+
+    job = validate_api_job_response(response)
+    assert job["job_id"].startswith("job_")
+    assert job["status"] == "queued"
+    assert job["result"] is None
+    assert job["error"] is None
+    assert job["input_summary"] == {
+        "workflow": "analyze",
+        "model_path": "models/resnet18.onnx",
+        "artifact_path": None,
+        "metadata_path": "artifacts/metadata.json",
+        "manifest_path": "artifacts/manifest.json",
+        "notes": "smoke job",
+    }
+    assert job["links"]["self"] == f"/api/jobs/{job['job_id']}"
+    assert job["next_actions"] == ["poll_self"]
+
+
+def test_jobs_endpoint_returns_same_in_memory_job():
+    app = api.create_app()
+    analyze_endpoint = _get_route_endpoint(app, "/api/analyze", method="POST")
+    jobs_endpoint = _get_route_endpoint(app, "/api/jobs/{job_id}")
+
+    created = analyze_endpoint(payload={"artifact_path": "artifacts/model.engine"})
+    fetched = jobs_endpoint(job_id=created["job_id"])
+
+    assert validate_api_job_response(fetched) == created
+
+
+def test_jobs_endpoint_returns_404_for_missing_job():
+    app = api.create_app()
+    endpoint = _get_route_endpoint(app, "/api/jobs/{job_id}")
+
+    try:
+        endpoint(job_id="job_missing")
+    except HTTPException as exc:
+        assert exc.status_code == 404
+        assert exc.detail == "job not found"
+    else:
+        raise AssertionError("HTTPException was not raised")
+
+
+def test_analyze_endpoint_rejects_missing_model_or_artifact_path():
+    app = api.create_app()
+    endpoint = _get_route_endpoint(app, "/api/analyze", method="POST")
+
+    try:
+        endpoint(payload={"notes": "missing target"})
+    except HTTPException as exc:
+        assert exc.status_code == 400
+        assert "model_path or artifact_path" in exc.detail
     else:
         raise AssertionError("HTTPException was not raised")
 

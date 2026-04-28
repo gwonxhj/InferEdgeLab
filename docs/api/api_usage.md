@@ -56,13 +56,15 @@ By default, the API runs on `127.0.0.1:8000`.
 
 ## Endpoints
 
-Current read-only endpoints:
+Current endpoints:
 
 - `GET /health`
 - `GET /api/list-results`
 - `GET /api/summarize`
 - `GET /api/history-report`
 - `GET /api/compare`
+- `POST /api/analyze`
+- `GET /api/jobs/{job_id}`
 
 ---
 
@@ -244,6 +246,27 @@ The fixture at `tests/fixtures/api_response_bundle.json` locks the external cont
 Long-running SaaS workflows such as future `/api/analyze` calls should use the async job response contract documented in [saas_job_workflow.md](saas_job_workflow.md).
 
 The contract defines `queued`, `running`, `completed`, `failed`, and `cancelled` job states. Completed jobs carry the existing API response contract bundle in `result`, including Lab-owned `deployment_decision`; failed jobs keep `result` as `null` and include structured `error` details.
+
+Current stub example:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/api/analyze" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model_path": "models/resnet18.onnx",
+    "metadata_path": "artifacts/metadata.json",
+    "manifest_path": "artifacts/manifest.json",
+    "notes": "smoke job"
+  }'
+```
+
+The current implementation returns a `queued` in-memory job and does not run Forge, Runtime, uploads, queues, or workers.
+
+Poll the job:
+
+```bash
+curl "http://127.0.0.1:8000/api/jobs/job_..."
+```
 
 ---
 

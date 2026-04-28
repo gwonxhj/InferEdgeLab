@@ -53,6 +53,18 @@ POST /api/analyze
 
 Failed jobs follow the same polling shape but return `status: failed`, `result: null`, and a structured `error` object.
 
+## Current Implementation Scope
+
+The current API implementation is an in-memory stub:
+
+- `POST /api/analyze` accepts JSON with `model_path` or `artifact_path`, optional `metadata_path`, optional `manifest_path`, and optional `notes`.
+- The endpoint creates a `queued` job response only.
+- `GET /api/jobs/{job_id}` returns the stored in-memory job response.
+- Jobs are not advanced to `running` or `completed` in this step.
+- The store is process-local and resets when the API process restarts.
+
+This keeps the SaaS workflow contract executable without committing to queue, database, worker, upload, Forge build, or Runtime execution infrastructure.
+
 ## Non-Goals
 
 This contract does not introduce:

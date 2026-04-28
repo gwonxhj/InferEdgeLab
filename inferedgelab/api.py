@@ -10,6 +10,7 @@ from inferedgelab.compare.judgement import judge_comparison
 from inferedgelab.config import resolve_compare_thresholds
 from inferedgelab.report.html_generator import generate_compare_html
 from inferedgelab.report.markdown_generator import generate_compare_markdown
+from inferedgelab.services.api_job_store import InMemoryApiJobStore
 from inferedgelab.services.api_response_contract import build_api_response_bundle
 from inferedgelab.services.compare_service import build_compare_bundle
 from inferedgelab.services.compare_service import build_compare_latest_bundle
@@ -21,6 +22,7 @@ from inferedgelab.services.summarize_service import build_summary_bundle
 
 def create_app() -> FastAPI:
     app = FastAPI(title="InferEdgeLab API")
+    job_store = InMemoryApiJobStore()
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -125,6 +127,22 @@ def create_app() -> FastAPI:
             return _build_compare_response_from_payload(payload)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.post("/api/analyze")
+    def analyze(
+        payload: dict[str, Any] = Body(...),
+    ) -> dict[str, Any]:
+        try:
+            return job_store.create_analyze_job(payload)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.get("/api/jobs/{job_id}")
+    def get_job(job_id: str) -> dict[str, Any]:
+        job = job_store.get_job(job_id)
+        if job is None:
+            raise HTTPException(status_code=404, detail="job not found")
+        return job
 
     @app.get("/api/compare-latest")
     def compare_latest(
