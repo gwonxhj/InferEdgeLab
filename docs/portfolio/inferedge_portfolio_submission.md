@@ -4,6 +4,8 @@
 
 InferEdge는 edge AI 모델을 변환, 실행, 비교, 진단하고 최종 배포 가능 여부를 판단하는 end-to-end inference validation pipeline이다.
 
+InferEdge is not a benchmarking tool, but an end-to-end validation pipeline that connects artifact provenance, runtime behavior, and deployment decisions.
+
 이 프로젝트는 단순 latency benchmark가 아니라 artifact provenance, runtime result compatibility, deployment decision까지 연결한다. 목표는 "빠른 숫자"를 보여주는 것이 아니라, 어떤 모델과 산출물이 어떤 환경에서 실행되었고 그 결과를 배포해도 되는지 검토 가능한 evidence로 남기는 것이다.
 
 Pipeline:
@@ -98,11 +100,12 @@ Forge summary
 
 ## 7. Technical Highlights
 
-- **C++ Runtime boundary:** Runtime is implemented as a C++ execution/result export layer rather than a Python-only benchmark script.
-- **Schema-first integration:** Lab, Runtime, Forge, and AIGuard are connected through explicit JSON contracts and fixtures.
-- **Provenance validation:** Artifact/source hash and runtime provenance are treated as first-class deployment evidence.
-- **SaaS-ready boundary:** Lab already has API response contracts, in-memory async job stubs, and worker request/response mapping without prematurely adding DB/queue infrastructure.
-- **Deterministic diagnosis:** AIGuard uses rule + evidence detectors instead of vague LLM judgement.
+- **End-to-end pipeline:** Forge, Runtime, Lab, and AIGuard are connected as one validation flow from artifact build to deploy/review/blocked decision.
+- **C++ Runtime execution layer:** Runtime is implemented as a C++ execution/result export boundary rather than a Python-only benchmark script.
+- **Schema-first contract-based integration:** Lab, Runtime, Forge, and AIGuard communicate through explicit JSON contracts and compatibility fixtures.
+- **Provenance-aware validation:** Artifact/source hash and runtime provenance are treated as first-class deployment evidence.
+- **SaaS-ready API + async job workflow:** Lab has API response contracts, in-memory async job stubs, and worker request/response mapping without prematurely adding DB/queue infrastructure.
+- **Deterministic rule-based diagnosis:** AIGuard uses rule + evidence detectors instead of vague LLM judgement.
 - **Deployment decision ownership:** Lab keeps final deploy/review/blocked ownership while preserving optional guard evidence.
 
 ## 8. Current Limitations and Next Steps
@@ -120,17 +123,17 @@ Current planned production work:
 
 Next practical step:
 
-- convert this Markdown draft into a PDF submission document
-- keep the PDF concise enough for recruiter review
-- add diagrams/screenshots only where they clarify the pipeline
+- customize this portfolio for each target company
+- refine evaluation datasets and real-world benchmarks
+- extend the pipeline to production-ready worker execution
 
-PDF export:
+Appendix: local PDF export:
 
 ```bash
 bash scripts/export_portfolio_pdf.sh
 ```
 
-The script reads this Markdown file and writes `artifacts/portfolio/inferedge_portfolio_submission.pdf`. The generated `artifacts/` directory is intentionally ignored by git.
+This writes `artifacts/portfolio/inferedge_portfolio_submission.pdf`. The generated `artifacts/` directory is intentionally ignored by git.
 
 ## 9. Interview Talking Points
 
