@@ -46,7 +46,7 @@ Implemented today: Lab API response contract, `/api/compare`, `/api/analyze` in-
 
 Not implemented yet: real worker daemon, automatic Forge/Runtime execution from Lab jobs, DB/Redis/queue, file upload, SaaS frontend, and production auth/billing/deployment controls.
 
-Portfolio status: [docs/portfolio/inferedge_pipeline_status.md](docs/portfolio/inferedge_pipeline_status.md)
+Portfolio entry points: [1-page architecture summary](docs/portfolio/inferedge_1page_architecture.md) · [pipeline status](docs/portfolio/inferedge_pipeline_status.md)
 
 Interview one-liner: **InferEdge is an end-to-end inference validation pipeline that converts, runs, compares, diagnoses, and decides whether an edge AI model candidate is ready to deploy.**
 
@@ -208,6 +208,7 @@ Validated on real edge hardware:
 
 - [Benchmark reference table](BENCHMARKS.md)
 - [InferEdge pipeline contract](docs/pipeline_contract.md)
+- [InferEdge 1-Page Architecture Summary](docs/portfolio/inferedge_1page_architecture.md)
 - [InferEdge Pipeline Status](docs/portfolio/inferedge_pipeline_status.md)
 - [InferEdge Pipeline Portfolio Summary](docs/portfolio/inferedge_pipeline_portfolio.md)
 - [InferEdge Pipeline PDF Draft](docs/portfolio/inferedge_pipeline_portfolio_pdf.md)
