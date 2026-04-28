@@ -27,6 +27,7 @@ def test_create_app_registers_expected_routes():
     assert any(path == "/api/analyze" and "POST" in methods for path, methods in routes)
     assert any(path == "/api/jobs/{job_id}" and "GET" in methods for path, methods in routes)
     assert any(path == "/api/jobs/{job_id}/complete-dev" and "POST" in methods for path, methods in routes)
+    assert any(path == "/api/jobs/{job_id}/run-runtime-dev" and "POST" in methods for path, methods in routes)
     assert any(path == "/api/compare-latest" and "GET" in methods for path, methods in routes)
 
 
