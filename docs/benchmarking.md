@@ -1,13 +1,14 @@
 # Benchmarking Methodology
 
-이 문서는 EdgeBench의 벤치마크 측정 방법론을 정의합니다.  
+이 문서는 InferEdgeLab의 벤치마크 측정 방법론을 정의합니다.  
+`edgebench` 명령은 현재도 호환 alias로 남아 있지만, 문서의 기준 이름은 InferEdgeLab입니다.
 본 문서는 재현 가능성(Reproducibility)을 최우선 목표로 작성되었습니다.
 
 ---
 
 ## 1. 목표
 
-EdgeBench는 다음 두 지표를 통합 분석합니다:
+InferEdgeLab은 다음 두 지표를 통합 분석합니다:
 
 1. **정적 지표 (Static Metrics)**
    - Parameter count

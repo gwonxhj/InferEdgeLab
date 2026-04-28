@@ -1,4 +1,4 @@
-![CI](https://github.com/gwonxhj/edgebench/actions/workflows/benchmarks.yml/badge.svg)
+![CI](https://github.com/gwonxhj/InferEdgeLab/actions/workflows/benchmarks.yml/badge.svg)
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -64,7 +64,7 @@ Runtime identity polish: when a Forge manifest is applied, Runtime now preserves
 
 Not implemented yet: real worker daemon, full automated Forge/Runtime execution from production Lab workers, DB/Redis/queue, file upload, SaaS frontend, and production auth/billing/deployment controls.
 
-Portfolio entry points: [portfolio submission draft](docs/portfolio/inferedge_portfolio_submission.md) · [resume/interview summary](docs/portfolio/inferedge_resume_interview_summary.md) · [1-page architecture summary](docs/portfolio/inferedge_1page_architecture.md) · [pipeline status](docs/portfolio/inferedge_pipeline_status.md)
+Portfolio entry points: [portfolio submission](docs/portfolio/inferedge_portfolio_submission.md) · [resume/interview summary](docs/portfolio/inferedge_resume_interview_summary.md) · [1-page architecture summary](docs/portfolio/inferedge_1page_architecture.md) · [pipeline status](docs/portfolio/inferedge_pipeline_status.md)
 
 Interview one-liner: **InferEdge is an end-to-end inference validation pipeline that converts, runs, compares, diagnoses, and decides whether an edge AI model candidate is ready to deploy.**
 
@@ -93,7 +93,7 @@ For a quick review, follow this order:
 
 1. Read the pipeline summary: [docs/portfolio/inferedge_pipeline_portfolio.md](docs/portfolio/inferedge_pipeline_portfolio.md)
 2. Check the real benchmark result: [docs/portfolio/runtime_compare_yolov8n.md](docs/portfolio/runtime_compare_yolov8n.md)
-3. Review the PDF-ready draft: [docs/portfolio/inferedge_pipeline_portfolio_pdf.md](docs/portfolio/inferedge_pipeline_portfolio_pdf.md)
+3. Review the current submission draft: [docs/portfolio/inferedge_portfolio_submission.md](docs/portfolio/inferedge_portfolio_submission.md)
 4. Run Lab comparison with `compare-runtime-dir` if local InferEdgeRuntime JSON artifacts are available.
 
 Raw Runtime JSON and generated benchmark reports are intentionally not committed because they are environment-dependent.
@@ -228,17 +228,16 @@ Validated on real edge hardware:
 
 - [Benchmark reference table](BENCHMARKS.md)
 - [InferEdge pipeline contract](docs/pipeline_contract.md)
-- [InferEdge Portfolio Submission Draft](docs/portfolio/inferedge_portfolio_submission.md)
+- [InferEdge Portfolio Submission](docs/portfolio/inferedge_portfolio_submission.md)
+- [InferEdge Resume/Interview Summary](docs/portfolio/inferedge_resume_interview_summary.md)
 - [InferEdge 1-Page Architecture Summary](docs/portfolio/inferedge_1page_architecture.md)
 - [InferEdge Pipeline Status](docs/portfolio/inferedge_pipeline_status.md)
-- [InferEdge Pipeline Portfolio Summary](docs/portfolio/inferedge_pipeline_portfolio.md)
-- [InferEdge Pipeline PDF Draft](docs/portfolio/inferedge_pipeline_portfolio_pdf.md)
 - [YOLOv8n Runtime Comparison Report](docs/portfolio/runtime_compare_yolov8n.md)
 - [Jetson TensorRT validation runbook](docs/validation/jetson_tensorrt_validation.md)
 - [FastAPI API usage guide](docs/api/api_usage.md)
 - [SaaS async job workflow contract](docs/api/saas_job_workflow.md)
 - [Forge/Runtime worker integration contract](docs/api/worker_integration_contract.md)
-- [Portfolio design & architecture](docs/portfolio/edgebench_portfolio.md)
+- Legacy/reference portfolio notes: [pipeline portfolio summary](docs/portfolio/inferedge_pipeline_portfolio.md), [older PDF draft](docs/portfolio/inferedge_pipeline_portfolio_pdf.md), [EdgeBench-era design notes](docs/portfolio/edgebench_portfolio.md)
 - [Project roadmap](Roadmap.md)
 
 ---
@@ -248,8 +247,8 @@ Validated on real edge hardware:
 ### Clone and install
 
 ```bash
-git clone https://github.com/gwonxhj/edgebench.git
-cd edgebench
+git clone https://github.com/gwonxhj/InferEdgeLab.git
+cd InferEdgeLab
 
 pip install poetry
 poetry install
@@ -302,13 +301,13 @@ InferEdgeLab can consume compare-ready JSON files produced by InferEdgeRuntime a
 Runtime results are grouped by `compare_key`, then backend measurements are compared by `backend_key` using `mean_ms`.
 
 ```bash
-poetry run edgebench compare-runtime-dir results/
+poetry run inferedgelab compare-runtime-dir results/
 ```
 
 To save the same grouped comparison as Markdown:
 
 ```bash
-poetry run edgebench compare-runtime-dir results/ --report reports/runtime_compare.md
+poetry run inferedgelab compare-runtime-dir results/ --report reports/runtime_compare.md
 ```
 
 Example compare-ready Runtime fields:

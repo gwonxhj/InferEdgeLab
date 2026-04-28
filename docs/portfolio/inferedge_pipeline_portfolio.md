@@ -1,14 +1,20 @@
 # InferEdge Pipeline Portfolio Summary
 
+> Status note: this is an older portfolio summary kept as reference material.
+> For the current source of truth, use [inferedge_pipeline_status.md](inferedge_pipeline_status.md),
+> [inferedge_portfolio_submission.md](inferedge_portfolio_submission.md), and
+> [inferedge_resume_interview_summary.md](inferedge_resume_interview_summary.md).
+
 ## 1. Project Summary
 
-InferEdge is a portfolio project that splits the edge AI inference workflow into three focused stages:
+InferEdge is a portfolio project that now splits the edge AI inference workflow across four focused responsibilities:
 
 - InferEdgeForge: prepares model artifacts, conversion outputs, manifests, and metadata.
 - InferEdgeRuntime: runs inference on the target device, measures benchmark latency and FPS, and exports JSON results.
 - InferEdgeLab: loads Runtime JSON results, groups them by `compare_key`, compares them by `backend_key`, and generates comparison reports.
+- InferEdgeAIGuard: optionally adds deterministic rule/evidence diagnosis for provenance and failure signals.
 
-This project demonstrates an end-to-end edge AI inference validation workflow from artifact preparation to runtime benchmarking and result comparison.
+This project demonstrates an end-to-end edge AI inference validation workflow from artifact preparation to runtime execution, Lab comparison/reporting, optional diagnosis evidence, and deployment decision support.
 
 ## How to Read This Portfolio
 
