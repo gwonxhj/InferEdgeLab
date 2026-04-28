@@ -2,12 +2,49 @@ from __future__ import annotations
 
 from typing import Any
 
+from inferedgelab.services.api_job_contract import ApiJobContractError
+from inferedgelab.services.api_job_contract import validate_api_job_response
+
 
 WORKER_RESPONSE_STATUSES = {"completed", "failed"}
 
 
 class WorkerContractError(ValueError):
     """Raised when a Forge/Runtime worker boundary payload is invalid."""
+
+
+def build_worker_request_from_job(
+    job: dict[str, Any],
+    *,
+    options: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Project a queued analyze job response into the worker request contract."""
+
+    try:
+        validated_job = validate_api_job_response(job)
+    except ApiJobContractError as exc:
+        raise WorkerContractError(str(exc)) from exc
+
+    status = validated_job["status"]
+    if status != "queued":
+        raise WorkerContractError("only queued jobs can be converted to worker requests")
+
+    input_summary = validated_job["input_summary"]
+    if input_summary.get("workflow") != "analyze":
+        raise WorkerContractError("only analyze jobs can be converted to worker requests")
+
+    request_options = _build_worker_options(input_summary, options)
+    request = {
+        "job_id": validated_job["job_id"],
+        "input_summary": input_summary,
+        "requested_at": validated_job.get("updated_at") or validated_job["created_at"],
+        "model_path": input_summary.get("model_path"),
+        "artifact_path": input_summary.get("artifact_path"),
+        "metadata_path": input_summary.get("metadata_path"),
+        "manifest_path": input_summary.get("manifest_path"),
+        "options": request_options,
+    }
+    return validate_worker_request(request)
 
 
 def validate_worker_request(request: Any) -> dict[str, Any]:
@@ -58,6 +95,32 @@ def validate_worker_response(response: Any) -> dict[str, Any]:
             raise WorkerContractError("failed worker response runtime_result must be null")
 
     return response
+
+
+def _build_worker_options(
+    input_summary: dict[str, Any],
+    options: dict[str, Any] | None,
+) -> dict[str, Any]:
+    summary_options = input_summary.get("options")
+    if summary_options is None:
+        request_options: dict[str, Any] = {}
+    elif isinstance(summary_options, dict):
+        request_options = dict(summary_options)
+    else:
+        raise WorkerContractError("input_summary.options must be an object when provided")
+
+    if options is not None:
+        if not isinstance(options, dict):
+            raise WorkerContractError("options must be an object when provided")
+        request_options.update(options)
+
+    notes = input_summary.get("notes")
+    if notes is not None:
+        if not isinstance(notes, str):
+            raise WorkerContractError("input_summary.notes must be a string when provided")
+        request_options.setdefault("notes", notes)
+
+    return request_options
 
 
 def _validate_runtime_result(runtime_result: dict[str, Any]) -> None:

@@ -74,6 +74,7 @@ The current API implementation is an in-memory stub:
 
 - `POST /api/analyze` accepts JSON with `model_path` or `artifact_path`, optional `metadata_path`, optional `manifest_path`, and optional `notes`.
 - The endpoint creates a `queued` job response.
+- Queued analyze jobs can be projected into the worker request contract for future Forge/Runtime workers.
 - `GET /api/jobs/{job_id}` returns the stored in-memory job response.
 - `POST /api/jobs/{job_id}/complete-dev` can complete a queued/running in-memory job with a mock API response contract result.
 - The store is process-local and resets when the API process restarts.
