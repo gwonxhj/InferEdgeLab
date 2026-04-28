@@ -1,5 +1,38 @@
 # InferEdge Resume and Interview Summary
 
+## Final Resume Bullets
+
+- Built InferEdge, an end-to-end Edge AI inference validation pipeline that connects Forge build provenance, C++ Runtime execution, Lab comparison/report/API/job workflows, optional AIGuard diagnosis evidence, and Lab-owned deployment decisions.
+- Validated real execution paths on both macOS and edge hardware: `yolov8n.onnx` through Lab -> C++ Runtime -> ONNX Runtime CPU -> Lab job result ingestion, and Jetson Orin Nano TensorRT execution through Forge manifest + `model.engine` + C++ Runtime CLI.
+- Documented Jetson TensorRT smoke evidence with mean latency about 14.00 ms, p99 about 15.50 ms, and about 71.44 FPS on a Forge-generated TensorRT engine artifact.
+- Polished Runtime provenance readiness so manifest-backed TensorRT artifacts preserve source identity: `model.engine` can keep `compare_model_name=yolov8n` and `compare_key=yolov8n__b1__h640w640__fp32`.
+
+## Role-Specific Resume Versions
+
+### AI Inference Engineer
+
+Built an end-to-end Edge AI inference validation pipeline across Forge, Runtime, Lab, and AIGuard. The system validates not only latency, but also artifact provenance, runtime result compatibility, comparison readiness, and deployment decision evidence. I verified `yolov8n.onnx` through ONNX Runtime CPU on macOS and a Forge-generated TensorRT `model.engine` on Jetson Orin Nano, with Jetson smoke evidence around 14.00 ms mean latency, 15.50 ms p99, and 71.44 FPS. Runtime now preserves Forge manifest source identity for compare keys, reducing ambiguity when TensorRT artifacts are executed as engine files.
+
+### Embedded / Edge Engineer
+
+Built a multi-repository edge inference validation workflow that connects model build artifacts to real device execution evidence. InferEdgeRuntime provides a C++ execution/result export boundary, and I validated a Jetson Orin Nano TensorRT smoke using a Forge manifest plus generated `model.engine` artifact. The run completed successfully through the C++ Runtime CLI with TensorRT backend, Jetson device target, manifest applied, mean latency about 14.00 ms, p99 about 15.50 ms, and about 71.44 FPS. This is manual/dev smoke evidence, while production worker orchestration remains future work.
+
+### Backend / AI Platform
+
+Built the Lab-side orchestration and contract foundation for an edge AI validation platform. InferEdgeLab exposes compare/API/job/deployment-decision boundaries, maps analyze jobs to worker requests, ingests worker responses, preserves optional AIGuard evidence, and keeps production infrastructure concerns separate from the contract layer. Current scope is SaaS/API/job contract foundation plus dev-only Runtime execution smoke; production worker daemon, persistent queue/database, file upload, frontend, auth, and billing remain future work.
+
+## Interview: First 30 Seconds
+
+InferEdge는 단순 benchmark tool이 아니라 edge AI 모델의 build provenance, 실제 Runtime execution, 비교/report, optional diagnosis evidence, deployment decision을 연결하는 end-to-end validation pipeline입니다. 저는 macOS에서 `yolov8n.onnx`를 Lab -> C++ Runtime -> ONNX Runtime CPU -> Lab job result로 검증했고, Jetson Orin Nano에서는 Forge manifest와 TensorRT `model.engine`를 C++ Runtime CLI로 실행해 mean 약 14.00 ms, p99 약 15.50 ms, FPS 약 71.44의 smoke evidence를 확보했습니다. 최근에는 Runtime이 manifest source model identity를 보존하도록 보완해, engine artifact도 `compare_key=yolov8n__b1__h640w640__fp32` 형태를 유지할 수 있게 했습니다.
+
+## Interview: What Actually Works?
+
+현재 실제로 동작하는 범위는 세 단계로 설명할 수 있습니다. 첫째, Lab은 Runtime result를 compare/report/API/job/deployment_decision 형태로 정리할 수 있습니다. 둘째, dev-only 경로에서 Lab이 C++ Runtime CLI를 subprocess로 호출해 `yolov8n.onnx` ONNX Runtime CPU 실행 결과를 job result로 ingest하는 smoke가 성공했습니다. 셋째, Jetson Orin Nano에서 Forge manifest와 TensorRT `model.engine` artifact를 C++ Runtime CLI로 실행한 manual smoke가 성공했고, TensorRT backend, Jetson target, manifest applied, mean 약 14.00 ms, p99 약 15.50 ms, FPS 약 71.44 evidence를 확보했습니다. 다만 production worker daemon이나 queue 기반 자동 실행은 아직 구현 범위가 아닙니다.
+
+## Interview: Is The SaaS Complete?
+
+아직 production SaaS가 완성된 것은 아닙니다. 현재 구현된 것은 SaaS/API/job/worker contract foundation입니다. `/api/compare`, `/api/analyze`, `/api/jobs/{job_id}`, worker request/response mapping, dev-only Runtime execution smoke, deployment decision bundle, optional AIGuard evidence preservation까지는 구현되어 있습니다. 반면 production worker daemon, persistent DB/queue, upload flow, frontend, auth, billing은 future work로 명확히 분리했습니다. 그래서 정확한 표현은 "production SaaS"가 아니라 "SaaS-ready contract foundation plus dev/manual Runtime execution evidence"입니다.
+
 ## 1. Resume Project Entry: 5-Line Version
 
 - Built InferEdge, an end-to-end Edge AI Inference Validation Pipeline that connects model artifact provenance, real runtime execution, result analysis, diagnosis evidence, and deployment decisions.

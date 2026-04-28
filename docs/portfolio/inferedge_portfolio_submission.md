@@ -148,8 +148,11 @@ Next practical step:
 
 ## 9. Interview Talking Points
 
+- Final resume/interview wording is available in [InferEdge Resume and Interview Summary](inferedge_resume_interview_summary.md), including role-specific versions for AI Inference Engineer, Embedded/Edge Engineer, and Backend/AI Platform roles.
 - "제가 만든 것은 단순 벤치마크 스크립트가 아니라, edge deployment artifact의 출처와 실행 결과를 연결해 배포 가능 여부까지 판단하는 검증 파이프라인입니다."
 - "Forge, Runtime, Lab, AIGuard를 각각 build/provenance, C++ execution/result export, analysis/API/decision, rule/evidence diagnosis layer로 나눴습니다."
+- "macOS ONNX Runtime CPU smoke와 Jetson Orin Nano TensorRT smoke를 모두 확보했고, Jetson에서는 Forge manifest + TensorRT `model.engine` + C++ Runtime CLI 실행으로 mean 약 14.00 ms, p99 약 15.50 ms, FPS 약 71.44 evidence를 확보했습니다."
+- "Runtime source identity polish 이후에는 manifest-backed TensorRT engine artifact도 `compare_model_name=yolov8n`, `compare_key=yolov8n__b1__h640w640__fp32`를 유지할 수 있습니다."
 - "AIGuard는 LLM 추측이 아니라 artifact hash, source hash, precision, shape 같은 evidence를 비교하는 deterministic detector 구조입니다."
 - "아직 production worker, DB/Redis/queue, frontend, auth/billing은 계획 단계로 명확히 구분했고, 먼저 contract와 smoke coverage를 안정화했습니다."
 - "이 프로젝트는 AI inference engineer 포트폴리오 관점에서 C++ runtime, Python orchestration, schema contract, provenance validation, SaaS API boundary를 하나의 제품형 pipeline으로 연결한 사례입니다."
