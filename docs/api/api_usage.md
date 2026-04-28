@@ -65,6 +65,7 @@ Current endpoints:
 - `GET /api/compare`
 - `POST /api/analyze`
 - `GET /api/jobs/{job_id}`
+- `POST /api/jobs/{job_id}/complete-dev`
 
 ---
 
@@ -268,11 +269,32 @@ Poll the job:
 curl "http://127.0.0.1:8000/api/jobs/job_..."
 ```
 
+Development-only completion stub:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/api/jobs/job_.../complete-dev" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "result": {
+      "summary": {"response_type": "compare", "overall": "improvement", "comparison_mode": "same_precision", "precision_pair": ["fp32", "fp32"], "deployment_decision": "deployable", "guard_status": null},
+      "comparison": {"result": {}, "judgement": {}, "rendered": {"markdown": "# Compare", "html": "<html></html>"}},
+      "deployment_decision": {"decision": "deployable", "reason": "Mock dev completion result.", "lab_overall": "improvement", "guard_status": null, "recommended_action": "Review generated report before deployment."},
+      "provenance": {"source_bundle": "compare"},
+      "metadata": {"legacy_warning": false},
+      "timestamps": {"base": "2026-04-13T09:00:00Z", "new": "2026-04-13T10:00:00Z"},
+      "execution_info": {"base_path": "dev/base.json", "new_path": "dev/new.json", "selection_mode": null, "legacy_warning": false}
+    }
+  }'
+```
+
+`/api/jobs/{job_id}/complete-dev` is only a development/mock path. It stores a caller-provided API response contract bundle on an in-memory job so SaaS clients can smoke-test the queued-to-completed flow before real Forge/Runtime worker integration exists.
+
 ---
 
 ## Notes
 
-- The current API is read-only.
+- The compare/history/summarize/list-results API layer remains a thin service adapter.
+- The analyze job endpoints are in-memory SaaS workflow stubs.
 - The API layer reuses service-layer logic rather than duplicating benchmark logic inside HTTP handlers.
 - This keeps CLI and API behavior aligned across compare, history-report, summarize, and list-results.
 - The API is intentionally a bridge layer for future Web UI or SaaS-oriented expansion, not a separate product surface yet.

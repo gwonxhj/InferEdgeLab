@@ -144,6 +144,21 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=404, detail="job not found")
         return job
 
+    @app.post("/api/jobs/{job_id}/complete-dev")
+    def complete_job_dev(
+        job_id: str,
+        payload: dict[str, Any] = Body(...),
+    ) -> dict[str, Any]:
+        result = payload.get("result", payload)
+        try:
+            return job_store.complete_job_dev(job_id, result)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="job not found") from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
     @app.get("/api/compare-latest")
     def compare_latest(
         pattern: str = "results/*.json",

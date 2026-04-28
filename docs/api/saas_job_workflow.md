@@ -53,14 +53,27 @@ POST /api/analyze
 
 Failed jobs follow the same polling shape but return `status: failed`, `result: null`, and a structured `error` object.
 
+For local development only, InferEdgeLab also exposes a mock completion path:
+
+```text
+POST /api/analyze
+-> queued job response
+POST /api/jobs/{job_id}/complete-dev
+-> completed job response with caller-provided API response contract result
+GET /api/jobs/{job_id}
+-> same completed job response
+```
+
+`/api/jobs/{job_id}/complete-dev` is not a worker substitute. It validates that the supplied `result` follows the existing API response contract and stores it in the process-local job store so frontend/SaaS clients can smoke-test the full job lifecycle before Forge/Runtime worker integration exists.
+
 ## Current Implementation Scope
 
 The current API implementation is an in-memory stub:
 
 - `POST /api/analyze` accepts JSON with `model_path` or `artifact_path`, optional `metadata_path`, optional `manifest_path`, and optional `notes`.
-- The endpoint creates a `queued` job response only.
+- The endpoint creates a `queued` job response.
 - `GET /api/jobs/{job_id}` returns the stored in-memory job response.
-- Jobs are not advanced to `running` or `completed` in this step.
+- `POST /api/jobs/{job_id}/complete-dev` can complete a queued/running in-memory job with a mock API response contract result.
 - The store is process-local and resets when the API process restarts.
 
 This keeps the SaaS workflow contract executable without committing to queue, database, worker, upload, Forge build, or Runtime execution infrastructure.
