@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -10,6 +11,9 @@ from inferedgelab.services.compare_service import (
     build_compare_latest_bundle,
     select_latest_compare_pair,
 )
+
+
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
 
 def write_result(
@@ -59,6 +63,15 @@ def write_result(
         encoding="utf-8",
     )
     return str(path)
+
+
+def load_aiguard_mismatch_fixture(name: str) -> dict:
+    fixtures = json.loads(
+        (FIXTURES / "aiguard_artifact_mismatch_guard_analysis.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    return fixtures[name]
 
 
 def test_build_compare_bundle_returns_compare_artifacts_for_same_precision_pair(tmp_path):
@@ -259,6 +272,96 @@ def test_build_compare_bundle_with_guard_cross_precision_low_speedup(tmp_path, m
     assert "insufficient_precision_speedup" in bundle["guard_analysis"]["anomalies"]
     assert bundle["deployment_decision"]["decision"] == "review_required"
     assert "Guard Analysis" in bundle["markdown"]
+
+
+@pytest.mark.parametrize(
+    ("fixture_name", "expected_decision", "expected_anomaly"),
+    [
+        ("artifact_hash_mismatch", "blocked", "artifact_sha256_mismatch"),
+        ("source_model_hash_mismatch", "blocked", "source_model_sha256_mismatch"),
+        ("precision_or_shape_mismatch", "review_required", "shape_mismatch"),
+        ("insufficient_provenance", "review_required", "insufficient_provenance"),
+    ],
+)
+def test_build_compare_bundle_preserves_aiguard_artifact_mismatch_evidence(
+    tmp_path,
+    monkeypatch,
+    fixture_name,
+    expected_decision,
+    expected_anomaly,
+):
+    guard_analysis = load_aiguard_mismatch_fixture(fixture_name)
+    monkeypatch.setattr(
+        compare_service,
+        "analyze_compare_result",
+        lambda guard_input: guard_analysis,
+    )
+    base_path = write_result(
+        tmp_path,
+        "base.json",
+        timestamp="2026-04-13T09:00:00Z",
+        precision="fp16",
+        mean_ms=10.0,
+    )
+    new_path = write_result(
+        tmp_path,
+        "new.json",
+        timestamp="2026-04-13T10:00:00Z",
+        precision="fp16",
+        mean_ms=9.0,
+    )
+
+    bundle = build_compare_bundle(base_path=base_path, new_path=new_path, with_guard=True)
+
+    assert bundle["guard_analysis"] == guard_analysis
+    assert bundle["data"]["guard_analysis"] == guard_analysis
+    assert bundle["deployment_decision"]["decision"] == expected_decision
+    assert bundle["deployment_decision"]["guard_status"] == guard_analysis["status"]
+    assert bundle["data"]["deployment_decision"] == bundle["deployment_decision"]
+    assert "Deployment Decision" in bundle["markdown"]
+    assert "Guard Analysis" in bundle["markdown"]
+    assert expected_anomaly in bundle["markdown"]
+    assert "Deployment Decision" in bundle["html"]
+    assert "Guard Analysis" in bundle["html"]
+    assert expected_anomaly in bundle["html"]
+
+
+def test_build_compare_latest_bundle_preserves_aiguard_mismatch_evidence(
+    tmp_path,
+    monkeypatch,
+):
+    guard_analysis = load_aiguard_mismatch_fixture("artifact_hash_mismatch")
+    monkeypatch.setattr(
+        compare_service,
+        "analyze_compare_result",
+        lambda guard_input: guard_analysis,
+    )
+    write_result(
+        tmp_path,
+        "older.json",
+        timestamp="2026-04-13T09:00:00Z",
+        precision="fp32",
+        mean_ms=10.0,
+    )
+    write_result(
+        tmp_path,
+        "newer.json",
+        timestamp="2026-04-13T10:00:00Z",
+        precision="fp32",
+        mean_ms=9.0,
+    )
+
+    bundle = build_compare_latest_bundle(
+        pattern=str(tmp_path / "*.json"),
+        selection_mode="same_precision",
+        with_guard=True,
+    )
+
+    assert bundle["guard_analysis"] == guard_analysis
+    assert bundle["data"]["guard_analysis"] == guard_analysis
+    assert bundle["deployment_decision"]["decision"] == "blocked"
+    assert bundle["data"]["deployment_decision"] == bundle["deployment_decision"]
+    assert "artifact_sha256_mismatch" in bundle["markdown"]
 
 
 def test_select_latest_compare_pair_selects_latest_same_precision_pair(tmp_path):
