@@ -1,10 +1,14 @@
 # InferEdge Pipeline Portfolio PDF Draft
 
+> Status note: this is an older compact PDF draft retained as reference.
+> The current PDF source is [inferedge_portfolio_submission.md](inferedge_portfolio_submission.md),
+> with final resume/interview wording in [inferedge_resume_interview_summary.md](inferedge_resume_interview_summary.md).
+
 ## Page 1. Project Overview
 
 ### One-Line Summary
 
-InferEdge is an end-to-end edge AI inference validation pipeline that connects model artifact preparation, runtime benchmarking, and automated result comparison.
+InferEdge is an end-to-end edge AI inference validation pipeline that connects build provenance, runtime execution, Lab comparison/reporting, optional diagnosis evidence, and deployment decisions.
 
 ### Problem
 
@@ -18,11 +22,12 @@ A practical deployment workflow needs to answer:
 
 ### Pipeline Overview
 
-InferEdge separates the workflow into three responsibilities:
+InferEdge separates the workflow into repository responsibilities:
 
 - InferEdgeForge prepares model artifacts, manifests, and metadata.
 - InferEdgeRuntime runs inference on target backends and exports benchmark JSON.
 - InferEdgeLab groups Runtime JSON by `compare_key`, compares by `backend_key`, and exports reports.
+- InferEdgeAIGuard optionally provides deterministic rule/evidence diagnosis.
 
 This makes the project more than a YOLOv8n demo. It is a reproducible validation pipeline from artifact preparation to measurable backend comparison.
 

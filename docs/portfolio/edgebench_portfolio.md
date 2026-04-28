@@ -1,3 +1,10 @@
+> Status note: this is an EdgeBench-era portfolio/design note kept as historical reference.
+> The current source of truth is the InferEdgeLab-centered pipeline documentation:
+> [inferedge_pipeline_status.md](inferedge_pipeline_status.md),
+> [inferedge_portfolio_submission.md](inferedge_portfolio_submission.md), and
+> [inferedge_resume_interview_summary.md](inferedge_resume_interview_summary.md).
+> Current production scope remains SaaS-ready validation contracts plus dev/manual runtime smoke evidence; production worker daemon, DB/queue, frontend, upload flow, auth, and billing remain future work.
+
 ## 📌 프로젝트 개요
 
 EdgeBench는 ONNX 기반 모델의 추론 성능을 분석하고,  
