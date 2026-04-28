@@ -202,6 +202,33 @@ Response structure:
 
 ---
 
+## InferEdgeLab API Response Contract
+
+SaaS-facing compare responses should be wrapped into a stable external JSON shape. The wrapper preserves existing service-layer output and does not change compare, report, or deployment decision logic.
+
+Required top-level fields:
+
+- `summary`
+  - compact response type, comparison mode, overall judgement, deployment decision, and guard status
+- `comparison`
+  - compare result, judgement, and rendered Markdown/HTML report content
+- `deployment_decision`
+  - Lab-owned deploy/review/block/unknown decision
+- `guard_analysis`
+  - optional AIGuard evidence; omitted when AIGuard is not installed or not executed
+- `provenance`
+  - runtime, shape, and run configuration provenance copied from the compare bundle
+- `metadata`
+  - request and bundle metadata such as paths and legacy warning state
+- `timestamps`
+  - base/new result timestamps when available
+- `execution_info`
+  - path, selection mode, and execution-context fields needed by frontend/SaaS clients
+
+The fixture at `tests/fixtures/api_response_bundle.json` locks the external contract for `deployable`, `review_required`, `blocked`, and AIGuard-absent responses. AIGuard remains optional, and InferEdgeLab remains the final deployment decision owner.
+
+---
+
 ## Notes
 
 - The current API is read-only.
