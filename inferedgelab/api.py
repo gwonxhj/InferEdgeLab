@@ -17,7 +17,10 @@ from inferedgelab.services.compare_service import build_compare_latest_bundle
 from inferedgelab.services.deployment_decision import build_deployment_decision
 from inferedgelab.services.history_report_service import build_history_report_outputs
 from inferedgelab.services.list_results_service import build_list_results_bundle
+from inferedgelab.services.runtime_executor import run_runtime_inference
 from inferedgelab.services.summarize_service import build_summary_bundle
+from inferedgelab.services.worker_contract import WorkerContractError
+from inferedgelab.services.worker_contract import build_worker_request_from_job
 
 
 def create_app() -> FastAPI:
@@ -156,6 +159,20 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=404, detail="job not found") from exc
         except RuntimeError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.post("/api/jobs/{job_id}/run-runtime-dev")
+    def run_runtime_dev(job_id: str) -> dict[str, Any]:
+        job = job_store.get_job(job_id)
+        if job is None:
+            raise HTTPException(status_code=404, detail="job not found")
+        try:
+            worker_request = build_worker_request_from_job(job)
+            worker_response = run_runtime_inference(worker_request)
+            return job_store.apply_worker_response(job_id, worker_response)
+        except WorkerContractError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 

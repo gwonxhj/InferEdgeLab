@@ -5,6 +5,8 @@ from typing import Any
 from uuid import uuid4
 
 from inferedgelab.services.api_job_contract import build_api_job_response
+from inferedgelab.services.worker_contract import WorkerContractError
+from inferedgelab.services.worker_contract import apply_worker_response_to_job
 
 
 class InMemoryApiJobStore:
@@ -90,6 +92,17 @@ class InMemoryApiJobStore:
         )
         self._jobs[job_id] = completed
         return completed
+
+    def apply_worker_response(self, job_id: str, worker_response: dict[str, Any]) -> dict[str, Any]:
+        job = self.get_job(job_id)
+        if job is None:
+            raise KeyError(job_id)
+        try:
+            updated = apply_worker_response_to_job(job, worker_response)
+        except WorkerContractError:
+            raise
+        self._jobs[job_id] = updated
+        return updated
 
 
 def _optional_string(payload: dict[str, Any], key: str) -> str | None:
