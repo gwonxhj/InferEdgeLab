@@ -1,0 +1,118 @@
+{
+  "artifact_hash_mismatch": {
+    "mode": "forge_runtime_provenance_reasoning",
+    "status": "error",
+    "confidence": 0.9,
+    "anomalies": [
+      {
+        "type": "artifact_sha256_mismatch",
+        "severity": "high",
+        "message": "Runtime artifact_sha256 does not match Forge artifact_sha256.",
+        "evidence": {
+          "field": "artifact_sha256",
+          "expected": "forge-artifact-sha",
+          "observed": "runtime-artifact-sha",
+          "expected_source": "forge_manifest",
+          "observed_source": "runtime_result.extra"
+        }
+      }
+    ],
+    "suspected_causes": [
+      "runtime_result_does_not_match_forge_artifact"
+    ],
+    "recommendations": [
+      "Block or review deployment until Runtime profiling is repeated against the Forge-built artifact."
+    ]
+  },
+  "source_model_hash_mismatch": {
+    "mode": "forge_runtime_provenance_reasoning",
+    "status": "error",
+    "confidence": 0.9,
+    "anomalies": [
+      {
+        "type": "source_model_sha256_mismatch",
+        "severity": "high",
+        "message": "Runtime source_model_sha256 does not match Forge source_model_sha256.",
+        "evidence": {
+          "field": "source_model_sha256",
+          "expected": "forge-source-sha",
+          "observed": "runtime-source-sha",
+          "expected_source": "forge_manifest",
+          "observed_source": "runtime_result.extra"
+        }
+      }
+    ],
+    "suspected_causes": [
+      "runtime_result_does_not_match_forge_artifact"
+    ],
+    "recommendations": [
+      "Block or review deployment until Runtime profiling is repeated against the Forge-built artifact."
+    ]
+  },
+  "precision_or_shape_mismatch": {
+    "mode": "forge_runtime_provenance_reasoning",
+    "status": "warning",
+    "confidence": 0.7,
+    "anomalies": [
+      {
+        "type": "runtime_config_mismatch",
+        "severity": "medium",
+        "message": "Runtime precision does not match Forge handoff provenance.",
+        "evidence": {
+          "field": "precision",
+          "expected": "fp16",
+          "observed": "fp32",
+          "expected_source": "forge_manifest",
+          "observed_source": "runtime_result"
+        }
+      },
+      {
+        "type": "shape_mismatch",
+        "severity": "medium",
+        "message": "Runtime height does not match Forge handoff provenance.",
+        "evidence": {
+          "field": "height",
+          "expected": 640,
+          "observed": 320,
+          "expected_source": "forge_manifest",
+          "observed_source": "runtime_result.run_config"
+        }
+      }
+    ],
+    "suspected_causes": [
+      "forge_runtime_configuration_mismatch"
+    ],
+    "recommendations": [
+      "Review Forge handoff metadata and Runtime launch configuration before trusting the profiling result."
+    ]
+  },
+  "insufficient_provenance": {
+    "mode": "forge_runtime_provenance_reasoning",
+    "status": "warning",
+    "confidence": 0.7,
+    "anomalies": [
+      {
+        "type": "insufficient_provenance",
+        "severity": "medium",
+        "message": "Forge/Runtime provenance comparison is incomplete because required fields are missing.",
+        "evidence": {
+          "missing_fields": [
+            {
+              "field": "artifact_sha256",
+              "expected": null,
+              "observed": null,
+              "expected_source": null,
+              "observed_source": null
+            }
+          ]
+        }
+      }
+    ],
+    "suspected_causes": [
+      "incomplete_forge_runtime_provenance"
+    ],
+    "recommendations": [
+      "Record Forge metadata/manifest and Runtime result provenance before using artifact mismatch reasoning for deployment decisions."
+    ]
+  }
+}

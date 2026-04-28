@@ -86,6 +86,8 @@ AIGuard is responsible for:
 
 AIGuard does not replace Lab judgement. It adds reviewer-facing diagnosis evidence that Lab may reflect in the final deployment decision.
 
+Artifact and provenance mismatch diagnosis is treated as optional AIGuard evidence. For example, AIGuard can report Forge/Runtime `artifact_sha256`, `source_model_sha256`, artifact path, precision, or shape mismatches through `guard_analysis`; Lab preserves that evidence in compare/report bundles and still owns the final deployment decision.
+
 ## Contract Artifacts
 
 | Artifact | Owner repo | Consumer repo | Required purpose |
