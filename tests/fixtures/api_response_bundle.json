@@ -1,0 +1,272 @@
+{
+  "deployable": {
+    "summary": {
+      "response_type": "compare",
+      "overall": "improvement",
+      "comparison_mode": "same_precision",
+      "precision_pair": "fp32_vs_fp32",
+      "deployment_decision": "deployable",
+      "guard_status": "ok"
+    },
+    "comparison": {
+      "result": {
+        "metrics": {
+          "mean_ms": {
+            "base": 10.0,
+            "new": 9.0,
+            "delta": -1.0,
+            "delta_pct": -10.0
+          }
+        },
+        "runtime_provenance": {
+          "base": {
+            "runtime_artifact_path": "artifacts/base.onnx"
+          },
+          "new": {
+            "runtime_artifact_path": "artifacts/new.onnx"
+          }
+        }
+      },
+      "judgement": {
+        "overall": "improvement",
+        "comparison_mode": "same_precision",
+        "precision_pair": "fp32_vs_fp32"
+      },
+      "rendered": {
+        "markdown": "# report",
+        "html": "<html></html>"
+      }
+    },
+    "deployment_decision": {
+      "decision": "deployable",
+      "reason": "Lab judgement is favorable and Guard analysis passed.",
+      "lab_overall": "improvement",
+      "guard_status": "ok",
+      "recommended_action": "Deployment can proceed with normal rollout monitoring."
+    },
+    "guard_analysis": {
+      "status": "ok",
+      "mode": "compare_reasoning",
+      "anomalies": [],
+      "suspected_causes": [],
+      "recommendations": [],
+      "confidence": 0.5
+    },
+    "provenance": {
+      "runtime": {
+        "base": {
+          "runtime_artifact_path": "artifacts/base.onnx"
+        },
+        "new": {
+          "runtime_artifact_path": "artifacts/new.onnx"
+        }
+      },
+      "shape": {},
+      "run_config_diff": {},
+      "source_bundle": "compare"
+    },
+    "metadata": {
+      "base_path": "results/base.json",
+      "new_path": "results/new.json",
+      "legacy_warning": false
+    },
+    "timestamps": {
+      "base": "2026-04-13T09:00:00Z",
+      "new": "2026-04-13T10:00:00Z"
+    },
+    "execution_info": {
+      "base_path": "results/base.json",
+      "new_path": "results/new.json",
+      "selection_mode": null,
+      "legacy_warning": false
+    }
+  },
+  "review_required": {
+    "summary": {
+      "response_type": "compare",
+      "overall": "improvement",
+      "comparison_mode": "same_precision",
+      "precision_pair": "fp32_vs_fp32",
+      "deployment_decision": "review_required",
+      "guard_status": "warning"
+    },
+    "comparison": {
+      "result": {},
+      "judgement": {
+        "overall": "improvement"
+      },
+      "rendered": {
+        "markdown": "# report",
+        "html": "<html></html>"
+      }
+    },
+    "deployment_decision": {
+      "decision": "review_required",
+      "reason": "Guard analysis reported warning-level validation risks.",
+      "lab_overall": "improvement",
+      "guard_status": "warning",
+      "recommended_action": "Review Guard anomalies, suspected causes, and accuracy/provenance evidence before deployment."
+    },
+    "guard_analysis": {
+      "status": "warning",
+      "mode": "forge_runtime_provenance_reasoning",
+      "anomalies": [
+        {
+          "type": "shape_mismatch",
+          "severity": "medium",
+          "evidence": {
+            "field": "height",
+            "expected": 640,
+            "observed": 320
+          }
+        }
+      ],
+      "suspected_causes": [
+        "forge_runtime_configuration_mismatch"
+      ],
+      "recommendations": [
+        "Review Forge handoff metadata and Runtime launch configuration before trusting the profiling result."
+      ],
+      "confidence": 0.7
+    },
+    "provenance": {
+      "runtime": {},
+      "shape": {},
+      "run_config_diff": {},
+      "source_bundle": "compare"
+    },
+    "metadata": {
+      "base_path": "results/base.json",
+      "new_path": "results/new.json",
+      "legacy_warning": false
+    },
+    "timestamps": {
+      "base": "2026-04-13T09:00:00Z",
+      "new": "2026-04-13T10:00:00Z"
+    },
+    "execution_info": {
+      "base_path": "results/base.json",
+      "new_path": "results/new.json",
+      "selection_mode": null,
+      "legacy_warning": false
+    }
+  },
+  "blocked": {
+    "summary": {
+      "response_type": "compare",
+      "overall": "improvement",
+      "comparison_mode": "same_precision",
+      "precision_pair": "fp32_vs_fp32",
+      "deployment_decision": "blocked",
+      "guard_status": "error"
+    },
+    "comparison": {
+      "result": {},
+      "judgement": {
+        "overall": "improvement"
+      },
+      "rendered": {
+        "markdown": "# report",
+        "html": "<html></html>"
+      }
+    },
+    "deployment_decision": {
+      "decision": "blocked",
+      "reason": "Guard analysis reported an error-level validation issue.",
+      "lab_overall": "improvement",
+      "guard_status": "error",
+      "recommended_action": "Do not deploy until the Guard anomalies are resolved."
+    },
+    "guard_analysis": {
+      "status": "error",
+      "mode": "forge_runtime_provenance_reasoning",
+      "anomalies": [
+        {
+          "type": "artifact_sha256_mismatch",
+          "severity": "high",
+          "evidence": {
+            "field": "artifact_sha256",
+            "expected": "forge-artifact-sha",
+            "observed": "runtime-artifact-sha"
+          }
+        }
+      ],
+      "suspected_causes": [
+        "runtime_result_does_not_match_forge_artifact"
+      ],
+      "recommendations": [
+        "Block or review deployment until Runtime profiling is repeated against the Forge-built artifact."
+      ],
+      "confidence": 0.9
+    },
+    "provenance": {
+      "runtime": {},
+      "shape": {},
+      "run_config_diff": {},
+      "source_bundle": "compare"
+    },
+    "metadata": {
+      "base_path": "results/base.json",
+      "new_path": "results/new.json",
+      "legacy_warning": false
+    },
+    "timestamps": {
+      "base": "2026-04-13T09:00:00Z",
+      "new": "2026-04-13T10:00:00Z"
+    },
+    "execution_info": {
+      "base_path": "results/base.json",
+      "new_path": "results/new.json",
+      "selection_mode": null,
+      "legacy_warning": false
+    }
+  },
+  "without_guard": {
+    "summary": {
+      "response_type": "compare",
+      "overall": "improvement",
+      "comparison_mode": "same_precision",
+      "precision_pair": "fp32_vs_fp32",
+      "deployment_decision": "unknown",
+      "guard_status": null
+    },
+    "comparison": {
+      "result": {},
+      "judgement": {
+        "overall": "improvement"
+      },
+      "rendered": {
+        "markdown": "# report",
+        "html": "<html></html>"
+      }
+    },
+    "deployment_decision": {
+      "decision": "unknown",
+      "reason": "Guard analysis is unavailable.",
+      "lab_overall": "improvement",
+      "guard_status": null,
+      "recommended_action": "Run compare with --with-guard before deployment decision."
+    },
+    "provenance": {
+      "runtime": {},
+      "shape": {},
+      "run_config_diff": {},
+      "source_bundle": "compare"
+    },
+    "metadata": {
+      "base_path": "results/base.json",
+      "new_path": "results/new.json",
+      "legacy_warning": false
+    },
+    "timestamps": {
+      "base": "2026-04-13T09:00:00Z",
+      "new": "2026-04-13T10:00:00Z"
+    },
+    "execution_info": {
+      "base_path": "results/base.json",
+      "new_path": "results/new.json",
+      "selection_mode": null,
+      "legacy_warning": false
+    }
+  }
+}
