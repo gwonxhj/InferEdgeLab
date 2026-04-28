@@ -88,6 +88,7 @@ The current cross-repository loop is covered by documentation, fixtures, and smo
 - Runtime Lab `worker_request` dry-run validation
 - Runtime worker completed/failed response dry-run export
 - Runtime manual Jetson TensorRT smoke with Forge manifest + TensorRT engine artifact
+- Runtime source-model identity preservation for manifest-backed TensorRT engine compare keys
 - Forge worker/runtime summary contract
 - Forge summary to Lab worker request compatibility
 - Forge summary-origin Lab worker request validation in Runtime
@@ -101,7 +102,7 @@ InferEdge now has two runtime execution evidence paths:
 1. macOS ONNX Runtime CPU smoke through Lab's dev-only Runtime execution path using `yolov8n.onnx`. The smoke created Lab job `job_9e2321179256`, called the C++ Runtime CLI through Lab's subprocess path, executed ONNX Runtime on CPU with FP32, and ingested the resulting JSON back into the Lab job result. Runtime reported input shape `[1, 3, 640, 640]`, output shape `[1, 84, 8400]`, `warmup=1`, `runs=5`, benchmark status success, mean latency about 47.97 ms, p50 about 46.95 ms, p95/p99 about 51.80 ms, and about 20.85 FPS. The resulting `deployment_decision` was `unknown`, which is expected for direct Runtime execution before Lab compare/report.
 2. Jetson Orin Nano TensorRT smoke using a Forge-generated manifest and TensorRT engine artifact executed by the C++ Runtime CLI. The manual Jetson smoke ran on Linux `5.15.148-tegra` / `aarch64` from `~/InferEdge-Runtime`, using Forge manifest `/home/risenano01/InferEdgeForge/builds/yolov8n__jetson__tensorrt__jetson_fp16/manifest.json` and artifact `/home/risenano01/InferEdgeForge/builds/yolov8n__jetson__tensorrt__jetson_fp16/model.engine`. The result JSON was `results/jetson/yolov8n_jetson_tensorrt_manifest_smoke.json` and reported `success: true`, `status: success`, `engine_backend: tensorrt`, `device_name: jetson`, `manifest_applied: true`, input shape `[1, 3, 640, 640]`, output shape `[1, 84, 8400]`, mean latency about 14.00 ms, p99 about 15.50 ms, and about 71.44 FPS.
 
-Note: the Jetson smoke currently produced a `compare_key` based on `model__b1__h640w640__fp32` because Runtime compare naming derives the model name from the explicit `model.engine` path stem instead of preserving the source model identity from the Forge manifest. This is not an execution failure; it is a compare naming/provenance polish item. Future work should preserve source model identity from Forge manifest for `compare_key`.
+Compare-key polish status: this limitation has been resolved in InferEdgeRuntime #37. When a Forge manifest is applied, Runtime now prefers `manifest.source_model.path` for compare naming, so a TensorRT artifact path such as `model.engine` can still produce `compare_model_name=yolov8n` and `compare_key=yolov8n__b1__h640w640__fp32`. This improves provenance and compare-readiness; it does not add production SaaS worker infrastructure.
 
 ## Implemented vs Planned
 
@@ -117,6 +118,7 @@ Note: the Jetson smoke currently produced a `compare_key` based on `model__b1__h
 - Worker request and worker response boundary contracts
 - Dev-only Lab -> Runtime execution smoke for a real `yolov8n.onnx` model
 - Manual Jetson TensorRT Runtime smoke using Forge manifest and TensorRT engine artifact
+- Runtime compare-key identity polish for manifest-backed engine artifacts
 - Cross-repo fixture compatibility across Forge, Runtime, Lab, and AIGuard
 - Rule/evidence based provenance mismatch diagnosis
 
@@ -125,7 +127,6 @@ Note: the Jetson smoke currently produced a `compare_key` based on `model__b1__h
 - real worker daemon
 - real Forge build execution from Lab jobs
 - full automated Runtime inference execution from production Lab workers
-- preserve source model identity from Forge manifest for Runtime `compare_key`
 - database persistence
 - Redis, Celery, or another queue
 - file upload handling

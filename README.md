@@ -58,7 +58,9 @@ Repository roles are deliberately split:
 - **InferEdgeLab:** compare/report/API/job workflow and final deployment decision ownership.
 - **InferEdgeAIGuard:** optional rule + evidence based failure and provenance diagnosis.
 
-Implemented today: Lab API response contract, `/api/compare`, `/api/analyze` in-memory jobs, worker request/response mappings, Runtime dry-run validation/export, Forge worker/runtime summary, AIGuard provenance mismatch diagnosis, Lab decision/report evidence smoke coverage, dev-only Lab -> Runtime ONNX Runtime smoke using `yolov8n.onnx`, and manual Jetson TensorRT Runtime smoke using a Forge manifest plus TensorRT engine artifact.
+Implemented today: Lab API response contract, `/api/compare`, `/api/analyze` in-memory jobs, worker request/response mappings, Runtime dry-run validation/export, Forge worker/runtime summary, AIGuard provenance mismatch diagnosis, Lab decision/report evidence smoke coverage, dev-only Lab -> Runtime ONNX Runtime smoke using `yolov8n.onnx`, manual Jetson TensorRT Runtime smoke using a Forge manifest plus TensorRT engine artifact, and Runtime source-model identity preservation for compare-ready TensorRT engine results.
+
+Runtime identity polish: when a Forge manifest is applied, Runtime now preserves the manifest `source_model.path` identity for comparison naming. A TensorRT artifact such as `model.engine` can therefore keep `compare_model_name=yolov8n` and `compare_key=yolov8n__b1__h640w640__fp32` instead of degrading to `model__...`. This is provenance/compare-readiness polish, not production SaaS infrastructure.
 
 Not implemented yet: real worker daemon, full automated Forge/Runtime execution from production Lab workers, DB/Redis/queue, file upload, SaaS frontend, and production auth/billing/deployment controls.
 

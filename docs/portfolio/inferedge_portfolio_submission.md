@@ -99,10 +99,11 @@ Recent validation evidence:
 - Lab PR #171 기준 1-page architecture summary 문서화 완료
 - Lab -> Runtime manual smoke using `yolov8n.onnx`: `/api/analyze` created job `job_9e2321179256`, Lab invoked the C++ Runtime CLI through the dev-only subprocess path, ONNX Runtime executed the model successfully, and the latency/provenance JSON was ingested back into the Lab job result. The smoke reported ONNX Runtime backend available, benchmark status success, mean latency about 47.97 ms, p50 about 46.95 ms, p95/p99 about 51.80 ms, and about 20.85 FPS.
 - Jetson TensorRT Runtime smoke: on Jetson Orin Nano (`Linux 5.15.148-tegra`, `aarch64`), the C++ Runtime CLI in `~/InferEdge-Runtime` executed Forge manifest `/home/risenano01/InferEdgeForge/builds/yolov8n__jetson__tensorrt__jetson_fp16/manifest.json` and TensorRT engine artifact `/home/risenano01/InferEdgeForge/builds/yolov8n__jetson__tensorrt__jetson_fp16/model.engine`. The output `results/jetson/yolov8n_jetson_tensorrt_manifest_smoke.json` reported `success: true`, `engine_backend: tensorrt`, `device_name: jetson`, `manifest_applied: true`, input shape `[1, 3, 640, 640]`, output shape `[1, 84, 8400]`, mean latency about 14.00 ms, p99 about 15.50 ms, and about 71.44 FPS.
+- Runtime compare-key identity polish: InferEdgeRuntime now preserves Forge manifest source model identity for compare naming. If `manifest.source_model.path` is `models/onnx/yolov8n.onnx` and the explicit TensorRT artifact path is `model.engine`, Runtime can keep `compare_model_name=yolov8n` and `compare_key=yolov8n__b1__h640w640__fp32`.
 
 The direct Runtime execution result includes `deployment_decision`. Its `unknown` value is expected before Lab compare/report because the worker response has not yet been compared by Lab.
 
-Jetson note: the TensorRT smoke currently generated `compare_key` from the explicit `model.engine` path stem (`model__b1__h640w640__fp32`) rather than the Forge manifest source model identity. This is a compare naming/provenance polish item, not an execution failure.
+Jetson note: the earlier TensorRT smoke exposed a compare naming polish item where explicit `model.engine` paths could degrade the comparison model name to `model`. Runtime #37 resolved this by preferring Forge manifest source model identity when a manifest is applied. This is a provenance/compare-readiness improvement, not a production SaaS feature.
 
 The current cross-repository loop is fixture/smoke covered:
 
@@ -121,7 +122,7 @@ Forge summary
 - **Jetson TensorRT artifact execution evidence:** On Jetson Orin Nano, the C++ Runtime CLI executed a Forge-generated TensorRT engine artifact with its manifest and exported successful TensorRT latency evidence.
 - **C++ Runtime execution layer:** Runtime is implemented as a C++ execution/result export boundary rather than a Python-only benchmark script.
 - **Schema-first contract-based integration:** Lab, Runtime, Forge, and AIGuard communicate through explicit JSON contracts and compatibility fixtures.
-- **Provenance-aware validation:** Artifact/source hash and runtime provenance are treated as first-class deployment evidence.
+- **Provenance-aware validation:** Artifact/source hash, manifest source model identity, and runtime provenance are treated as first-class deployment evidence.
 - **SaaS-ready API + async job workflow:** Lab has API response contracts, in-memory async job stubs, and worker request/response mapping without prematurely adding DB/queue infrastructure.
 - **Deterministic rule-based diagnosis:** AIGuard uses rule + evidence detectors instead of vague LLM judgement.
 - **Deployment decision ownership:** Lab keeps final deploy/review/blocked ownership while preserving optional guard evidence.
@@ -134,7 +135,6 @@ Current planned production work:
 
 - real worker daemon
 - full automated Forge/Runtime execution from a production Lab worker
-- preserving Forge source model identity in Runtime `compare_key` when explicit engine paths are used
 - database, Redis, or queue
 - file upload flow
 - SaaS frontend

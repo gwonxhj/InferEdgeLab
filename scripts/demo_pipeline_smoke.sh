@@ -100,6 +100,8 @@ Path 2: Jetson TensorRT Runtime smoke
     engine_backend: tensorrt
     device_name: jetson
     manifest_applied: true
+    compare_model_name: yolov8n
+    compare_key: yolov8n__b1__h640w640__fp32
     input shape: [1, 3, 640, 640]
     output shape: [1, 84, 8400]
     mean_ms: 13.997197
@@ -108,9 +110,9 @@ Path 2: Jetson TensorRT Runtime smoke
 
 Note:
   This is a guided/manual smoke script, not production worker orchestration.
-  The current Jetson compare_key may use the explicit model.engine stem
-  (model__b1__h640w640__fp32). Preserving Forge source model identity from
-  the manifest for compare_key is future polish.
+  Runtime now preserves Forge manifest source_model identity for compare naming
+  when a manifest is applied, so explicit model.engine artifact paths can still
+  produce yolov8n compare keys.
 EOF
 
 if [[ "$RUN_JETSON" -eq 1 ]]; then
