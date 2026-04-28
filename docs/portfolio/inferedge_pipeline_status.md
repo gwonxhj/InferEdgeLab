@@ -6,6 +6,8 @@ This document summarizes the current portfolio status of the InferEdge multi-rep
 
 InferEdge is an end-to-end edge AI inference validation pipeline. It is designed to turn an ONNX model into deployment evidence by connecting artifact build provenance, runtime profiling, Lab comparison/reporting, optional rule-based diagnosis, and a final deployment decision.
 
+For a compressed recruiter/interviewer entry point, see [InferEdge 1-Page Architecture Summary](inferedge_1page_architecture.md).
+
 Interview summary:
 
 > InferEdge is an end-to-end inference validation pipeline that converts, runs, compares, diagnoses, and decides whether an edge AI model candidate is ready to deploy.
@@ -142,6 +144,7 @@ More concrete version:
 
 ## Related Documents
 
+- [InferEdge 1-page architecture summary](inferedge_1page_architecture.md)
 - [Pipeline contract](../pipeline_contract.md)
 - [SaaS async job workflow](../api/saas_job_workflow.md)
 - [Forge/Runtime worker integration contract](../api/worker_integration_contract.md)
