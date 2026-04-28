@@ -8,10 +8,19 @@ from inferedgelab.services.api_response_contract import build_api_response_bundl
 
 
 FIXTURE_PATH = Path(__file__).resolve().parent / "fixtures" / "api_response_bundle.json"
+WORKER_GUARD_FIXTURE_PATH = (
+    Path(__file__).resolve().parent
+    / "fixtures"
+    / "aiguard_worker_provenance_mismatch_guard_analysis.json"
+)
 
 
 def load_fixture() -> dict[str, dict[str, Any]]:
     return json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
+
+
+def load_worker_provenance_guard_fixture() -> dict[str, Any]:
+    return json.loads(WORKER_GUARD_FIXTURE_PATH.read_text(encoding="utf-8"))
 
 
 def assert_api_response_contract(response: dict[str, Any], *, guard_expected: bool) -> None:
@@ -184,3 +193,60 @@ def test_build_api_response_bundle_omits_guard_when_absent():
     assert_api_response_contract(response, guard_expected=False)
     assert response["deployment_decision"]["decision"] == "unknown"
     assert response["summary"]["guard_status"] is None
+
+
+def test_build_api_response_bundle_preserves_worker_provenance_guard_evidence():
+    guard_analysis = load_worker_provenance_guard_fixture()
+    bundle = {
+        "meta": {
+            "base_path": "results/base.json",
+            "new_path": "results/new.json",
+            "legacy_warning": False,
+        },
+        "result": {
+            "precision": {
+                "comparison_mode": "same_precision",
+                "pair": "fp16_vs_fp16",
+            },
+            "runtime_provenance": {
+                "new": {
+                    "runtime_artifact_sha256": "runtime-worker-artifact-sha256",
+                    "source_model_sha256": "runtime-worker-source-sha256",
+                }
+            },
+            "shape_context": {},
+            "run_config_diff": {},
+        },
+        "judgement": {
+            "overall": "improvement",
+            "comparison_mode": "same_precision",
+            "precision_pair": "fp16_vs_fp16",
+        },
+        "rendered": {
+            "markdown": "# report\n\n## Guard Analysis",
+            "html": "<html><h2>Guard Analysis</h2></html>",
+        },
+        "deployment_decision": {
+            "decision": "blocked",
+            "reason": "Guard analysis reported an error-level validation issue.",
+            "lab_overall": "improvement",
+            "guard_status": "error",
+            "recommended_action": "Do not deploy until the guard error is resolved.",
+        },
+        "guard_analysis": guard_analysis,
+    }
+
+    response = build_api_response_bundle(bundle)
+
+    assert_api_response_contract(response, guard_expected=True)
+    assert response["deployment_decision"]["decision"] == "blocked"
+    assert response["summary"]["guard_status"] == "error"
+    assert response["guard_analysis"] == guard_analysis
+    evidence = response["guard_analysis"]["anomalies"][0]["evidence"]
+    assert evidence == {
+        "field": "artifact_sha256",
+        "expected": "forge-summary-artifact-sha256",
+        "observed": "runtime-worker-artifact-sha256",
+        "expected_source": "forge_worker_runtime_summary",
+        "observed_source": "runtime_worker_response",
+    }

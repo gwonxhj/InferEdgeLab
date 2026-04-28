@@ -1,0 +1,39 @@
+{
+  "mode": "worker_provenance_reasoning",
+  "status": "error",
+  "confidence": 0.92,
+  "anomalies": [
+    {
+      "type": "worker_provenance_mismatch",
+      "severity": "high",
+      "message": "Runtime worker response artifact provenance does not match the Forge worker/runtime summary.",
+      "evidence": {
+        "field": "artifact_sha256",
+        "expected": "forge-summary-artifact-sha256",
+        "observed": "runtime-worker-artifact-sha256",
+        "expected_source": "forge_worker_runtime_summary",
+        "observed_source": "runtime_worker_response"
+      }
+    },
+    {
+      "type": "source_model_sha256_mismatch",
+      "severity": "high",
+      "message": "Runtime worker response source model provenance does not match the Forge worker/runtime summary.",
+      "evidence": {
+        "field": "source_model_sha256",
+        "expected": "forge-summary-source-sha256",
+        "observed": "runtime-worker-source-sha256",
+        "expected_source": "forge_worker_runtime_summary",
+        "observed_source": "runtime_worker_response"
+      }
+    }
+  ],
+  "suspected_causes": [
+    "runtime_worker_response_does_not_match_forge_summary",
+    "worker_ran_against_stale_or_wrong_artifact"
+  ],
+  "recommendations": [
+    "Block or review deployment until the worker response is regenerated from the Forge-built artifact.",
+    "Verify artifact path, artifact hash, and source model hash before trusting the profiling result."
+  ]
+}
