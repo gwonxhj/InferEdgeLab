@@ -14,6 +14,46 @@ class WorkerContractError(ValueError):
     """Raised when a Forge/Runtime worker boundary payload is invalid."""
 
 
+def forge_summary_to_input_summary(summary: dict[str, Any]) -> dict[str, Any]:
+    """Normalize a Forge worker/runtime summary into a Lab analyze input summary."""
+
+    if not isinstance(summary, dict):
+        raise WorkerContractError("Forge worker/runtime summary must be a JSON object")
+
+    source_model_path = _require_string(summary, "source_model_path")
+    artifact_path = _require_string(summary, "artifact_path")
+    metadata_path = _optional_string(summary, "metadata_path")
+    manifest_path = _optional_string(summary, "manifest_path")
+    provenance = {
+        "source_model_sha256": _require_string(summary, "source_model_sha256"),
+        "artifact_sha256": _require_string(summary, "artifact_sha256"),
+        "artifact_type": _require_string(summary, "artifact_type"),
+        "preset_name": _require_string(summary, "preset_name"),
+        "build_id": _require_string(summary, "build_id"),
+    }
+    options = {
+        "backend": _require_string(summary, "backend"),
+        "target": _require_string(summary, "target"),
+        "precision": _require_string(summary, "precision"),
+        "batch": _require_positive_int(summary, "batch"),
+        "height": _require_positive_int(summary, "height"),
+        "width": _require_positive_int(summary, "width"),
+        "provenance": provenance,
+    }
+    return {
+        "workflow": "analyze",
+        "model_path": source_model_path,
+        "artifact_path": artifact_path,
+        "metadata_path": metadata_path,
+        "manifest_path": manifest_path,
+        "provenance": provenance,
+        "options": options,
+    }
+
+
+normalize_forge_summary_for_worker_request = forge_summary_to_input_summary
+
+
 def build_worker_request_from_job(
     job: dict[str, Any],
     *,
@@ -291,6 +331,13 @@ def _optional_string(data: dict[str, Any], field: str) -> str | None:
         return None
     if not isinstance(value, str) or not value:
         raise WorkerContractError(f"{field} must be a non-empty string when provided")
+    return value
+
+
+def _require_positive_int(data: dict[str, Any], field: str) -> int:
+    value = data.get(field)
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        raise WorkerContractError(f"{field} must be a positive integer")
     return value
 
 

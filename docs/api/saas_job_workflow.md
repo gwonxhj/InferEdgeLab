@@ -100,6 +100,8 @@ This smoke test uses mock worker payloads only. It does not run Forge, Runtime, 
 
 InferEdgeLab also keeps a Runtime dry-run response ingest smoke. It validates Runtime-exported completed/failed worker response fixtures and applies them to queued Lab jobs without executing the Runtime binary.
 
+Forge summary ingest is also covered. Lab validates that a Forge `worker_runtime_summary` can be normalized into analyze `input_summary`, converted into `worker_request`, and preserve source/artifact hash provenance without executing Forge or Runtime.
+
 ## Non-Goals
 
 This contract does not introduce:
@@ -123,6 +125,7 @@ The contract is locked by:
 - `tests/fixtures/worker_request.json`
 - `tests/fixtures/worker_completed_response.json`
 - `tests/fixtures/worker_failed_response.json`
+- `tests/fixtures/forge_worker_runtime_summary.json`
 - `tests/fixtures/runtime_worker_completed_response.json`
 - `tests/fixtures/runtime_worker_failed_response.json`
 - `tests/test_worker_contract.py`

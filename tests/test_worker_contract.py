@@ -10,6 +10,7 @@ from inferedgelab.services.worker_contract import (
     WorkerContractError,
     apply_worker_response_to_job,
     build_worker_request_from_job,
+    forge_summary_to_input_summary,
     validate_worker_request,
     validate_worker_response,
 )
@@ -77,6 +78,52 @@ def test_worker_request_mapping_preserves_optional_paths_notes_and_options():
         "runs": 50,
         "notes": "run worker smoke",
     }
+
+
+def test_forge_summary_maps_to_worker_request_input_summary():
+    summary = load_fixture("forge_worker_runtime_summary.json")
+
+    input_summary = forge_summary_to_input_summary(summary)
+    job = _make_queued_analyze_job(
+        job_id="job_forge_summary_smoke",
+        input_summary=input_summary,
+    )
+    request = build_worker_request_from_job(job)
+
+    assert validate_worker_request(request) == request
+    assert request["job_id"] == "job_forge_summary_smoke"
+    assert request["model_path"] == summary["source_model_path"]
+    assert request["artifact_path"] == summary["artifact_path"]
+    assert request["metadata_path"] == summary["metadata_path"]
+    assert request["manifest_path"] == summary["manifest_path"]
+    assert request["options"]["backend"] == summary["backend"]
+    assert request["options"]["target"] == summary["target"]
+    assert request["options"]["precision"] == summary["precision"]
+    assert request["options"]["batch"] == summary["batch"]
+    assert request["options"]["height"] == summary["height"]
+    assert request["options"]["width"] == summary["width"]
+
+
+def test_forge_summary_worker_request_preserves_provenance():
+    summary = load_fixture("forge_worker_runtime_summary.json")
+
+    input_summary = forge_summary_to_input_summary(summary)
+    job = _make_queued_analyze_job(
+        job_id="job_forge_summary_smoke",
+        input_summary=input_summary,
+    )
+    request = build_worker_request_from_job(job)
+
+    expected_provenance = {
+        "source_model_sha256": summary["source_model_sha256"],
+        "artifact_sha256": summary["artifact_sha256"],
+        "artifact_type": summary["artifact_type"],
+        "preset_name": summary["preset_name"],
+        "build_id": summary["build_id"],
+    }
+    assert input_summary["provenance"] == expected_provenance
+    assert request["input_summary"]["provenance"] == expected_provenance
+    assert request["options"]["provenance"] == expected_provenance
 
 
 def test_completed_job_cannot_map_to_worker_request():
