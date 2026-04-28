@@ -74,6 +74,15 @@ def load_aiguard_mismatch_fixture(name: str) -> dict:
     return fixtures[name]
 
 
+def load_worker_provenance_guard_fixture() -> dict:
+    return json.loads(
+        (
+            FIXTURES
+            / "aiguard_worker_provenance_mismatch_guard_analysis.json"
+        ).read_text(encoding="utf-8")
+    )
+
+
 def test_build_compare_bundle_returns_compare_artifacts_for_same_precision_pair(tmp_path):
     base_path = write_result(
         tmp_path,
@@ -362,6 +371,63 @@ def test_build_compare_latest_bundle_preserves_aiguard_mismatch_evidence(
     assert bundle["deployment_decision"]["decision"] == "blocked"
     assert bundle["data"]["deployment_decision"] == bundle["deployment_decision"]
     assert "artifact_sha256_mismatch" in bundle["markdown"]
+
+
+@pytest.mark.parametrize(
+    ("guard_status", "expected_decision"),
+    [
+        ("error", "blocked"),
+        ("warning", "review_required"),
+    ],
+)
+def test_build_compare_bundle_preserves_worker_provenance_guard_evidence(
+    tmp_path,
+    monkeypatch,
+    guard_status,
+    expected_decision,
+):
+    guard_analysis = load_worker_provenance_guard_fixture()
+    guard_analysis["status"] = guard_status
+    if guard_status == "warning":
+        guard_analysis["anomalies"][0]["severity"] = "medium"
+
+    monkeypatch.setattr(
+        compare_service,
+        "analyze_compare_result",
+        lambda guard_input: guard_analysis,
+    )
+    base_path = write_result(
+        tmp_path,
+        "base.json",
+        timestamp="2026-04-13T09:00:00Z",
+        precision="fp16",
+        mean_ms=10.0,
+    )
+    new_path = write_result(
+        tmp_path,
+        "new.json",
+        timestamp="2026-04-13T10:00:00Z",
+        precision="fp16",
+        mean_ms=9.0,
+    )
+
+    bundle = build_compare_bundle(base_path=base_path, new_path=new_path, with_guard=True)
+
+    assert bundle["guard_analysis"] == guard_analysis
+    assert bundle["data"]["guard_analysis"] == guard_analysis
+    assert bundle["deployment_decision"]["decision"] == expected_decision
+    assert bundle["deployment_decision"]["guard_status"] == guard_status
+    assert bundle["data"]["deployment_decision"] == bundle["deployment_decision"]
+    evidence = guard_analysis["anomalies"][0]["evidence"]
+    assert evidence["expected_source"] == "forge_worker_runtime_summary"
+    assert evidence["observed_source"] == "runtime_worker_response"
+    assert "Guard Analysis" in bundle["markdown"]
+    assert "worker_provenance_mismatch" in bundle["markdown"]
+    assert "forge_worker_runtime_summary" in bundle["markdown"]
+    assert "runtime_worker_response" in bundle["markdown"]
+    assert "Deployment Decision" in bundle["html"]
+    assert "Guard Analysis" in bundle["html"]
+    assert "worker_provenance_mismatch" in bundle["html"]
 
 
 def test_select_latest_compare_pair_selects_latest_same_precision_pair(tmp_path):

@@ -168,6 +168,10 @@ The completed fixture follows Runtime's dry-run result naming, including `runtim
 
 This smoke coverage verifies that Runtime-exported worker responses can be validated and applied to Lab jobs without running the Runtime binary, Forge, queues, databases, Redis, Celery, or external worker processes.
 
+### AIGuard Worker Provenance Evidence
+
+InferEdgeAIGuard may compare Forge `worker_runtime_summary` provenance with Runtime-exported worker response provenance. If it reports artifact hash, source model hash, backend, target, precision, or shape mismatches through optional `guard_analysis`, Lab preserves that evidence in compare/report/API bundles and reflects the guard status in the Lab-owned `deployment_decision`. Error-level guard evidence can block deployment, while warning-level evidence can require review. Lab remains usable when this optional evidence is absent.
+
 ### Worker Response Mapping
 
 InferEdgeLab maps terminal worker responses back into Lab job responses with these rules:
