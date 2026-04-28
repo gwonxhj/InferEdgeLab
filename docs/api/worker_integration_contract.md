@@ -6,6 +6,8 @@ This document defines the minimum boundary contract between InferEdgeLab and fut
 
 The contract keeps InferEdgeLab responsible for SaaS job state, analysis, report bundling, and deployment decision ownership while allowing Forge and Runtime to run outside the API process later. It does not introduce a queue, database, file upload path, Forge build execution, or Runtime inference execution in this step.
 
+For the portfolio-level view of how this worker boundary fits into Forge, Runtime, Lab, and AIGuard, see [InferEdge Pipeline Status](../portfolio/inferedge_pipeline_status.md).
+
 ## Current SaaS API State
 
 InferEdgeLab currently exposes:

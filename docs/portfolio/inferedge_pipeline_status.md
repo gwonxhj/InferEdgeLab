@@ -1,0 +1,149 @@
+# InferEdge Pipeline Status
+
+## Purpose
+
+This document summarizes the current portfolio status of the InferEdge multi-repository project.
+
+InferEdge is an end-to-end edge AI inference validation pipeline. It is designed to turn an ONNX model into deployment evidence by connecting artifact build provenance, runtime profiling, Lab comparison/reporting, optional rule-based diagnosis, and a final deployment decision.
+
+Interview summary:
+
+> InferEdge is an end-to-end inference validation pipeline that converts, runs, compares, diagnoses, and decides whether an edge AI model candidate is ready to deploy.
+
+## Product-Level Pipeline
+
+```text
+ONNX model
+-> InferEdgeForge build
+-> metadata / manifest / worker runtime summary
+-> InferEdgeRuntime validation / result export
+-> InferEdgeLab compare / API / job workflow / deployment_decision
+-> optional InferEdgeAIGuard provenance diagnosis
+-> deploy / review / blocked decision
+```
+
+The goal is not only to measure latency. The goal is to create reproducible evidence that can support deployment review.
+
+## Repository Roles
+
+### InferEdgeForge
+
+Forge owns build artifact and provenance generation.
+
+Current role:
+
+- converts ONNX models into edge deployment artifacts such as TensorRT engine or RKNN artifact
+- emits `metadata.json`, `manifest.json`, and build summaries
+- preserves source model hash, artifact hash, backend, target, precision, shape, preset, and build id
+- provides a worker/runtime summary that can feed Lab worker requests and Runtime invocation boundaries
+
+### InferEdgeRuntime
+
+Runtime owns execution, profiling, and result export.
+
+Current role:
+
+- provides the C++ runtime execution boundary
+- validates Lab worker request payloads in dry-run mode
+- exports Lab-compatible result JSON and dry-run worker completed/failed responses
+- keeps the Runtime-to-Lab worker response shape executable without introducing queue or daemon infrastructure
+
+### InferEdgeLab
+
+Lab owns comparison, reporting, API/job workflow contracts, and the final deployment decision.
+
+Current role:
+
+- consumes Runtime result JSON
+- runs compare, compare-latest, report, and deployment decision flows
+- exposes `/api/compare` with the SaaS API response contract
+- exposes in-memory `/api/analyze` and `/api/jobs/{job_id}` workflow stubs
+- maps analyze jobs to worker requests and worker responses back to job results
+- preserves optional AIGuard evidence while keeping Lab as the final decision owner
+
+### InferEdgeAIGuard
+
+AIGuard owns deterministic failure and provenance diagnosis.
+
+Current role:
+
+- stays optional for Lab
+- uses rule + evidence based detectors instead of abstract LLM guessing
+- diagnoses artifact/source hash mismatch, precision/shape/backend/target mismatch, and missing provenance
+- emits `guard_analysis` that Lab can preserve in report/API bundles and reflect in deployment decisions
+
+## Implemented Connections
+
+The current cross-repository loop is covered by documentation, fixtures, and smoke tests:
+
+- Lab API response contract
+- `/api/compare` contract response
+- `/api/analyze` in-memory job stub
+- Lab analyze job to `worker_request` mapping
+- Lab `worker_response` to job result mapping
+- Runtime Lab `worker_request` dry-run validation
+- Runtime worker completed/failed response dry-run export
+- Forge worker/runtime summary contract
+- Forge summary to Lab worker request compatibility
+- Forge summary-origin Lab worker request validation in Runtime
+- AIGuard worker provenance mismatch diagnosis
+- Lab deployment decision/report evidence smoke for AIGuard worker provenance diagnosis
+
+This means the current product boundary is testable without running the real worker infrastructure.
+
+## Implemented vs Planned
+
+### Implemented Now
+
+- Structured benchmark/result comparison in Lab
+- Markdown/HTML report generation
+- Lab-owned `deployment_decision`
+- Optional `guard_analysis` preservation
+- SaaS API response contract
+- `/api/compare` response wrapper
+- In-memory async job contract and API stub
+- Worker request and worker response boundary contracts
+- Cross-repo fixture compatibility across Forge, Runtime, Lab, and AIGuard
+- Rule/evidence based provenance mismatch diagnosis
+
+### Planned Later
+
+- real worker daemon
+- real Forge build execution from Lab jobs
+- real Runtime inference execution from Lab jobs
+- database persistence
+- Redis, Celery, or another queue
+- file upload handling
+- SaaS frontend
+- production authentication, billing, and deployment controls
+
+These gaps are intentional. The current project fixes the contracts first, then leaves infrastructure choices for later.
+
+## Portfolio Strengths
+
+From a hiring perspective, InferEdge demonstrates:
+
+- edge inference validation beyond raw latency measurement
+- artifact provenance based reproducibility
+- clean repository responsibility boundaries
+- SaaS-ready worker boundary contracts before infrastructure is introduced
+- rule + evidence based diagnosis instead of vague AI interpretation
+- CLI, report, API, async job, and deployment decision surfaces connected as one product flow
+
+## How To Explain It In An Interview
+
+Short version:
+
+> InferEdge validates edge AI model candidates end to end: Forge creates reproducible artifacts, Runtime measures execution, Lab compares and decides, and AIGuard optionally diagnoses provenance and failure evidence.
+
+More concrete version:
+
+> I built InferEdge as a multi-repository validation pipeline. It starts from an ONNX model, preserves build provenance through Forge, exports profiling evidence from Runtime, compares and reports in Lab, optionally diagnoses mismatch evidence through AIGuard, and produces a Lab-owned deploy/review/blocked decision.
+
+## Related Documents
+
+- [Pipeline contract](../pipeline_contract.md)
+- [SaaS async job workflow](../api/saas_job_workflow.md)
+- [Forge/Runtime worker integration contract](../api/worker_integration_contract.md)
+- [Pipeline portfolio summary](inferedge_pipeline_portfolio.md)
+- [YOLOv8n Runtime backend comparison](runtime_compare_yolov8n.md)

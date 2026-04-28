@@ -21,6 +21,37 @@ Instead of a single latency number, InferEdgeLab answers:
 
 ---
 
+## InferEdge Pipeline Overview
+
+InferEdge is organized as one product-style Edge AI inference validation pipeline:
+
+```text
+ONNX model
+-> InferEdgeForge build
+-> metadata / manifest / worker runtime summary
+-> InferEdgeRuntime validation / result export
+-> InferEdgeLab compare / API / job workflow / deployment_decision
+-> optional InferEdgeAIGuard provenance diagnosis
+-> deploy / review / blocked decision
+```
+
+Repository roles are deliberately split:
+
+- **InferEdgeForge:** build artifact and provenance generation.
+- **InferEdgeRuntime:** C++ execution, profiling, result export, and worker response boundary.
+- **InferEdgeLab:** compare/report/API/job workflow and final deployment decision ownership.
+- **InferEdgeAIGuard:** optional rule + evidence based failure and provenance diagnosis.
+
+Implemented today: Lab API response contract, `/api/compare`, `/api/analyze` in-memory jobs, worker request/response mappings, Runtime dry-run validation/export, Forge worker/runtime summary, AIGuard provenance mismatch diagnosis, and Lab decision/report evidence smoke coverage.
+
+Not implemented yet: real worker daemon, automatic Forge/Runtime execution from Lab jobs, DB/Redis/queue, file upload, SaaS frontend, and production auth/billing/deployment controls.
+
+Portfolio status: [docs/portfolio/inferedge_pipeline_status.md](docs/portfolio/inferedge_pipeline_status.md)
+
+Interview one-liner: **InferEdge is an end-to-end inference validation pipeline that converts, runs, compares, diagnoses, and decides whether an edge AI model candidate is ready to deploy.**
+
+---
+
 ## Real Inference Benchmark Result
 
 YOLOv8n was validated with a real OpenCV image-input benchmark: InferEdgeRuntime generated compare-ready JSON results, and InferEdgeLab automatically grouped and compared them by `compare_key` and `backend_key`.
@@ -177,6 +208,7 @@ Validated on real edge hardware:
 
 - [Benchmark reference table](BENCHMARKS.md)
 - [InferEdge pipeline contract](docs/pipeline_contract.md)
+- [InferEdge Pipeline Status](docs/portfolio/inferedge_pipeline_status.md)
 - [InferEdge Pipeline Portfolio Summary](docs/portfolio/inferedge_pipeline_portfolio.md)
 - [InferEdge Pipeline PDF Draft](docs/portfolio/inferedge_pipeline_portfolio_pdf.md)
 - [YOLOv8n Runtime Comparison Report](docs/portfolio/runtime_compare_yolov8n.md)
