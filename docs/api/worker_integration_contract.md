@@ -91,6 +91,24 @@ Worker requests are created by Lab from the queued analyze job.
 
 The fixture `tests/fixtures/worker_request.json` locks the minimum request shape.
 
+### Queued Job Mapping
+
+InferEdgeLab maps a queued analyze job into `worker_request` with these rules:
+
+| Job field | Worker request field |
+|---|---|
+| `job_id` | `job_id` |
+| `input_summary` | `input_summary` |
+| `updated_at` or `created_at` | `requested_at` |
+| `input_summary.model_path` | `model_path` |
+| `input_summary.artifact_path` | `artifact_path` |
+| `input_summary.metadata_path` | `metadata_path` |
+| `input_summary.manifest_path` | `manifest_path` |
+| `input_summary.options` plus optional caller options | `options` |
+| `input_summary.notes` | `options.notes` when present |
+
+Only `queued` jobs with `input_summary.workflow: analyze` may be converted. Completed, failed, cancelled, running, or non-analyze jobs must not be handed to workers through this helper.
+
 ## Worker Response Contract
 
 Worker responses are terminal worker-boundary payloads. Lab may convert them into job responses after analysis/report/deployment decision wrapping.
@@ -163,7 +181,6 @@ This contract does not add:
 
 ## Next Implementation Steps
 
-- Add a helper that converts an `/api/analyze` job into the worker request contract.
 - Add a dev-only worker response ingestion helper that validates worker responses before job completion.
 - Later, introduce a worker adapter boundary without committing Lab to a specific queue implementation.
 - Finally, connect real Forge/Runtime execution behind that adapter when artifacts and environments are ready.

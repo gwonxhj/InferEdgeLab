@@ -5,8 +5,10 @@ from pathlib import Path
 
 import pytest
 
+from inferedgelab.services.api_job_contract import build_api_job_response
 from inferedgelab.services.worker_contract import (
     WorkerContractError,
+    build_worker_request_from_job,
     validate_worker_request,
     validate_worker_response,
 )
@@ -26,6 +28,101 @@ def test_worker_request_fixture_satisfies_contract():
     assert request["input_summary"]["workflow"] == "analyze"
     assert request["model_path"] == "models/resnet18.onnx"
     assert request["options"]["backend"] == "onnxruntime"
+
+
+def test_queued_analyze_job_maps_to_valid_worker_request():
+    job = _make_queued_analyze_job()
+
+    request = build_worker_request_from_job(job)
+
+    assert validate_worker_request(request) == request
+    assert request["job_id"] == job["job_id"]
+    assert request["input_summary"] == job["input_summary"]
+    assert request["requested_at"] == job["updated_at"]
+    assert request["model_path"] == "models/resnet18.onnx"
+    assert request["artifact_path"] is None
+
+
+def test_worker_request_mapping_preserves_optional_paths_notes_and_options():
+    job = _make_queued_analyze_job(
+        input_summary={
+            "workflow": "analyze",
+            "model_path": "models/resnet18.onnx",
+            "artifact_path": None,
+            "metadata_path": "artifacts/metadata.json",
+            "manifest_path": "artifacts/manifest.json",
+            "notes": "run worker smoke",
+            "options": {
+                "backend": "onnxruntime",
+                "target": "cpu",
+                "precision": "fp32",
+            },
+        }
+    )
+
+    request = build_worker_request_from_job(
+        job,
+        options={"with_guard": True, "runs": 50},
+    )
+
+    assert validate_worker_request(request) == request
+    assert request["metadata_path"] == "artifacts/metadata.json"
+    assert request["manifest_path"] == "artifacts/manifest.json"
+    assert request["options"] == {
+        "backend": "onnxruntime",
+        "target": "cpu",
+        "precision": "fp32",
+        "with_guard": True,
+        "runs": 50,
+        "notes": "run worker smoke",
+    }
+
+
+def test_completed_job_cannot_map_to_worker_request():
+    job = build_api_job_response(
+        job_id="job_completed",
+        status="completed",
+        created_at="2026-04-28T05:30:00Z",
+        updated_at="2026-04-28T05:31:00Z",
+        input_summary={
+            "workflow": "analyze",
+            "model_path": "models/resnet18.onnx",
+            "artifact_path": None,
+        },
+        result={"deployment_decision": {"decision": "deployable"}},
+        error=None,
+        links={"self": "/api/jobs/job_completed"},
+        next_actions=["review_deployment_decision"],
+    )
+
+    with pytest.raises(WorkerContractError, match="only queued jobs"):
+        build_worker_request_from_job(job)
+
+
+def test_worker_request_mapping_rejects_missing_model_or_artifact_path():
+    job = _make_queued_analyze_job(
+        input_summary={
+            "workflow": "analyze",
+            "model_path": None,
+            "artifact_path": None,
+        }
+    )
+
+    with pytest.raises(WorkerContractError, match="model_path or artifact_path"):
+        build_worker_request_from_job(job)
+
+
+def test_worker_request_mapping_rejects_non_analyze_job():
+    job = _make_queued_analyze_job(
+        input_summary={
+            "workflow": "compare",
+            "model_path": "models/resnet18.onnx",
+            "artifact_path": None,
+        }
+    )
+
+    with pytest.raises(WorkerContractError, match="only analyze jobs"):
+        build_worker_request_from_job(job)
 
 
 def test_worker_completed_response_fixture_satisfies_contract():
@@ -85,3 +182,28 @@ def test_worker_request_rejects_missing_model_or_artifact_path():
 
     with pytest.raises(WorkerContractError, match="model_path or artifact_path"):
         validate_worker_request(request)
+
+
+def _make_queued_analyze_job(
+    *,
+    input_summary: dict | None = None,
+) -> dict:
+    return build_api_job_response(
+        job_id="job_analyze_queued",
+        status="queued",
+        created_at="2026-04-28T05:30:00Z",
+        updated_at="2026-04-28T05:30:10Z",
+        input_summary=input_summary
+        or {
+            "workflow": "analyze",
+            "model_path": "models/resnet18.onnx",
+            "artifact_path": None,
+            "metadata_path": None,
+            "manifest_path": None,
+            "notes": None,
+        },
+        result=None,
+        error=None,
+        links={"self": "/api/jobs/job_analyze_queued"},
+        next_actions=["poll_self"],
+    )
