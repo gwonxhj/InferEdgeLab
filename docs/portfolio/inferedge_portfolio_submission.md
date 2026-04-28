@@ -61,7 +61,7 @@ AIGuard = optional rule + evidence diagnosis
 Build/provenance layer. ONNX 모델을 TensorRT/RKNN 등 edge deployment artifact로 변환하고, `metadata.json`, `manifest.json`, `worker_runtime_summary`로 source hash, artifact hash, backend, target, precision, shape, preset 정보를 보존한다.
 
 **InferEdgeRuntime**  
-C++ execution/result export layer. Forge artifact 또는 Lab worker_request를 받아 execution boundary를 담당하고, Lab-compatible result JSON과 worker_response dry-run export를 제공한다. 현재 중심은 ONNX Runtime C++ MVP와 contract validation이며, TensorRT 실행 확장은 후속 단계로 분리했다.
+C++ execution/result export layer. Forge artifact 또는 Lab worker_request를 받아 execution boundary를 담당하고, Lab-compatible result JSON과 worker_response dry-run export를 제공한다. 현재 ONNX Runtime C++ MVP와 contract validation을 중심으로 하며, Jetson Orin Nano에서는 Forge manifest와 TensorRT engine artifact를 C++ Runtime CLI로 실행한 manual smoke evidence도 확보했다. Production worker daemon 기반 자동 실행은 후속 단계로 분리했다.
 
 **InferEdgeLab**  
 Analysis/API/job/deployment decision owner. Runtime result JSON을 비교하고 Markdown/HTML report, SaaS API response, async job workflow contract, deployment_decision을 생성한다. AIGuard는 optional이며 최종 decision owner는 Lab이다.
@@ -76,6 +76,7 @@ Rule + evidence diagnosis layer. Forge summary, Runtime worker_response, Lab res
 - `/api/analyze` in-memory job workflow
 - Lab worker_request / worker_response boundary
 - Lab -> Runtime dev-only minimal execution smoke with `yolov8n.onnx`
+- Jetson TensorRT Runtime smoke using Forge manifest + TensorRT engine artifact
 - Runtime worker_request dry-run validation
 - Runtime worker_response dry-run export
 - Forge metadata/manifest to worker/runtime summary contract
@@ -97,8 +98,11 @@ Recent validation evidence:
 - GitHub Actions: Lab Benchmarks success, Runtime CI success
 - Lab PR #171 기준 1-page architecture summary 문서화 완료
 - Lab -> Runtime manual smoke using `yolov8n.onnx`: `/api/analyze` created job `job_9e2321179256`, Lab invoked the C++ Runtime CLI through the dev-only subprocess path, ONNX Runtime executed the model successfully, and the latency/provenance JSON was ingested back into the Lab job result. The smoke reported ONNX Runtime backend available, benchmark status success, mean latency about 47.97 ms, p50 about 46.95 ms, p95/p99 about 51.80 ms, and about 20.85 FPS.
+- Jetson TensorRT Runtime smoke: on Jetson Orin Nano (`Linux 5.15.148-tegra`, `aarch64`), the C++ Runtime CLI in `~/InferEdge-Runtime` executed Forge manifest `/home/risenano01/InferEdgeForge/builds/yolov8n__jetson__tensorrt__jetson_fp16/manifest.json` and TensorRT engine artifact `/home/risenano01/InferEdgeForge/builds/yolov8n__jetson__tensorrt__jetson_fp16/model.engine`. The output `results/jetson/yolov8n_jetson_tensorrt_manifest_smoke.json` reported `success: true`, `engine_backend: tensorrt`, `device_name: jetson`, `manifest_applied: true`, input shape `[1, 3, 640, 640]`, output shape `[1, 84, 8400]`, mean latency about 14.00 ms, p99 about 15.50 ms, and about 71.44 FPS.
 
 The direct Runtime execution result includes `deployment_decision`. Its `unknown` value is expected before Lab compare/report because the worker response has not yet been compared by Lab.
+
+Jetson note: the TensorRT smoke currently generated `compare_key` from the explicit `model.engine` path stem (`model__b1__h640w640__fp32`) rather than the Forge manifest source model identity. This is a compare naming/provenance polish item, not an execution failure.
 
 The current cross-repository loop is fixture/smoke covered:
 
@@ -114,6 +118,7 @@ Forge summary
 
 - **End-to-end pipeline:** Forge, Runtime, Lab, and AIGuard are connected as one validation flow from artifact build to deploy/review/blocked decision.
 - **Real inference execution smoke:** Lab can create an analyze job, call the C++ Runtime CLI through a dev-only subprocess path, execute `yolov8n.onnx` with ONNX Runtime, ingest the result JSON, and complete the job.
+- **Jetson TensorRT artifact execution evidence:** On Jetson Orin Nano, the C++ Runtime CLI executed a Forge-generated TensorRT engine artifact with its manifest and exported successful TensorRT latency evidence.
 - **C++ Runtime execution layer:** Runtime is implemented as a C++ execution/result export boundary rather than a Python-only benchmark script.
 - **Schema-first contract-based integration:** Lab, Runtime, Forge, and AIGuard communicate through explicit JSON contracts and compatibility fixtures.
 - **Provenance-aware validation:** Artifact/source hash and runtime provenance are treated as first-class deployment evidence.
@@ -129,6 +134,7 @@ Current planned production work:
 
 - real worker daemon
 - full automated Forge/Runtime execution from a production Lab worker
+- preserving Forge source model identity in Runtime `compare_key` when explicit engine paths are used
 - database, Redis, or queue
 - file upload flow
 - SaaS frontend
