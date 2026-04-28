@@ -183,6 +183,7 @@ Validated on real edge hardware:
 - [Jetson TensorRT validation runbook](docs/validation/jetson_tensorrt_validation.md)
 - [FastAPI API usage guide](docs/api/api_usage.md)
 - [SaaS async job workflow contract](docs/api/saas_job_workflow.md)
+- [Forge/Runtime worker integration contract](docs/api/worker_integration_contract.md)
 - [Portfolio design & architecture](docs/portfolio/edgebench_portfolio.md)
 - [Project roadmap](Roadmap.md)
 

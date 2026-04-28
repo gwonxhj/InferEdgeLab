@@ -66,6 +66,8 @@ GET /api/jobs/{job_id}
 
 `/api/jobs/{job_id}/complete-dev` is not a worker substitute. It validates that the supplied `result` follows the existing API response contract and stores it in the process-local job store so frontend/SaaS clients can smoke-test the full job lifecycle before Forge/Runtime worker integration exists.
 
+The future Lab-to-worker boundary is documented in [worker_integration_contract.md](worker_integration_contract.md). It defines the minimum worker request, completed response, and failed response payloads while keeping queue and execution infrastructure out of scope.
+
 ## Current Implementation Scope
 
 The current API implementation is an in-memory stub:
@@ -98,5 +100,9 @@ The contract is locked by:
 - `tests/fixtures/api_job_completed.json`
 - `tests/fixtures/api_job_failed.json`
 - `tests/test_api_job_contract.py`
+- `tests/fixtures/worker_request.json`
+- `tests/fixtures/worker_completed_response.json`
+- `tests/fixtures/worker_failed_response.json`
+- `tests/test_worker_contract.py`
 
 These fixtures prepare InferEdgeLab for a later in-memory `/api/analyze` job stub while keeping infrastructure choices out of scope for this step.

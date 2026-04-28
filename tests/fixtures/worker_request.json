@@ -1,0 +1,24 @@
+{
+  "job_id": "job_worker_smoke",
+  "input_summary": {
+    "workflow": "analyze",
+    "model_path": "models/resnet18.onnx",
+    "artifact_path": null,
+    "metadata_path": "artifacts/metadata.json",
+    "manifest_path": "artifacts/manifest.json",
+    "notes": "worker boundary smoke"
+  },
+  "requested_at": "2026-04-28T05:30:00Z",
+  "model_path": "models/resnet18.onnx",
+  "metadata_path": "artifacts/metadata.json",
+  "manifest_path": "artifacts/manifest.json",
+  "options": {
+    "backend": "onnxruntime",
+    "target": "cpu",
+    "precision": "fp32",
+    "batch": 1,
+    "height": 224,
+    "width": 224,
+    "with_guard": true
+  }
+}
