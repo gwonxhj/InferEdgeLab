@@ -4,6 +4,8 @@
 
 InferEdge is an end-to-end Edge AI inference validation pipeline that builds deployment artifacts, runs edge inference, compares results, diagnoses provenance issues, and produces deployment decisions.
 
+PDF-ready portfolio draft: [InferEdge Portfolio Submission](inferedge_portfolio_submission.md)
+
 ## Problem
 
 Edge AI deployment needs more than a latency number. A model candidate must be tied to the artifact that was built, the runtime result that was measured, the comparison policy that was applied, and the final deployment decision. Without artifact provenance, reproducible build records, compatible result schemas, and decision evidence, benchmark results are hard to trust or review.
