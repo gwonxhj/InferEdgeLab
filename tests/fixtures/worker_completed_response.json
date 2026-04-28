@@ -1,0 +1,44 @@
+{
+  "job_id": "job_worker_smoke",
+  "status": "completed",
+  "forge_metadata": {
+    "build_id": "build_resnet18_fp32_cpu",
+    "backend": "onnxruntime",
+    "target": "cpu",
+    "precision": "fp32",
+    "artifact_path": "artifacts/resnet18.onnx",
+    "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "source_model_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "runtime_result": {
+    "model": "resnet18",
+    "engine": "onnxruntime",
+    "device": "cpu",
+    "precision": "fp32",
+    "batch": 1,
+    "height": 224,
+    "width": 224,
+    "mean_ms": 9.4,
+    "p50_ms": 9.2,
+    "p95_ms": 10.1,
+    "p99_ms": 10.8,
+    "timestamp": "2026-04-28T05:31:00Z",
+    "run_config": {
+      "warmup": 5,
+      "runs": 50
+    },
+    "extra": {
+      "runtime_artifact_path": "artifacts/resnet18.onnx",
+      "runtime_artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "source_model_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  },
+  "guard_analysis": {
+    "status": "ok",
+    "anomalies": [],
+    "suspected_causes": [],
+    "recommendations": [],
+    "confidence": 0.7
+  },
+  "completed_at": "2026-04-28T05:31:30Z"
+}

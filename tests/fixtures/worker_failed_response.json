@@ -1,0 +1,10 @@
+{
+  "job_id": "job_worker_smoke",
+  "status": "failed",
+  "error": {
+    "code": "runtime_result_missing",
+    "message": "Runtime did not emit a Lab-compatible result JSON.",
+    "stage": "runtime"
+  },
+  "failed_at": "2026-04-28T05:31:30Z"
+}

@@ -248,6 +248,8 @@ Long-running SaaS workflows such as future `/api/analyze` calls should use the a
 
 The contract defines `queued`, `running`, `completed`, `failed`, and `cancelled` job states. Completed jobs carry the existing API response contract bundle in `result`, including Lab-owned `deployment_decision`; failed jobs keep `result` as `null` and include structured `error` details.
 
+Future Forge/Runtime worker handoff payloads are documented in [worker_integration_contract.md](worker_integration_contract.md). That contract defines the minimum worker request/completed/failed response shapes without adding queue, database, Forge execution, or Runtime execution infrastructure.
+
 Current stub example:
 
 ```bash
