@@ -26,6 +26,7 @@ def test_create_app_registers_expected_routes():
     assert any(path == "/api/compare" and "POST" in methods for path, methods in routes)
     assert any(path == "/api/analyze" and "POST" in methods for path, methods in routes)
     assert any(path == "/api/jobs/{job_id}" and "GET" in methods for path, methods in routes)
+    assert any(path == "/api/jobs/{job_id}/complete-dev" and "POST" in methods for path, methods in routes)
     assert any(path == "/api/compare-latest" and "GET" in methods for path, methods in routes)
 
 
@@ -357,6 +358,94 @@ def test_jobs_endpoint_returns_404_for_missing_job():
         raise AssertionError("HTTPException was not raised")
 
 
+def test_complete_dev_endpoint_completes_queued_analyze_job():
+    app = api.create_app()
+    analyze_endpoint = _get_route_endpoint(app, "/api/analyze", method="POST")
+    complete_endpoint = _get_route_endpoint(
+        app,
+        "/api/jobs/{job_id}/complete-dev",
+        method="POST",
+    )
+    jobs_endpoint = _get_route_endpoint(app, "/api/jobs/{job_id}")
+
+    created = analyze_endpoint(payload={"model_path": "models/resnet18.onnx"})
+    result = _make_api_response_result(decision="deployable")
+
+    completed = complete_endpoint(
+        job_id=created["job_id"],
+        payload={"result": result},
+    )
+
+    job = validate_api_job_response(completed)
+    assert job["job_id"] == created["job_id"]
+    assert job["status"] == "completed"
+    assert job["result"] == result
+    assert job["result"]["deployment_decision"]["decision"] == "deployable"
+    assert job["error"] is None
+    assert job["next_actions"] == ["review_deployment_decision"]
+    assert jobs_endpoint(job_id=created["job_id"]) == completed
+
+
+def test_complete_dev_endpoint_returns_404_for_missing_job():
+    app = api.create_app()
+    endpoint = _get_route_endpoint(app, "/api/jobs/{job_id}/complete-dev", method="POST")
+
+    try:
+        endpoint(job_id="job_missing", payload={"result": _make_api_response_result()})
+    except HTTPException as exc:
+        assert exc.status_code == 404
+        assert exc.detail == "job not found"
+    else:
+        raise AssertionError("HTTPException was not raised")
+
+
+def test_complete_dev_endpoint_rejects_invalid_result_contract():
+    app = api.create_app()
+    analyze_endpoint = _get_route_endpoint(app, "/api/analyze", method="POST")
+    complete_endpoint = _get_route_endpoint(
+        app,
+        "/api/jobs/{job_id}/complete-dev",
+        method="POST",
+    )
+
+    created = analyze_endpoint(payload={"artifact_path": "artifacts/resnet18.engine"})
+
+    try:
+        complete_endpoint(job_id=created["job_id"], payload={"result": {"summary": {}}})
+    except HTTPException as exc:
+        assert exc.status_code == 400
+        assert "deployment_decision" in exc.detail
+    else:
+        raise AssertionError("HTTPException was not raised")
+
+
+def test_complete_dev_endpoint_rejects_already_completed_job():
+    app = api.create_app()
+    analyze_endpoint = _get_route_endpoint(app, "/api/analyze", method="POST")
+    complete_endpoint = _get_route_endpoint(
+        app,
+        "/api/jobs/{job_id}/complete-dev",
+        method="POST",
+    )
+
+    created = analyze_endpoint(payload={"model_path": "models/resnet18.onnx"})
+    complete_endpoint(
+        job_id=created["job_id"],
+        payload={"result": _make_api_response_result()},
+    )
+
+    try:
+        complete_endpoint(
+            job_id=created["job_id"],
+            payload={"result": _make_api_response_result()},
+        )
+    except HTTPException as exc:
+        assert exc.status_code == 409
+        assert "completed job cannot be completed" in exc.detail
+    else:
+        raise AssertionError("HTTPException was not raised")
+
+
 def test_analyze_endpoint_rejects_missing_model_or_artifact_path():
     app = api.create_app()
     endpoint = _get_route_endpoint(app, "/api/analyze", method="POST")
@@ -485,6 +574,61 @@ def _make_result(
         "extra": {
             "runtime_artifact_path": "artifacts/resnet18.onnx",
             "resolved_input_shapes": {"input": [1, 3, 224, 224]},
+        },
+    }
+
+
+def _make_api_response_result(*, decision: str = "deployable") -> dict:
+    return {
+        "summary": {
+            "response_type": "compare",
+            "overall": "improvement",
+            "comparison_mode": "same_precision",
+            "precision_pair": ["fp32", "fp32"],
+            "deployment_decision": decision,
+            "guard_status": None,
+        },
+        "comparison": {
+            "result": {
+                "latency": {"mean_ms_delta": -1.0, "p99_ms_delta": -1.0},
+                "precision": {"comparison_mode": "same_precision"},
+            },
+            "judgement": {
+                "overall": "improvement",
+                "comparison_mode": "same_precision",
+            },
+            "rendered": {
+                "markdown": "# Compare",
+                "html": "<html></html>",
+            },
+        },
+        "deployment_decision": {
+            "decision": decision,
+            "reason": "Mock dev completion result.",
+            "lab_overall": "improvement",
+            "guard_status": None,
+            "recommended_action": "Review generated report before deployment.",
+        },
+        "provenance": {
+            "runtime": None,
+            "shape": None,
+            "run_config_diff": None,
+            "source_bundle": "compare",
+        },
+        "metadata": {
+            "base_path": "dev/base.json",
+            "new_path": "dev/new.json",
+            "legacy_warning": False,
+        },
+        "timestamps": {
+            "base": "2026-04-13T09:00:00Z",
+            "new": "2026-04-13T10:00:00Z",
+        },
+        "execution_info": {
+            "base_path": "dev/base.json",
+            "new_path": "dev/new.json",
+            "selection_mode": None,
+            "legacy_warning": False,
         },
     }
 

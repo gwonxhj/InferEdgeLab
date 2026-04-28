@@ -59,6 +59,38 @@ class InMemoryApiJobStore:
     def get_job(self, job_id: str) -> dict[str, Any] | None:
         return self._jobs.get(job_id)
 
+    def complete_job_dev(self, job_id: str, result: dict[str, Any]) -> dict[str, Any]:
+        """Complete an in-memory analyze job with a mock API response result.
+
+        This is a development-only helper. It validates the external response
+        contract shape but does not execute Forge, Runtime, queues, or workers.
+        """
+
+        job = self.get_job(job_id)
+        if job is None:
+            raise KeyError(job_id)
+        if job["status"] in {"completed", "failed", "cancelled"}:
+            raise RuntimeError(f"{job['status']} job cannot be completed")
+
+        _validate_api_response_result(result)
+        updated_at = _utc_now_iso()
+        completed = build_api_job_response(
+            job_id=job_id,
+            status="completed",
+            created_at=job["created_at"],
+            updated_at=updated_at,
+            input_summary=job["input_summary"],
+            result=result,
+            error=None,
+            links={
+                "self": f"/api/jobs/{job_id}",
+                "result": f"/api/jobs/{job_id}",
+            },
+            next_actions=["review_deployment_decision"],
+        )
+        self._jobs[job_id] = completed
+        return completed
+
 
 def _optional_string(payload: dict[str, Any], key: str) -> str | None:
     value = payload.get(key)
@@ -76,3 +108,35 @@ def _utc_now_iso() -> str:
         .isoformat()
         .replace("+00:00", "Z")
     )
+
+
+def _validate_api_response_result(result: Any) -> None:
+    if not isinstance(result, dict):
+        raise ValueError("result must be a JSON object")
+
+    required_objects = {
+        "summary",
+        "comparison",
+        "deployment_decision",
+        "provenance",
+        "metadata",
+        "timestamps",
+        "execution_info",
+    }
+    missing = sorted(field for field in required_objects if field not in result)
+    if missing:
+        raise ValueError(f"result missing required field(s): {', '.join(missing)}")
+
+    for field in sorted(required_objects):
+        if not isinstance(result[field], dict):
+            raise ValueError(f"result.{field} must be an object")
+
+    decision = result["deployment_decision"].get("decision")
+    if not isinstance(decision, str) or not decision:
+        raise ValueError("result.deployment_decision.decision must be a non-empty string")
+
+    if result["summary"].get("deployment_decision") != decision:
+        raise ValueError(
+            "result.summary.deployment_decision must match "
+            "result.deployment_decision.decision"
+        )
