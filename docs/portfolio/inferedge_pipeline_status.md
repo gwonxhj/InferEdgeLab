@@ -104,6 +104,8 @@ InferEdge now has two runtime execution evidence paths:
 
 Compare-key polish status: this limitation has been resolved in InferEdgeRuntime #37. When a Forge manifest is applied, Runtime now prefers `manifest.source_model.path` for compare naming, so a TensorRT artifact path such as `model.engine` can still produce `compare_model_name=yolov8n` and `compare_key=yolov8n__b1__h640w640__fp32`. This improves provenance and compare-readiness; it does not add production SaaS worker infrastructure.
 
+Demo readiness: `scripts/demo_pipeline_full.sh` now provides a guided end-to-end portfolio entrypoint for Forge -> Runtime -> Lab -> optional AIGuard. The default mode prints a safe summary, `--run-jetson-command-print` prints the Jetson TensorRT command, and `--run-jetson-local` is reserved for running on the Jetson device. This is demo guidance for a SaaS-ready validation foundation, not production worker orchestration.
+
 ## Implemented vs Planned
 
 ### Implemented Now
@@ -119,6 +121,7 @@ Compare-key polish status: this limitation has been resolved in InferEdgeRuntime
 - Dev-only Lab -> Runtime execution smoke for a real `yolov8n.onnx` model
 - Manual Jetson TensorRT Runtime smoke using Forge manifest and TensorRT engine artifact
 - Runtime compare-key identity polish for manifest-backed engine artifacts
+- Guided end-to-end demo entrypoint for portfolio and interview walkthroughs
 - Cross-repo fixture compatibility across Forge, Runtime, Lab, and AIGuard
 - Rule/evidence based provenance mismatch diagnosis
 
