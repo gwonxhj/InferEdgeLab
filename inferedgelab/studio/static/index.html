@@ -9,112 +9,141 @@
   <body>
     <main class="shell">
       <header class="studio-header">
-        <div>
-          <p class="eyebrow">Local-first workflow UI</p>
+        <div class="title-block">
+          <p class="eyebrow">Inference validation workspace</p>
           <h1>InferEdge Local Studio</h1>
+          <p class="subtitle">Local-first Edge AI Inference Validation Workflow</p>
         </div>
-        <p class="header-note">
-          A browser view over the existing CLI, API, job, and deployment decision contracts.
-        </p>
+        <div class="status-badge">SaaS-ready (local mode)</div>
       </header>
 
-      <section class="panel flow-panel" aria-labelledby="pipeline-title">
+      <section class="section-block" aria-labelledby="pipeline-title">
         <div class="section-heading">
-          <p class="eyebrow">Pipeline Flow</p>
-          <h2 id="pipeline-title">Forge -> Runtime -> Lab -> optional AIGuard</h2>
+          <p class="section-kicker">01</p>
+          <div>
+            <h2 id="pipeline-title">Pipeline Flow</h2>
+            <p>Follow the validation path from build provenance to deployment decision.</p>
+          </div>
         </div>
         <div id="pipeline-flow" class="pipeline-flow"></div>
       </section>
 
-      <section class="grid three-column">
-        <article class="panel" aria-labelledby="run-title">
-          <div class="section-heading">
-            <p class="eyebrow">Run</p>
-            <h2 id="run-title">Create analyze job</h2>
+      <section class="section-block" aria-labelledby="actions-title">
+        <div class="section-heading">
+          <p class="section-kicker">02</p>
+          <div>
+            <h2 id="actions-title">Run / Import / Jetson</h2>
+            <p>Start a local job, import Runtime evidence, or prepare a Jetson smoke command.</p>
           </div>
-          <div class="form-stack">
-            <label for="run-model-path">model path</label>
-            <input id="run-model-path" type="text" placeholder="models/yolov8n.onnx" />
-            <button id="run-button" type="button">Run</button>
-            <p id="run-status" class="empty-state"></p>
-          </div>
-        </article>
+        </div>
+        <div class="action-grid">
+          <article class="tool-card" aria-labelledby="run-title">
+            <div class="card-header">
+              <div>
+                <p class="eyebrow">Run Card</p>
+                <h3 id="run-title">Create analyze job</h3>
+              </div>
+              <span id="run-state" class="state-pill idle">idle</span>
+            </div>
+            <div class="form-stack">
+              <label for="run-model-path">model path</label>
+              <input id="run-model-path" type="text" placeholder="models/yolov8n.onnx" />
+              <button id="run-button" type="button">Run</button>
+              <p id="run-status" class="status-line"></p>
+            </div>
+          </article>
 
-        <article class="panel" aria-labelledby="import-title">
-          <div class="section-heading">
-            <p class="eyebrow">Import</p>
-            <h2 id="import-title">Runtime result JSON</h2>
-          </div>
-          <div class="form-stack">
-            <label for="import-json-path">JSON path</label>
-            <input id="import-json-path" type="text" placeholder="results/jetson/result.json" />
-            <button id="import-button" type="button">Import</button>
-            <p id="import-status" class="empty-state"></p>
-          </div>
-        </article>
+          <article class="tool-card" aria-labelledby="import-title">
+            <div class="card-header">
+              <div>
+                <p class="eyebrow">Import Card</p>
+                <h3 id="import-title">Runtime result JSON</h3>
+              </div>
+              <span id="import-state" class="state-pill idle">idle</span>
+            </div>
+            <div class="form-stack">
+              <label for="import-json-path">result path</label>
+              <input id="import-json-path" type="text" placeholder="results/jetson/result.json" />
+              <button id="import-button" type="button">Import</button>
+              <p id="import-status" class="status-line"></p>
+            </div>
+          </article>
 
-        <article class="panel" aria-labelledby="jetson-title">
-          <div class="section-heading">
-            <p class="eyebrow">Jetson Helper</p>
-            <h2 id="jetson-title">Runtime command</h2>
-          </div>
-          <div class="form-stack">
-            <textarea id="jetson-command" rows="7" readonly></textarea>
-            <button id="copy-jetson-command" type="button">Copy</button>
-            <p id="jetson-status" class="empty-state"></p>
-          </div>
-        </article>
+          <article class="tool-card" aria-labelledby="jetson-title">
+            <div class="card-header">
+              <div>
+                <p class="eyebrow">Jetson Helper Card</p>
+                <h3 id="jetson-title">Runtime command</h3>
+              </div>
+              <span id="jetson-state" class="state-pill idle">idle</span>
+            </div>
+            <p class="body-text">Run on Jetson after building the TensorRT artifact and manifest.</p>
+            <div class="form-stack">
+              <textarea id="jetson-command" rows="7" readonly></textarea>
+              <button id="copy-jetson-command" type="button">Copy</button>
+              <p id="jetson-status" class="status-line"></p>
+            </div>
+          </article>
+        </div>
       </section>
 
-      <section class="grid two-column">
-        <article class="panel" aria-labelledby="jobs-title">
-          <div class="section-heading">
-            <p class="eyebrow">Job List</p>
-            <h2 id="jobs-title">Recent jobs</h2>
+      <section class="section-block" aria-labelledby="job-result-title">
+        <div class="section-heading">
+          <p class="section-kicker">03</p>
+          <div>
+            <h2 id="job-result-title">Job / Result</h2>
+            <p>Inspect recent local jobs and the selected Runtime result surface.</p>
           </div>
-          <div id="job-list" class="stack"></div>
-        </article>
+        </div>
+        <div class="job-result-layout">
+          <article class="panel" aria-labelledby="jobs-title">
+            <div class="panel-title-row">
+              <h3 id="jobs-title">Recent jobs</h3>
+              <span id="job-count" class="count-pill">0</span>
+            </div>
+            <div id="job-list" class="list-stack"></div>
+          </article>
 
-        <article class="panel" aria-labelledby="job-detail-title">
-          <div class="section-heading">
-            <p class="eyebrow">Job Detail</p>
-            <h2 id="job-detail-title">Selected result</h2>
-          </div>
-          <div id="job-detail" class="metric-grid"></div>
-        </article>
+          <article class="panel" aria-labelledby="job-detail-title">
+            <div class="panel-title-row">
+              <h3 id="job-detail-title">Selected job detail</h3>
+              <span id="selected-job-status" class="state-pill idle">idle</span>
+            </div>
+            <div id="job-detail" class="metric-grid"></div>
+          </article>
+        </div>
       </section>
 
-      <section class="grid two-column">
-        <article class="panel" aria-labelledby="compare-title">
-          <div class="section-heading">
-            <p class="eyebrow">Compare</p>
-            <h2 id="compare-title">TensorRT vs ONNX Runtime</h2>
+      <section class="section-block" aria-labelledby="compare-title">
+        <div class="section-heading">
+          <p class="section-kicker">04</p>
+          <div>
+            <h2 id="compare-title">Compare View</h2>
+            <p>Compare TensorRT and ONNX Runtime evidence when imported or available.</p>
           </div>
-          <div id="compare-panel" class="stack"></div>
-        </article>
-
-        <article class="panel" aria-labelledby="decision-title">
-          <div class="section-heading">
-            <p class="eyebrow">Deployment Decision</p>
-            <h2 id="decision-title">Lab-owned decision</h2>
-          </div>
-          <div id="deployment-decision" class="stack"></div>
-        </article>
+        </div>
+        <div id="compare-panel" class="compare-grid"></div>
       </section>
 
-      <section class="grid">
-        <article class="panel future-panel" aria-labelledby="future-title">
-          <div class="section-heading">
-            <p class="eyebrow">Future Work</p>
-            <h2 id="future-title">Intentionally outside this skeleton</h2>
+      <section class="section-block" aria-labelledby="decision-title">
+        <div class="section-heading">
+          <p class="section-kicker">05</p>
+          <div>
+            <h2 id="decision-title">Deployment Decision</h2>
+            <p>Lab remains the final decision owner; AIGuard evidence is optional.</p>
           </div>
-          <ul>
-            <li>production worker daemon</li>
-            <li>DB/queue</li>
-            <li>upload flow</li>
-            <li>frontend auth/billing</li>
-          </ul>
-        </article>
+        </div>
+        <div id="deployment-decision" class="decision-card"></div>
+      </section>
+
+      <section class="section-block compact-note" aria-labelledby="future-title">
+        <div class="section-heading">
+          <p class="section-kicker">Later</p>
+          <div>
+            <h2 id="future-title">Future Work</h2>
+            <p>Production worker daemon, DB/queue, upload flow, auth, and billing remain outside local mode.</p>
+          </div>
+        </div>
       </section>
     </main>
 
