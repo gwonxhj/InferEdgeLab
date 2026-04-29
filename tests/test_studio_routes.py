@@ -66,3 +66,55 @@ def test_studio_compare_latest_api_returns_json_structure():
     assert "deployment_decision" in response
     assert "data" in response
     assert response.get("source") in {None, "/api/compare-latest"}
+
+
+def test_studio_run_api_creates_analyze_job():
+    app = api.create_app()
+    route = _get_route(app, "/studio/api/run")
+    request = SimpleNamespace(app=app)
+
+    response = route.endpoint(request=request, payload={"model_path": "models/yolov8n.onnx"})
+
+    assert response["status"] == "created"
+    assert response["source"] == "/api/analyze"
+    assert response["job_id"].startswith("job_")
+    assert response["job"]["input_summary"]["model_path"] == "models/yolov8n.onnx"
+
+
+def test_studio_import_api_accepts_runtime_result_json():
+    app = api.create_app()
+    route = _get_route(app, "/studio/api/import")
+    request = SimpleNamespace(app=app)
+    result = {
+        "runtime_role": "runtime-result",
+        "model": "yolov8n",
+        "engine": "onnxruntime",
+        "device": "cpu",
+        "precision": "fp32",
+        "batch": 1,
+        "height": 640,
+        "width": 640,
+        "mean_ms": 45.0,
+        "p99_ms": 50.0,
+        "timestamp": "2026-04-29T12:00:00Z",
+        "compare_key": "yolov8n__b1__h640w640__fp32",
+        "backend_key": "onnxruntime__cpu",
+    }
+
+    response = route.endpoint(request=request, payload={"result": result})
+
+    assert response["status"] == "imported"
+    assert response["count"] == 1
+    assert response["result"]["backend_key"] == "onnxruntime__cpu"
+    assert response["compare_ready"] is False
+
+
+def test_studio_jetson_command_api_returns_command():
+    app = api.create_app()
+    route = _get_route(app, "/studio/api/jetson-command")
+
+    response = route.endpoint()
+
+    assert "--engine tensorrt" in response["command"]
+    assert "--device jetson" in response["command"]
+    assert "--output results/jetson/" in response["command"]

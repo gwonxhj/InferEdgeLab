@@ -26,6 +26,46 @@
         <div id="pipeline-flow" class="pipeline-flow"></div>
       </section>
 
+      <section class="grid three-column">
+        <article class="panel" aria-labelledby="run-title">
+          <div class="section-heading">
+            <p class="eyebrow">Run</p>
+            <h2 id="run-title">Create analyze job</h2>
+          </div>
+          <div class="form-stack">
+            <label for="run-model-path">model path</label>
+            <input id="run-model-path" type="text" placeholder="models/yolov8n.onnx" />
+            <button id="run-button" type="button">Run</button>
+            <p id="run-status" class="empty-state"></p>
+          </div>
+        </article>
+
+        <article class="panel" aria-labelledby="import-title">
+          <div class="section-heading">
+            <p class="eyebrow">Import</p>
+            <h2 id="import-title">Runtime result JSON</h2>
+          </div>
+          <div class="form-stack">
+            <label for="import-json-path">JSON path</label>
+            <input id="import-json-path" type="text" placeholder="results/jetson/result.json" />
+            <button id="import-button" type="button">Import</button>
+            <p id="import-status" class="empty-state"></p>
+          </div>
+        </article>
+
+        <article class="panel" aria-labelledby="jetson-title">
+          <div class="section-heading">
+            <p class="eyebrow">Jetson Helper</p>
+            <h2 id="jetson-title">Runtime command</h2>
+          </div>
+          <div class="form-stack">
+            <textarea id="jetson-command" rows="7" readonly></textarea>
+            <button id="copy-jetson-command" type="button">Copy</button>
+            <p id="jetson-status" class="empty-state"></p>
+          </div>
+        </article>
+      </section>
+
       <section class="grid two-column">
         <article class="panel" aria-labelledby="jobs-title">
           <div class="section-heading">

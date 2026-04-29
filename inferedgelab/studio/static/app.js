@@ -51,6 +51,22 @@ async function fetchJson(url) {
   return response.json();
 }
 
+async function postJson(url, payload) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || `Request failed: ${response.status}`);
+  }
+  return response.json();
+}
+
 async function loadJobs() {
   setLoading("#job-list");
   try {
@@ -98,6 +114,79 @@ async function loadCompare() {
     if (!activeDecision) {
       updateDecision(null);
     }
+  }
+}
+
+async function runModel() {
+  const button = document.querySelector("#run-button");
+  const status = document.querySelector("#run-status");
+  const modelPath = document.querySelector("#run-model-path").value.trim();
+  if (!modelPath) {
+    status.textContent = "Enter a model path.";
+    return;
+  }
+
+  button.disabled = true;
+  status.textContent = "Creating job...";
+  try {
+    const payload = await postJson("/studio/api/run", { model_path: modelPath });
+    status.textContent = `Created ${payload.job_id}`;
+    await loadJobs();
+  } catch (error) {
+    status.textContent = "Run failed.";
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function importResult() {
+  const button = document.querySelector("#import-button");
+  const status = document.querySelector("#import-status");
+  const jsonPath = document.querySelector("#import-json-path").value.trim();
+  if (!jsonPath) {
+    status.textContent = "Enter a JSON path.";
+    return;
+  }
+
+  button.disabled = true;
+  status.textContent = "Importing result...";
+  try {
+    const payload = await postJson("/studio/api/import", { path: jsonPath });
+    status.textContent = payload.compare_ready
+      ? "Imported. Compare is ready."
+      : "Imported. Add one more result for compare.";
+    renderImportedResult(payload.result);
+    await loadCompare();
+  } catch (error) {
+    status.textContent = "Import failed.";
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function loadJetsonCommand() {
+  const textarea = document.querySelector("#jetson-command");
+  const status = document.querySelector("#jetson-status");
+  status.textContent = "Loading command...";
+  try {
+    const payload = await fetchJson("/studio/api/jetson-command");
+    textarea.value = payload.command || "";
+    status.textContent = "Command ready.";
+  } catch (error) {
+    textarea.value = "";
+    status.textContent = "Command unavailable.";
+  }
+}
+
+async function copyJetsonCommand() {
+  const textarea = document.querySelector("#jetson-command");
+  const status = document.querySelector("#jetson-status");
+  try {
+    await navigator.clipboard.writeText(textarea.value);
+    status.textContent = "Copied.";
+  } catch (error) {
+    textarea.select();
+    status.textContent = "Select and copy manually.";
   }
 }
 
@@ -163,6 +252,27 @@ function renderJobDetail(job) {
     ["compare_key", runtimeResult.compare_key],
     ["backend_key", runtimeResult.backend_key],
     ["runtime status", runtimeResult.status || result.status || job.status],
+  ];
+
+  metrics.forEach(([label, value]) => {
+    target.append(metricTile(label, formatValue(value)));
+  });
+}
+
+function renderImportedResult(result) {
+  const target = document.querySelector("#job-detail");
+  target.replaceChildren();
+
+  const metrics = [
+    ["model", result.model],
+    ["engine/backend", result.engine || result.backend || result.backend_key],
+    ["device", result.device || result.device_name],
+    ["mean_ms", result.mean_ms],
+    ["p99_ms", result.p99_ms],
+    ["fps", result.fps || result.fps_value],
+    ["compare_key", result.compare_key],
+    ["backend_key", result.backend_key],
+    ["runtime status", result.status || result.runtime_role],
   ];
 
   metrics.forEach(([label, value]) => {
@@ -294,7 +404,11 @@ function formatValue(value) {
 
 window.onload = async () => {
   renderPipeline();
+  document.querySelector("#run-button").addEventListener("click", runModel);
+  document.querySelector("#import-button").addEventListener("click", importResult);
+  document.querySelector("#copy-jetson-command").addEventListener("click", copyJetsonCommand);
   updateDecision(null);
   await loadJobs();
   await loadCompare();
+  await loadJetsonCommand();
 };
