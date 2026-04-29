@@ -72,6 +72,22 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert ".tool-card" in style_text
 
 
+def test_studio_app_preserves_selected_job_detail_contract():
+    app = api.create_app()
+    route = _get_route(app, "/studio/static/{asset_name}")
+
+    app_response = route.endpoint(asset_name="app.js")
+    style_response = route.endpoint(asset_name="style.css")
+    app_text = Path(app_response.path).read_text(encoding="utf-8")
+    style_text = Path(style_response.path).read_text(encoding="utf-8")
+
+    assert "selectedJobId" in app_text
+    assert "loadJobs(payload.job_id)" in app_text
+    assert "Queued job" in app_text
+    assert "Runtime metrics will appear" in app_text
+    assert ".detail-note" in style_text
+
+
 def test_studio_jobs_api_returns_json_structure():
     app = api.create_app()
     route = _get_route(app, "/studio/api/jobs")
@@ -109,6 +125,25 @@ def test_studio_run_api_creates_analyze_job():
     assert response["source"] == "/api/analyze"
     assert response["job_id"].startswith("job_")
     assert response["job"]["input_summary"]["model_path"] == "models/yolov8n.onnx"
+
+
+def test_studio_run_job_can_be_listed_and_selected():
+    app = api.create_app()
+    request = SimpleNamespace(app=app)
+    run_route = _get_route(app, "/studio/api/run")
+    jobs_route = _get_route(app, "/studio/api/jobs")
+    detail_route = _get_route(app, "/studio/api/job/{job_id}")
+
+    created = run_route.endpoint(request=request, payload={"model_path": "models/yolov8n.onnx"})
+    jobs = jobs_route.endpoint(request=request)
+    detail = detail_route.endpoint(request=request, job_id=created["job_id"])
+
+    assert jobs["count"] == 1
+    assert jobs["jobs"][0]["job_id"] == created["job_id"]
+    assert detail["job_id"] == created["job_id"]
+    assert detail["status"] == "queued"
+    assert detail["result"] is None
+    assert detail["next_actions"] == ["poll_self"]
 
 
 def test_studio_import_api_accepts_runtime_result_json():
