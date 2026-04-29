@@ -34,6 +34,7 @@ def test_studio_route_returns_local_studio_html():
     assert 'data-critical="studio-dark"' in html
     assert 'href="/studio/static/style.css?v=' in html
     assert 'src="/studio/static/app.js?v=' in html
+    assert 'value="results/latest.json"' in html
 
 
 def test_studio_static_assets_are_served():
@@ -66,6 +67,8 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert style_response.status_code == 200
     assert "initLocalStudio" in app_text
     assert "DOMContentLoaded" in app_text
+    assert "Open Studio from http://127.0.0.1:8000/studio" in app_text
+    assert "responseErrorMessage" in app_text
     assert "#0b0f14" in style_text
     assert "grid-template-columns" in style_text
     assert ".form-stack button" in style_text
@@ -171,6 +174,19 @@ def test_studio_import_api_accepts_runtime_result_json():
     assert response["status"] == "imported"
     assert response["count"] == 1
     assert response["result"]["backend_key"] == "onnxruntime__cpu"
+    assert response["compare_ready"] is False
+
+
+def test_studio_import_api_accepts_existing_result_path():
+    app = api.create_app()
+    route = _get_route(app, "/studio/api/import")
+    request = SimpleNamespace(app=app)
+
+    response = route.endpoint(request=request, payload={"path": "results/latest.json"})
+
+    assert response["status"] == "imported"
+    assert response["result"]["compare_key"]
+    assert response["result"]["backend_key"]
     assert response["compare_ready"] is False
 
 

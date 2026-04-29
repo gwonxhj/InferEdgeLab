@@ -75,14 +75,16 @@ function setEmpty(selector, label = "No data available") {
 }
 
 async function fetchJson(url) {
+  assertHttpStudio();
   const response = await fetch(url, { headers: { Accept: "application/json" } });
   if (!response.ok) {
-    throw new Error(`Request failed: ${response.status}`);
+    throw new Error(await responseErrorMessage(response));
   }
   return response.json();
 }
 
 async function postJson(url, payload) {
+  assertHttpStudio();
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -92,10 +94,32 @@ async function postJson(url, payload) {
     body: JSON.stringify(payload),
   });
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || `Request failed: ${response.status}`);
+    throw new Error(await responseErrorMessage(response));
   }
   return response.json();
+}
+
+function assertHttpStudio() {
+  if (window.location.protocol === "file:") {
+    throw new Error("Open Studio from http://127.0.0.1:8000/studio so it can call the local API.");
+  }
+}
+
+async function responseErrorMessage(response) {
+  const fallback = `Request failed: ${response.status}`;
+  try {
+    const payload = await response.clone().json();
+    if (payload?.detail) {
+      return Array.isArray(payload.detail) ? payload.detail.map(String).join("; ") : String(payload.detail);
+    }
+    if (payload?.error) {
+      return typeof payload.error === "string" ? payload.error : JSON.stringify(payload.error);
+    }
+  } catch (error) {
+    const text = await response.text();
+    return text || fallback;
+  }
+  return fallback;
 }
 
 async function loadJobs(preferredJobId = selectedJobId) {
@@ -191,7 +215,7 @@ async function runModel() {
     setState("#run-state", "completed");
     await loadJobs(payload.job_id);
   } catch (error) {
-    setStatus("#run-status", "Error: run request failed.", "error");
+    setStatus("#run-status", `Error: ${formatError(error)}`, "error");
     setState("#run-state", "idle");
   } finally {
     button.disabled = false;
@@ -225,7 +249,7 @@ async function importResult() {
     renderImportedResult();
     await loadCompare();
   } catch (error) {
-    setStatus("#import-status", "Error: import failed.", "error");
+    setStatus("#import-status", `Error: ${formatError(error)}`, "error");
     setState("#import-state", "idle");
   } finally {
     button.disabled = false;
@@ -244,7 +268,7 @@ async function loadJetsonCommand() {
     setState("#jetson-state", "completed");
   } catch (error) {
     textarea.value = "";
-    setStatus("#jetson-status", "Error: command unavailable.", "error");
+    setStatus("#jetson-status", `Error: ${formatError(error)}`, "error");
     setState("#jetson-state", "idle");
   }
 }
@@ -616,8 +640,18 @@ async function initLocalStudio() {
     await loadJetsonCommand();
   } catch (error) {
     console.error("Local Studio initialization failed", error);
+    if (window.location.protocol === "file:") {
+      renderFileProtocolNotice();
+    }
     renderSafeFallback();
   }
+}
+
+function renderFileProtocolNotice() {
+  const message = "Open http://127.0.0.1:8000/studio instead of this file path to use Run, Import, Compare, and Jetson helpers.";
+  setStatus("#run-status", message, "error");
+  setStatus("#import-status", message, "error");
+  setStatus("#jetson-status", message, "error");
 }
 
 function renderSafeFallback() {
@@ -635,6 +669,11 @@ function renderSafeFallback() {
       target.replaceChildren(createElement("p", "empty-state", message));
     }
   });
+}
+
+function formatError(error) {
+  const message = error?.message || String(error || "request failed");
+  return message.replace(/^Error:\s*/, "");
 }
 
 if (document.readyState === "loading") {
