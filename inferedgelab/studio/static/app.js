@@ -24,6 +24,7 @@ const pipelineStages = [
 
 let currentJobs = [];
 let selectedJob = null;
+let selectedJobId = null;
 let compareData = null;
 let activeDecision = null;
 let importedResult = null;
@@ -41,23 +42,35 @@ function createElement(tagName, className, textContent) {
 
 function setStatus(id, message, tone = "muted") {
   const target = document.querySelector(id);
+  if (!target) {
+    return;
+  }
   target.textContent = message;
   target.className = `status-line ${tone}`;
 }
 
 function setState(id, state) {
   const target = document.querySelector(id);
+  if (!target) {
+    return;
+  }
   target.textContent = state;
   target.className = `state-pill ${normalizeState(state)}`;
 }
 
 function setLoading(selector, label = "Loading...") {
   const target = document.querySelector(selector);
+  if (!target) {
+    return;
+  }
   target.replaceChildren(createElement("p", "empty-state loading-dot", label));
 }
 
 function setEmpty(selector, label = "No data available") {
   const target = document.querySelector(selector);
+  if (!target) {
+    return;
+  }
   target.replaceChildren(createElement("p", "empty-state", label));
 }
 
@@ -85,21 +98,27 @@ async function postJson(url, payload) {
   return response.json();
 }
 
-async function loadJobs() {
+async function loadJobs(preferredJobId = selectedJobId) {
   setLoading("#job-list");
   try {
     const payload = await fetchJson("/studio/api/jobs");
     currentJobs = Array.isArray(payload.jobs) ? payload.jobs : [];
-    renderJobList();
     if (currentJobs.length > 0) {
-      await loadJobDetail(currentJobs[0].job_id);
+      const preferredJob = currentJobs.find((job) => job.job_id === preferredJobId);
+      const nextJob = preferredJob || currentJobs[0];
+      selectedJobId = nextJob.job_id;
+      renderJobList();
+      await loadJobDetail(nextJob.job_id);
     } else {
       selectedJob = null;
+      selectedJobId = null;
+      renderJobList();
       renderJobDetail();
     }
   } catch (error) {
     currentJobs = [];
     selectedJob = null;
+    selectedJobId = null;
     setEmpty("#job-list");
     renderJobDetail();
   }
@@ -109,18 +128,23 @@ async function loadJobs() {
 async function loadJobDetail(jobId) {
   if (!jobId) {
     selectedJob = null;
+    selectedJobId = null;
     renderJobDetail();
     return;
   }
 
+  selectedJobId = jobId;
+  renderJobList();
   setLoading("#job-detail");
   try {
     selectedJob = await fetchJson(`/studio/api/job/${encodeURIComponent(jobId)}`);
+    selectedJobId = selectedJob.job_id || jobId;
     renderJobDetail();
+    renderJobList();
     updateDecision(extractDecision(selectedJob));
   } catch (error) {
     selectedJob = null;
-    renderJobDetail();
+    renderJobDetail(`Unable to load ${jobId}.`);
   }
   renderPipeline();
 }
@@ -161,9 +185,11 @@ async function runModel() {
   renderPipeline();
   try {
     const payload = await postJson("/studio/api/run", { model_path: modelPath });
+    selectedJobId = payload.job_id;
+    selectedJob = payload.job || null;
     setStatus("#run-status", `Success: created ${payload.job_id}`, "success");
     setState("#run-state", "completed");
-    await loadJobs();
+    await loadJobs(payload.job_id);
   } catch (error) {
     setStatus("#run-status", "Error: run request failed.", "error");
     setState("#run-state", "idle");
@@ -258,9 +284,9 @@ function renderPipeline() {
 }
 
 function renderRunPanel() {
-  document.querySelector("#run-button").addEventListener("click", runModel);
-  document.querySelector("#import-button").addEventListener("click", importResult);
-  document.querySelector("#copy-jetson-command").addEventListener("click", copyJetsonCommand);
+  document.querySelector("#run-button").onclick = runModel;
+  document.querySelector("#import-button").onclick = importResult;
+  document.querySelector("#copy-jetson-command").onclick = copyJetsonCommand;
   setState("#run-state", "idle");
   setState("#import-state", "idle");
   setState("#jetson-state", "idle");
@@ -280,7 +306,7 @@ function renderJobList() {
   currentJobs.forEach((job) => {
     const row = createElement("button", "job-row");
     row.type = "button";
-    if (selectedJob?.job_id === job.job_id) {
+    if (selectedJobId === job.job_id) {
       row.classList.add("selected");
     }
     row.addEventListener("click", () => loadJobDetail(job.job_id));
@@ -295,14 +321,14 @@ function renderJobList() {
   });
 }
 
-function renderJobDetail() {
+function renderJobDetail(emptyMessage = "Select a job or import a Runtime result.") {
   const target = document.querySelector("#job-detail");
   const selectedStatus = document.querySelector("#selected-job-status");
   target.replaceChildren();
 
   if (!selectedJob) {
     setState("#selected-job-status", "idle");
-    setEmpty("#job-detail", "Select a job or import a Runtime result.");
+    setEmpty("#job-detail", emptyMessage);
     return;
   }
 
@@ -310,7 +336,7 @@ function renderJobDetail() {
   selectedStatus.className = `state-pill ${normalizeState(selectedJob.status)}`;
 
   const result = selectedJob.result || {};
-  const runtimeResult = result.runtime_result || result.data?.new || result.new || result;
+  const runtimeResult = extractRuntimeResult(selectedJob);
   const compareMetrics = result.comparison?.result?.metrics || result.data?.result?.metrics || {};
   const input = selectedJob.input_summary || {};
 
@@ -328,6 +354,18 @@ function renderJobDetail() {
   metrics.forEach(([label, value]) => {
     target.append(metricTile(label, formatValue(value)));
   });
+
+  const status = String(selectedJob.status || "").toLowerCase();
+  if (!selectedJob.result && status === "queued") {
+    target.append(
+      detailNote(
+        "Queued job",
+        "The local API accepted this analyze job. Runtime metrics will appear after a worker/dev completion flow or after importing Runtime result JSON.",
+      ),
+    );
+  } else if (selectedJob.error) {
+    target.append(detailNote("Job error", selectedJob.error.message || selectedJob.error.detail || "Inspect job error details."));
+  }
 }
 
 function renderImportedResult() {
@@ -415,6 +453,12 @@ function metricTile(label, value) {
   return tile;
 }
 
+function detailNote(title, message) {
+  const note = createElement("div", "detail-note");
+  note.append(createElement("strong", "", title), createElement("p", "body-text", message));
+  return note;
+}
+
 function compareMetricCard(label, meanMs, backendKey) {
   const card = createElement("article", "compare-card");
   card.append(
@@ -453,6 +497,21 @@ function extractDecision(payload) {
     return null;
   }
   return payload.deployment_decision || payload.result?.deployment_decision || payload.data?.deployment_decision || null;
+}
+
+function extractRuntimeResult(job) {
+  const result = job?.result;
+  if (!result) {
+    return {};
+  }
+  return (
+    result.runtime_result ||
+    result.comparison?.result?.runtime_result ||
+    result.comparison?.result?.new ||
+    result.data?.new ||
+    result.new ||
+    result
+  );
 }
 
 function pipelineStatus() {
