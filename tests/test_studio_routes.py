@@ -59,8 +59,10 @@ def test_studio_route_returns_local_studio_html():
     assert "Import" in html
     assert "Jetson Helper" in html
     assert 'data-critical="studio-dark"' in html
-    assert 'href="/studio/static/style.css?v=9"' in html
-    assert 'src="/studio/static/app.js?v=9"' in html
+    assert "style.css?v=10" in html
+    assert "app.js?v=10" in html
+    assert "file-protocol-warning" in html
+    assert 'window.location.protocol === "file:" ? "" : "/studio/static/"' in html
     assert 'value="results/latest.json"' in html
     assert 'id="import-json-payload"' in html
 
@@ -97,6 +99,7 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert "DOMContentLoaded" in app_text
     assert "Open Studio from http://127.0.0.1:8000/studio" in app_text
     assert "responseErrorMessage" in app_text
+    assert "markFileMode" in app_text
     assert "parseJsonResponse" in app_text
     assert "renderImportEvidence" in app_text
     assert "AIGuard evidence not provided" in app_text
@@ -110,6 +113,7 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert ".form-stack button" in style_text
     assert ".tool-card" in style_text
     assert ".state-pill.optional" in style_text
+    assert ".file-protocol-warning" in style_text
     assert ".evidence-summary" in style_text
     assert ".compare-card.improvement" in style_text
 

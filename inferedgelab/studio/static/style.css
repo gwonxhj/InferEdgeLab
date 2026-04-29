@@ -47,6 +47,31 @@ body {
   margin-bottom: 28px;
 }
 
+.file-protocol-warning {
+  display: none;
+  border: 1px solid rgba(234, 179, 8, 0.38);
+  border-radius: 12px;
+  background: rgba(234, 179, 8, 0.08);
+  color: var(--ink);
+  margin-bottom: 18px;
+  padding: 14px 16px;
+}
+
+.file-protocol-warning strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.file-protocol-warning p {
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+body.file-mode .file-protocol-warning {
+  display: block;
+}
+
 .title-block h1,
 .section-heading h2,
 .panel h3,

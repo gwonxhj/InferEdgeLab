@@ -119,6 +119,12 @@ function assertHttpStudio() {
   }
 }
 
+function markFileMode() {
+  if (window.location.protocol === "file:") {
+    document.body.classList.add("file-mode");
+  }
+}
+
 async function responseErrorMessage(response) {
   const fallback = `Request failed: ${response.status}`;
   try {
@@ -800,6 +806,7 @@ function formatValue(value) {
 
 async function initLocalStudio() {
   try {
+    markFileMode();
     renderRunPanel();
     renderPipeline();
     renderJobDetail();

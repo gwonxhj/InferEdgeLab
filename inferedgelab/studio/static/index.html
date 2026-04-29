@@ -132,7 +132,12 @@
         }
       }
     </style>
-    <link rel="stylesheet" href="/studio/static/style.css?v=9" />
+    <script>
+      (function () {
+        var base = window.location.protocol === "file:" ? "" : "/studio/static/";
+        document.write('<link rel="stylesheet" href="' + base + 'style.css?v=10" />');
+      })();
+    </script>
   </head>
   <body>
     <main class="shell">
@@ -144,6 +149,11 @@
         </div>
         <div class="status-badge">SaaS-ready (local mode)</div>
       </header>
+
+      <section class="file-protocol-warning" aria-label="Local Studio launch notice">
+        <strong>Open Local Studio through the local server.</strong>
+        <p>Use http://127.0.0.1:8000/studio after running inferedgelab serve. Direct file mode can preview layout only; Run, Import, Compare, and Jetson helpers require the local API.</p>
+      </section>
 
       <section class="section-block" aria-labelledby="pipeline-title">
         <div class="section-heading">
@@ -282,6 +292,11 @@
       </section>
     </main>
 
-    <script src="/studio/static/app.js?v=9" defer></script>
+    <script>
+      (function () {
+        var base = window.location.protocol === "file:" ? "" : "/studio/static/";
+        document.write('<script src="' + base + 'app.js?v=10" defer><\\/script>');
+      })();
+    </script>
   </body>
 </html>
