@@ -71,10 +71,13 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert "responseErrorMessage" in app_text
     assert "runtimeModelName" in app_text
     assert "Same backend" in app_text
+    assert "hasImportedEvidence" in app_text
+    assert 'aiguard: hasGuardEvidence ? "completed" : "optional"' in app_text
     assert "#0b0f14" in style_text
     assert "grid-template-columns" in style_text
     assert ".form-stack button" in style_text
     assert ".tool-card" in style_text
+    assert ".state-pill.optional" in style_text
 
 
 def test_studio_app_preserves_selected_job_detail_contract():
