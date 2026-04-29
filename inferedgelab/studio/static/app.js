@@ -28,6 +28,7 @@ let selectedJobId = null;
 let compareData = null;
 let activeDecision = null;
 let importedResult = null;
+const importedResultsByJobId = {};
 
 function createElement(tagName, className, textContent) {
   const element = document.createElement(tagName);
@@ -236,7 +237,10 @@ async function runModel() {
   setStatus("#run-status", "Loading: creating analyze job...", "loading");
   renderPipeline();
   try {
-    const payload = await postJson("/studio/api/run", { model_path: modelPath });
+    const payload = await postJson("/studio/api/run", {
+      model_path: modelPath,
+      options: runOptions(),
+    });
     selectedJobId = payload.job_id;
     selectedJob = payload.job || null;
     setStatus("#run-status", `Success: created ${payload.job_id}`, "success");
@@ -267,6 +271,7 @@ async function importResult() {
   try {
     const payload = await postJson("/studio/api/import", buildImportPayload(jsonPath, jsonPayload));
     importedResult = payload.result;
+    rememberImportedResultForSelectedJob(importedResult);
     setStatus(
       "#import-status",
       payload.compare_ready
@@ -289,14 +294,38 @@ async function importResult() {
 }
 
 function buildImportPayload(path, jsonPayload) {
+  const payload = {};
   if (jsonPayload) {
     try {
-      return { result: JSON.parse(jsonPayload) };
+      payload.result = JSON.parse(jsonPayload);
     } catch (error) {
       throw new Error("JSON payload is not valid JSON.");
     }
+  } else {
+    payload.path = path;
   }
-  return { path };
+  const backendOverride = document.querySelector("#import-backend-preset")?.value || "";
+  if (backendOverride) {
+    payload.backend_override = backendOverride;
+  }
+  if (selectedJobId) {
+    payload.job_id = selectedJobId;
+  }
+  return payload;
+}
+
+function runOptions() {
+  return {
+    backend: document.querySelector("#run-backend")?.value || "onnxruntime",
+    device: document.querySelector("#run-device")?.value || "cpu",
+  };
+}
+
+function rememberImportedResultForSelectedJob(result) {
+  if (!selectedJobId || !result) {
+    return;
+  }
+  importedResultsByJobId[selectedJobId] = result;
 }
 
 async function loadJetsonCommand() {
@@ -344,6 +373,7 @@ function renderPipeline() {
     card.append(top, title, detail);
     if (stage.optional) {
       card.append(createElement("span", "soft-label", "optional"));
+      card.append(createElement("p", "stage-note", "No guard run is required for local validation."));
     }
     target.append(card);
   });
@@ -384,6 +414,19 @@ function renderRunPanel() {
   setState("#run-state", "idle");
   setState("#import-state", "idle");
   setState("#jetson-state", "idle");
+}
+
+function resetTransientInputs() {
+  ["#run-model-path", "#import-json-path", "#import-json-payload"].forEach((selector) => {
+    const target = document.querySelector(selector);
+    if (target) {
+      target.value = "";
+    }
+  });
+  const importPreset = document.querySelector("#import-backend-preset");
+  if (importPreset) {
+    importPreset.value = "";
+  }
 }
 
 function renderJobList() {
@@ -431,18 +474,21 @@ function renderJobDetail(emptyMessage = "Select a job or import a Runtime result
 
   const result = selectedJob.result || {};
   const runtimeResult = extractRuntimeResult(selectedJob);
+  const importedForJob = importedResultsByJobId[selectedJob.job_id] || {};
+  const displayResult = hasRuntimeMetrics(runtimeResult) ? runtimeResult : importedForJob;
   const compareMetrics = result.comparison?.result?.metrics || result.data?.result?.metrics || {};
   const input = selectedJob.input_summary || {};
+  const inputOptions = input.options || {};
 
   const metrics = [
-    ["model", runtimeModelName(runtimeResult) || input.model_path || input.artifact_path],
-    ["backend", runtimeBackendName(runtimeResult)],
-    ["device", runtimeDeviceName(runtimeResult)],
-    ["mean", runtimeResult.mean_ms ?? compareMetrics.mean_ms?.new],
-    ["p99", runtimeResult.p99_ms ?? compareMetrics.p99_ms?.new],
-    ["fps", runtimeResult.fps || runtimeResult.fps_value],
-    ["compare_key", runtimeResult.compare_key],
-    ["backend_key", runtimeResult.backend_key],
+    ["model", runtimeModelName(displayResult) || input.model_path || input.artifact_path],
+    ["backend", runtimeBackendName(displayResult) || inputOptions.backend],
+    ["device", runtimeDeviceName(displayResult) || inputOptions.device],
+    ["mean", displayResult.mean_ms ?? compareMetrics.mean_ms?.new],
+    ["p99", displayResult.p99_ms ?? compareMetrics.p99_ms?.new],
+    ["fps", displayResult.fps || displayResult.fps_value],
+    ["compare_key", displayResult.compare_key],
+    ["backend_key", displayResult.backend_key || normalizedBackendKey(displayResult)],
   ];
 
   metrics.forEach(([label, value]) => {
@@ -450,11 +496,18 @@ function renderJobDetail(emptyMessage = "Select a job or import a Runtime result
   });
 
   const status = String(selectedJob.status || "").toLowerCase();
-  if (!selectedJob.result && status === "queued") {
+  if (!selectedJob.result && status === "queued" && !hasRuntimeMetrics(displayResult)) {
     target.append(
       detailNote(
         "Queued job",
         "The local API accepted this analyze job. Runtime metrics will appear after a worker/dev completion flow or after importing Runtime result JSON.",
+      ),
+    );
+  } else if (!selectedJob.result && hasRuntimeMetrics(displayResult)) {
+    target.append(
+      detailNote(
+        "Imported evidence linked in Studio",
+        "This queued analyze job is showing the latest Runtime result imported while the job was selected. The backend contract remains local and in-memory.",
       ),
     );
   } else if (selectedJob.error) {
@@ -528,7 +581,8 @@ function renderDecision(decision) {
     target.append(
       createElement("p", "caption", "Decision"),
       createElement("h3", "", "UNKNOWN"),
-      createElement("p", "body-text", "No deployment decision is available yet."),
+      createElement("p", "body-text", "No Lab comparison decision is available yet."),
+      createElement("p", "caption", "Import two compatible Runtime results to let Lab compare latency. AIGuard evidence is optional."),
     );
     return;
   }
@@ -631,6 +685,18 @@ function extractRuntimeResult(job) {
     result.data?.new ||
     result.new ||
     result
+  );
+}
+
+function hasRuntimeMetrics(result = {}) {
+  return Boolean(
+    result &&
+      (result.mean_ms !== undefined ||
+        result.p99_ms !== undefined ||
+        result.fps !== undefined ||
+        result.fps_value !== undefined ||
+        result.compare_key ||
+        normalizedBackendKey(result)),
   );
 }
 
@@ -807,6 +873,7 @@ function formatValue(value) {
 async function initLocalStudio() {
   try {
     markFileMode();
+    resetTransientInputs();
     renderRunPanel();
     renderPipeline();
     renderJobDetail();

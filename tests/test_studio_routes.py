@@ -60,14 +60,20 @@ def test_studio_route_returns_local_studio_html():
     assert "Import" in html
     assert "Jetson Helper" in html
     assert 'data-critical="studio-dark"' in html
-    assert 'href="/studio/static/style.css?v=12"' in html
-    assert 'href="style.css?v=12"' in html
-    assert 'src="/studio/static/app.js?v=12"' in html
-    assert 'src="app.js?v=12"' in html
+    assert 'href="/studio/static/style.css?v=13"' in html
+    assert 'href="style.css?v=13"' in html
+    assert 'src="/studio/static/app.js?v=13"' in html
+    assert 'src="app.js?v=13"' in html
     assert "file-protocol-warning" in html
     assert 'placeholder="results/latest.json"' in html
     assert 'value="results/latest.json"' not in html
     assert 'id="import-json-payload"' in html
+    assert 'autocomplete="off"' in html
+    assert 'id="run-backend"' in html
+    assert 'id="run-device"' in html
+    assert 'id="import-backend-preset"' in html
+    assert "TensorRT / Jetson" in html
+    assert "Lab's local gate" in html
 
 
 def test_studio_static_assets_are_served():
@@ -110,6 +116,11 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert "runtimeModelName" in app_text
     assert "Same backend" in app_text
     assert "hasImportedEvidence" in app_text
+    assert "importedResultsByJobId" in app_text
+    assert "rememberImportedResultForSelectedJob" in app_text
+    assert "runOptions" in app_text
+    assert "resetTransientInputs" in app_text
+    assert "No guard run is required" in app_text
     assert 'aiguard: hasGuardEvidence ? "completed" : "optional"' in app_text
     assert "#0b0f14" in style_text
     assert "grid-template-columns" in style_text
@@ -136,6 +147,8 @@ def test_studio_app_preserves_selected_job_detail_contract():
     assert "Queued job" in app_text
     assert "Runtime metrics will appear" in app_text
     assert ".detail-note" in style_text
+    assert ".inline-fields" in style_text
+    assert ".future-heading" in style_text
 
 
 def test_studio_jobs_api_returns_json_structure():
@@ -182,12 +195,22 @@ def test_studio_run_api_creates_analyze_job():
     route = _get_route(app, "/studio/api/run")
     request = SimpleNamespace(app=app)
 
-    response = route.endpoint(request=request, payload={"model_path": "models/yolov8n.onnx"})
+    response = route.endpoint(
+        request=request,
+        payload={
+            "model_path": "models/yolov8n.onnx",
+            "options": {"backend": "tensorrt", "device": "jetson"},
+        },
+    )
 
     assert response["status"] == "created"
     assert response["source"] == "/api/analyze"
     assert response["job_id"].startswith("job_")
     assert response["job"]["input_summary"]["model_path"] == "models/yolov8n.onnx"
+    assert response["job"]["input_summary"]["options"] == {
+        "backend": "tensorrt",
+        "device": "jetson",
+    }
 
 
 def test_studio_run_job_can_be_listed_and_selected():
@@ -221,6 +244,24 @@ def test_studio_import_api_accepts_runtime_result_json():
     assert response["count"] == 1
     assert response["result"]["backend_key"] == "onnxruntime__cpu"
     assert response["compare_ready"] is False
+
+
+def test_studio_import_api_applies_backend_override():
+    app = api.create_app()
+    route = _get_route(app, "/studio/api/import")
+    request = SimpleNamespace(app=app)
+    result = _runtime_result(engine="onnxruntime", device="cpu", mean_ms=9.9)
+
+    response = route.endpoint(
+        request=request,
+        payload={"result": result, "backend_override": "tensorrt__jetson"},
+    )
+
+    assert response["status"] == "imported"
+    assert response["result"]["engine"] == "tensorrt"
+    assert response["result"]["engine_backend"] == "tensorrt"
+    assert response["result"]["device"] == "jetson"
+    assert response["result"]["backend_key"] == "tensorrt__jetson"
 
 
 def test_studio_import_api_generates_missing_compare_keys():

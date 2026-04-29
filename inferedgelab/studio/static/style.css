@@ -133,6 +133,24 @@ body.file-mode .file-protocol-warning {
   margin-bottom: 14px;
 }
 
+.future-heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+
+.future-heading h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.future-heading p:last-child {
+  margin: 6px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 .section-heading > div {
   min-width: 0;
 }
@@ -258,6 +276,13 @@ body.file-mode .file-protocol-warning {
   line-height: 1.5;
 }
 
+.stage-note {
+  margin-top: 10px;
+  color: var(--caption);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
 .state-pill {
   display: inline-flex;
   align-items: center;
@@ -311,7 +336,8 @@ body.file-mode .file-protocol-warning {
 }
 
 .form-stack input,
-.form-stack textarea {
+.form-stack textarea,
+.form-stack select {
   width: 100%;
   border: 1px solid var(--line-strong);
   border-radius: 10px;
@@ -323,8 +349,28 @@ body.file-mode .file-protocol-warning {
 }
 
 .form-stack input:focus,
-.form-stack textarea:focus {
+.form-stack textarea:focus,
+.form-stack select:focus {
   border-color: var(--primary);
+}
+
+.form-stack select {
+  appearance: none;
+  background:
+    linear-gradient(45deg, transparent 50%, var(--primary) 50%) calc(100% - 18px) 50% / 6px 6px no-repeat,
+    linear-gradient(135deg, var(--primary) 50%, transparent 50%) calc(100% - 13px) 50% / 6px 6px no-repeat,
+    #0b1220;
+}
+
+.inline-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.inline-fields > div {
+  display: grid;
+  gap: 8px;
 }
 
 .form-stack textarea {
@@ -594,6 +640,11 @@ body.file-mode .file-protocol-warning {
   }
 
   .evidence-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .inline-fields,
+  .future-heading {
     grid-template-columns: 1fr;
   }
 }

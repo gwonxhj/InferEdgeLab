@@ -107,7 +107,14 @@ def studio_run(request: Request, payload: dict[str, Any] = Body(...)) -> dict[st
         raise HTTPException(status_code=400, detail="model_path is required")
 
     endpoint = _get_api_endpoint(request.app, "/api/analyze")
-    job = endpoint(payload={"model_path": model_path.strip(), "notes": "Created from Local Studio Run"})
+    analyze_payload: dict[str, Any] = {
+        "model_path": model_path.strip(),
+        "notes": "Created from Local Studio Run",
+    }
+    options = payload.get("options")
+    if isinstance(options, dict):
+        analyze_payload["options"] = dict(options)
+    job = endpoint(payload=analyze_payload)
     return {
         "status": "created",
         "source": "/api/analyze",
@@ -119,6 +126,7 @@ def studio_run(request: Request, payload: dict[str, Any] = Body(...)) -> dict[st
 @router.post("/studio/api/import", include_in_schema=False)
 def studio_import(request: Request, payload: dict[str, Any] = Body(...)) -> dict[str, Any]:
     result = _load_import_payload(payload)
+    result = _apply_backend_override(result, payload.get("backend_override"))
     imported_results = _get_imported_results(request)
     imported_results.append(result)
     return {
@@ -245,6 +253,29 @@ def _with_compare_keys(result: dict[str, Any]) -> dict[str, Any]:
         if model and batch and height and width and precision:
             enriched["compare_key"] = f"{model}__b{batch}__h{height}w{width}__{precision}"
     return enriched
+
+
+def _apply_backend_override(result: dict[str, Any], override: Any) -> dict[str, Any]:
+    if not isinstance(override, str) or not override.strip():
+        return result
+
+    override = override.strip()
+    if override == "onnxruntime__cpu":
+        engine = "onnxruntime"
+        device = "cpu"
+    elif override == "tensorrt__jetson":
+        engine = "tensorrt"
+        device = "jetson"
+    else:
+        raise HTTPException(status_code=400, detail="unsupported backend_override")
+
+    enriched = dict(result)
+    enriched["engine"] = engine
+    enriched["engine_backend"] = engine
+    enriched["device"] = device
+    enriched["device_name"] = device
+    enriched["backend_key"] = override
+    return _with_compare_keys(enriched)
 
 
 def _first_display_value(*values: Any) -> str:
