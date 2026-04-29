@@ -33,6 +33,9 @@ build-backend = "setuptools.build_meta"
 include = ["inferedgelab*"]
 exclude = ["models*"]
 
+[tool.setuptools.package-data]
+inferedgelab = ["studio/static/*.html", "studio/static/*.js", "studio/static/*.css"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

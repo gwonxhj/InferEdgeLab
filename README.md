@@ -370,6 +370,27 @@ More details: [FastAPI API usage guide](docs/api/api_usage.md)
 
 ---
 
+## Local Studio
+
+InferEdge Local Studio is a local-first browser interface for inspecting the existing CLI workflow, API/job contracts, result metrics, and Lab-owned deployment decision structure.
+It runs on the user's machine through the FastAPI server and is intended as a local workflow UI foundation, not a production SaaS dashboard or cloud dashboard.
+
+### Run Local Studio
+
+```bash
+poetry run inferedgelab serve --host 127.0.0.1 --port 8000
+```
+
+Open:
+
+```text
+http://localhost:8000/studio
+```
+
+The first Studio skeleton uses local static assets only and renders demo placeholders for the pipeline flow, evidence summary, result metrics, and deployment decision. Future work can connect these cards to real `/api/jobs`, `/api/compare`, and `/api/analyze` responses while keeping DB/queue/upload/auth/billing outside the current scope.
+
+---
+
 ## CI / Benchmarks
 
 InferEdgeLab integrates benchmarking into CI:
