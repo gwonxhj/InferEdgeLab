@@ -25,6 +25,13 @@ def test_studio_route_returns_local_studio_html():
     assert isinstance(response, FileResponse)
     assert response.status_code == 200
     assert "InferEdge Local Studio" in html
+    assert "SaaS-ready (local mode)" in html
+    assert "Pipeline Flow" in html
+    assert "Run" in html
+    assert "Import" in html
+    assert "Jetson Helper" in html
+    assert 'href="/studio/static/style.css?v=' in html
+    assert 'src="/studio/static/app.js?v=' in html
 
 
 def test_studio_static_assets_are_served():
@@ -40,6 +47,25 @@ def test_studio_static_assets_are_served():
     assert style_response.status_code == 200
     assert "renderPipeline" in Path(app_response.path).read_text(encoding="utf-8")
     assert "pipeline-flow" in Path(style_response.path).read_text(encoding="utf-8")
+
+
+def test_studio_static_assets_include_redesigned_ui_contracts():
+    app = api.create_app()
+    route = _get_route(app, "/studio/static/{asset_name}")
+
+    app_response = route.endpoint(asset_name="app.js")
+    style_response = route.endpoint(asset_name="style.css")
+    app_text = Path(app_response.path).read_text(encoding="utf-8")
+    style_text = Path(style_response.path).read_text(encoding="utf-8")
+
+    assert app_response.status_code == 200
+    assert style_response.status_code == 200
+    assert "initLocalStudio" in app_text
+    assert "DOMContentLoaded" in app_text
+    assert "#0b0f14" in style_text
+    assert "grid-template-columns" in style_text
+    assert ".form-stack button" in style_text
+    assert ".tool-card" in style_text
 
 
 def test_studio_jobs_api_returns_json_structure():

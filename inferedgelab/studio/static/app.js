@@ -545,13 +545,41 @@ function formatValue(value) {
   return String(value);
 }
 
-window.onload = async () => {
-  renderRunPanel();
-  renderPipeline();
-  renderJobDetail();
-  renderCompare();
-  updateDecision(null);
-  await loadJobs();
-  await loadCompare();
-  await loadJetsonCommand();
-};
+async function initLocalStudio() {
+  try {
+    renderRunPanel();
+    renderPipeline();
+    renderJobDetail();
+    renderCompare();
+    updateDecision(null);
+    await loadJobs();
+    await loadCompare();
+    await loadJetsonCommand();
+  } catch (error) {
+    console.error("Local Studio initialization failed", error);
+    renderSafeFallback();
+  }
+}
+
+function renderSafeFallback() {
+  const requiredTargets = [
+    ["#pipeline-flow", "Pipeline cards could not be initialized."],
+    ["#job-list", "Job list is temporarily unavailable."],
+    ["#job-detail", "Result detail is temporarily unavailable."],
+    ["#compare-panel", "Compare view is temporarily unavailable."],
+    ["#deployment-decision", "Deployment decision is temporarily unavailable."],
+  ];
+
+  requiredTargets.forEach(([selector, message]) => {
+    const target = document.querySelector(selector);
+    if (target && target.children.length === 0) {
+      target.replaceChildren(createElement("p", "empty-state", message));
+    }
+  });
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initLocalStudio);
+} else {
+  initLocalStudio();
+}
