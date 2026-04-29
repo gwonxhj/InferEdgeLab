@@ -1,26 +1,32 @@
-const studioDemoData = {
-  pipeline: [
-    {
-      name: "Forge",
-      detail: "Build provenance and manifest evidence",
-    },
-    {
-      name: "Runtime",
-      detail: "Local execution, profiling, and result export",
-    },
-    {
-      name: "Lab",
-      detail: "Compare, report, job workflow, deployment decision",
-    },
-    {
-      name: "AIGuard",
-      detail: "Optional deterministic diagnosis evidence",
-      optional: true,
-    },
-  ],
-};
+const pipelineStages = [
+  {
+    key: "forge",
+    name: "Forge",
+    description: "provenance",
+  },
+  {
+    key: "runtime",
+    name: "Runtime",
+    description: "execution",
+  },
+  {
+    key: "lab",
+    name: "Lab",
+    description: "analysis + decision",
+  },
+  {
+    key: "aiguard",
+    name: "AIGuard",
+    description: "optional evidence",
+    optional: true,
+  },
+];
 
+let currentJobs = [];
+let selectedJob = null;
+let compareData = null;
 let activeDecision = null;
+let importedResult = null;
 
 function createElement(tagName, className, textContent) {
   const element = document.createElement(tagName);
@@ -33,9 +39,21 @@ function createElement(tagName, className, textContent) {
   return element;
 }
 
+function setStatus(id, message, tone = "muted") {
+  const target = document.querySelector(id);
+  target.textContent = message;
+  target.className = `status-line ${tone}`;
+}
+
+function setState(id, state) {
+  const target = document.querySelector(id);
+  target.textContent = state;
+  target.className = `state-pill ${normalizeState(state)}`;
+}
+
 function setLoading(selector, label = "Loading...") {
   const target = document.querySelector(selector);
-  target.replaceChildren(createElement("p", "empty-state", label));
+  target.replaceChildren(createElement("p", "empty-state loading-dot", label));
 }
 
 function setEmpty(selector, label = "No data available") {
@@ -71,187 +89,240 @@ async function loadJobs() {
   setLoading("#job-list");
   try {
     const payload = await fetchJson("/studio/api/jobs");
-    const jobs = Array.isArray(payload.jobs) ? payload.jobs : [];
-    renderJobList(jobs);
-    if (jobs.length > 0) {
-      await loadJobDetail(jobs[0].job_id);
+    currentJobs = Array.isArray(payload.jobs) ? payload.jobs : [];
+    renderJobList();
+    if (currentJobs.length > 0) {
+      await loadJobDetail(currentJobs[0].job_id);
     } else {
-      setEmpty("#job-detail");
+      selectedJob = null;
+      renderJobDetail();
     }
   } catch (error) {
+    currentJobs = [];
+    selectedJob = null;
     setEmpty("#job-list");
-    setEmpty("#job-detail");
+    renderJobDetail();
   }
+  renderPipeline();
 }
 
 async function loadJobDetail(jobId) {
   if (!jobId) {
-    setEmpty("#job-detail");
+    selectedJob = null;
+    renderJobDetail();
     return;
   }
 
   setLoading("#job-detail");
   try {
-    const job = await fetchJson(`/studio/api/job/${encodeURIComponent(jobId)}`);
-    renderJobDetail(job);
-    updateDecision(extractDecision(job));
+    selectedJob = await fetchJson(`/studio/api/job/${encodeURIComponent(jobId)}`);
+    renderJobDetail();
+    updateDecision(extractDecision(selectedJob));
   } catch (error) {
-    setEmpty("#job-detail");
+    selectedJob = null;
+    renderJobDetail();
   }
+  renderPipeline();
 }
 
 async function loadCompare() {
   setLoading("#compare-panel");
   try {
-    const compareResult = await fetchJson("/studio/api/compare/latest");
-    renderCompare(compareResult);
-    const decision = extractDecision(compareResult);
-    if (compareResult.status !== "empty" || !activeDecision) {
+    compareData = await fetchJson("/studio/api/compare/latest");
+    renderCompare();
+    const decision = extractDecision(compareData);
+    if (compareData.status === "empty") {
+      activeDecision = null;
+      renderDecision(decision);
+    } else if (!activeDecision) {
       updateDecision(decision);
     }
   } catch (error) {
-    setEmpty("#compare-panel");
+    compareData = null;
+    renderCompare();
     if (!activeDecision) {
       updateDecision(null);
     }
   }
+  renderPipeline();
 }
 
 async function runModel() {
   const button = document.querySelector("#run-button");
-  const status = document.querySelector("#run-status");
   const modelPath = document.querySelector("#run-model-path").value.trim();
   if (!modelPath) {
-    status.textContent = "Enter a model path.";
+    setStatus("#run-status", "Error: enter a model path.", "error");
     return;
   }
 
   button.disabled = true;
-  status.textContent = "Creating job...";
+  setState("#run-state", "running");
+  setStatus("#run-status", "Loading: creating analyze job...", "loading");
+  renderPipeline();
   try {
     const payload = await postJson("/studio/api/run", { model_path: modelPath });
-    status.textContent = `Created ${payload.job_id}`;
+    setStatus("#run-status", `Success: created ${payload.job_id}`, "success");
+    setState("#run-state", "completed");
     await loadJobs();
   } catch (error) {
-    status.textContent = "Run failed.";
+    setStatus("#run-status", "Error: run request failed.", "error");
+    setState("#run-state", "idle");
   } finally {
     button.disabled = false;
+    renderPipeline();
   }
 }
 
 async function importResult() {
   const button = document.querySelector("#import-button");
-  const status = document.querySelector("#import-status");
   const jsonPath = document.querySelector("#import-json-path").value.trim();
   if (!jsonPath) {
-    status.textContent = "Enter a JSON path.";
+    setStatus("#import-status", "Error: enter a result path.", "error");
     return;
   }
 
   button.disabled = true;
-  status.textContent = "Importing result...";
+  setState("#import-state", "running");
+  setStatus("#import-status", "Loading: importing Runtime result...", "loading");
+  renderPipeline();
   try {
     const payload = await postJson("/studio/api/import", { path: jsonPath });
-    status.textContent = payload.compare_ready
-      ? "Imported. Compare is ready."
-      : "Imported. Add one more result for compare.";
-    renderImportedResult(payload.result);
+    importedResult = payload.result;
+    setStatus(
+      "#import-status",
+      payload.compare_ready
+        ? "Success: imported. Compare is ready."
+        : "Success: imported. Add one more result for compare.",
+      "success",
+    );
+    setState("#import-state", "completed");
+    renderImportedResult();
     await loadCompare();
   } catch (error) {
-    status.textContent = "Import failed.";
+    setStatus("#import-status", "Error: import failed.", "error");
+    setState("#import-state", "idle");
   } finally {
     button.disabled = false;
+    renderPipeline();
   }
 }
 
 async function loadJetsonCommand() {
   const textarea = document.querySelector("#jetson-command");
-  const status = document.querySelector("#jetson-status");
-  status.textContent = "Loading command...";
+  setState("#jetson-state", "running");
+  setStatus("#jetson-status", "Loading: preparing command...", "loading");
   try {
     const payload = await fetchJson("/studio/api/jetson-command");
     textarea.value = payload.command || "";
-    status.textContent = "Command ready.";
+    setStatus("#jetson-status", "Success: command ready.", "success");
+    setState("#jetson-state", "completed");
   } catch (error) {
     textarea.value = "";
-    status.textContent = "Command unavailable.";
+    setStatus("#jetson-status", "Error: command unavailable.", "error");
+    setState("#jetson-state", "idle");
   }
 }
 
 async function copyJetsonCommand() {
   const textarea = document.querySelector("#jetson-command");
-  const status = document.querySelector("#jetson-status");
   try {
     await navigator.clipboard.writeText(textarea.value);
-    status.textContent = "Copied.";
+    setStatus("#jetson-status", "Success: copied command.", "success");
   } catch (error) {
     textarea.select();
-    status.textContent = "Select and copy manually.";
+    setStatus("#jetson-status", "Select and copy manually.", "muted");
   }
 }
 
-function renderPipeline(data = studioDemoData.pipeline) {
+function renderPipeline() {
   const target = document.querySelector("#pipeline-flow");
   target.replaceChildren();
 
-  data.forEach((step, index) => {
-    const card = createElement("div", "pipeline-step");
-    const number = createElement("span", "step-number", String(index + 1));
-    const title = createElement("h3", "", step.name);
-    const detail = createElement("p", "", step.detail);
+  const states = pipelineStatus();
+  pipelineStages.forEach((stage, index) => {
+    const card = createElement("article", "pipeline-card");
+    const top = createElement("div", "pipeline-card-top");
+    top.append(
+      createElement("span", "stage-index", String(index + 1).padStart(2, "0")),
+      createElement("span", `state-pill ${states[stage.key]}`, states[stage.key]),
+    );
 
-    card.append(number, title, detail);
-    if (step.optional) {
-      card.append(createElement("span", "badge", "optional"));
+    const title = createElement("h3", "", stage.name);
+    const detail = createElement("p", "", stage.description);
+    card.append(top, title, detail);
+    if (stage.optional) {
+      card.append(createElement("span", "soft-label", "optional"));
     }
     target.append(card);
   });
 }
 
-function renderJobList(jobs) {
+function renderRunPanel() {
+  document.querySelector("#run-button").addEventListener("click", runModel);
+  document.querySelector("#import-button").addEventListener("click", importResult);
+  document.querySelector("#copy-jetson-command").addEventListener("click", copyJetsonCommand);
+  setState("#run-state", "idle");
+  setState("#import-state", "idle");
+  setState("#jetson-state", "idle");
+}
+
+function renderJobList() {
   const target = document.querySelector("#job-list");
+  const count = document.querySelector("#job-count");
+  count.textContent = String(currentJobs.length);
   target.replaceChildren();
 
-  if (!jobs.length) {
-    setEmpty("#job-list");
+  if (!currentJobs.length) {
+    setEmpty("#job-list", "No recent jobs. Run a model to create one.");
     return;
   }
 
-  jobs.forEach((job) => {
-    const button = createElement("button", "summary-row job-row");
-    button.type = "button";
-    button.addEventListener("click", () => loadJobDetail(job.job_id));
-    button.append(
+  currentJobs.forEach((job) => {
+    const row = createElement("button", "job-row");
+    row.type = "button";
+    if (selectedJob?.job_id === job.job_id) {
+      row.classList.add("selected");
+    }
+    row.addEventListener("click", () => loadJobDetail(job.job_id));
+
+    const main = createElement("span", "job-main");
+    main.append(
       createElement("strong", "", job.job_id || "-"),
-      createElement("span", "", `${job.status || "-"} / ${job.updated_at || job.created_at || "-"}`),
+      createElement("span", "caption", job.updated_at || job.created_at || "-"),
     );
-    target.append(button);
+    row.append(main, createElement("span", `state-pill ${normalizeState(job.status)}`, job.status || "idle"));
+    target.append(row);
   });
 }
 
-function renderJobDetail(job) {
+function renderJobDetail() {
   const target = document.querySelector("#job-detail");
+  const selectedStatus = document.querySelector("#selected-job-status");
   target.replaceChildren();
 
-  if (!job) {
-    setEmpty("#job-detail");
+  if (!selectedJob) {
+    setState("#selected-job-status", "idle");
+    setEmpty("#job-detail", "Select a job or import a Runtime result.");
     return;
   }
 
-  const result = job.result || {};
+  selectedStatus.textContent = selectedJob.status || "idle";
+  selectedStatus.className = `state-pill ${normalizeState(selectedJob.status)}`;
+
+  const result = selectedJob.result || {};
   const runtimeResult = result.runtime_result || result.data?.new || result.new || result;
   const compareMetrics = result.comparison?.result?.metrics || result.data?.result?.metrics || {};
-  const input = job.input_summary || {};
+  const input = selectedJob.input_summary || {};
+
   const metrics = [
     ["model", runtimeResult.model || input.model_path || input.artifact_path],
-    ["engine/backend", runtimeResult.engine || runtimeResult.backend || runtimeResult.backend_key],
+    ["backend", runtimeResult.engine || runtimeResult.backend || runtimeResult.backend_key],
     ["device", runtimeResult.device || runtimeResult.device_name],
-    ["mean_ms", runtimeResult.mean_ms ?? compareMetrics.mean_ms?.new],
-    ["p99_ms", runtimeResult.p99_ms ?? compareMetrics.p99_ms?.new],
+    ["mean", runtimeResult.mean_ms ?? compareMetrics.mean_ms?.new],
+    ["p99", runtimeResult.p99_ms ?? compareMetrics.p99_ms?.new],
     ["fps", runtimeResult.fps || runtimeResult.fps_value],
     ["compare_key", runtimeResult.compare_key],
     ["backend_key", runtimeResult.backend_key],
-    ["runtime status", runtimeResult.status || result.status || job.status],
   ];
 
   metrics.forEach(([label, value]) => {
@@ -259,56 +330,54 @@ function renderJobDetail(job) {
   });
 }
 
-function renderImportedResult(result) {
+function renderImportedResult() {
   const target = document.querySelector("#job-detail");
   target.replaceChildren();
+  setState("#selected-job-status", "completed");
 
-  const metrics = [
-    ["model", result.model],
-    ["engine/backend", result.engine || result.backend || result.backend_key],
-    ["device", result.device || result.device_name],
-    ["mean_ms", result.mean_ms],
-    ["p99_ms", result.p99_ms],
-    ["fps", result.fps || result.fps_value],
-    ["compare_key", result.compare_key],
-    ["backend_key", result.backend_key],
-    ["runtime status", result.status || result.runtime_role],
-  ];
-
-  metrics.forEach(([label, value]) => {
-    target.append(metricTile(label, formatValue(value)));
-  });
-}
-
-function renderCompare(compareResult) {
-  const target = document.querySelector("#compare-panel");
-  target.replaceChildren();
-
-  if (!compareResult || compareResult.status === "empty") {
-    setEmpty("#compare-panel");
+  if (!importedResult) {
+    setEmpty("#job-detail", "No imported result selected.");
     return;
   }
 
-  const base = compareResult.base || compareResult.data?.base || {};
-  const newer = compareResult.new || compareResult.data?.new || {};
-  const result = compareResult.result || compareResult.data?.result || {};
-  const meanMetric = result.metrics?.mean_ms || {};
-  const speedup = result.speedup || result.backend_comparison?.speedup || calculateSpeedup(base, newer);
-
-  const rows = [
-    ["TensorRT backend_key", findBackendKey([base, newer], "tensorrt")],
-    ["ONNX Runtime backend_key", findBackendKey([base, newer], "onnx")],
-    ["latency diff", formatLatencyDiff(meanMetric)],
-    ["speedup", speedup ? `${formatNumber(speedup)}x` : "-"],
-    ["base backend_key", base.backend_key],
-    ["new backend_key", newer.backend_key],
+  const metrics = [
+    ["model", importedResult.model],
+    ["backend", importedResult.engine || importedResult.backend || importedResult.backend_key],
+    ["device", importedResult.device || importedResult.device_name],
+    ["mean", importedResult.mean_ms],
+    ["p99", importedResult.p99_ms],
+    ["fps", importedResult.fps || importedResult.fps_value],
+    ["compare_key", importedResult.compare_key],
+    ["backend_key", importedResult.backend_key],
   ];
 
-  rows.forEach(([label, value]) => {
-    const row = createElement("div", "summary-row");
-    row.append(createElement("strong", "", label), createElement("span", "", formatValue(value)));
-    target.append(row);
+  metrics.forEach(([label, value]) => {
+    target.append(metricTile(label, formatValue(value)));
   });
+}
+
+function renderCompare() {
+  const target = document.querySelector("#compare-panel");
+  target.replaceChildren();
+
+  if (!compareData || compareData.status === "empty") {
+    target.append(emptyCompareCard());
+    return;
+  }
+
+  const base = compareData.base || compareData.data?.base || {};
+  const newer = compareData.new || compareData.data?.new || {};
+  const result = compareData.result || compareData.data?.result || {};
+  const meanMetric = result.metrics?.mean_ms || {};
+  const speedup = result.speedup || result.backend_comparison?.speedup || calculateSpeedup(base, newer);
+  const tensorRt = findResultByBackend([base, newer], "tensorrt");
+  const onnx = findResultByBackend([base, newer], "onnx");
+
+  target.append(
+    compareMetricCard("TensorRT", tensorRt?.mean_ms, tensorRt?.backend_key || "tensorrt"),
+    compareMetricCard("ONNX Runtime", onnx?.mean_ms, onnx?.backend_key || "onnxruntime"),
+    compareSummaryCard(meanMetric, speedup, base, newer),
+  );
 }
 
 function renderDecision(decision) {
@@ -316,21 +385,23 @@ function renderDecision(decision) {
   target.replaceChildren();
 
   if (!decision) {
-    setEmpty("#deployment-decision");
+    target.className = "decision-card idle";
+    target.append(
+      createElement("p", "caption", "Decision"),
+      createElement("h3", "", "UNKNOWN"),
+      createElement("p", "body-text", "No deployment decision is available yet."),
+    );
     return;
   }
 
-  const rows = [
-    ["decision", decision.decision],
-    ["reason", decision.reason],
-    ["notes", decision.notes || decision.recommended_action],
-  ];
-
-  rows.forEach(([label, value]) => {
-    const row = createElement("div", "summary-row");
-    row.append(createElement("strong", "", label), createElement("span", "", formatValue(value)));
-    target.append(row);
-  });
+  const decisionName = String(decision.decision || "unknown");
+  target.className = `decision-card ${decisionTone(decisionName)}`;
+  target.append(
+    createElement("p", "caption", "Decision"),
+    createElement("h3", "", decisionName.toUpperCase()),
+    createElement("p", "body-text", decision.reason || "-"),
+    createElement("p", "caption", decision.notes || decision.recommended_action || ""),
+  );
 }
 
 function updateDecision(decision) {
@@ -344,6 +415,39 @@ function metricTile(label, value) {
   return tile;
 }
 
+function compareMetricCard(label, meanMs, backendKey) {
+  const card = createElement("article", "compare-card");
+  card.append(
+    createElement("p", "caption", backendKey),
+    createElement("h3", "", label),
+    createElement("strong", "compare-value", meanMs === undefined || meanMs === null ? "-" : `${formatNumber(meanMs)} ms`),
+  );
+  return card;
+}
+
+function compareSummaryCard(metric, speedup, base, newer) {
+  const card = createElement("article", "compare-card highlight");
+  const diff = formatLatencyDiff(metric);
+  const faster = speedup ? `${formatNumber(speedup)}x faster` : "speedup unavailable";
+  card.append(
+    createElement("p", "caption", "Latency comparison"),
+    createElement("h3", "", faster),
+    createElement("p", "body-text", `Latency diff: ${diff}`),
+    createElement("p", "caption", `${base.backend_key || "-"} -> ${newer.backend_key || "-"}`),
+  );
+  return card;
+}
+
+function emptyCompareCard() {
+  const card = createElement("article", "compare-card empty");
+  card.append(
+    createElement("p", "caption", "TensorRT vs ONNX Runtime"),
+    createElement("h3", "", "No compare-ready result"),
+    createElement("p", "body-text", "Import two compatible Runtime JSON files or run the CLI workflow, then reload Studio."),
+  );
+  return card;
+}
+
 function extractDecision(payload) {
   if (!payload) {
     return null;
@@ -351,9 +455,48 @@ function extractDecision(payload) {
   return payload.deployment_decision || payload.result?.deployment_decision || payload.data?.deployment_decision || null;
 }
 
-function findBackendKey(results, keyword) {
-  const match = results.find((item) => String(item.backend_key || "").toLowerCase().includes(keyword));
-  return match?.backend_key;
+function pipelineStatus() {
+  const anyRunning = currentJobs.some((job) => job.status === "queued" || job.status === "running");
+  const anyCompleted = currentJobs.some((job) => job.status === "completed") || Boolean(importedResult);
+  const hasCompareDecision = Boolean(activeDecision);
+  return {
+    forge: importedResult ? "completed" : "idle",
+    runtime: anyRunning ? "running" : anyCompleted ? "completed" : "idle",
+    lab: hasCompareDecision ? "completed" : anyRunning ? "running" : "idle",
+    aiguard: hasCompareDecision && activeDecision?.guard_status ? "completed" : "idle",
+  };
+}
+
+function normalizeState(state) {
+  const value = String(state || "idle").toLowerCase();
+  if (value === "queued") {
+    return "running";
+  }
+  if (value === "completed" || value === "success" || value === "deployable") {
+    return "completed";
+  }
+  if (value === "failed" || value === "blocked" || value === "error") {
+    return "blocked";
+  }
+  if (value.includes("review")) {
+    return "review";
+  }
+  if (value === "running") {
+    return "running";
+  }
+  return "idle";
+}
+
+function decisionTone(decision) {
+  const normalized = normalizeState(decision);
+  if (normalized === "completed") {
+    return "deployable";
+  }
+  return normalized;
+}
+
+function findResultByBackend(results, keyword) {
+  return results.find((item) => String(item.backend_key || item.engine || "").toLowerCase().includes(keyword));
 }
 
 function formatLatencyDiff(metric) {
@@ -403,10 +546,10 @@ function formatValue(value) {
 }
 
 window.onload = async () => {
+  renderRunPanel();
   renderPipeline();
-  document.querySelector("#run-button").addEventListener("click", runModel);
-  document.querySelector("#import-button").addEventListener("click", importResult);
-  document.querySelector("#copy-jetson-command").addEventListener("click", copyJetsonCommand);
+  renderJobDetail();
+  renderCompare();
   updateDecision(null);
   await loadJobs();
   await loadCompare();
