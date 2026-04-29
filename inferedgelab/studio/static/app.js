@@ -18,38 +18,87 @@ const studioDemoData = {
       optional: true,
     },
   ],
-  evidence: [
-    {
-      label: "macOS ONNX Runtime CPU smoke",
-      status: "validated evidence path",
-    },
-    {
-      label: "Jetson Orin Nano TensorRT smoke",
-      status: "validated evidence path",
-    },
-  ],
-  metrics: [
-    "mean_ms",
-    "p99_ms",
-    "fps",
-    "compare_key",
-    "backend_key",
-  ],
-  decision: {
-    owner: "Lab",
-    aiguardRole: "optional deterministic diagnosis evidence",
-  },
 };
+
+let activeDecision = null;
 
 function createElement(tagName, className, textContent) {
   const element = document.createElement(tagName);
   if (className) {
     element.className = className;
   }
-  if (textContent) {
+  if (textContent !== undefined && textContent !== null) {
     element.textContent = textContent;
   }
   return element;
+}
+
+function setLoading(selector, label = "Loading...") {
+  const target = document.querySelector(selector);
+  target.replaceChildren(createElement("p", "empty-state", label));
+}
+
+function setEmpty(selector, label = "No data available") {
+  const target = document.querySelector(selector);
+  target.replaceChildren(createElement("p", "empty-state", label));
+}
+
+async function fetchJson(url) {
+  const response = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!response.ok) {
+    throw new Error(`Request failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+async function loadJobs() {
+  setLoading("#job-list");
+  try {
+    const payload = await fetchJson("/studio/api/jobs");
+    const jobs = Array.isArray(payload.jobs) ? payload.jobs : [];
+    renderJobList(jobs);
+    if (jobs.length > 0) {
+      await loadJobDetail(jobs[0].job_id);
+    } else {
+      setEmpty("#job-detail");
+    }
+  } catch (error) {
+    setEmpty("#job-list");
+    setEmpty("#job-detail");
+  }
+}
+
+async function loadJobDetail(jobId) {
+  if (!jobId) {
+    setEmpty("#job-detail");
+    return;
+  }
+
+  setLoading("#job-detail");
+  try {
+    const job = await fetchJson(`/studio/api/job/${encodeURIComponent(jobId)}`);
+    renderJobDetail(job);
+    updateDecision(extractDecision(job));
+  } catch (error) {
+    setEmpty("#job-detail");
+  }
+}
+
+async function loadCompare() {
+  setLoading("#compare-panel");
+  try {
+    const compareResult = await fetchJson("/studio/api/compare/latest");
+    renderCompare(compareResult);
+    const decision = extractDecision(compareResult);
+    if (compareResult.status !== "empty" || !activeDecision) {
+      updateDecision(decision);
+    }
+  } catch (error) {
+    setEmpty("#compare-panel");
+    if (!activeDecision) {
+      updateDecision(null);
+    }
+  }
 }
 
 function renderPipeline(data = studioDemoData.pipeline) {
@@ -70,58 +119,182 @@ function renderPipeline(data = studioDemoData.pipeline) {
   });
 }
 
-function renderEvidenceSummary(data = studioDemoData.evidence) {
-  const target = document.querySelector("#evidence-summary");
+function renderJobList(jobs) {
+  const target = document.querySelector("#job-list");
   target.replaceChildren();
 
-  data.forEach((item) => {
-    const row = createElement("div", "summary-row");
-    row.append(
-      createElement("strong", "", item.label),
-      createElement("span", "", item.status),
+  if (!jobs.length) {
+    setEmpty("#job-list");
+    return;
+  }
+
+  jobs.forEach((job) => {
+    const button = createElement("button", "summary-row job-row");
+    button.type = "button";
+    button.addEventListener("click", () => loadJobDetail(job.job_id));
+    button.append(
+      createElement("strong", "", job.job_id || "-"),
+      createElement("span", "", `${job.status || "-"} / ${job.updated_at || job.created_at || "-"}`),
     );
+    target.append(button);
+  });
+}
+
+function renderJobDetail(job) {
+  const target = document.querySelector("#job-detail");
+  target.replaceChildren();
+
+  if (!job) {
+    setEmpty("#job-detail");
+    return;
+  }
+
+  const result = job.result || {};
+  const runtimeResult = result.runtime_result || result.data?.new || result.new || result;
+  const compareMetrics = result.comparison?.result?.metrics || result.data?.result?.metrics || {};
+  const input = job.input_summary || {};
+  const metrics = [
+    ["model", runtimeResult.model || input.model_path || input.artifact_path],
+    ["engine/backend", runtimeResult.engine || runtimeResult.backend || runtimeResult.backend_key],
+    ["device", runtimeResult.device || runtimeResult.device_name],
+    ["mean_ms", runtimeResult.mean_ms ?? compareMetrics.mean_ms?.new],
+    ["p99_ms", runtimeResult.p99_ms ?? compareMetrics.p99_ms?.new],
+    ["fps", runtimeResult.fps || runtimeResult.fps_value],
+    ["compare_key", runtimeResult.compare_key],
+    ["backend_key", runtimeResult.backend_key],
+    ["runtime status", runtimeResult.status || result.status || job.status],
+  ];
+
+  metrics.forEach(([label, value]) => {
+    target.append(metricTile(label, formatValue(value)));
+  });
+}
+
+function renderCompare(compareResult) {
+  const target = document.querySelector("#compare-panel");
+  target.replaceChildren();
+
+  if (!compareResult || compareResult.status === "empty") {
+    setEmpty("#compare-panel");
+    return;
+  }
+
+  const base = compareResult.base || compareResult.data?.base || {};
+  const newer = compareResult.new || compareResult.data?.new || {};
+  const result = compareResult.result || compareResult.data?.result || {};
+  const meanMetric = result.metrics?.mean_ms || {};
+  const speedup = result.speedup || result.backend_comparison?.speedup || calculateSpeedup(base, newer);
+
+  const rows = [
+    ["TensorRT backend_key", findBackendKey([base, newer], "tensorrt")],
+    ["ONNX Runtime backend_key", findBackendKey([base, newer], "onnx")],
+    ["latency diff", formatLatencyDiff(meanMetric)],
+    ["speedup", speedup ? `${formatNumber(speedup)}x` : "-"],
+    ["base backend_key", base.backend_key],
+    ["new backend_key", newer.backend_key],
+  ];
+
+  rows.forEach(([label, value]) => {
+    const row = createElement("div", "summary-row");
+    row.append(createElement("strong", "", label), createElement("span", "", formatValue(value)));
     target.append(row);
   });
 }
 
-function renderMetrics(data = studioDemoData.metrics) {
-  const target = document.querySelector("#result-metrics");
-  target.replaceChildren();
-
-  data.forEach((metric) => {
-    const tile = createElement("div", "metric-tile");
-    tile.append(
-      createElement("span", "metric-name", metric),
-      createElement("span", "metric-value", "placeholder"),
-    );
-    target.append(tile);
-  });
-}
-
-function renderDecision(data = studioDemoData.decision) {
+function renderDecision(decision) {
   const target = document.querySelector("#deployment-decision");
   target.replaceChildren();
 
-  const owner = createElement("div", "summary-row");
-  owner.append(
-    createElement("strong", "", "decision owner"),
-    createElement("span", "", data.owner),
-  );
+  if (!decision) {
+    setEmpty("#deployment-decision");
+    return;
+  }
 
-  const role = createElement("div", "summary-row");
-  role.append(
-    createElement("strong", "", "AIGuard role"),
-    createElement("span", "", data.aiguardRole),
-  );
+  const rows = [
+    ["decision", decision.decision],
+    ["reason", decision.reason],
+    ["notes", decision.notes || decision.recommended_action],
+  ];
 
-  target.append(owner, role);
+  rows.forEach(([label, value]) => {
+    const row = createElement("div", "summary-row");
+    row.append(createElement("strong", "", label), createElement("span", "", formatValue(value)));
+    target.append(row);
+  });
 }
 
-function renderStudio(data = studioDemoData) {
-  renderPipeline(data.pipeline);
-  renderEvidenceSummary(data.evidence);
-  renderMetrics(data.metrics);
-  renderDecision(data.decision);
+function updateDecision(decision) {
+  activeDecision = decision;
+  renderDecision(decision);
 }
 
-renderStudio();
+function metricTile(label, value) {
+  const tile = createElement("div", "metric-tile");
+  tile.append(createElement("span", "metric-name", label), createElement("span", "metric-value", value));
+  return tile;
+}
+
+function extractDecision(payload) {
+  if (!payload) {
+    return null;
+  }
+  return payload.deployment_decision || payload.result?.deployment_decision || payload.data?.deployment_decision || null;
+}
+
+function findBackendKey(results, keyword) {
+  const match = results.find((item) => String(item.backend_key || "").toLowerCase().includes(keyword));
+  return match?.backend_key;
+}
+
+function formatLatencyDiff(metric) {
+  if (!metric || Object.keys(metric).length === 0) {
+    return "-";
+  }
+  const delta = metric.delta_ms ?? metric.delta;
+  const deltaPct = metric.delta_pct;
+  if (delta === undefined && deltaPct === undefined) {
+    return "-";
+  }
+  const parts = [];
+  if (delta !== undefined && delta !== null) {
+    parts.push(`${formatNumber(delta)} ms`);
+  }
+  if (deltaPct !== undefined && deltaPct !== null) {
+    parts.push(`${formatNumber(deltaPct)}%`);
+  }
+  return parts.join(" / ");
+}
+
+function calculateSpeedup(base, newer) {
+  const baseMean = Number(base.mean_ms);
+  const newMean = Number(newer.mean_ms);
+  if (!Number.isFinite(baseMean) || !Number.isFinite(newMean) || newMean === 0) {
+    return null;
+  }
+  return baseMean / newMean;
+}
+
+function formatNumber(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) {
+    return String(value);
+  }
+  return number.toFixed(3).replace(/\.?0+$/, "");
+}
+
+function formatValue(value) {
+  if (value === undefined || value === null || value === "") {
+    return "-";
+  }
+  if (typeof value === "number") {
+    return formatNumber(value);
+  }
+  return String(value);
+}
+
+window.onload = async () => {
+  renderPipeline();
+  updateDecision(null);
+  await loadJobs();
+  await loadCompare();
+};

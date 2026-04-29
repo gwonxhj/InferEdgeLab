@@ -26,8 +26,8 @@ from inferedgelab.studio.routes import register_studio
 
 def create_app() -> FastAPI:
     app = FastAPI(title="InferEdgeLab API")
-    register_studio(app)
     job_store = InMemoryApiJobStore()
+    register_studio(app, job_store=job_store)
 
     @app.get("/health")
     def health() -> dict[str, str]:
