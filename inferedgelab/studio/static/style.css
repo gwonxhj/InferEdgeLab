@@ -261,6 +261,11 @@ body {
   color: var(--red);
 }
 
+.state-pill.optional {
+  border-color: rgba(148, 163, 184, 0.28);
+  color: var(--muted);
+}
+
 .form-stack,
 .list-stack {
   display: grid;

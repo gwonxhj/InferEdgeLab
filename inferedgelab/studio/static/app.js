@@ -544,11 +544,13 @@ function pipelineStatus() {
   const anyRunning = currentJobs.some((job) => job.status === "queued" || job.status === "running");
   const anyCompleted = currentJobs.some((job) => job.status === "completed") || Boolean(importedResult);
   const hasCompareDecision = Boolean(activeDecision);
+  const hasImportedEvidence = Boolean(importedResult);
+  const hasGuardEvidence = Boolean(activeDecision?.guard_status);
   return {
     forge: importedResult ? "completed" : "idle",
-    runtime: anyRunning ? "running" : anyCompleted ? "completed" : "idle",
-    lab: hasCompareDecision ? "completed" : anyRunning ? "running" : "idle",
-    aiguard: hasCompareDecision && activeDecision?.guard_status ? "completed" : "idle",
+    runtime: hasImportedEvidence || anyCompleted ? "completed" : anyRunning ? "running" : "idle",
+    lab: hasCompareDecision || hasImportedEvidence ? "completed" : anyRunning ? "running" : "idle",
+    aiguard: hasGuardEvidence ? "completed" : "optional",
   };
 }
 
@@ -568,6 +570,9 @@ function normalizeState(state) {
   }
   if (value === "running") {
     return "running";
+  }
+  if (value === "optional" || value === "skipped") {
+    return "optional";
   }
   return "idle";
 }
