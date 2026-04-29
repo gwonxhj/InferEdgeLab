@@ -246,6 +246,20 @@ Validated on real edge hardware:
 
 ---
 
+## End-to-End Demo
+
+`scripts/demo_pipeline_full.sh` is the guided portfolio demo entrypoint for the full InferEdge flow: Forge -> Runtime -> Lab -> optional AIGuard.
+By default it prints a safe demo summary and does not start a production worker daemon, queue, database, or SaaS worker.
+It separates macOS Lab -> Runtime ONNX Runtime smoke from Jetson TensorRT manifest smoke and preserves the current SaaS-ready validation foundation scope.
+
+```bash
+bash scripts/demo_pipeline_full.sh
+bash scripts/demo_pipeline_full.sh --help
+bash scripts/demo_pipeline_full.sh --run-jetson-command-print
+```
+
+---
+
 ## 🚀 Quickstart (3-minute demo)
 
 ### Clone and install
