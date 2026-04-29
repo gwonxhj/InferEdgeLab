@@ -24,12 +24,14 @@ def test_studio_route_returns_local_studio_html():
 
     assert isinstance(response, FileResponse)
     assert response.status_code == 200
+    assert response.headers["cache-control"] == "no-store"
     assert "InferEdge Local Studio" in html
     assert "SaaS-ready (local mode)" in html
     assert "Pipeline Flow" in html
     assert "Run" in html
     assert "Import" in html
     assert "Jetson Helper" in html
+    assert 'data-critical="studio-dark"' in html
     assert 'href="/studio/static/style.css?v=' in html
     assert 'src="/studio/static/app.js?v=' in html
 
@@ -45,6 +47,8 @@ def test_studio_static_assets_are_served():
     assert isinstance(style_response, FileResponse)
     assert app_response.status_code == 200
     assert style_response.status_code == 200
+    assert app_response.headers["cache-control"] == "no-store"
+    assert style_response.headers["cache-control"] == "no-store"
     assert "renderPipeline" in Path(app_response.path).read_text(encoding="utf-8")
     assert "pipeline-flow" in Path(style_response.path).read_text(encoding="utf-8")
 
