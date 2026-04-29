@@ -137,12 +137,8 @@
         }
       }
     </style>
-    <script>
-      (function () {
-        var base = window.location.protocol === "file:" ? "" : "/studio/static/";
-        document.write('<link rel="stylesheet" href="' + base + 'style.css?v=11" />');
-      })();
-    </script>
+    <link rel="stylesheet" href="/studio/static/style.css?v=12" />
+    <link rel="stylesheet" href="style.css?v=12" />
   </head>
   <body>
     <main class="shell">
@@ -206,7 +202,7 @@
             </div>
             <div class="form-stack">
               <label for="import-json-path">result path</label>
-              <input id="import-json-path" type="text" value="results/latest.json" placeholder="results/latest.json" />
+              <input id="import-json-path" type="text" placeholder="results/latest.json" />
               <label for="import-json-payload">or JSON payload</label>
               <textarea
                 id="import-json-payload"
@@ -297,11 +293,7 @@
       </section>
     </main>
 
-    <script>
-      (function () {
-        var base = window.location.protocol === "file:" ? "" : "/studio/static/";
-        document.write('<script src="' + base + 'app.js?v=11" defer><\\/script>');
-      })();
-    </script>
+    <script src="/studio/static/app.js?v=12" defer></script>
+    <script src="app.js?v=12" defer></script>
   </body>
 </html>

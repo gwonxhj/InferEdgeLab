@@ -60,11 +60,13 @@ def test_studio_route_returns_local_studio_html():
     assert "Import" in html
     assert "Jetson Helper" in html
     assert 'data-critical="studio-dark"' in html
-    assert "style.css?v=11" in html
-    assert "app.js?v=11" in html
+    assert 'href="/studio/static/style.css?v=12"' in html
+    assert 'href="style.css?v=12"' in html
+    assert 'src="/studio/static/app.js?v=12"' in html
+    assert 'src="app.js?v=12"' in html
     assert "file-protocol-warning" in html
-    assert 'window.location.protocol === "file:" ? "" : "/studio/static/"' in html
-    assert 'value="results/latest.json"' in html
+    assert 'placeholder="results/latest.json"' in html
+    assert 'value="results/latest.json"' not in html
     assert 'id="import-json-payload"' in html
 
 
