@@ -7,7 +7,14 @@ from fastapi import APIRouter
 from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi import Request
+from fastapi import Body
 from fastapi.responses import FileResponse
+
+from inferedgelab.compare.comparator import compare_results
+from inferedgelab.compare.judgement import judge_comparison
+from inferedgelab.result.loader import load_result
+from inferedgelab.result.schema import normalize_result_schema
+from inferedgelab.services.deployment_decision import build_deployment_decision
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 STATIC_ASSETS = {
@@ -56,6 +63,10 @@ def studio_job_detail(request: Request, job_id: str) -> dict[str, Any]:
 
 @router.get("/studio/api/compare/latest", include_in_schema=False)
 def studio_compare_latest(request: Request) -> dict[str, Any]:
+    imported_results = _get_imported_results(request)
+    if len(imported_results) >= 2:
+        return _build_imported_compare_response(imported_results[-2], imported_results[-1])
+
     endpoint = _get_api_endpoint(request.app, "/api/compare-latest")
     try:
         return endpoint()
@@ -75,8 +86,56 @@ def studio_compare_latest(request: Request) -> dict[str, Any]:
         }
 
 
+@router.post("/studio/api/run", include_in_schema=False)
+def studio_run(request: Request, payload: dict[str, Any] = Body(...)) -> dict[str, Any]:
+    model_path = payload.get("model_path")
+    if not isinstance(model_path, str) or not model_path.strip():
+        raise HTTPException(status_code=400, detail="model_path is required")
+
+    endpoint = _get_api_endpoint(request.app, "/api/analyze")
+    job = endpoint(payload={"model_path": model_path.strip(), "notes": "Created from Local Studio Run"})
+    return {
+        "status": "created",
+        "source": "/api/analyze",
+        "job_id": job["job_id"],
+        "job": job,
+    }
+
+
+@router.post("/studio/api/import", include_in_schema=False)
+def studio_import(request: Request, payload: dict[str, Any] = Body(...)) -> dict[str, Any]:
+    result = _load_import_payload(payload)
+    imported_results = _get_imported_results(request)
+    imported_results.append(result)
+    return {
+        "status": "imported",
+        "source": "studio-memory",
+        "count": len(imported_results),
+        "result": result,
+        "compare_ready": len(imported_results) >= 2,
+    }
+
+
+@router.get("/studio/api/jetson-command", include_in_schema=False)
+def studio_jetson_command() -> dict[str, str]:
+    command = "\n".join(
+        [
+            "./inferedge-runtime \\",
+            "  --manifest ~/InferEdgeForge/builds/yolov8n__jetson__tensorrt__jetson_fp16/manifest.json \\",
+            "  --model ~/InferEdgeForge/builds/yolov8n__jetson__tensorrt__jetson_fp16/model.engine \\",
+            "  --engine tensorrt \\",
+            "  --device jetson \\",
+            "  --runs 5 \\",
+            "  --warmup 1 \\",
+            "  --output results/jetson/yolov8n_jetson_tensorrt_manifest_smoke.json",
+        ]
+    )
+    return {"command": command}
+
+
 def register_studio(app: FastAPI, job_store: Any | None = None) -> None:
     app.state.studio_job_store = job_store
+    app.state.studio_imported_results = []
     app.include_router(router)
 
 
@@ -84,8 +143,78 @@ def _get_studio_job_store(request: Request) -> Any | None:
     return getattr(request.app.state, "studio_job_store", None)
 
 
+def _get_imported_results(request: Request) -> list[dict[str, Any]]:
+    imported_results = getattr(request.app.state, "studio_imported_results", None)
+    if imported_results is None:
+        imported_results = []
+        request.app.state.studio_imported_results = imported_results
+    return imported_results
+
+
 def _get_api_endpoint(app: FastAPI, path: str) -> Any:
     for route in app.routes:
         if getattr(route, "path", None) == path:
             return route.endpoint
     raise HTTPException(status_code=404, detail=f"API route not found: {path}")
+
+
+def _load_import_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    path = payload.get("path") or payload.get("json_path")
+    if isinstance(path, str) and path.strip():
+        try:
+            return _with_compare_keys(load_result(path.strip()))
+        except (OSError, ValueError) as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    raw_result = payload.get("result") or payload.get("payload") or payload.get("json")
+    if raw_result is None:
+        raw_result = payload
+    if not isinstance(raw_result, dict):
+        raise HTTPException(status_code=400, detail="import payload must be a JSON object")
+
+    try:
+        result = normalize_result_schema(dict(raw_result))
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    result.setdefault("legacy_result", False)
+    return _with_compare_keys(result)
+
+
+def _build_imported_compare_response(base: dict[str, Any], new: dict[str, Any]) -> dict[str, Any]:
+    result = compare_results(base, new)
+    judgement = judge_comparison(result)
+    deployment_decision = build_deployment_decision(judgement)
+    return {
+        "status": "ok",
+        "source": "studio-memory",
+        "data": {
+            "base": base,
+            "new": new,
+            "result": result,
+            "judgement": judgement,
+            "deployment_decision": deployment_decision,
+        },
+        "base": base,
+        "new": new,
+        "result": result,
+        "judgement": judgement,
+        "deployment_decision": deployment_decision,
+    }
+
+
+def _with_compare_keys(result: dict[str, Any]) -> dict[str, Any]:
+    enriched = dict(result)
+    if not enriched.get("backend_key"):
+        engine = enriched.get("engine") or enriched.get("backend")
+        device = enriched.get("device") or enriched.get("device_name")
+        if engine and device:
+            enriched["backend_key"] = f"{engine}__{device}"
+    if not enriched.get("compare_key"):
+        model = enriched.get("model")
+        batch = enriched.get("batch")
+        height = enriched.get("height")
+        width = enriched.get("width")
+        precision = enriched.get("precision")
+        if model and batch and height and width and precision:
+            enriched["compare_key"] = f"{model}__b{batch}__h{height}w{width}__{precision}"
+    return enriched

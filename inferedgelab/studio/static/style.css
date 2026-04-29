@@ -77,6 +77,10 @@ body {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.three-column {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .panel {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -231,6 +235,53 @@ body {
   color: var(--muted);
 }
 
+.form-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.form-stack label {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.form-stack input,
+.form-stack textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfc;
+  color: var(--ink);
+  font: inherit;
+  padding: 11px 12px;
+}
+
+.form-stack textarea {
+  min-height: 142px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.form-stack button {
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  padding: 11px 14px;
+}
+
+.form-stack button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 @media (max-width: 840px) {
   .studio-header {
     align-items: start;
@@ -238,6 +289,7 @@ body {
   }
 
   .two-column,
+  .three-column,
   .pipeline-flow {
     grid-template-columns: 1fr;
   }
