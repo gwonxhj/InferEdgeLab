@@ -27,7 +27,11 @@ router = APIRouter()
 
 @router.get("/studio", include_in_schema=False)
 def studio_index() -> FileResponse:
-    return FileResponse(STATIC_DIR / "index.html", media_type="text/html")
+    return FileResponse(
+        STATIC_DIR / "index.html",
+        media_type="text/html",
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 @router.get("/studio/static/{asset_name}", include_in_schema=False)
@@ -35,7 +39,11 @@ def studio_static(asset_name: str) -> FileResponse:
     media_type = STATIC_ASSETS.get(asset_name)
     if media_type is None:
         raise HTTPException(status_code=404, detail="studio asset not found")
-    return FileResponse(STATIC_DIR / asset_name, media_type=media_type)
+    return FileResponse(
+        STATIC_DIR / asset_name,
+        media_type=media_type,
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 @router.get("/studio/api/jobs", include_in_schema=False)
