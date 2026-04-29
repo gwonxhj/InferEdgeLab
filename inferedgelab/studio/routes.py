@@ -9,6 +9,7 @@ from fastapi import HTTPException
 from fastapi import Request
 from fastapi import Body
 from fastapi.responses import FileResponse
+from fastapi.responses import RedirectResponse
 
 from inferedgelab.compare.comparator import compare_results
 from inferedgelab.compare.judgement import judge_comparison
@@ -32,6 +33,11 @@ def studio_index() -> FileResponse:
         media_type="text/html",
         headers={"Cache-Control": "no-store"},
     )
+
+
+@router.get("/studio로", include_in_schema=False)
+def studio_korean_particle_redirect() -> RedirectResponse:
+    return RedirectResponse(url="/studio", status_code=307)
 
 
 @router.get("/studio/static/{asset_name}", include_in_schema=False)
@@ -139,6 +145,15 @@ def studio_jetson_command() -> dict[str, str]:
         ]
     )
     return {"command": command}
+
+
+@router.get("/studio{suffix:path}", include_in_schema=False)
+def studio_path_fallback(suffix: str) -> RedirectResponse:
+    if suffix.startswith("/api") or suffix.startswith("/static"):
+        raise HTTPException(status_code=404, detail="studio route not found")
+    if suffix:
+        return RedirectResponse(url="/studio", status_code=307)
+    return RedirectResponse(url="/studio", status_code=307)
 
 
 def register_studio(app: FastAPI, job_store: Any | None = None) -> None:

@@ -4,6 +4,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from fastapi.responses import FileResponse
+from fastapi.responses import RedirectResponse
 
 import inferedgelab.api as api
 
@@ -59,8 +60,8 @@ def test_studio_route_returns_local_studio_html():
     assert "Import" in html
     assert "Jetson Helper" in html
     assert 'data-critical="studio-dark"' in html
-    assert "style.css?v=10" in html
-    assert "app.js?v=10" in html
+    assert "style.css?v=11" in html
+    assert "app.js?v=11" in html
     assert "file-protocol-warning" in html
     assert 'window.location.protocol === "file:" ? "" : "/studio/static/"' in html
     assert 'value="results/latest.json"' in html
@@ -116,6 +117,7 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert ".file-protocol-warning" in style_text
     assert ".evidence-summary" in style_text
     assert ".compare-card.improvement" in style_text
+    assert "justify-content: flex-start" in style_text
 
 
 def test_studio_app_preserves_selected_job_detail_contract():
@@ -145,6 +147,17 @@ def test_studio_jobs_api_returns_json_structure():
     assert response["source"] == "/api/jobs"
     assert response["count"] == 0
     assert response["jobs"] == []
+
+
+def test_studio_malformed_path_redirects_to_studio():
+    app = api.create_app()
+    route = _get_route(app, "/studio로")
+
+    response = route.endpoint()
+
+    assert isinstance(response, RedirectResponse)
+    assert response.status_code == 307
+    assert response.headers["location"] == "/studio"
 
 
 def test_studio_compare_latest_api_returns_json_structure():
