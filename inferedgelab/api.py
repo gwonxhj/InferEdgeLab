@@ -21,10 +21,12 @@ from inferedgelab.services.runtime_executor import run_runtime_inference
 from inferedgelab.services.summarize_service import build_summary_bundle
 from inferedgelab.services.worker_contract import WorkerContractError
 from inferedgelab.services.worker_contract import build_worker_request_from_job
+from inferedgelab.studio.routes import register_studio
 
 
 def create_app() -> FastAPI:
     app = FastAPI(title="InferEdgeLab API")
+    register_studio(app)
     job_store = InMemoryApiJobStore()
 
     @app.get("/health")

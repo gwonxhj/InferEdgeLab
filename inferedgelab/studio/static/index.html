@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>InferEdge Local Studio</title>
+    <link rel="stylesheet" href="/studio/static/style.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="studio-header">
+        <div>
+          <p class="eyebrow">Local-first workflow UI</p>
+          <h1>InferEdge Local Studio</h1>
+        </div>
+        <p class="header-note">
+          A browser view over the existing CLI, API, job, and deployment decision contracts.
+        </p>
+      </header>
+
+      <section class="panel flow-panel" aria-labelledby="pipeline-title">
+        <div class="section-heading">
+          <p class="eyebrow">Pipeline Flow</p>
+          <h2 id="pipeline-title">Forge -> Runtime -> Lab -> optional AIGuard</h2>
+        </div>
+        <div id="pipeline-flow" class="pipeline-flow"></div>
+      </section>
+
+      <section class="grid two-column">
+        <article class="panel" aria-labelledby="evidence-title">
+          <div class="section-heading">
+            <p class="eyebrow">Evidence Summary</p>
+            <h2 id="evidence-title">Smoke evidence</h2>
+          </div>
+          <div id="evidence-summary" class="stack"></div>
+        </article>
+
+        <article class="panel" aria-labelledby="metrics-title">
+          <div class="section-heading">
+            <p class="eyebrow">Result Metrics</p>
+            <h2 id="metrics-title">Placeholders</h2>
+          </div>
+          <div id="result-metrics" class="metric-grid"></div>
+        </article>
+      </section>
+
+      <section class="grid two-column">
+        <article class="panel" aria-labelledby="decision-title">
+          <div class="section-heading">
+            <p class="eyebrow">Deployment Decision</p>
+            <h2 id="decision-title">Decision placeholder</h2>
+          </div>
+          <div id="deployment-decision" class="stack"></div>
+        </article>
+
+        <article class="panel future-panel" aria-labelledby="future-title">
+          <div class="section-heading">
+            <p class="eyebrow">Future Work</p>
+            <h2 id="future-title">Intentionally outside this skeleton</h2>
+          </div>
+          <ul>
+            <li>production worker daemon</li>
+            <li>DB/queue</li>
+            <li>upload flow</li>
+            <li>frontend auth/billing</li>
+          </ul>
+        </article>
+      </section>
+    </main>
+
+    <script src="/studio/static/app.js"></script>
+  </body>
+</html>
