@@ -365,9 +365,9 @@ function renderJobDetail(emptyMessage = "Select a job or import a Runtime result
   const input = selectedJob.input_summary || {};
 
   const metrics = [
-    ["model", runtimeResult.model || input.model_path || input.artifact_path],
-    ["backend", runtimeResult.engine || runtimeResult.backend || runtimeResult.backend_key],
-    ["device", runtimeResult.device || runtimeResult.device_name],
+    ["model", runtimeModelName(runtimeResult) || input.model_path || input.artifact_path],
+    ["backend", runtimeBackendName(runtimeResult)],
+    ["device", runtimeDeviceName(runtimeResult)],
     ["mean", runtimeResult.mean_ms ?? compareMetrics.mean_ms?.new],
     ["p99", runtimeResult.p99_ms ?? compareMetrics.p99_ms?.new],
     ["fps", runtimeResult.fps || runtimeResult.fps_value],
@@ -403,9 +403,9 @@ function renderImportedResult() {
   }
 
   const metrics = [
-    ["model", importedResult.model],
-    ["backend", importedResult.engine || importedResult.backend || importedResult.backend_key],
-    ["device", importedResult.device || importedResult.device_name],
+    ["model", runtimeModelName(importedResult)],
+    ["backend", runtimeBackendName(importedResult)],
+    ["device", runtimeDeviceName(importedResult)],
     ["mean", importedResult.mean_ms],
     ["p99", importedResult.p99_ms],
     ["fps", importedResult.fps || importedResult.fps_value],
@@ -434,11 +434,12 @@ function renderCompare() {
   const speedup = result.speedup || result.backend_comparison?.speedup || calculateSpeedup(base, newer);
   const tensorRt = findResultByBackend([base, newer], "tensorrt");
   const onnx = findResultByBackend([base, newer], "onnx");
+  const sameBackend = normalizedBackendKey(base) && normalizedBackendKey(base) === normalizedBackendKey(newer);
 
   target.append(
-    compareMetricCard("TensorRT", tensorRt?.mean_ms, tensorRt?.backend_key || "tensorrt"),
-    compareMetricCard("ONNX Runtime", onnx?.mean_ms, onnx?.backend_key || "onnxruntime"),
-    compareSummaryCard(meanMetric, speedup, base, newer),
+    compareMetricCard("TensorRT", tensorRt?.mean_ms, normalizedBackendKey(tensorRt) || "tensorrt"),
+    compareMetricCard("ONNX Runtime", onnx?.mean_ms, normalizedBackendKey(onnx) || "onnxruntime"),
+    compareSummaryCard(meanMetric, speedup, base, newer, sameBackend),
   );
 }
 
@@ -493,15 +494,16 @@ function compareMetricCard(label, meanMs, backendKey) {
   return card;
 }
 
-function compareSummaryCard(metric, speedup, base, newer) {
+function compareSummaryCard(metric, speedup, base, newer, sameBackend = false) {
   const card = createElement("article", "compare-card highlight");
   const diff = formatLatencyDiff(metric);
-  const faster = speedup ? `${formatNumber(speedup)}x faster` : "speedup unavailable";
+  const faster = sameBackend ? "Same backend" : speedup ? `${formatNumber(speedup)}x faster` : "speedup unavailable";
+  const note = sameBackend ? "Import a TensorRT and an ONNX Runtime result to compare backend speedup." : `Latency diff: ${diff}`;
   card.append(
     createElement("p", "caption", "Latency comparison"),
     createElement("h3", "", faster),
-    createElement("p", "body-text", `Latency diff: ${diff}`),
-    createElement("p", "caption", `${base.backend_key || "-"} -> ${newer.backend_key || "-"}`),
+    createElement("p", "body-text", note),
+    createElement("p", "caption", `${normalizedBackendKey(base) || "-"} -> ${normalizedBackendKey(newer) || "-"}`),
   );
   return card;
 }
@@ -579,7 +581,59 @@ function decisionTone(decision) {
 }
 
 function findResultByBackend(results, keyword) {
-  return results.find((item) => String(item.backend_key || item.engine || "").toLowerCase().includes(keyword));
+  return results.find((item) => normalizedBackendKey(item).toLowerCase().includes(keyword));
+}
+
+function runtimeModelName(result = {}) {
+  return firstDisplayValue(result.model_name, result.model?.name, result.model, result.model_path);
+}
+
+function runtimeBackendName(result = {}) {
+  return firstDisplayValue(
+    result.engine_backend,
+    result.engine?.backend,
+    result.engine?.name,
+    result.backend,
+    result.engine,
+    result.backend_key,
+  );
+}
+
+function runtimeDeviceName(result = {}) {
+  return firstDisplayValue(result.device_name, result.device?.name, result.device);
+}
+
+function normalizedBackendKey(result = {}) {
+  return firstDisplayValue(result.backend_key, result.engine_backend, result.engine?.backend, result.engine?.name, result.engine);
+}
+
+function firstDisplayValue(...values) {
+  for (const value of values) {
+    const formatted = displayValue(value);
+    if (formatted !== "-") {
+      return formatted;
+    }
+  }
+  return "";
+}
+
+function displayValue(value) {
+  if (value === undefined || value === null || value === "") {
+    return "-";
+  }
+  if (typeof value === "number") {
+    return formatNumber(value);
+  }
+  if (typeof value === "string" || typeof value === "boolean") {
+    return String(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map(displayValue).join(", ");
+  }
+  if (typeof value === "object") {
+    return firstDisplayValue(value.name, value.backend, value.path, value.status, value.id);
+  }
+  return String(value);
 }
 
 function formatLatencyDiff(metric) {
@@ -619,13 +673,7 @@ function formatNumber(value) {
 }
 
 function formatValue(value) {
-  if (value === undefined || value === null || value === "") {
-    return "-";
-  }
-  if (typeof value === "number") {
-    return formatNumber(value);
-  }
-  return String(value);
+  return displayValue(value);
 }
 
 async function initLocalStudio() {

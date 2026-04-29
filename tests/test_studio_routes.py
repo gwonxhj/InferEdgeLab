@@ -69,6 +69,8 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert "DOMContentLoaded" in app_text
     assert "Open Studio from http://127.0.0.1:8000/studio" in app_text
     assert "responseErrorMessage" in app_text
+    assert "runtimeModelName" in app_text
+    assert "Same backend" in app_text
     assert "#0b0f14" in style_text
     assert "grid-template-columns" in style_text
     assert ".form-stack button" in style_text
@@ -188,6 +190,8 @@ def test_studio_import_api_accepts_existing_result_path():
     assert response["result"]["compare_key"]
     assert response["result"]["backend_key"]
     assert response["compare_ready"] is False
+    assert isinstance(response["result"]["model"], dict)
+    assert response["result"]["model"]["name"] == "yolov8n.onnx"
 
 
 def test_studio_jetson_command_api_returns_command():
