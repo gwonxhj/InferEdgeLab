@@ -4,18 +4,13 @@
 
 # InferEdgeLab
 
+Language: English | [한국어](README.ko.md)
+
 **GitHub description:** Analysis/API layer for end-to-end Edge AI inference validation, reports, jobs, and deployment decisions.
 
 InferEdge is an end-to-end Edge AI inference validation pipeline that connects build provenance, C++ runtime execution, Lab analysis/deployment decision, and optional deterministic diagnosis evidence.
 
 ## Portfolio Summary
-
-**한국어 5줄 요약**
-- InferEdgeLab은 단순 benchmark viewer가 아니라, Runtime benchmark 결과를 분석해 compare/report/API/job result/deployment decision까지 생성하는 Edge AI inference validation layer입니다.
-- InferEdge 전체 pipeline은 Forge build provenance -> Runtime real execution -> Lab analysis/API/job/deployment_decision -> optional AIGuard diagnosis evidence로 이어집니다.
-- Lab은 Forge metadata/manifest, InferEdge-Runtime C++ 실행 결과, optional AIGuard guard_analysis를 하나의 검증 evidence bundle로 정렬합니다.
-- 최근 `yolov8n.onnx` manual smoke에서 Lab -> C++ Runtime CLI -> ONNX Runtime CPU execution -> Lab job result ingestion 경로와 Jetson Orin Nano Forge manifest + TensorRT engine artifact -> C++ Runtime execution 경로가 검증되었습니다.
-- 현재 상태는 portfolio-grade pipeline foundation이며, production worker daemon, persistent queue/database, file upload, frontend, auth/billing은 future work로 분리되어 있습니다.
 
 **English 5-line summary**
 - InferEdgeLab analyzes runtime benchmark results and produces comparison reports, API responses, async job results, and deployment decisions.
