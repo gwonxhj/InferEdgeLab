@@ -213,12 +213,16 @@ def _build_imported_compare_response(base: dict[str, Any], new: dict[str, Any]) 
 def _with_compare_keys(result: dict[str, Any]) -> dict[str, Any]:
     enriched = dict(result)
     if not enriched.get("backend_key"):
-        engine = enriched.get("engine") or enriched.get("backend")
-        device = enriched.get("device") or enriched.get("device_name")
+        engine = _first_display_value(
+            enriched.get("engine_backend"),
+            enriched.get("engine"),
+            enriched.get("backend"),
+        )
+        device = _first_display_value(enriched.get("device_name"), enriched.get("device"))
         if engine and device:
             enriched["backend_key"] = f"{engine}__{device}"
     if not enriched.get("compare_key"):
-        model = enriched.get("model")
+        model = _first_display_value(enriched.get("model_name"), enriched.get("model"))
         batch = enriched.get("batch")
         height = enriched.get("height")
         width = enriched.get("width")
@@ -226,3 +230,25 @@ def _with_compare_keys(result: dict[str, Any]) -> dict[str, Any]:
         if model and batch and height and width and precision:
             enriched["compare_key"] = f"{model}__b{batch}__h{height}w{width}__{precision}"
     return enriched
+
+
+def _first_display_value(*values: Any) -> str:
+    for value in values:
+        display_value = _display_value(value)
+        if display_value:
+            return display_value
+    return ""
+
+
+def _display_value(value: Any) -> str:
+    if value is None or value == "":
+        return ""
+    if isinstance(value, dict):
+        return _first_display_value(
+            value.get("name"),
+            value.get("backend"),
+            value.get("path"),
+            value.get("status"),
+            value.get("id"),
+        )
+    return str(value)

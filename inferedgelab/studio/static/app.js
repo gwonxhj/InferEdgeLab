@@ -76,27 +76,41 @@ function setEmpty(selector, label = "No data available") {
 
 async function fetchJson(url) {
   assertHttpStudio();
-  const response = await fetch(url, { headers: { Accept: "application/json" } });
-  if (!response.ok) {
-    throw new Error(await responseErrorMessage(response));
+  try {
+    const response = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!response.ok) {
+      throw new Error(await responseErrorMessage(response));
+    }
+    return await parseJsonResponse(response);
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error(`Invalid JSON response from ${url}.`);
+    }
+    throw error;
   }
-  return response.json();
 }
 
 async function postJson(url, payload) {
   assertHttpStudio();
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    throw new Error(await responseErrorMessage(response));
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      throw new Error(await responseErrorMessage(response));
+    }
+    return await parseJsonResponse(response);
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error(`Invalid JSON response from ${url}.`);
+    }
+    throw error;
   }
-  return response.json();
 }
 
 function assertHttpStudio() {
@@ -122,6 +136,14 @@ async function responseErrorMessage(response) {
   return fallback;
 }
 
+async function parseJsonResponse(response) {
+  try {
+    return await response.json();
+  } catch (error) {
+    throw new SyntaxError("Response body is not valid JSON.");
+  }
+}
+
 async function loadJobs(preferredJobId = selectedJobId) {
   setLoading("#job-list");
   try {
@@ -143,8 +165,8 @@ async function loadJobs(preferredJobId = selectedJobId) {
     currentJobs = [];
     selectedJob = null;
     selectedJobId = null;
-    setEmpty("#job-list");
-    renderJobDetail();
+    setEmpty("#job-list", `Error: ${formatError(error)}`);
+    renderJobDetail(`Unable to load jobs: ${formatError(error)}`);
   }
   renderPipeline();
 }
@@ -168,7 +190,7 @@ async function loadJobDetail(jobId) {
     updateDecision(extractDecision(selectedJob));
   } catch (error) {
     selectedJob = null;
-    renderJobDetail(`Unable to load ${jobId}.`);
+    renderJobDetail(`Unable to load ${jobId}: ${formatError(error)}`);
   }
   renderPipeline();
 }
@@ -182,11 +204,11 @@ async function loadCompare() {
     if (compareData.status === "empty") {
       activeDecision = null;
       renderDecision(decision);
-    } else if (!activeDecision) {
+    } else {
       updateDecision(decision);
     }
   } catch (error) {
-    compareData = null;
+    compareData = { status: "error", error: formatError(error) };
     renderCompare();
     if (!activeDecision) {
       updateDecision(null);
@@ -226,8 +248,9 @@ async function runModel() {
 async function importResult() {
   const button = document.querySelector("#import-button");
   const jsonPath = document.querySelector("#import-json-path").value.trim();
-  if (!jsonPath) {
-    setStatus("#import-status", "Error: enter a result path.", "error");
+  const jsonPayload = document.querySelector("#import-json-payload").value.trim();
+  if (!jsonPath && !jsonPayload) {
+    setStatus("#import-status", "Error: enter a result path or JSON payload.", "error");
     return;
   }
 
@@ -236,7 +259,7 @@ async function importResult() {
   setStatus("#import-status", "Loading: importing Runtime result...", "loading");
   renderPipeline();
   try {
-    const payload = await postJson("/studio/api/import", { path: jsonPath });
+    const payload = await postJson("/studio/api/import", buildImportPayload(jsonPath, jsonPayload));
     importedResult = payload.result;
     setStatus(
       "#import-status",
@@ -246,8 +269,10 @@ async function importResult() {
       "success",
     );
     setState("#import-state", "completed");
+    renderImportEvidence(payload);
     renderImportedResult();
     await loadCompare();
+    renderPipeline();
   } catch (error) {
     setStatus("#import-status", `Error: ${formatError(error)}`, "error");
     setState("#import-state", "idle");
@@ -255,6 +280,17 @@ async function importResult() {
     button.disabled = false;
     renderPipeline();
   }
+}
+
+function buildImportPayload(path, jsonPayload) {
+  if (jsonPayload) {
+    try {
+      return { result: JSON.parse(jsonPayload) };
+    } catch (error) {
+      throw new Error("JSON payload is not valid JSON.");
+    }
+  }
+  return { path };
 }
 
 async function loadJetsonCommand() {
@@ -305,6 +341,34 @@ function renderPipeline() {
     }
     target.append(card);
   });
+}
+
+function renderImportEvidence(payload) {
+  const target = document.querySelector("#import-evidence");
+  if (!target) {
+    return;
+  }
+  target.replaceChildren();
+
+  const result = payload?.result || {};
+  const missing = missingResultKeys(result);
+  target.append(
+    evidenceItem("model", runtimeModelName(result)),
+    evidenceItem("backend", normalizedBackendKey(result) || runtimeBackendName(result)),
+    evidenceItem("compare", result.compare_key || fallbackLabel("compare_key")),
+    evidenceItem("mean", result.mean_ms === undefined ? "-" : `${formatNumber(result.mean_ms)} ms`),
+  );
+  if (missing.length > 0) {
+    target.append(
+      createElement("p", "evidence-warning", `Fallback metadata: missing ${missing.join(", ")}.`),
+    );
+  }
+}
+
+function evidenceItem(label, value) {
+  const item = createElement("div", "evidence-item");
+  item.append(createElement("span", "metric-name", label), createElement("strong", "", formatValue(value)));
+  return item;
 }
 
 function renderRunPanel() {
@@ -422,6 +486,11 @@ function renderCompare() {
   const target = document.querySelector("#compare-panel");
   target.replaceChildren();
 
+  if (compareData?.status === "error") {
+    target.append(errorCompareCard(compareData.error));
+    return;
+  }
+
   if (!compareData || compareData.status === "empty") {
     target.append(emptyCompareCard());
     return;
@@ -430,6 +499,7 @@ function renderCompare() {
   const base = compareData.base || compareData.data?.base || {};
   const newer = compareData.new || compareData.data?.new || {};
   const result = compareData.result || compareData.data?.result || {};
+  const judgement = compareData.judgement || compareData.data?.judgement || {};
   const meanMetric = result.metrics?.mean_ms || {};
   const speedup = result.speedup || result.backend_comparison?.speedup || calculateSpeedup(base, newer);
   const tensorRt = findResultByBackend([base, newer], "tensorrt");
@@ -439,7 +509,7 @@ function renderCompare() {
   target.append(
     compareMetricCard("TensorRT", tensorRt?.mean_ms, normalizedBackendKey(tensorRt) || "tensorrt"),
     compareMetricCard("ONNX Runtime", onnx?.mean_ms, normalizedBackendKey(onnx) || "onnxruntime"),
-    compareSummaryCard(meanMetric, speedup, base, newer, sameBackend),
+    compareSummaryCard(meanMetric, speedup, base, newer, sameBackend, judgement.overall),
   );
 }
 
@@ -462,7 +532,7 @@ function renderDecision(decision) {
   target.append(
     createElement("p", "caption", "Decision"),
     createElement("h3", "", decisionName.toUpperCase()),
-    createElement("p", "body-text", decision.reason || "-"),
+    createElement("p", "body-text", decisionReason(decision)),
     createElement("p", "caption", decision.notes || decision.recommended_action || ""),
   );
 }
@@ -494,16 +564,26 @@ function compareMetricCard(label, meanMs, backendKey) {
   return card;
 }
 
-function compareSummaryCard(metric, speedup, base, newer, sameBackend = false) {
-  const card = createElement("article", "compare-card highlight");
+function compareSummaryCard(metric, speedup, base, newer, sameBackend = false, overall = "unknown") {
+  const card = createElement("article", `compare-card highlight ${compareTone(overall)}`);
   const diff = formatLatencyDiff(metric);
   const faster = sameBackend ? "Same backend" : speedup ? `${formatNumber(speedup)}x faster` : "speedup unavailable";
   const note = sameBackend ? "Import a TensorRT and an ONNX Runtime result to compare backend speedup." : `Latency diff: ${diff}`;
   card.append(
-    createElement("p", "caption", "Latency comparison"),
+    createElement("p", "caption", `Latency comparison / ${overall || "unknown"}`),
     createElement("h3", "", faster),
     createElement("p", "body-text", note),
     createElement("p", "caption", `${normalizedBackendKey(base) || "-"} -> ${normalizedBackendKey(newer) || "-"}`),
+  );
+  return card;
+}
+
+function errorCompareCard(message) {
+  const card = createElement("article", "compare-card empty error-card");
+  card.append(
+    createElement("p", "caption", "Compare error"),
+    createElement("h3", "", "Unable to load compare data"),
+    createElement("p", "body-text", message || "No error detail was provided."),
   );
   return card;
 }
@@ -523,6 +603,14 @@ function extractDecision(payload) {
     return null;
   }
   return payload.deployment_decision || payload.result?.deployment_decision || payload.data?.deployment_decision || null;
+}
+
+function decisionReason(decision) {
+  const decisionName = String(decision?.decision || "unknown").toLowerCase();
+  if (decisionName === "unknown" && !decision?.guard_status) {
+    return "AIGuard evidence not provided.";
+  }
+  return decision?.reason || "-";
 }
 
 function extractRuntimeResult(job) {
@@ -639,6 +727,35 @@ function displayValue(value) {
     return firstDisplayValue(value.name, value.backend, value.path, value.status, value.id);
   }
   return String(value);
+}
+
+function missingResultKeys(result = {}) {
+  const missing = [];
+  if (!result.compare_key) {
+    missing.push("compare_key");
+  }
+  if (!normalizedBackendKey(result)) {
+    missing.push("backend_key");
+  }
+  return missing;
+}
+
+function fallbackLabel(key) {
+  return `${key} unavailable`;
+}
+
+function compareTone(overall) {
+  const value = String(overall || "").toLowerCase();
+  if (value.includes("improvement")) {
+    return "improvement";
+  }
+  if (value.includes("regression")) {
+    return "regression";
+  }
+  if (value.includes("neutral")) {
+    return "neutral";
+  }
+  return "unknown";
 }
 
 function formatLatencyDiff(metric) {

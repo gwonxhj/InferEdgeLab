@@ -15,6 +15,33 @@ def _get_route(app, path: str):
     raise AssertionError(f"route not found: {path}")
 
 
+def _runtime_result(
+    *,
+    engine: str = "onnxruntime",
+    device: str = "cpu",
+    mean_ms: float = 45.0,
+    p99_ms: float = 50.0,
+    backend_key: str | None = "onnxruntime__cpu",
+) -> dict:
+    result = {
+        "runtime_role": "runtime-result",
+        "model": "yolov8n",
+        "engine": engine,
+        "device": device,
+        "precision": "fp32",
+        "batch": 1,
+        "height": 640,
+        "width": 640,
+        "mean_ms": mean_ms,
+        "p99_ms": p99_ms,
+        "timestamp": "2026-04-29T12:00:00Z",
+        "compare_key": "yolov8n__b1__h640w640__fp32",
+    }
+    if backend_key is not None:
+        result["backend_key"] = backend_key
+    return result
+
+
 def test_studio_route_returns_local_studio_html():
     app = api.create_app()
     route = _get_route(app, "/studio")
@@ -32,9 +59,10 @@ def test_studio_route_returns_local_studio_html():
     assert "Import" in html
     assert "Jetson Helper" in html
     assert 'data-critical="studio-dark"' in html
-    assert 'href="/studio/static/style.css?v=' in html
-    assert 'src="/studio/static/app.js?v=' in html
+    assert 'href="/studio/static/style.css?v=9"' in html
+    assert 'src="/studio/static/app.js?v=9"' in html
     assert 'value="results/latest.json"' in html
+    assert 'id="import-json-payload"' in html
 
 
 def test_studio_static_assets_are_served():
@@ -69,6 +97,10 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert "DOMContentLoaded" in app_text
     assert "Open Studio from http://127.0.0.1:8000/studio" in app_text
     assert "responseErrorMessage" in app_text
+    assert "parseJsonResponse" in app_text
+    assert "renderImportEvidence" in app_text
+    assert "AIGuard evidence not provided" in app_text
+    assert "compareTone" in app_text
     assert "runtimeModelName" in app_text
     assert "Same backend" in app_text
     assert "hasImportedEvidence" in app_text
@@ -78,6 +110,8 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert ".form-stack button" in style_text
     assert ".tool-card" in style_text
     assert ".state-pill.optional" in style_text
+    assert ".evidence-summary" in style_text
+    assert ".compare-card.improvement" in style_text
 
 
 def test_studio_app_preserves_selected_job_detail_contract():
@@ -117,9 +151,11 @@ def test_studio_compare_latest_api_returns_json_structure():
     response = route.endpoint(request=request)
 
     assert route.status_code is None
+    assert response["status"] == "empty"
     assert "deployment_decision" in response
     assert "data" in response
     assert response.get("source") in {None, "/api/compare-latest"}
+    assert response["deployment_decision"]["decision"] == "unknown"
 
 
 def test_studio_run_api_creates_analyze_job():
@@ -158,21 +194,7 @@ def test_studio_import_api_accepts_runtime_result_json():
     app = api.create_app()
     route = _get_route(app, "/studio/api/import")
     request = SimpleNamespace(app=app)
-    result = {
-        "runtime_role": "runtime-result",
-        "model": "yolov8n",
-        "engine": "onnxruntime",
-        "device": "cpu",
-        "precision": "fp32",
-        "batch": 1,
-        "height": 640,
-        "width": 640,
-        "mean_ms": 45.0,
-        "p99_ms": 50.0,
-        "timestamp": "2026-04-29T12:00:00Z",
-        "compare_key": "yolov8n__b1__h640w640__fp32",
-        "backend_key": "onnxruntime__cpu",
-    }
+    result = _runtime_result()
 
     response = route.endpoint(request=request, payload={"result": result})
 
@@ -180,6 +202,20 @@ def test_studio_import_api_accepts_runtime_result_json():
     assert response["count"] == 1
     assert response["result"]["backend_key"] == "onnxruntime__cpu"
     assert response["compare_ready"] is False
+
+
+def test_studio_import_api_generates_missing_compare_keys():
+    app = api.create_app()
+    route = _get_route(app, "/studio/api/import")
+    request = SimpleNamespace(app=app)
+    result = _runtime_result(backend_key=None)
+    result.pop("compare_key")
+
+    response = route.endpoint(request=request, payload={"result": result})
+
+    assert response["status"] == "imported"
+    assert response["result"]["backend_key"] == "onnxruntime__cpu"
+    assert response["result"]["compare_key"] == "yolov8n__b1__h640w640__fp32"
 
 
 def test_studio_import_api_accepts_existing_result_path():
@@ -206,3 +242,37 @@ def test_studio_jetson_command_api_returns_command():
     assert "--engine tensorrt" in response["command"]
     assert "--device jetson" in response["command"]
     assert "--output results/jetson/" in response["command"]
+
+
+def test_studio_importing_two_compatible_results_returns_compare_data():
+    app = api.create_app()
+    request = SimpleNamespace(app=app)
+    import_route = _get_route(app, "/studio/api/import")
+    compare_route = _get_route(app, "/studio/api/compare/latest")
+
+    first = import_route.endpoint(
+        request=request,
+        payload={"result": _runtime_result(engine="onnxruntime", device="cpu", mean_ms=45.0, p99_ms=50.0)},
+    )
+    second = import_route.endpoint(
+        request=request,
+        payload={
+            "result": _runtime_result(
+                engine="tensorrt",
+                device="jetson",
+                mean_ms=9.9,
+                p99_ms=12.0,
+                backend_key="tensorrt__jetson",
+            )
+        },
+    )
+    compare = compare_route.endpoint(request=request)
+
+    assert first["compare_ready"] is False
+    assert second["compare_ready"] is True
+    assert compare["status"] == "ok"
+    assert compare["base"]["backend_key"] == "onnxruntime__cpu"
+    assert compare["new"]["backend_key"] == "tensorrt__jetson"
+    assert compare["result"]["metrics"]["mean_ms"]["new"] == 9.9
+    assert compare["judgement"]["overall"] == "improvement"
+    assert compare["deployment_decision"]["decision"] == "unknown"
