@@ -132,7 +132,7 @@
         }
       }
     </style>
-    <link rel="stylesheet" href="/studio/static/style.css?v=8" />
+    <link rel="stylesheet" href="/studio/static/style.css?v=9" />
   </head>
   <body>
     <main class="shell">
@@ -192,8 +192,15 @@
             <div class="form-stack">
               <label for="import-json-path">result path</label>
               <input id="import-json-path" type="text" value="results/latest.json" placeholder="results/latest.json" />
+              <label for="import-json-payload">or JSON payload</label>
+              <textarea
+                id="import-json-payload"
+                rows="5"
+                placeholder='{"runtime_role":"runtime-result","model":"yolov8n","engine":"onnxruntime","device":"cpu","mean_ms":45.0}'
+              ></textarea>
               <button id="import-button" type="button">Import</button>
               <p id="import-status" class="status-line"></p>
+              <div id="import-evidence" class="evidence-summary"></div>
             </div>
           </article>
 
@@ -275,6 +282,6 @@
       </section>
     </main>
 
-    <script src="/studio/static/app.js?v=8" defer></script>
+    <script src="/studio/static/app.js?v=9" defer></script>
   </body>
 </html>
