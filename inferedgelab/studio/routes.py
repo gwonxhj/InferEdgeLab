@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -24,6 +25,7 @@ DEMO_EVIDENCE_FILES = (
     "onnxruntime_cpu_result.json",
     "tensorrt_jetson_result.json",
 )
+DEMO_JOB_ID = "demo_yolov8n_trt_vs_onnx"
 STATIC_ASSETS = {
     "app.js": "application/javascript",
     "style.css": "text/css",
@@ -63,11 +65,13 @@ def studio_jobs(request: Request) -> dict[str, Any]:
     store = _get_studio_job_store(request)
     jobs = []
     if store is not None:
-        jobs = sorted(
-            getattr(store, "_jobs", {}).values(),
-            key=lambda job: str(job.get("updated_at") or job.get("created_at") or ""),
-            reverse=True,
-        )
+        jobs.extend(getattr(store, "_jobs", {}).values())
+    jobs.extend(_get_demo_jobs(request).values())
+    jobs = sorted(
+        jobs,
+        key=lambda job: str(job.get("updated_at") or job.get("created_at") or ""),
+        reverse=True,
+    )
     return {
         "source": "/api/jobs",
         "count": len(jobs),
@@ -77,6 +81,10 @@ def studio_jobs(request: Request) -> dict[str, Any]:
 
 @router.get("/studio/api/job/{job_id}", include_in_schema=False)
 def studio_job_detail(request: Request, job_id: str) -> dict[str, Any]:
+    demo_job = _get_demo_jobs(request).get(job_id)
+    if demo_job is not None:
+        return demo_job
+
     endpoint = _get_api_endpoint(request.app, "/api/jobs/{job_id}")
     return endpoint(job_id=job_id)
 
@@ -121,6 +129,7 @@ def studio_run(request: Request, payload: dict[str, Any] = Body(...)) -> dict[st
     if isinstance(options, dict):
         analyze_payload["options"] = dict(options)
     job = endpoint(payload=analyze_payload)
+    job["display_name"] = _build_analyze_display_name(job)
     return {
         "status": "created",
         "source": "/api/analyze",
@@ -150,9 +159,13 @@ def studio_demo_evidence(request: Request) -> dict[str, Any]:
     imported_results = _get_imported_results(request)
     imported_results.extend(results)
     compare = _build_imported_compare_response(results[0], results[1])
+    demo_job = _build_demo_job(results, compare)
+    _get_demo_jobs(request)[DEMO_JOB_ID] = demo_job
     return {
         "status": "loaded",
         "source": "examples/studio_demo",
+        "job_id": DEMO_JOB_ID,
+        "job": demo_job,
         "count": len(results),
         "results": results,
         "compare_ready": True,
@@ -190,6 +203,7 @@ def studio_path_fallback(suffix: str) -> RedirectResponse:
 def register_studio(app: FastAPI, job_store: Any | None = None) -> None:
     app.state.studio_job_store = job_store
     app.state.studio_imported_results = []
+    app.state.studio_demo_jobs = {}
     app.include_router(router)
 
 
@@ -203,6 +217,14 @@ def _get_imported_results(request: Request) -> list[dict[str, Any]]:
         imported_results = []
         request.app.state.studio_imported_results = imported_results
     return imported_results
+
+
+def _get_demo_jobs(request: Request) -> dict[str, dict[str, Any]]:
+    demo_jobs = getattr(request.app.state, "studio_demo_jobs", None)
+    if demo_jobs is None:
+        demo_jobs = {}
+        request.app.state.studio_demo_jobs = demo_jobs
+    return demo_jobs
 
 
 def _get_api_endpoint(app: FastAPI, path: str) -> Any:
@@ -272,6 +294,55 @@ def _load_demo_result(file_name: str) -> dict[str, Any]:
     result.setdefault("legacy_result", False)
     result["_source_path"] = str(path.relative_to(DEMO_EVIDENCE_DIR.parents[1]))
     return _with_compare_keys(result)
+
+
+def _build_demo_job(results: list[dict[str, Any]], compare: dict[str, Any]) -> dict[str, Any]:
+    now = _utc_now_iso()
+    runtime_result = results[-1] if results else {}
+    return {
+        "job_id": DEMO_JOB_ID,
+        "display_name": "Demo: TensorRT vs ONNX Runtime",
+        "status": "completed",
+        "created_at": now,
+        "updated_at": now,
+        "input_summary": {
+            "workflow": "studio_demo_evidence",
+            "model_path": "examples/studio_demo/*.json",
+            "notes": "Bundled Local Studio demo evidence",
+        },
+        "result": {
+            "runtime_result": runtime_result,
+            "comparison": compare,
+            "deployment_decision": compare["deployment_decision"],
+            "summary": compare["judgement"]["summary"],
+        },
+        "error": None,
+        "links": {
+            "self": f"/studio/api/job/{DEMO_JOB_ID}",
+            "compare": "/studio/api/compare/latest",
+        },
+        "next_actions": ["review_compare"],
+    }
+
+
+def _build_analyze_display_name(job: dict[str, Any]) -> str:
+    input_summary = job.get("input_summary") or {}
+    model_path = _first_display_value(input_summary.get("model_path"), input_summary.get("artifact_path"))
+    model_name = Path(model_path).name if model_path else "analyze job"
+    options = input_summary.get("options") if isinstance(input_summary.get("options"), dict) else {}
+    backend = _first_display_value(options.get("backend"))
+    device = _first_display_value(options.get("device"))
+    suffix = f" ({backend}/{device})" if backend or device else ""
+    return f"Analyze {model_name}{suffix}"
+
+
+def _utc_now_iso() -> str:
+    return (
+        datetime.now(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
 
 
 def _with_compare_keys(result: dict[str, Any]) -> dict[str, Any]:

@@ -366,12 +366,15 @@ async function loadDemoEvidence() {
     const results = Array.isArray(payload.results) ? payload.results : [];
     importedResult = results[results.length - 1] || null;
     compareData = payload.compare || null;
+    selectedJobId = payload.job_id || payload.job?.job_id || selectedJobId;
+    selectedJob = payload.job || selectedJob;
     setState("#demo-state", "completed");
     setState("#import-state", "completed");
     setStatus("#demo-status", "Success: demo evidence loaded.", "success");
     setStatus("#import-status", "Success: demo ONNX Runtime + TensorRT evidence imported.", "success");
     renderImportEvidence({ result: importedResult });
     renderImportedResult();
+    await loadJobs(selectedJobId);
     await loadCompare();
   } catch (error) {
     setState("#demo-state", "idle");
@@ -469,7 +472,7 @@ function renderJobList() {
     return;
   }
 
-  currentJobs.forEach((job) => {
+  currentJobs.forEach((job, index) => {
     const row = createElement("button", "job-row");
     row.type = "button";
     if (selectedJobId === job.job_id) {
@@ -479,12 +482,33 @@ function renderJobList() {
 
     const main = createElement("span", "job-main");
     main.append(
-      createElement("strong", "", job.job_id || "-"),
-      createElement("span", "caption", job.updated_at || job.created_at || "-"),
+      createElement("strong", "", jobDisplayName(job, index)),
+      createElement("span", "caption", jobCaption(job)),
     );
     row.append(main, createElement("span", `state-pill ${normalizeState(job.status)}`, job.status || "idle"));
     target.append(row);
   });
+}
+
+function jobDisplayName(job, index) {
+  if (job.display_name) {
+    return job.display_name;
+  }
+  const input = job.input_summary || {};
+  const modelPath = input.model_path || input.artifact_path;
+  const modelName = modelPath ? modelPath.split("/").pop() : "";
+  const prefix = modelName ? `Analyze ${modelName}` : `Analyze job ${index + 1}`;
+  const options = input.options || {};
+  const backend = firstDisplayValue(options.backend);
+  const device = firstDisplayValue(options.device);
+  const suffix = backend || device ? ` (${[backend, device].filter(Boolean).join("/")})` : "";
+  return `${prefix}${suffix}`;
+}
+
+function jobCaption(job) {
+  const timestamp = job.updated_at || job.created_at || "-";
+  const jobId = job.job_id || "-";
+  return `${jobId} · ${timestamp}`;
 }
 
 function renderJobDetail(emptyMessage = "Select a job or import a Runtime result.") {
