@@ -144,7 +144,8 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert ".demo-card" in style_text
     assert ".compare-stat-list" in style_text
     assert ".job-row .state-pill" in style_text
-    assert "text-overflow: ellipsis" in style_text
+    assert "flex-wrap: wrap" in style_text
+    assert "flex: 0 0 auto" in style_text
     assert "justify-content: flex-start" in style_text
 
 

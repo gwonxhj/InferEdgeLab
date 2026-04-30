@@ -455,6 +455,7 @@ body.file-mode .file-protocol-warning {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
   min-width: 0;
   width: 100%;
@@ -482,10 +483,9 @@ body.file-mode .file-protocol-warning {
 }
 
 .job-row .state-pill {
-  flex: 0 1 auto;
-  max-width: 44%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  flex: 0 0 auto;
+  max-width: 100%;
+  padding-inline: 10px;
 }
 
 .job-main strong,
