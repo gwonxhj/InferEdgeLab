@@ -89,7 +89,7 @@ Improve usability, discoverability, and expansion paths beyond the core CLI work
 - [x] Provide richer CLI presentation with Rich
 - [x] Generate HTML benchmark and validation reports
 - [x] Run automated benchmark / validation checks in CI
-- [ ] Add a web dashboard mode
+- [x] Add a local-first Studio workflow UI for portfolio demo and browser inspection
 
 ---
 
@@ -124,6 +124,56 @@ Improve usability, discoverability, and expansion paths beyond the core CLI work
 ## 🔭 Future Direction
 
 - [ ] Complete full RKNN runtime backend integration so curated and runtime validation share one end-to-end device workflow
-- [ ] Evolve the current API adapter into a foundation for a web dashboard or SaaS-style validation surface
+- [ ] Keep Local Studio as a local-first workflow UI, and only later evaluate whether a production dashboard is justified
 - [ ] Add memory profiling so deployment decisions are informed by both latency and resource pressure
 - [ ] Explore multi-device distributed benchmarking for larger validation fleets and lab-scale experimentation
+
+---
+
+## Cross-Repository Roadmap
+
+The current portfolio boundary is intentionally local-first and evidence-driven. The items below are future development directions, not current claims.
+
+### InferEdgeForge
+
+Forge should stay focused on build provenance and artifact handoff.
+
+- [x] Emit manifest and metadata records for source model, artifact, backend, target, precision, shape, preset, and build id
+- [x] Provide worker/runtime summary data that can feed Lab and Runtime contracts
+- [ ] Add stronger build reproducibility checks across repeated artifact builds
+- [ ] Expand preset coverage for Jetson TensorRT and RKNN build targets
+- [ ] Add artifact package export suitable for sharing with Runtime without manual path coordination
+
+### InferEdgeRuntime
+
+Runtime should stay focused on real execution, profiling, and Lab-compatible result export.
+
+- [x] Provide C++ execution/result export boundary
+- [x] Validate Lab worker request payloads in dry-run mode
+- [x] Export compare-ready Runtime result JSON for ONNX Runtime CPU and TensorRT Jetson evidence
+- [x] Preserve source model identity for manifest-backed TensorRT engine results
+- [ ] Harden Runtime execution error reporting for failed engine/model loads
+- [ ] Add memory/resource profiling to complement latency, p99, and FPS
+- [ ] Complete RKNN runtime execution so curated RKNN evidence and live Runtime execution share one path
+
+### InferEdgeLab
+
+Lab should remain the comparison, reporting, API/job contract, Local Studio, and deployment decision owner.
+
+- [x] Compare Runtime result JSON by `compare_key` and `backend_key`
+- [x] Generate Markdown/HTML reports and API response bundles
+- [x] Provide in-memory `/api/analyze`, `/api/jobs/{job_id}`, and worker request/response mapping contracts
+- [x] Provide Local Studio for Run, Import, Demo Evidence, Compare View, Deployment Decision, and Jetson command helper
+- [ ] Add optional persisted result storage after the portfolio demo boundary is stable
+- [ ] Add production worker daemon integration only after Forge/Runtime handoff is reliable
+- [ ] Improve multi-model evidence browsing without turning Studio into a production SaaS surface
+
+### InferEdgeAIGuard
+
+AIGuard should stay optional and deterministic. It should explain evidence risks, not replace Lab's final decision ownership.
+
+- [x] Diagnose provenance mismatch with rule/evidence based detectors
+- [x] Preserve `guard_analysis` in Lab reports/API/deployment decision bundles
+- [ ] Add more detector coverage for missing manifest fields, backend mismatch, precision mismatch, and suspicious result deltas
+- [ ] Add clearer guard evidence examples for interview demos
+- [ ] Keep AIGuard optional in Studio until the evidence contract is strong enough to justify a UI action

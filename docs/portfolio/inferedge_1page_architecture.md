@@ -40,6 +40,7 @@ ONNX model
 - Lab `worker_request` / `worker_response` boundary
 - Lab -> Runtime dev-only minimal execution smoke using `yolov8n.onnx` (ONNX Runtime CPU, success, mean about 47.97 ms, p95 about 51.80 ms, about 20.85 FPS)
 - Jetson Orin Nano TensorRT Runtime smoke using Forge manifest + TensorRT engine artifact (success, manifest applied, mean about 14.00 ms, p99 about 15.50 ms, about 71.44 FPS)
+- Local Studio demo evidence replay at `/studio` using bundled ONNX Runtime CPU and TensorRT Jetson result fixtures: 45.4299 ms vs 9.9375 ms mean latency, 49.2128 ms vs 15.5231 ms p99, 22.0119 vs 100.6293 FPS, and a 4.57x TensorRT speedup for the demo pair
 - Runtime source-model identity polish for manifest-backed TensorRT engine results (`model.engine` can still keep `compare_model_name=yolov8n` and `compare_key=yolov8n__b1__h640w640__fp32`)
 - Runtime `worker_request` validation and `worker_response` dry-run export
 - Forge worker/runtime summary
@@ -53,7 +54,7 @@ ONNX model
 - full automated Forge/Runtime execution from a production Lab worker
 - database, Redis, or queue
 - file upload
-- frontend
+- production frontend beyond the local Studio workflow UI
 - production authentication, billing, and deployment controls
 
 ## Interview Explanation

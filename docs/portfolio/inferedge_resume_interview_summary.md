@@ -5,6 +5,7 @@
 - Built InferEdge, an end-to-end Edge AI inference validation pipeline that connects Forge build provenance, C++ Runtime execution, Lab comparison/report/API/job workflows, optional AIGuard diagnosis evidence, and Lab-owned deployment decisions.
 - Validated real execution paths on both macOS and edge hardware: `yolov8n.onnx` through Lab -> C++ Runtime -> ONNX Runtime CPU -> Lab job result ingestion, and Jetson Orin Nano TensorRT execution through Forge manifest + `model.engine` + C++ Runtime CLI.
 - Documented Jetson TensorRT smoke evidence with mean latency about 14.00 ms, p99 about 15.50 ms, and about 71.44 FPS on a Forge-generated TensorRT engine artifact.
+- Added Local Studio as a local-first browser workflow UI that can replay bundled ONNX Runtime CPU and TensorRT Jetson demo evidence, showing 45.4299 ms vs 9.9375 ms mean latency and a 4.57x TensorRT speedup without claiming production SaaS readiness.
 - Polished Runtime provenance readiness so manifest-backed TensorRT artifacts preserve source identity: `model.engine` can keep `compare_model_name=yolov8n` and `compare_key=yolov8n__b1__h640w640__fp32`.
 
 ## Role-Specific Resume Versions
@@ -19,7 +20,7 @@ Built a multi-repository edge inference validation workflow that connects model 
 
 ### Backend / AI Platform
 
-Built the Lab-side orchestration and contract foundation for an edge AI validation platform. InferEdgeLab exposes compare/API/job/deployment-decision boundaries, maps analyze jobs to worker requests, ingests worker responses, preserves optional AIGuard evidence, and keeps production infrastructure concerns separate from the contract layer. Current scope is SaaS/API/job contract foundation plus dev-only Runtime execution smoke; production worker daemon, persistent queue/database, file upload, frontend, auth, and billing remain future work.
+Built the Lab-side orchestration and contract foundation for an edge AI validation platform. InferEdgeLab exposes compare/API/job/deployment-decision boundaries, maps analyze jobs to worker requests, ingests worker responses, preserves optional AIGuard evidence, and provides a local-first Studio UI for browser-based workflow inspection. Current scope is SaaS/API/job contract foundation plus dev-only Runtime execution smoke and local Studio demo evidence; production worker daemon, persistent queue/database, file upload, production frontend, auth, and billing remain future work.
 
 ## Interview: First 30 Seconds
 

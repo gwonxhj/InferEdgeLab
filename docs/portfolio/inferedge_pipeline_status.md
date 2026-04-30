@@ -61,7 +61,7 @@ Current role:
 - runs compare, compare-latest, report, and deployment decision flows
 - exposes `/api/compare` with the SaaS API response contract
 - exposes in-memory `/api/analyze` and `/api/jobs/{job_id}` workflow stubs
-- exposes a local-first `/studio` skeleton that presents the CLI/API/job/deployment decision workflow in the browser
+- exposes a local-first `/studio` workflow UI for Run, Import, Compare View, Jetson command helper, demo evidence replay, and deployment decision inspection
 - maps analyze jobs to worker requests and worker responses back to job results
 - preserves optional AIGuard evidence while keeping Lab as the final decision owner
 
@@ -95,7 +95,7 @@ The current cross-repository loop is covered by documentation, fixtures, and smo
 - Forge summary-origin Lab worker request validation in Runtime
 - AIGuard worker provenance mismatch diagnosis
 - Lab deployment decision/report evidence smoke for AIGuard worker provenance diagnosis
-- Local Studio skeleton for viewing the Forge -> Runtime -> Lab -> optional AIGuard workflow, smoke evidence, metrics placeholders, and deployment decision ownership from a local browser
+- Local Studio local-first workflow UI for viewing Forge -> Runtime -> Lab -> optional AIGuard state, creating in-memory analyze jobs, importing Runtime result JSON, replaying bundled demo evidence, comparing backends, and inspecting Lab-owned deployment decision context
 
 This means the current product boundary is testable without running the production worker infrastructure.
 
@@ -124,7 +124,7 @@ Demo readiness: `scripts/demo_pipeline_full.sh` now provides a guided end-to-end
 - Manual Jetson TensorRT Runtime smoke using Forge manifest and TensorRT engine artifact
 - Runtime compare-key identity polish for manifest-backed engine artifacts
 - Guided end-to-end demo entrypoint for portfolio and interview walkthroughs
-- Local Studio skeleton at `/studio` for a local-first browser view of the workflow foundation
+- Local Studio at `/studio` for a local-first browser view of Run / Import / Demo Evidence / Compare / Decision / Jetson Helper workflows
 - Cross-repo fixture compatibility across Forge, Runtime, Lab, and AIGuard
 - Rule/evidence based provenance mismatch diagnosis
 
@@ -136,7 +136,7 @@ Demo readiness: `scripts/demo_pipeline_full.sh` now provides a guided end-to-end
 - database persistence
 - Redis, Celery, or another queue
 - file upload handling
-- production frontend beyond the local Studio skeleton
+- production frontend beyond the local Studio workflow UI
 - production authentication, billing, and deployment controls
 
 These gaps are intentional. The current project fixes the contracts first, then leaves infrastructure choices for later.
