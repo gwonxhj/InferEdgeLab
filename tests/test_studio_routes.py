@@ -113,7 +113,7 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert "markFileMode" in app_text
     assert "parseJsonResponse" in app_text
     assert "renderImportEvidence" in app_text
-    assert "AIGuard evidence not provided" in app_text
+    assert "AIGuard diagnosis evidence was not loaded" in app_text
     assert "compareTone" in app_text
     assert "runtimeModelName" in app_text
     assert "Same backend" in app_text
@@ -123,6 +123,8 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert "runOptions" in app_text
     assert "resetTransientInputs" in app_text
     assert "No guard run is required" in app_text
+    assert "decisionNotes" in app_text
+    assert "request record only" in app_text
     assert "loadDemoEvidence" in app_text
     assert "/studio/api/demo-evidence" in app_text
     assert "compareStatList" in app_text
@@ -152,10 +154,11 @@ def test_studio_app_preserves_selected_job_detail_contract():
     assert "selectedJobId" in app_text
     assert "loadJobs(payload.job_id)" in app_text
     assert "Queued job" in app_text
-    assert "Runtime metrics will appear" in app_text
+    assert "Runtime metrics are not attached" in app_text
     assert ".detail-note" in style_text
     assert ".inline-fields" in style_text
     assert ".future-heading" in style_text
+    assert "min-width: 62px" in style_text
 
 
 def test_studio_jobs_api_returns_json_structure():

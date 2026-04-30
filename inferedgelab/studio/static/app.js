@@ -508,17 +508,21 @@ function renderJobDetail(emptyMessage = "Select a job or import a Runtime result
   const compareMetrics = result.comparison?.result?.metrics || result.data?.result?.metrics || {};
   const input = selectedJob.input_summary || {};
   const inputOptions = input.options || {};
+  const hasMetrics = hasRuntimeMetrics(displayResult);
 
-  const metrics = [
+  const identityMetrics = [
     ["model", runtimeModelName(displayResult) || input.model_path || input.artifact_path],
     ["backend", runtimeBackendName(displayResult) || inputOptions.backend],
     ["device", runtimeDeviceName(displayResult) || inputOptions.device],
+  ];
+  const resultMetrics = [
     ["mean", displayResult.mean_ms ?? compareMetrics.mean_ms?.new],
     ["p99", displayResult.p99_ms ?? compareMetrics.p99_ms?.new],
     ["fps", displayResult.fps || displayResult.fps_value],
     ["compare_key", displayResult.compare_key],
     ["backend_key", displayResult.backend_key || normalizedBackendKey(displayResult)],
   ];
+  const metrics = hasMetrics ? identityMetrics.concat(resultMetrics) : identityMetrics;
 
   metrics.forEach(([label, value]) => {
     target.append(metricTile(label, formatValue(value)));
@@ -529,7 +533,7 @@ function renderJobDetail(emptyMessage = "Select a job or import a Runtime result
     target.append(
       detailNote(
         "Queued job",
-        "The local API accepted this analyze job. Runtime metrics will appear after a worker/dev completion flow or after importing Runtime result JSON.",
+        "This is a request record only. Runtime metrics are not attached to this job yet; use Import or Load Demo Evidence to inspect actual validation evidence.",
       ),
     );
   } else if (!selectedJob.result && hasRuntimeMetrics(displayResult)) {
@@ -611,7 +615,7 @@ function renderDecision(decision) {
       createElement("p", "caption", "Decision"),
       createElement("h3", "", "UNKNOWN"),
       createElement("p", "body-text", "No Lab comparison decision is available yet."),
-      createElement("p", "caption", "Import two compatible Runtime results to let Lab compare latency. AIGuard evidence is optional."),
+      createElement("p", "caption", "Load demo evidence or import two compatible Runtime results. AIGuard remains optional."),
     );
     return;
   }
@@ -622,7 +626,7 @@ function renderDecision(decision) {
     createElement("p", "caption", "Decision"),
     createElement("h3", "", decisionName.toUpperCase()),
     createElement("p", "body-text", decisionReason(decision)),
-    createElement("p", "caption", decision.notes || decision.recommended_action || ""),
+    createElement("p", "caption", decisionNotes(decision)),
   );
 }
 
@@ -714,9 +718,17 @@ function extractDecision(payload) {
 function decisionReason(decision) {
   const decisionName = String(decision?.decision || "unknown").toLowerCase();
   if (decisionName === "unknown" && !decision?.guard_status) {
-    return "AIGuard evidence not provided.";
+    return "Lab comparison is available, but AIGuard diagnosis evidence was not loaded for this local demo.";
   }
   return decision?.reason || "-";
+}
+
+function decisionNotes(decision) {
+  const decisionName = String(decision?.decision || "unknown").toLowerCase();
+  if (decisionName === "unknown" && !decision?.guard_status) {
+    return "This is expected: AIGuard is optional and only needed when guard-backed diagnosis evidence is part of the review.";
+  }
+  return decision?.notes || decision?.recommended_action || "";
 }
 
 function extractRuntimeResult(job) {
