@@ -701,15 +701,39 @@ function compareStat(label, value) {
 function compareSummaryCard(metric, speedup, base, newer, sameBackend = false, overall = "unknown") {
   const card = createElement("article", `compare-card highlight ${compareTone(overall)}`);
   const diff = formatLatencyDiff(metric);
-  const faster = sameBackend ? "Same backend" : speedup ? `${formatNumber(speedup)}x faster` : "speedup unavailable";
-  const note = sameBackend ? "Import a TensorRT and an ONNX Runtime result to compare backend speedup." : `Latency diff: ${diff}`;
+  const speedLabel = compareSpeedLabel(speedup, sameBackend);
+  const note = sameBackend
+    ? "Import a TensorRT and an ONNX Runtime result to compare backend speedup."
+    : compareSpeedNote(speedup, diff);
   card.append(
     createElement("p", "caption", `Latency comparison / ${overall || "unknown"}`),
-    createElement("h3", "", faster),
+    createElement("h3", "", speedLabel),
     createElement("p", "body-text", note),
     createElement("p", "caption", `${normalizedBackendKey(base) || "-"} -> ${normalizedBackendKey(newer) || "-"}`),
   );
   return card;
+}
+
+function compareSpeedLabel(speedup, sameBackend = false) {
+  if (sameBackend) {
+    return "Same backend";
+  }
+  const ratio = Number(speedup);
+  if (!Number.isFinite(ratio) || ratio <= 0) {
+    return "speedup unavailable";
+  }
+  if (ratio >= 1) {
+    return `${formatNumber(ratio)}x faster`;
+  }
+  return `${formatNumber(1 / ratio)}x slower`;
+}
+
+function compareSpeedNote(speedup, diff) {
+  const ratio = Number(speedup);
+  if (Number.isFinite(ratio) && ratio > 0 && ratio < 1) {
+    return `New result is slower. Latency diff: ${diff}`;
+  }
+  return `Latency diff: ${diff}`;
 }
 
 function errorCompareCard(message) {

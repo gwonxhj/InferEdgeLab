@@ -416,6 +416,12 @@ What works today:
 Current non-goals remain unchanged: no DB, queue, upload service, production auth, billing, or production SaaS worker orchestration.
 Jobs and imported Studio evidence are in-memory and reset when the local server process restarts.
 
+Recommended portfolio demo flow:
+
+1. Open `/studio`.
+2. Click `Load Demo Evidence` to show the stable ONNX Runtime CPU vs TensorRT Jetson comparison.
+3. Use Run / Import only as supporting controls that demonstrate how the local UI extends the CLI/API workflow.
+
 ---
 
 ## CI / Benchmarks
