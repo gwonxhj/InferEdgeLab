@@ -32,12 +32,17 @@
       }
 
       .studio-header,
-      .section-heading,
       .card-header,
       .panel-title-row {
         display: flex;
         justify-content: space-between;
         gap: 16px;
+      }
+
+      .section-heading {
+        display: flex;
+        justify-content: flex-start;
+        gap: 14px;
       }
 
       .studio-header,
@@ -132,7 +137,8 @@
         }
       }
     </style>
-    <link rel="stylesheet" href="/studio/static/style.css?v=9" />
+    <link rel="stylesheet" href="/studio/static/style.css?v=15" />
+    <link rel="stylesheet" href="style.css?v=15" />
   </head>
   <body>
     <main class="shell">
@@ -144,6 +150,11 @@
         </div>
         <div class="status-badge">SaaS-ready (local mode)</div>
       </header>
+
+      <section class="file-protocol-warning" aria-label="Local Studio launch notice">
+        <strong>Open Local Studio through the local server.</strong>
+        <p>Use http://127.0.0.1:8000/studio after running inferedgelab serve. Direct file mode can preview layout only; Run, Import, Compare, and Jetson helpers require the local API.</p>
+      </section>
 
       <section class="section-block" aria-labelledby="pipeline-title">
         <div class="section-heading">
@@ -175,7 +186,23 @@
             </div>
             <div class="form-stack">
               <label for="run-model-path">model path</label>
-              <input id="run-model-path" type="text" placeholder="models/yolov8n.onnx" />
+              <input id="run-model-path" type="text" placeholder="models/yolov8n.onnx" autocomplete="off" />
+              <div class="inline-fields">
+                <div>
+                  <label for="run-backend">backend</label>
+                  <select id="run-backend">
+                    <option value="onnxruntime">ONNX Runtime</option>
+                    <option value="tensorrt">TensorRT</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="run-device">device</label>
+                  <select id="run-device">
+                    <option value="cpu">CPU</option>
+                    <option value="jetson">Jetson</option>
+                  </select>
+                </div>
+              </div>
               <button id="run-button" type="button">Run</button>
               <p id="run-status" class="status-line"></p>
             </div>
@@ -191,11 +218,18 @@
             </div>
             <div class="form-stack">
               <label for="import-json-path">result path</label>
-              <input id="import-json-path" type="text" value="results/latest.json" placeholder="results/latest.json" />
+              <input id="import-json-path" type="text" placeholder="results/latest.json" autocomplete="off" />
+              <label for="import-backend-preset">backend mapping</label>
+              <select id="import-backend-preset">
+                <option value="">Keep result metadata</option>
+                <option value="onnxruntime__cpu">ONNX Runtime / CPU</option>
+                <option value="tensorrt__jetson">TensorRT / Jetson</option>
+              </select>
               <label for="import-json-payload">or JSON payload</label>
               <textarea
                 id="import-json-payload"
                 rows="5"
+                autocomplete="off"
                 placeholder='{"runtime_role":"runtime-result","model":"yolov8n","engine":"onnxruntime","device":"cpu","mean_ms":45.0}'
               ></textarea>
               <button id="import-button" type="button">Import</button>
@@ -217,6 +251,21 @@
               <textarea id="jetson-command" rows="7" readonly></textarea>
               <button id="copy-jetson-command" type="button">Copy</button>
               <p id="jetson-status" class="status-line"></p>
+            </div>
+          </article>
+
+          <article class="tool-card demo-card" aria-labelledby="demo-title">
+            <div class="card-header">
+              <div>
+                <p class="eyebrow">Demo Evidence</p>
+                <h3 id="demo-title">Replay validation evidence</h3>
+              </div>
+              <span id="demo-state" class="state-pill idle">idle</span>
+            </div>
+            <p class="body-text">Load the bundled ONNX Runtime CPU and TensorRT Jetson results to reproduce Compare and Decision locally.</p>
+            <div class="form-stack">
+              <button id="load-demo-evidence" type="button">Load Demo Evidence</button>
+              <p id="demo-status" class="status-line"></p>
             </div>
           </article>
         </div>
@@ -265,14 +314,14 @@
           <p class="section-kicker">05</p>
           <div>
             <h2 id="decision-title">Deployment Decision</h2>
-            <p>Lab remains the final decision owner; AIGuard evidence is optional.</p>
+            <p>Lab's local gate for deploy, review, or block. AIGuard evidence is optional and not required for this Studio flow.</p>
           </div>
         </div>
         <div id="deployment-decision" class="decision-card"></div>
       </section>
 
       <section class="section-block compact-note" aria-labelledby="future-title">
-        <div class="section-heading">
+        <div class="future-heading">
           <p class="section-kicker">Later</p>
           <div>
             <h2 id="future-title">Future Work</h2>
@@ -282,6 +331,7 @@
       </section>
     </main>
 
-    <script src="/studio/static/app.js?v=9" defer></script>
+    <script src="/studio/static/app.js?v=15" defer></script>
+    <script src="app.js?v=15" defer></script>
   </body>
 </html>

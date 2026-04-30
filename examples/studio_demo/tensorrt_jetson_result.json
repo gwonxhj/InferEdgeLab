@@ -1,0 +1,40 @@
+{
+  "runtime_role": "runtime-result",
+  "model": "yolov8n.onnx",
+  "engine": "tensorrt",
+  "engine_backend": "tensorrt",
+  "device": "jetson",
+  "device_name": "jetson",
+  "precision": "fp32",
+  "batch": 1,
+  "height": 640,
+  "width": 640,
+  "mean_ms": 9.9375,
+  "p99_ms": 15.5231,
+  "fps_value": 100.6293,
+  "success": true,
+  "status": "success",
+  "timestamp": "2026-04-29T12:01:00Z",
+  "compare_key": "yolov8n__b1__h640w640__fp32",
+  "backend_key": "tensorrt__jetson",
+  "system": {
+    "os": "Linux 5.15.148-tegra",
+    "machine": "aarch64"
+  },
+  "run_config": {
+    "warmup": 1,
+    "runs": 5,
+    "mode": "image",
+    "task": "detection"
+  },
+  "accuracy": {},
+  "extra": {
+    "input_mode": "image",
+    "input_preprocess": "opencv_bgr_to_rgb_resize_float32_nchw",
+    "manifest_applied": true,
+    "runtime_artifact_path": "~/InferEdgeForge/builds/yolov8n__jetson__tensorrt__jetson_fp16/model.engine",
+    "effective_batch": 1,
+    "effective_height": 640,
+    "effective_width": 640
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "runtime_role": "runtime-result",
+  "model": "yolov8n.onnx",
+  "engine": "onnxruntime",
+  "engine_backend": "onnxruntime",
+  "device": "cpu",
+  "device_name": "cpu",
+  "precision": "fp32",
+  "batch": 1,
+  "height": 640,
+  "width": 640,
+  "mean_ms": 45.4299,
+  "p99_ms": 49.2128,
+  "fps_value": 22.0119,
+  "success": true,
+  "status": "success",
+  "timestamp": "2026-04-29T12:00:00Z",
+  "compare_key": "yolov8n__b1__h640w640__fp32",
+  "backend_key": "onnxruntime__cpu",
+  "system": {
+    "os": "macOS",
+    "machine": "arm64"
+  },
+  "run_config": {
+    "warmup": 1,
+    "runs": 5,
+    "mode": "image",
+    "task": "detection"
+  },
+  "accuracy": {},
+  "extra": {
+    "input_mode": "image",
+    "input_preprocess": "opencv_bgr_to_rgb_resize_float32_nchw",
+    "effective_batch": 1,
+    "effective_height": 640,
+    "effective_width": 640
+  }
+}

@@ -14,7 +14,7 @@ InferEdge is not a benchmarking tool, but an end-to-end validation pipeline that
 - InferEdge 전체 흐름은 Forge build provenance -> Runtime real execution -> Lab compare/report/API/job/deployment_decision -> optional AIGuard diagnosis evidence로 구성된다.
 - Lab은 InferEdgeForge provenance metadata, InferEdge-Runtime C++ execution output, optional InferEdgeAIGuard diagnostic evidence를 하나의 검증 bundle로 연결한다.
 - `yolov8n.onnx` manual smoke에서 Lab -> C++ Runtime CLI -> ONNX Runtime CPU execution -> Lab job result ingestion 경로가 dev-only minimal Runtime execution path로 검증되었다.
-- 현재 상태는 portfolio-grade pipeline foundation이며, production worker daemon, persistent queue/database, file upload, frontend, auth/billing은 future work로 명확히 분리한다.
+- 현재 상태는 portfolio-grade pipeline foundation이며, production worker daemon, persistent queue/database, file upload, production frontend beyond Local Studio, auth/billing은 future work로 명확히 분리한다.
 
 Pipeline:
 
@@ -93,13 +93,14 @@ Rule + evidence diagnosis layer. Forge summary, Runtime worker_response, Lab res
 - Runtime worker_response compatibility ingest in Lab
 - AIGuard worker provenance mismatch diagnosis
 - AIGuard guard_analysis preservation in Lab deployment decision/report smoke
+- Local Studio browser workflow for Run, Import, Jetson command helper, demo evidence replay, Compare View, and Lab-owned Deployment Decision inspection
 - 4개 repository README pipeline summary sync
 
 ## 6. Validation Evidence
 
 Recent validation evidence:
 
-- InferEdgeLab: `poetry run python3 -m pytest -q` -> 245 passed
+- InferEdgeLab: `poetry run python3 -m pytest -q` -> 262 passed
 - InferEdgeForge: `python -m pytest -q` -> 89 passed
 - InferEdgeRuntime: `python3 tests/test_lab_worker_adapter_contract.py` -> 12 tests passed
 - InferEdgeRuntime: `scripts/smoke_default.sh` -> success
@@ -110,6 +111,7 @@ Recent validation evidence:
 - Jetson TensorRT Runtime smoke: on Jetson Orin Nano (`Linux 5.15.148-tegra`, `aarch64`), the C++ Runtime CLI in `~/InferEdge-Runtime` executed Forge manifest `/home/risenano01/InferEdgeForge/builds/yolov8n__jetson__tensorrt__jetson_fp16/manifest.json` and TensorRT engine artifact `/home/risenano01/InferEdgeForge/builds/yolov8n__jetson__tensorrt__jetson_fp16/model.engine`. The output `results/jetson/yolov8n_jetson_tensorrt_manifest_smoke.json` reported `success: true`, `engine_backend: tensorrt`, `device_name: jetson`, `manifest_applied: true`, input shape `[1, 3, 640, 640]`, output shape `[1, 84, 8400]`, mean latency about 14.00 ms, p99 about 15.50 ms, and about 71.44 FPS.
 - Runtime compare-key identity polish: InferEdgeRuntime now preserves Forge manifest source model identity for compare naming. If `manifest.source_model.path` is `models/onnx/yolov8n.onnx` and the explicit TensorRT artifact path is `model.engine`, Runtime can keep `compare_model_name=yolov8n` and `compare_key=yolov8n__b1__h640w640__fp32`.
 - Guided demo entrypoint: `scripts/demo_pipeline_full.sh` summarizes the full Forge -> Runtime -> Lab -> optional AIGuard flow and can print the Jetson TensorRT Runtime command without claiming production worker or SaaS readiness.
+- Local Studio demo evidence: `/studio` can load bundled ONNX Runtime CPU and TensorRT Jetson Runtime result fixtures from `examples/studio_demo`, keep the demo pair selectable in Recent jobs while the local server process is alive, and show TensorRT Jetson vs ONNX Runtime CPU comparison in the browser. The fixture-backed evidence records ONNX Runtime CPU at mean 45.4299 ms / p99 49.2128 ms / 22.0119 FPS and TensorRT Jetson at mean 9.9375 ms / p99 15.5231 ms / 100.6293 FPS, a 4.57x TensorRT speedup for this demo pair.
 
 The direct Runtime execution result includes `deployment_decision`. Its `unknown` value is expected before Lab compare/report because the worker response has not yet been compared by Lab.
 
@@ -136,6 +138,7 @@ Forge summary
 - **SaaS-ready API + async job workflow:** Lab has API response contracts, in-memory async job stubs, and worker request/response mapping without prematurely adding DB/queue infrastructure.
 - **Deterministic rule-based diagnosis:** AIGuard uses rule + evidence detectors instead of vague LLM judgement.
 - **Deployment decision ownership:** Lab keeps final deploy/review/blocked ownership while preserving optional guard evidence.
+- **Local-first Studio demo:** The browser UI can replay real validation evidence locally without adding DB, queue, upload, auth, billing, or production SaaS infrastructure.
 
 ## 8. Current Limitations and Next Steps
 
@@ -147,7 +150,7 @@ Current planned production work:
 - full automated Forge/Runtime execution from a production Lab worker
 - database, Redis, or queue
 - file upload flow
-- SaaS frontend
+- production frontend beyond Local Studio
 - production authentication, billing, and deployment controls
 
 Next practical step:
@@ -164,5 +167,5 @@ Next practical step:
 - "macOS ONNX Runtime CPU smoke와 Jetson Orin Nano TensorRT smoke를 모두 확보했고, Jetson에서는 Forge manifest + TensorRT `model.engine` + C++ Runtime CLI 실행으로 mean 약 14.00 ms, p99 약 15.50 ms, FPS 약 71.44 evidence를 확보했습니다."
 - "Runtime source identity polish 이후에는 manifest-backed TensorRT engine artifact도 `compare_model_name=yolov8n`, `compare_key=yolov8n__b1__h640w640__fp32`를 유지할 수 있습니다."
 - "AIGuard는 LLM 추측이 아니라 artifact hash, source hash, precision, shape 같은 evidence를 비교하는 deterministic detector 구조입니다."
-- "아직 production worker, DB/Redis/queue, frontend, auth/billing은 계획 단계로 명확히 구분했고, 먼저 contract와 smoke coverage를 안정화했습니다."
+- "아직 production worker, DB/Redis/queue, production frontend, auth/billing은 계획 단계로 명확히 구분했고, 먼저 contract와 smoke coverage를 안정화했습니다."
 - "이 프로젝트는 AI inference engineer 포트폴리오 관점에서 C++ runtime, Python orchestration, schema contract, provenance validation, SaaS API boundary를 하나의 제품형 pipeline으로 연결한 사례입니다."
