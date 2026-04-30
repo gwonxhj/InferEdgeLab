@@ -60,10 +60,10 @@ def test_studio_route_returns_local_studio_html():
     assert "Import" in html
     assert "Jetson Helper" in html
     assert 'data-critical="studio-dark"' in html
-    assert 'href="/studio/static/style.css?v=13"' in html
-    assert 'href="style.css?v=13"' in html
-    assert 'src="/studio/static/app.js?v=13"' in html
-    assert 'src="app.js?v=13"' in html
+    assert 'href="/studio/static/style.css?v=14"' in html
+    assert 'href="style.css?v=14"' in html
+    assert 'src="/studio/static/app.js?v=14"' in html
+    assert 'src="app.js?v=14"' in html
     assert "file-protocol-warning" in html
     assert 'placeholder="results/latest.json"' in html
     assert 'value="results/latest.json"' not in html
@@ -74,6 +74,8 @@ def test_studio_route_returns_local_studio_html():
     assert 'id="import-backend-preset"' in html
     assert "TensorRT / Jetson" in html
     assert "Lab's local gate" in html
+    assert "Load Demo Evidence" in html
+    assert 'id="demo-state"' in html
 
 
 def test_studio_static_assets_are_served():
@@ -121,6 +123,9 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert "runOptions" in app_text
     assert "resetTransientInputs" in app_text
     assert "No guard run is required" in app_text
+    assert "loadDemoEvidence" in app_text
+    assert "/studio/api/demo-evidence" in app_text
+    assert "compareStatList" in app_text
     assert 'aiguard: hasGuardEvidence ? "completed" : "optional"' in app_text
     assert "#0b0f14" in style_text
     assert "grid-template-columns" in style_text
@@ -130,6 +135,8 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert ".file-protocol-warning" in style_text
     assert ".evidence-summary" in style_text
     assert ".compare-card.improvement" in style_text
+    assert ".demo-card" in style_text
+    assert ".compare-stat-list" in style_text
     assert "justify-content: flex-start" in style_text
 
 
@@ -302,6 +309,31 @@ def test_studio_jetson_command_api_returns_command():
     assert "--engine tensorrt" in response["command"]
     assert "--device jetson" in response["command"]
     assert "--output results/jetson/" in response["command"]
+
+
+def test_studio_demo_evidence_loads_compare_ready_pair():
+    app = api.create_app()
+    route = _get_route(app, "/studio/api/demo-evidence")
+    compare_route = _get_route(app, "/studio/api/compare/latest")
+    request = SimpleNamespace(app=app)
+
+    response = route.endpoint(request=request)
+    compare = compare_route.endpoint(request=request)
+
+    assert response["status"] == "loaded"
+    assert response["source"] == "examples/studio_demo"
+    assert response["count"] == 2
+    assert response["compare_ready"] is True
+    assert response["results"][0]["backend_key"] == "onnxruntime__cpu"
+    assert response["results"][1]["backend_key"] == "tensorrt__jetson"
+    assert response["results"][0]["mean_ms"] == 45.4299
+    assert response["results"][1]["mean_ms"] == 9.9375
+    assert response["compare"]["status"] == "ok"
+    assert response["compare"]["judgement"]["overall"] == "improvement"
+    assert response["deployment_decision"]["decision"] == "unknown"
+    assert compare["status"] == "ok"
+    assert compare["base"]["backend_key"] == "onnxruntime__cpu"
+    assert compare["new"]["backend_key"] == "tensorrt__jetson"
 
 
 def test_studio_importing_two_compatible_results_returns_compare_data():

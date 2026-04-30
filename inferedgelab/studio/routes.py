@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +19,11 @@ from inferedgelab.result.schema import normalize_result_schema
 from inferedgelab.services.deployment_decision import build_deployment_decision
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+DEMO_EVIDENCE_DIR = Path(__file__).resolve().parents[2] / "examples" / "studio_demo"
+DEMO_EVIDENCE_FILES = (
+    "onnxruntime_cpu_result.json",
+    "tensorrt_jetson_result.json",
+)
 STATIC_ASSETS = {
     "app.js": "application/javascript",
     "style.css": "text/css",
@@ -138,6 +144,23 @@ def studio_import(request: Request, payload: dict[str, Any] = Body(...)) -> dict
     }
 
 
+@router.get("/studio/api/demo-evidence", include_in_schema=False)
+def studio_demo_evidence(request: Request) -> dict[str, Any]:
+    results = [_load_demo_result(file_name) for file_name in DEMO_EVIDENCE_FILES]
+    imported_results = _get_imported_results(request)
+    imported_results.extend(results)
+    compare = _build_imported_compare_response(results[0], results[1])
+    return {
+        "status": "loaded",
+        "source": "examples/studio_demo",
+        "count": len(results),
+        "results": results,
+        "compare_ready": True,
+        "compare": compare,
+        "deployment_decision": compare["deployment_decision"],
+    }
+
+
 @router.get("/studio/api/jetson-command", include_in_schema=False)
 def studio_jetson_command() -> dict[str, str]:
     command = "\n".join(
@@ -231,6 +254,24 @@ def _build_imported_compare_response(base: dict[str, Any], new: dict[str, Any]) 
         "judgement": judgement,
         "deployment_decision": deployment_decision,
     }
+
+
+def _load_demo_result(file_name: str) -> dict[str, Any]:
+    path = DEMO_EVIDENCE_DIR / file_name
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise HTTPException(status_code=500, detail=f"demo evidence not found: {file_name}") from exc
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=500, detail=f"demo evidence is invalid JSON: {file_name}") from exc
+
+    try:
+        result = normalize_result_schema(raw)
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=500, detail=f"demo evidence schema error: {file_name}") from exc
+    result.setdefault("legacy_result", False)
+    result["_source_path"] = str(path.relative_to(DEMO_EVIDENCE_DIR.parents[1]))
+    return _with_compare_keys(result)
 
 
 def _with_compare_keys(result: dict[str, Any]) -> dict[str, Any]:

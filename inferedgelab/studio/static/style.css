@@ -214,7 +214,26 @@ body.file-mode .file-protocol-warning {
   transition:
     transform 160ms ease,
     border-color 160ms ease,
-    background 160ms ease;
+  background 160ms ease;
+}
+
+.demo-card {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+  align-items: center;
+  gap: 16px;
+}
+
+.demo-card .card-header,
+.demo-card .body-text {
+  grid-column: 1;
+}
+
+.demo-card .form-stack {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  margin-top: 0;
 }
 
 .panel:hover,
@@ -579,6 +598,28 @@ body.file-mode .file-protocol-warning {
   line-height: 1;
 }
 
+.compare-stat-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.compare-stat {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.14);
+  color: var(--muted);
+  font-size: 0.86rem;
+  padding-top: 8px;
+}
+
+.compare-stat strong {
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
+}
+
 .decision-card {
   min-height: 156px;
 }
@@ -617,6 +658,23 @@ body.file-mode .file-protocol-warning {
 
   .pipeline-card {
     min-height: auto;
+  }
+
+  .demo-card,
+  .demo-card .card-header,
+  .demo-card .body-text,
+  .demo-card .form-stack {
+    display: grid;
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .demo-card {
+    grid-template-columns: 1fr;
+  }
+
+  .demo-card .form-stack {
+    margin-top: 0;
   }
 
   .pipeline-card::after {

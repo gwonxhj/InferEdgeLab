@@ -355,6 +355,33 @@ async function copyJetsonCommand() {
   }
 }
 
+async function loadDemoEvidence() {
+  const button = document.querySelector("#load-demo-evidence");
+  button.disabled = true;
+  setState("#demo-state", "running");
+  setStatus("#demo-status", "Loading: importing bundled Runtime evidence...", "loading");
+  renderPipeline();
+  try {
+    const payload = await fetchJson("/studio/api/demo-evidence");
+    const results = Array.isArray(payload.results) ? payload.results : [];
+    importedResult = results[results.length - 1] || null;
+    compareData = payload.compare || null;
+    setState("#demo-state", "completed");
+    setState("#import-state", "completed");
+    setStatus("#demo-status", "Success: demo evidence loaded.", "success");
+    setStatus("#import-status", "Success: demo ONNX Runtime + TensorRT evidence imported.", "success");
+    renderImportEvidence({ result: importedResult });
+    renderImportedResult();
+    await loadCompare();
+  } catch (error) {
+    setState("#demo-state", "idle");
+    setStatus("#demo-status", `Error: ${formatError(error)}`, "error");
+  } finally {
+    button.disabled = false;
+    renderPipeline();
+  }
+}
+
 function renderPipeline() {
   const target = document.querySelector("#pipeline-flow");
   target.replaceChildren();
@@ -411,9 +438,11 @@ function renderRunPanel() {
   document.querySelector("#run-button").onclick = runModel;
   document.querySelector("#import-button").onclick = importResult;
   document.querySelector("#copy-jetson-command").onclick = copyJetsonCommand;
+  document.querySelector("#load-demo-evidence").onclick = loadDemoEvidence;
   setState("#run-state", "idle");
   setState("#import-state", "idle");
   setState("#jetson-state", "idle");
+  setState("#demo-state", "idle");
 }
 
 function resetTransientInputs() {
@@ -566,8 +595,8 @@ function renderCompare() {
   const sameBackend = normalizedBackendKey(base) && normalizedBackendKey(base) === normalizedBackendKey(newer);
 
   target.append(
-    compareMetricCard("TensorRT", tensorRt?.mean_ms, normalizedBackendKey(tensorRt) || "tensorrt"),
-    compareMetricCard("ONNX Runtime", onnx?.mean_ms, normalizedBackendKey(onnx) || "onnxruntime"),
+    compareMetricCard("TensorRT", tensorRt, normalizedBackendKey(tensorRt) || "tensorrt"),
+    compareMetricCard("ONNX Runtime", onnx, normalizedBackendKey(onnx) || "onnxruntime"),
     compareSummaryCard(meanMetric, speedup, base, newer, sameBackend, judgement.overall),
   );
 }
@@ -614,14 +643,31 @@ function detailNote(title, message) {
   return note;
 }
 
-function compareMetricCard(label, meanMs, backendKey) {
+function compareMetricCard(label, result, backendKey) {
   const card = createElement("article", "compare-card");
+  const meanMs = result?.mean_ms;
   card.append(
     createElement("p", "caption", backendKey),
     createElement("h3", "", label),
     createElement("strong", "compare-value", meanMs === undefined || meanMs === null ? "-" : `${formatNumber(meanMs)} ms`),
+    compareStatList(result),
   );
   return card;
+}
+
+function compareStatList(result = {}) {
+  const list = createElement("div", "compare-stat-list");
+  list.append(
+    compareStat("p99", result?.p99_ms === undefined ? "-" : `${formatNumber(result.p99_ms)} ms`),
+    compareStat("fps", result?.fps_value ?? result?.fps ?? "-"),
+  );
+  return list;
+}
+
+function compareStat(label, value) {
+  const row = createElement("div", "compare-stat");
+  row.append(createElement("span", "", label), createElement("strong", "", formatValue(value)));
+  return row;
 }
 
 function compareSummaryCard(metric, speedup, base, newer, sameBackend = false, overall = "unknown") {

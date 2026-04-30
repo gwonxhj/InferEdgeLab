@@ -137,8 +137,8 @@
         }
       }
     </style>
-    <link rel="stylesheet" href="/studio/static/style.css?v=13" />
-    <link rel="stylesheet" href="style.css?v=13" />
+    <link rel="stylesheet" href="/studio/static/style.css?v=14" />
+    <link rel="stylesheet" href="style.css?v=14" />
   </head>
   <body>
     <main class="shell">
@@ -253,6 +253,21 @@
               <p id="jetson-status" class="status-line"></p>
             </div>
           </article>
+
+          <article class="tool-card demo-card" aria-labelledby="demo-title">
+            <div class="card-header">
+              <div>
+                <p class="eyebrow">Demo Evidence</p>
+                <h3 id="demo-title">Replay validation evidence</h3>
+              </div>
+              <span id="demo-state" class="state-pill idle">idle</span>
+            </div>
+            <p class="body-text">Load the bundled ONNX Runtime CPU and TensorRT Jetson results to reproduce Compare and Decision locally.</p>
+            <div class="form-stack">
+              <button id="load-demo-evidence" type="button">Load Demo Evidence</button>
+              <p id="demo-status" class="status-line"></p>
+            </div>
+          </article>
         </div>
       </section>
 
@@ -316,7 +331,7 @@
       </section>
     </main>
 
-    <script src="/studio/static/app.js?v=13" defer></script>
-    <script src="app.js?v=13" defer></script>
+    <script src="/studio/static/app.js?v=14" defer></script>
+    <script src="app.js?v=14" defer></script>
   </body>
 </html>
