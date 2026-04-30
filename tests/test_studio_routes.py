@@ -130,6 +130,8 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert "jobDisplayName" in app_text
     assert "jobCaption" in app_text
     assert "compareStatList" in app_text
+    assert "compareSpeedLabel" in app_text
+    assert "New result is slower" in app_text
     assert 'aiguard: hasGuardEvidence ? "completed" : "optional"' in app_text
     assert "#0b0f14" in style_text
     assert "grid-template-columns" in style_text
@@ -141,6 +143,8 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert ".compare-card.improvement" in style_text
     assert ".demo-card" in style_text
     assert ".compare-stat-list" in style_text
+    assert ".job-row .state-pill" in style_text
+    assert "text-overflow: ellipsis" in style_text
     assert "justify-content: flex-start" in style_text
 
 

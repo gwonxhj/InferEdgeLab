@@ -456,6 +456,7 @@ body.file-mode .file-protocol-warning {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -474,13 +475,23 @@ body.file-mode .file-protocol-warning {
 }
 
 .job-main {
+  flex: 1 1 auto;
   display: grid;
   gap: 4px;
   min-width: 0;
 }
 
+.job-row .state-pill {
+  flex: 0 1 auto;
+  max-width: 44%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .job-main strong,
+.job-main .caption,
 .metric-value {
+  min-width: 0;
   overflow-wrap: anywhere;
 }
 
