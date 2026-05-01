@@ -561,6 +561,14 @@ body.file-mode .file-protocol-warning {
   line-height: 1.45;
 }
 
+.demo-report-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.demo-report-summary .evidence-item:last-child {
+  grid-column: 1 / -1;
+}
+
 .metric-name,
 .metric-value {
   display: block;

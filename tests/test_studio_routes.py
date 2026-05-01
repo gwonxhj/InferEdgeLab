@@ -60,10 +60,10 @@ def test_studio_route_returns_local_studio_html():
     assert "Import" in html
     assert "Jetson Helper" in html
     assert 'data-critical="studio-dark"' in html
-    assert 'href="/studio/static/style.css?v=15"' in html
-    assert 'href="style.css?v=15"' in html
-    assert 'src="/studio/static/app.js?v=15"' in html
-    assert 'src="app.js?v=15"' in html
+    assert 'href="/studio/static/style.css?v=16"' in html
+    assert 'href="style.css?v=16"' in html
+    assert 'src="/studio/static/app.js?v=16"' in html
+    assert 'src="app.js?v=16"' in html
     assert "file-protocol-warning" in html
     assert 'placeholder="results/latest.json"' in html
     assert 'value="results/latest.json"' not in html
@@ -76,6 +76,7 @@ def test_studio_route_returns_local_studio_html():
     assert "Lab's local gate" in html
     assert "Load Demo Evidence" in html
     assert 'id="demo-state"' in html
+    assert 'id="demo-report-summary"' in html
 
 
 def test_studio_static_assets_are_served():
@@ -126,6 +127,7 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert "decisionNotes" in app_text
     assert "request record only" in app_text
     assert "loadDemoEvidence" in app_text
+    assert "renderDemoEvaluation" in app_text
     assert "/studio/api/demo-evidence" in app_text
     assert "jobDisplayName" in app_text
     assert "jobCaption" in app_text
@@ -142,6 +144,7 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert ".evidence-summary" in style_text
     assert ".compare-card.improvement" in style_text
     assert ".demo-card" in style_text
+    assert ".demo-report-summary" in style_text
     assert ".compare-stat-list" in style_text
     assert ".job-row .state-pill" in style_text
     assert "flex-wrap: wrap" in style_text
@@ -346,6 +349,10 @@ def test_studio_demo_evidence_loads_compare_ready_pair():
     assert response["compare"]["status"] == "ok"
     assert response["compare"]["judgement"]["overall"] == "improvement"
     assert response["deployment_decision"]["decision"] == "unknown"
+    assert response["evaluation_report"]["preset"] == "yolov8_coco"
+    assert response["evaluation_report"]["accuracy"]["status"] == "evaluated"
+    assert response["evaluation_report"]["accuracy"]["metrics"]["map50"] > 0
+    assert response["evaluation_report"]["structural_validation"]["status"] == "passed"
     assert compare["status"] == "ok"
     assert compare["base"]["backend_key"] == "onnxruntime__cpu"
     assert compare["new"]["backend_key"] == "tensorrt__jetson"
@@ -370,6 +377,7 @@ def test_studio_demo_evidence_is_listed_and_selectable_as_job():
     assert detail["result"]["runtime_result"]["backend_key"] == "tensorrt__jetson"
     assert detail["result"]["comparison"]["base"]["backend_key"] == "onnxruntime__cpu"
     assert detail["result"]["comparison"]["new"]["backend_key"] == "tensorrt__jetson"
+    assert detail["result"]["evaluation_report"]["accuracy"]["metrics"]["precision"] > 0
 
 
 def test_studio_importing_two_compatible_results_returns_compare_data():

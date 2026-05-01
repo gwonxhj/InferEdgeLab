@@ -83,6 +83,7 @@ YOLOv8n was validated with a real OpenCV image-input benchmark: InferEdgeRuntime
 TensorRT Jetson was 4.6x faster than ONNX Runtime CPU in this real image input benchmark.
 The benchmark uses end-to-end Runtime latency, not trtexec GPU-only latency.
 The full pipeline portfolio summary is available at [docs/portfolio/inferedge_pipeline_portfolio.md](docs/portfolio/inferedge_pipeline_portfolio.md), and the detailed Runtime comparison report is available at [docs/portfolio/runtime_compare_yolov8n.md](docs/portfolio/runtime_compare_yolov8n.md).
+The YOLOv8 COCO subset accuracy demo is documented in [docs/portfolio/yolov8_coco_subset_evaluation.md](docs/portfolio/yolov8_coco_subset_evaluation.md).
 
 ## Local Studio Demo Evidence
 
@@ -100,6 +101,7 @@ Verified demo fixture values:
 
 Studio reports this as a `4.57x` TensorRT speedup for the bundled demo pair.
 AIGuard remains optional in this local Studio path; if Guard evidence is not loaded, the deployment decision explains that the Lab comparison is available but diagnosis evidence is not provided.
+The same demo flow also surfaces a small `yolov8_coco` evaluation report summary: 10 images, 89 ground-truth boxes, mAP@50 `0.1410`, precision `0.2941`, recall `0.1685`, structural validation `passed`.
 
 ---
 
