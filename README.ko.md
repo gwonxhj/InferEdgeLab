@@ -1,5 +1,8 @@
 # InferEdgeLab
 
+End-to-end Edge AI inference validation pipeline  
+(C++ runtime · Jetson execution · validation · deployment decision)
+
 언어: [English](README.md) | 한국어
 
 InferEdgeLab은 InferEdge 전체 파이프라인에서 **analysis/API/job/deployment decision owner** 역할을 맡는 레포입니다.
@@ -14,6 +17,40 @@ ONNX model
 -> optional InferEdgeAIGuard deterministic diagnosis evidence
 -> deploy / review / blocked decision
 ```
+
+## Summary
+
+- End-to-end validation pipeline: Forge → Runtime → Lab → optional AIGuard
+- Real device execution: Jetson TensorRT + ONNX Runtime CPU
+- Structured comparison: latency, accuracy, validation evidence
+- Deployment decision: deployable / review / blocked
+- Local Studio: inference validation을 브라우저에서 확인하는 local-first workflow UI
+
+## What Makes InferEdge Different?
+
+InferEdge는 단순 benchmark tool이 아닙니다.
+
+InferEdge는 다음을 연결하는 validation pipeline입니다.
+
+- edge device에서 실제 inference 실행
+- accuracy와 output validity 평가
+- anomaly와 contract violation 감지
+- deployment-ready decision 생성
+
+## Local Studio (Recommended Demo Entry Point)
+
+Local Studio는 CLI/API/job workflow를 브라우저에서 조작하고 관찰하는 local-first interface입니다.
+cloud SaaS dashboard가 아니며, 사용자의 PC에서 실행되는 demo/review UI입니다.
+
+Recommended demo flow:
+
+1. `poetry run inferedgelab serve --host 127.0.0.1 --port 8000` 실행
+2. `http://localhost:8000/studio` 접속
+3. `Load Demo Evidence` 클릭
+4. TensorRT vs ONNX Runtime 비교와 Lab-owned deployment decision context 확인
+
+Load Demo Evidence는 bundled ONNX Runtime CPU / TensorRT Jetson result fixture를 불러오고, Run / Import / Jetson Helper는 기존 CLI/API workflow를 local UI로 확장하는 보조 기능입니다.
+Studio evidence와 jobs는 in-memory이며 local server process가 재시작되면 초기화됩니다.
 
 ## 이 레포의 역할
 
