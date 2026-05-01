@@ -60,6 +60,7 @@ YOLOv8 COCO subset evaluation:
 | annotation missing | review |
 | invalid detection structure | blocked |
 | contract shape mismatch | blocked |
+| latency regression | review_required |
 
 ## Remaining Future Work
 
