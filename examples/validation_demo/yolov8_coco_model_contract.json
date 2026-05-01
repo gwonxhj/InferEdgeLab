@@ -1,0 +1,26 @@
+{
+  "contract_version": "1",
+  "task": "object_detection",
+  "preset": "yolov8_coco",
+  "input": {
+    "name": "images",
+    "shape": [1, 3, 640, 640],
+    "format": "NCHW_RGB_FLOAT32_0_1",
+    "dtype": "float32"
+  },
+  "output": {
+    "name": "output0",
+    "type": "yolov8_detection",
+    "shape": [1, 84, 8400],
+    "format": "tensor",
+    "dtype": "float32"
+  },
+  "thresholds": {
+    "score": 0.25,
+    "iou": 0.5
+  },
+  "metadata": {
+    "demo_case": "normal",
+    "note": "Small contract fixture for contract/preset validation demos."
+  }
+}
