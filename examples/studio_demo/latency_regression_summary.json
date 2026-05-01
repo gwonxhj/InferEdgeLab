@@ -1,0 +1,79 @@
+{
+  "problem_case": "latency_regression",
+  "problem_case_type": "runtime_latency",
+  "source": "examples/studio_demo/latency_regression_summary.json",
+  "baseline_source": "examples/studio_demo/normal_baseline_result.json",
+  "new_source": "examples/studio_demo/latency_regression_result.json",
+  "policy": {
+    "mean_latency_regression_pct": 10.0,
+    "p99_latency_regression_pct": 20.0,
+    "fps_drop_pct": 10.0,
+    "run_config_mismatch": "invalid_comparison"
+  },
+  "baseline": {
+    "label": "normal baseline",
+    "backend_key": "tensorrt__jetson",
+    "compare_key": "yolov8n__b1__h640w640__fp16",
+    "mean_ms": 14.0,
+    "p99_ms": 15.5,
+    "fps_value": 71.429,
+    "run_config": {
+      "warmup": 1,
+      "runs": 5,
+      "mode": "image",
+      "task": "detection",
+      "precision": "fp16"
+    }
+  },
+  "new": {
+    "label": "regressed result",
+    "backend_key": "tensorrt__jetson",
+    "compare_key": "yolov8n__b1__h640w640__fp16",
+    "mean_ms": 16.1,
+    "p99_ms": 22.0,
+    "fps_value": 62.112,
+    "run_config": {
+      "warmup": 1,
+      "runs": 5,
+      "mode": "image",
+      "task": "detection",
+      "precision": "fp16"
+    }
+  },
+  "latency_checks": {
+    "mean_latency": {
+      "status": "review",
+      "baseline_ms": 14.0,
+      "new_ms": 16.1,
+      "delta_ms": 2.1,
+      "delta_pct": 15.0,
+      "threshold_pct": 10.0
+    },
+    "p99_latency": {
+      "status": "review",
+      "baseline_ms": 15.5,
+      "new_ms": 22.0,
+      "delta_ms": 6.5,
+      "delta_pct": 41.935,
+      "threshold_pct": 20.0
+    },
+    "fps": {
+      "status": "review",
+      "baseline": 71.429,
+      "new": 62.112,
+      "delta": -9.317,
+      "delta_pct": -13.044,
+      "threshold_pct": 10.0
+    },
+    "run_config": {
+      "status": "passed",
+      "mismatch": false
+    }
+  },
+  "deployment_signal": {
+    "decision": "review_required",
+    "reason": "p99 latency regression detected",
+    "notes": "Same backend, precision, and run_config comparison shows the new TensorRT Jetson result exceeds the p99 regression threshold.",
+    "recommended_action": "Review runtime provenance and rerun the same Jetson benchmark before deployment."
+  }
+}

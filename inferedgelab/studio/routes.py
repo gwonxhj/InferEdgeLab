@@ -33,6 +33,7 @@ DEMO_PROBLEM_REPORTS = (
     "invalid_detection_structure_report.json",
     "contract_shape_mismatch_report.json",
 )
+LATENCY_REGRESSION_SUMMARY = "latency_regression_summary.json"
 DEMO_JOB_ID = "demo_yolov8n_trt_vs_onnx"
 STATIC_ASSETS = {
     "app.js": "application/javascript",
@@ -336,7 +337,38 @@ def _load_demo_evaluation_report() -> dict[str, Any]:
 
 
 def _load_demo_problem_cases() -> list[dict[str, Any]]:
-    return [_load_problem_report(file_name) for file_name in DEMO_PROBLEM_REPORTS]
+    cases = [_load_problem_report(file_name) for file_name in DEMO_PROBLEM_REPORTS]
+    cases.append(_load_latency_regression_summary())
+    return cases
+
+
+def _load_latency_regression_summary() -> dict[str, Any]:
+    path = DEMO_EVIDENCE_DIR / LATENCY_REGRESSION_SUMMARY
+    try:
+        summary = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise HTTPException(status_code=500, detail=f"latency regression summary not found: {LATENCY_REGRESSION_SUMMARY}") from exc
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=500, detail=f"latency regression summary is invalid JSON: {LATENCY_REGRESSION_SUMMARY}") from exc
+
+    problem_case = summary.get("problem_case") if isinstance(summary, dict) else None
+    deployment_signal = summary.get("deployment_signal") if isinstance(summary, dict) else None
+    latency_checks = summary.get("latency_checks") if isinstance(summary, dict) else None
+    if not isinstance(problem_case, str) or not isinstance(deployment_signal, dict) or not isinstance(latency_checks, dict):
+        raise HTTPException(status_code=500, detail=f"latency regression summary schema error: {LATENCY_REGRESSION_SUMMARY}")
+
+    return {
+        "problem_case": problem_case,
+        "problem_case_type": summary.get("problem_case_type") or "runtime_latency",
+        "source": f"examples/studio_demo/{LATENCY_REGRESSION_SUMMARY}",
+        "baseline_source": summary.get("baseline_source"),
+        "new_source": summary.get("new_source"),
+        "policy": summary.get("policy") or {},
+        "baseline": summary.get("baseline") or {},
+        "new": summary.get("new") or {},
+        "latency_checks": latency_checks,
+        "deployment_signal": deployment_signal,
+    }
 
 
 def _load_problem_report(file_name: str) -> dict[str, Any]:

@@ -1,0 +1,41 @@
+{
+  "runtime_role": "runtime-result",
+  "model": "yolov8n.onnx",
+  "engine": "tensorrt",
+  "engine_backend": "tensorrt",
+  "device": "jetson",
+  "device_name": "jetson",
+  "precision": "fp16",
+  "batch": 1,
+  "height": 640,
+  "width": 640,
+  "mean_ms": 14.0,
+  "p99_ms": 15.5,
+  "fps_value": 71.429,
+  "success": true,
+  "status": "success",
+  "timestamp": "2026-04-30T12:10:00Z",
+  "compare_key": "yolov8n__b1__h640w640__fp16",
+  "backend_key": "tensorrt__jetson",
+  "system": {
+    "os": "Linux 5.15.148-tegra",
+    "machine": "aarch64"
+  },
+  "run_config": {
+    "warmup": 1,
+    "runs": 5,
+    "mode": "image",
+    "task": "detection",
+    "precision": "fp16"
+  },
+  "accuracy": {},
+  "extra": {
+    "problem_case_role": "latency_regression_baseline",
+    "input_mode": "image",
+    "input_preprocess": "opencv_bgr_to_rgb_resize_float32_nchw",
+    "manifest_applied": true,
+    "effective_batch": 1,
+    "effective_height": 640,
+    "effective_width": 640
+  }
+}

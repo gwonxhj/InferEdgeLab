@@ -404,22 +404,29 @@ function renderDemoProblemCases(problemCases = []) {
 
   problemCases.forEach((problem) => {
     const signal = problem.deployment_signal || {};
-    const structural = problem.structural_validation || {};
-    const contractShape = problem.contract_validation?.input_shape || {};
-    const accuracy = problem.accuracy || {};
     const card = createElement("article", `problem-case ${decisionTone(signal.decision)}`);
     card.append(
       createElement("p", "caption", problem.problem_case || "problem case"),
       createElement("h4", "", String(signal.decision || "review").toUpperCase()),
       createElement("p", "body-text", signal.reason || "Validation evidence requires review."),
-      createElement(
-        "p",
-        "caption",
-        `accuracy=${accuracy.status || "-"} / structure=${structural.status || "-"} / contract=${contractShape.status || "-"}`,
-      ),
+      createElement("p", "caption", problemCaseDetail(problem)),
     );
     target.append(card);
   });
+}
+
+function problemCaseDetail(problem = {}) {
+  if (problem.problem_case_type === "runtime_latency" || problem.latency_checks) {
+    const checks = problem.latency_checks || {};
+    const mean = checks.mean_latency?.delta_pct;
+    const p99 = checks.p99_latency?.delta_pct;
+    const fps = checks.fps?.delta_pct;
+    return `mean=${formatPercent(mean)} / p99=${formatPercent(p99)} / fps=${formatPercent(fps)} / run_config=${checks.run_config?.status || "-"}`;
+  }
+  const structural = problem.structural_validation || {};
+  const contractShape = problem.contract_validation?.input_shape || {};
+  const accuracy = problem.accuracy || {};
+  return `accuracy=${accuracy.status || "-"} / structure=${structural.status || "-"} / contract=${contractShape.status || "-"}`;
 }
 
 function renderDemoEvaluation(report) {
@@ -1035,6 +1042,13 @@ function formatNumber(value) {
     return String(value);
   }
   return number.toFixed(3).replace(/\.?0+$/, "");
+}
+
+function formatPercent(value) {
+  if (value === undefined || value === null) {
+    return "-";
+  }
+  return `${formatNumber(value)}%`;
 }
 
 function formatValue(value) {

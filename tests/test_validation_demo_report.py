@@ -44,3 +44,24 @@ def test_validation_problem_case_reports_cover_review_and_blocked_paths():
     assert reports["invalid_detection_structure_report.json"]["deployment_signal"]["decision"] == "blocked"
     assert reports["contract_shape_mismatch_report.json"]["contract_validation"]["input_shape"]["status"] == "mismatch"
     assert reports["contract_shape_mismatch_report.json"]["deployment_signal"]["decision"] == "blocked"
+
+
+def test_latency_regression_problem_case_records_review_signal():
+    repo_root = Path(__file__).resolve().parents[1]
+    summary_path = repo_root / "examples" / "studio_demo" / "latency_regression_summary.json"
+    baseline_path = repo_root / "examples" / "studio_demo" / "normal_baseline_result.json"
+    regression_path = repo_root / "examples" / "studio_demo" / "latency_regression_result.json"
+
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+    regression = json.loads(regression_path.read_text(encoding="utf-8"))
+
+    assert summary["problem_case"] == "latency_regression"
+    assert summary["deployment_signal"]["decision"] == "review_required"
+    assert summary["deployment_signal"]["reason"] == "p99 latency regression detected"
+    assert summary["latency_checks"]["mean_latency"]["delta_pct"] >= 10.0
+    assert summary["latency_checks"]["p99_latency"]["delta_pct"] >= 20.0
+    assert summary["latency_checks"]["run_config"]["status"] == "passed"
+    assert baseline["backend_key"] == regression["backend_key"] == "tensorrt__jetson"
+    assert baseline["compare_key"] == regression["compare_key"]
+    assert baseline["run_config"] == regression["run_config"]
