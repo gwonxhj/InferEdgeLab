@@ -16,6 +16,9 @@ from inferedgelab.engines.registry import (
     supported_engines,
     supported_engines_display,
 )
+from inferedgelab.evaluation.metrics import MetricBackendError
+from inferedgelab.evaluation.metrics import get_metric_backend
+from inferedgelab.evaluation.metrics import supported_metric_backends
 from inferedgelab.result.saver import save_result
 from inferedgelab.result.schema import BenchmarkResult
 from inferedgelab.utils.system_info import collect_system_snapshot
@@ -48,6 +51,11 @@ def evaluate_detection_cmd(
     label_dir: str = typer.Option("", "--label-dir", help="YOLO txt 라벨 디렉토리"),
     coco_annotations: str = typer.Option("", "--coco-annotations", help="COCO annotation JSON 경로"),
     preset: str = typer.Option("yolov8_coco", "--preset", help="Validation preset 이름"),
+    metric_backend: str = typer.Option(
+        "simplified",
+        "--metric-backend",
+        help="Metric backend: simplified or pycocotools",
+    ),
     model_contract: str = typer.Option("", "--model-contract", help="model_contract.json 경로"),
     num_classes: int = typer.Option(1, "--num-classes", help="클래스 수"),
     precision: str = typer.Option("fp16", "--precision", help="precision 메타데이터 (fp32, fp16, int8)"),
@@ -86,11 +94,17 @@ def evaluate_detection_cmd(
         raise typer.BadParameter("--num-classes must be >= 1")
     coco_annotations = _option_string(coco_annotations)
     preset = _option_string(preset, "yolov8_coco")
+    metric_backend = _option_string(metric_backend, "simplified").strip().lower()
     model_contract = _option_string(model_contract)
     report_json = _option_string(report_json)
     report_md = _option_string(report_md)
     report_html = _option_string(report_html)
     preset = preset.strip().lower()
+    try:
+        get_metric_backend(metric_backend).ensure_available()
+    except MetricBackendError as exc:
+        supported = ", ".join(supported_metric_backends())
+        raise typer.BadParameter(f"{exc} Supported metric backends: {supported}") from exc
     try:
         preset_def = get_preset(preset)
         contract = (
@@ -121,6 +135,7 @@ def evaluate_detection_cmd(
             use_rgb=rgb,
             input_size=640,
             debug_samples=debug_samples,
+            metric_backend=metric_backend,
         )
     except RuntimeError as exc:
         _exit_with_runtime_error(str(exc))
@@ -156,6 +171,7 @@ def evaluate_detection_cmd(
                 "model_contract_path": model_contract.strip() or None,
                 "coco_annotations": coco_annotations.strip() or None,
                 "num_classes": num_classes,
+                "metric_backend": metric_backend,
             },
             accuracy=accuracy_payload,
             extra={
@@ -190,6 +206,7 @@ def evaluate_detection_cmd(
     rprint(f"Images          : {image_dir}")
     rprint(f"Labels          : {label_dir or '(not provided)'}")
     rprint(f"COCO annotations: {coco_annotations or '(not provided)'}")
+    rprint(f"Metric backend  : {eval_result.metrics.get('backend', metric_backend)}")
     rprint(f"Samples         : {eval_result.sample_count}")
     rprint(f"Accuracy status : {eval_result.extra.get('accuracy_status', 'evaluated')}")
     if eval_result.extra.get("accuracy_status") == "skipped":

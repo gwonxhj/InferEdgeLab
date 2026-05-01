@@ -197,6 +197,7 @@ CLI / API → Service Layer → Structured Result → Compare / Report
 
 InferEdgeLab treats model evaluation as a **contract/preset-based validation workflow**, not as a claim that any arbitrary model can be automatically scored without context.
 `evaluate-detection` now supports the `yolov8_coco` preset, optional `model_contract.json`, COCO annotations, YOLO txt labels, structural detection-output validation, and JSON/Markdown/HTML evaluation reports.
+Metric evaluation defaults to the lightweight `--metric-backend simplified` path and can explicitly request `--metric-backend pycocotools` when the optional `pycocotools` package is installed.
 When annotations are not provided, accuracy is explicitly marked as `skipped` and the report records structural validation only.
 
 Planned presets such as `resnet_imagenet` and `custom_contract` keep future evaluation work scoped to explicit model contracts and dataset assumptions.

@@ -169,11 +169,13 @@ def test_accuracy_payload_save_keeps_task_and_metrics_structure(tmp_path):
             device="gpu",
             sample_count=2,
             metrics={
+                "backend": "simplified",
                 "map50": 0.9,
                 "map50_95": 0.7,
                 "f1_score": 0.8,
                 "precision": 0.85,
                 "recall": 0.75,
+                "note": "lightweight simplified mAP50 implementation",
             },
             notes=[],
             model_input={"name": "images", "dtype": "float32", "shape": [1, 3, 640, 640]},
@@ -195,6 +197,7 @@ def test_accuracy_payload_save_keeps_task_and_metrics_structure(tmp_path):
 
     saved = json.loads(out_json.read_text(encoding="utf-8"))
     assert saved["task"] == "detection"
+    assert saved["metrics"]["backend"] == "simplified"
     assert saved["metrics"]["map50"] == pytest.approx(0.9)
     assert saved["metrics"]["f1_score"] == pytest.approx(0.8)
     assert saved["dataset"]["sample_count"] == 2
@@ -213,11 +216,13 @@ def test_evaluate_detection_command_writes_accuracy_payload(tmp_path, monkeypatc
             device="gpu",
             sample_count=3,
             metrics={
+                "backend": "simplified",
                 "map50": 0.7791,
                 "map50_95": 0.5512,
                 "f1_score": 0.8180,
                 "precision": 0.7950,
                 "recall": 0.8424,
+                "note": "lightweight simplified mAP50 implementation",
             },
             notes=[],
             model_input={"name": "images", "dtype": "float16", "shape": [1, 3, 640, 640]},
@@ -266,11 +271,14 @@ def test_evaluate_detection_command_writes_accuracy_payload(tmp_path, monkeypatc
 
     payload = json.loads(out_json.read_text(encoding="utf-8"))
     assert payload["task"] == "detection"
+    assert payload["metrics"]["backend"] == "simplified"
     assert payload["metrics"]["map50"] == pytest.approx(0.7791)
     assert captured["result"].accuracy["task"] == "detection"
     assert captured["result"].accuracy["metrics"]["map50"] == pytest.approx(0.7791)
     assert captured["result"].run_config["mode"] == "evaluate-detection"
+    assert captured["result"].run_config["metric_backend"] == "simplified"
     assert captured["engine_kwargs"]["debug_samples"] == 0
+    assert captured["engine_kwargs"]["metric_backend"] == "simplified"
 
 
 def test_evaluate_detection_command_writes_contract_evaluation_report(tmp_path, monkeypatch):
@@ -286,11 +294,13 @@ def test_evaluate_detection_command_writes_contract_evaluation_report(tmp_path, 
             device="cpu",
             sample_count=1,
             metrics={
+                "backend": "simplified",
                 "map50": 0.0,
                 "map50_95": 0.0,
                 "f1_score": 0.0,
                 "precision": 0.0,
                 "recall": 0.0,
+                "note": "lightweight simplified mAP50 implementation",
             },
             notes=["structural validation only"],
             model_input={"name": "images", "dtype": "float32", "shape": [1, 3, 640, 640]},
@@ -341,8 +351,10 @@ def test_evaluate_detection_command_writes_contract_evaluation_report(tmp_path, 
     report = json.loads(report_json.read_text(encoding="utf-8"))
     assert captured["engine_kwargs"]["label_dir"] is None
     assert captured["engine_kwargs"]["coco_annotations"] is None
+    assert captured["engine_kwargs"]["metric_backend"] == "simplified"
     assert report["model_contract"]["preset"] == "yolov8_coco"
     assert report["accuracy"]["status"] == "skipped"
+    assert report["accuracy"]["metrics"]["backend"] == "simplified"
     assert "accuracy skipped reason" in report_md.read_text(encoding="utf-8")
 
 
@@ -441,6 +453,36 @@ def test_evaluate_detection_help_shows_debug_samples_option():
         assert "--model-contract" in result.stdout
         assert "--preset" in result.stdout
         assert "--coco-annotations" in result.stdout
+        assert "--metric-backend" in result.stdout
+
+
+def test_evaluate_detection_command_rejects_unsupported_metric_backend():
+    from inferedgelab.commands import evaluate_detection
+
+    with pytest.raises(Exception, match="unsupported metric backend"):
+        evaluate_detection.evaluate_detection_cmd(
+            model_path="models/onnx/yolov8n.onnx",
+            engine="onnxruntime",
+            engine_path="",
+            image_dir="images",
+            label_dir="labels",
+            metric_backend="made_up_backend",
+            preset="yolov8_coco",
+            model_contract="",
+            num_classes=1,
+            precision="fp32",
+            conf_threshold=0.2,
+            nms_threshold=0.45,
+            iou_threshold=0.5,
+            rgb=True,
+            debug_samples=0,
+            out_json="",
+            report_json="",
+            report_md="",
+            report_html="",
+            out_dir="results",
+            save_structured_result=False,
+        )
 
 
 def test_cli_help_registers_evaluate_detection_command():

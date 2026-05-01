@@ -20,6 +20,7 @@ It is not a full COCO benchmark and should not be presented as production model 
 | Samples | 10 |
 | Ground-truth boxes | 89 |
 | Post-NMS detections checked | 51 |
+| Metric backend | simplified |
 | mAP@50 | 0.1410 |
 | mAP@50-95 | 0.0873 |
 | Precision | 0.2941 |
@@ -31,6 +32,7 @@ It is not a full COCO benchmark and should not be presented as production model 
 ## Interpretation
 
 This demo proves that InferEdgeLab can load COCO-style annotations, run the YOLOv8 detection evaluator, compute simplified accuracy metrics, validate detection output structure, and emit JSON/Markdown/HTML reports.
+The report records `metrics.backend = simplified`; `pycocotools` remains an optional explicit backend rather than a required dependency.
 The numbers are intentionally documented as a small subset result only.
 They are useful as portfolio workflow evidence, not as a claim of full COCO accuracy.
 
