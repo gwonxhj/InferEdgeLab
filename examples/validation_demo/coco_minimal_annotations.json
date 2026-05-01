@@ -1,0 +1,26 @@
+{
+  "images": [
+    {
+      "id": 1,
+      "file_name": "sample.jpg",
+      "width": 640,
+      "height": 480
+    }
+  ],
+  "categories": [
+    {
+      "id": 1,
+      "name": "person"
+    }
+  ],
+  "annotations": [
+    {
+      "id": 1,
+      "image_id": 1,
+      "category_id": 1,
+      "bbox": [100.0, 120.0, 80.0, 60.0],
+      "area": 4800.0,
+      "iscrowd": 0
+    }
+  ]
+}

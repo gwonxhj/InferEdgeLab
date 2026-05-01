@@ -273,6 +273,79 @@ def test_evaluate_detection_command_writes_accuracy_payload(tmp_path, monkeypatc
     assert captured["engine_kwargs"]["debug_samples"] == 0
 
 
+def test_evaluate_detection_command_writes_contract_evaluation_report(tmp_path, monkeypatch):
+    from inferedgelab.commands import evaluate_detection
+
+    captured = {}
+
+    def fake_evaluate_detection_engine(**kwargs):
+        captured["engine_kwargs"] = kwargs
+        return DetectionEvalResult(
+            task="detection",
+            engine="onnxruntime",
+            device="cpu",
+            sample_count=1,
+            metrics={
+                "map50": 0.0,
+                "map50_95": 0.0,
+                "f1_score": 0.0,
+                "precision": 0.0,
+                "recall": 0.0,
+            },
+            notes=["structural validation only"],
+            model_input={"name": "images", "dtype": "float32", "shape": [1, 3, 640, 640]},
+            actual_input_shape=[1, 3, 640, 640],
+            dataset={"image_dir": "images", "label_dir": None, "sample_count": 1},
+            evaluation_config={
+                "conf_threshold": 0.2,
+                "nms_threshold": 0.45,
+                "iou_threshold": 0.5,
+                "input_size": 640,
+                "rgb": True,
+            },
+            extra={
+                "accuracy_status": "skipped",
+                "accuracy_skip_reason": "No annotations were provided.",
+                "structural_validation": {"status": "passed", "issues": []},
+            },
+        )
+
+    monkeypatch.setattr(evaluate_detection, "evaluate_detection_engine", fake_evaluate_detection_engine)
+
+    report_json = tmp_path / "evaluation.json"
+    report_md = tmp_path / "evaluation.md"
+    evaluate_detection.evaluate_detection_cmd(
+        model_path="models/onnx/yolov8n.onnx",
+        engine="onnxruntime",
+        engine_path="",
+        image_dir="images",
+        label_dir="",
+        coco_annotations="",
+        preset="yolov8_coco",
+        model_contract="",
+        num_classes=80,
+        precision="fp32",
+        conf_threshold=0.2,
+        nms_threshold=0.45,
+        iou_threshold=0.5,
+        rgb=True,
+        debug_samples=0,
+        out_json="",
+        report_json=str(report_json),
+        report_md=str(report_md),
+        report_html="",
+        out_dir=str(tmp_path / "results"),
+        save_structured_result=False,
+    )
+
+    report = json.loads(report_json.read_text(encoding="utf-8"))
+    assert captured["engine_kwargs"]["label_dir"] is None
+    assert captured["engine_kwargs"]["coco_annotations"] is None
+    assert report["model_contract"]["preset"] == "yolov8_coco"
+    assert report["accuracy"]["status"] == "skipped"
+    assert "accuracy skipped reason" in report_md.read_text(encoding="utf-8")
+
+
 def test_evaluate_detection_engine_debug_path_prints_sample_diagnostics(tmp_path, monkeypatch, capsys):
     image_dir = tmp_path / "images"
     label_dir = tmp_path / "labels"
@@ -365,6 +438,9 @@ def test_evaluate_detection_help_shows_debug_samples_option():
 
         assert result.exit_code == 0
         assert "--debug-samples" in result.stdout
+        assert "--model-contract" in result.stdout
+        assert "--preset" in result.stdout
+        assert "--coco-annotations" in result.stdout
 
 
 def test_cli_help_registers_evaluate_detection_command():

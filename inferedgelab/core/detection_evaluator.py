@@ -10,6 +10,8 @@ import numpy as np
 
 from inferedgelab.engines.base import EngineModelIO
 from inferedgelab.engines.registry import create_engine, normalize_engine_name
+from inferedgelab.validation.coco import load_coco_ground_truths
+from inferedgelab.validation.structural import validate_detection_structure
 
 
 @dataclass
@@ -750,9 +752,11 @@ def compute_precision_recall_f1(
 def build_accuracy_payload(eval_result: DetectionEvalResult) -> dict[str, Any]:
     return {
         "task": "detection",
+        "status": eval_result.extra.get("accuracy_status", "evaluated"),
         "metrics": dict(eval_result.metrics),
         "dataset": dict(eval_result.dataset),
         "evaluation_config": dict(eval_result.evaluation_config),
+        "notes": list(eval_result.notes),
     }
 
 
@@ -797,7 +801,8 @@ def evaluate_detection_engine(
     engine_name: str,
     engine_path: str | None,
     image_dir: str,
-    label_dir: str,
+    label_dir: str | None = None,
+    coco_annotations: str | None = None,
     num_classes: int = 1,
     conf_threshold: float = 0.2,
     nms_threshold: float = 0.45,
@@ -821,6 +826,14 @@ def evaluate_detection_engine(
 
         model_input = engine.inputs[0]
         image_files = get_image_files(image_dir)
+        coco_ground_truths = load_coco_ground_truths(coco_annotations) if coco_annotations else {}
+        accuracy_status = "evaluated" if label_dir or coco_annotations else "skipped"
+        accuracy_skip_reason = ""
+        if accuracy_status == "skipped":
+            accuracy_skip_reason = (
+                "No YOLO label directory or COCO annotation file was provided; "
+                "only output structure was validated."
+            )
 
         predictions_by_image: list[list[Detection]] = []
         ground_truths_by_image: list[list[GroundTruth]] = []
@@ -858,12 +871,19 @@ def evaluate_detection_engine(
                 debug=postprocess_debug,
             )
 
-            label_path = os.path.join(label_dir, f"{Path(image_path).stem}.txt")
-            ground_truths = load_ground_truth(
-                label_path,
-                image_width=original_width,
-                image_height=original_height,
-            )
+            ground_truths: list[GroundTruth] = []
+            if label_dir:
+                label_path = os.path.join(label_dir, f"{Path(image_path).stem}.txt")
+                ground_truths = load_ground_truth(
+                    label_path,
+                    image_width=original_width,
+                    image_height=original_height,
+                )
+            elif coco_annotations:
+                ground_truths = [
+                    GroundTruth(class_id=item.class_id, box=item.box)
+                    for item in coco_ground_truths.get(Path(image_path).name, [])
+                ]
 
             predictions_by_image.append(detections)
             ground_truths_by_image.append(ground_truths)
@@ -886,32 +906,40 @@ def evaluate_detection_engine(
                     )
                 )
 
-        precision, recall, f1_score = compute_precision_recall_f1(
+        structural_validation = validate_detection_structure(
             predictions_by_image,
-            ground_truths_by_image,
             num_classes=num_classes,
-            iou_threshold=iou_threshold,
         )
-        map50 = compute_average_precision(
-            predictions_by_image,
-            ground_truths_by_image,
-            num_classes=num_classes,
-            iou_threshold=0.5,
-        )
-        map_thresholds = np.arange(0.5, 1.0, 0.05)
-        map50_95 = float(
-            np.mean(
-                [
-                    compute_average_precision(
-                        predictions_by_image,
-                        ground_truths_by_image,
-                        num_classes=num_classes,
-                        iou_threshold=float(threshold),
-                    )
-                    for threshold in map_thresholds
-                ]
+
+        if accuracy_status == "evaluated":
+            precision, recall, f1_score = compute_precision_recall_f1(
+                predictions_by_image,
+                ground_truths_by_image,
+                num_classes=num_classes,
+                iou_threshold=iou_threshold,
             )
-        )
+            map50 = compute_average_precision(
+                predictions_by_image,
+                ground_truths_by_image,
+                num_classes=num_classes,
+                iou_threshold=0.5,
+            )
+            map_thresholds = np.arange(0.5, 1.0, 0.05)
+            map50_95 = float(
+                np.mean(
+                    [
+                        compute_average_precision(
+                            predictions_by_image,
+                            ground_truths_by_image,
+                            num_classes=num_classes,
+                            iou_threshold=float(threshold),
+                        )
+                        for threshold in map_thresholds
+                    ]
+                )
+            )
+        else:
+            precision = recall = f1_score = map50 = map50_95 = 0.0
 
         return DetectionEvalResult(
             task="detection",
@@ -926,9 +954,10 @@ def evaluate_detection_engine(
                 "recall": recall,
             },
             notes=[
-                "Detection evaluation uses YOLO txt labels and image directory traversal.",
+                "Detection evaluation uses image directory traversal.",
                 "YOLOv8 postprocessing supports single-output and split boxes/scores output layouts.",
-                "Primary detection accuracy metric for compare/enrich reuse is map50.",
+                "Accuracy uses YOLO txt labels or COCO annotations when provided.",
+                "When annotations are missing, InferEdge records accuracy_skipped and structural validation only.",
             ],
             model_input={
                 "name": model_input.name,
@@ -939,7 +968,9 @@ def evaluate_detection_engine(
             dataset={
                 "image_dir": image_dir,
                 "label_dir": label_dir,
+                "coco_annotations": coco_annotations,
                 "sample_count": len(image_files),
+                "accuracy_status": accuracy_status,
             },
             evaluation_config={
                 "conf_threshold": conf_threshold,
@@ -953,6 +984,9 @@ def evaluate_detection_engine(
                 "engine_path": engine_path,
                 "runtime_artifact_path": getattr(engine.runtime_paths, "runtime_artifact_path", None),
                 "image_files": image_files,
+                "accuracy_status": accuracy_status,
+                "accuracy_skip_reason": accuracy_skip_reason,
+                "structural_validation": structural_validation,
             },
         )
     finally:
