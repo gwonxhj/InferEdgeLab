@@ -29,6 +29,7 @@ let compareData = null;
 let activeDecision = null;
 let importedResult = null;
 let demoEvaluationReport = null;
+let demoProblemCases = [];
 const importedResultsByJobId = {};
 
 function createElement(tagName, className, textContent) {
@@ -367,6 +368,7 @@ async function loadDemoEvidence() {
     const results = Array.isArray(payload.results) ? payload.results : [];
     importedResult = results[results.length - 1] || null;
     demoEvaluationReport = payload.evaluation_report || null;
+    demoProblemCases = Array.isArray(payload.problem_cases) ? payload.problem_cases : [];
     compareData = payload.compare || null;
     selectedJobId = payload.job_id || payload.job?.job_id || selectedJobId;
     selectedJob = payload.job || selectedJob;
@@ -376,6 +378,7 @@ async function loadDemoEvidence() {
     setStatus("#import-status", "Success: demo ONNX Runtime + TensorRT evidence imported.", "success");
     renderImportEvidence({ result: importedResult });
     renderDemoEvaluation(demoEvaluationReport);
+    renderDemoProblemCases(demoProblemCases);
     renderImportedResult();
     await loadJobs(selectedJobId);
     await loadCompare();
@@ -386,6 +389,37 @@ async function loadDemoEvidence() {
     button.disabled = false;
     renderPipeline();
   }
+}
+
+function renderDemoProblemCases(problemCases = []) {
+  const target = document.querySelector("#demo-problem-cases");
+  if (!target) {
+    return;
+  }
+  target.replaceChildren();
+
+  if (!problemCases.length) {
+    return;
+  }
+
+  problemCases.forEach((problem) => {
+    const signal = problem.deployment_signal || {};
+    const structural = problem.structural_validation || {};
+    const contractShape = problem.contract_validation?.input_shape || {};
+    const accuracy = problem.accuracy || {};
+    const card = createElement("article", `problem-case ${decisionTone(signal.decision)}`);
+    card.append(
+      createElement("p", "caption", problem.problem_case || "problem case"),
+      createElement("h4", "", String(signal.decision || "review").toUpperCase()),
+      createElement("p", "body-text", signal.reason || "Validation evidence requires review."),
+      createElement(
+        "p",
+        "caption",
+        `accuracy=${accuracy.status || "-"} / structure=${structural.status || "-"} / contract=${contractShape.status || "-"}`,
+      ),
+    );
+    target.append(card);
+  });
 }
 
 function renderDemoEvaluation(report) {
@@ -476,6 +510,7 @@ function renderRunPanel() {
   setState("#jetson-state", "idle");
   setState("#demo-state", "idle");
   renderDemoEvaluation(null);
+  renderDemoProblemCases([]);
 }
 
 function resetTransientInputs() {

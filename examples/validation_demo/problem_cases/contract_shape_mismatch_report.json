@@ -1,0 +1,48 @@
+{
+  "report_role": "inferedge-evaluation-report",
+  "generated_at": "2026-05-01T00:00:00Z",
+  "problem_case": "contract_shape_mismatch",
+  "preset": {
+    "name": "yolov8_coco",
+    "task": "object_detection"
+  },
+  "runtime_result": {
+    "engine": "onnxruntime",
+    "device": "cpu",
+    "sample_count": 1,
+    "actual_input_shape": [1, 3, 640, 640]
+  },
+  "accuracy": {
+    "status": "skipped",
+    "metrics": {
+      "map50": 0.0,
+      "map50_95": 0.0,
+      "f1_score": 0.0,
+      "precision": 0.0,
+      "recall": 0.0
+    },
+    "reason": "model_contract_input_shape_mismatch"
+  },
+  "contract_validation": {
+    "input_shape": {
+      "status": "mismatch",
+      "actual_shape": [1, 3, 640, 640],
+      "expected_shape": [1, 3, 320, 320]
+    },
+    "preset": "yolov8_coco",
+    "task": "object_detection"
+  },
+  "structural_validation": {
+    "status": "passed",
+    "checked": {
+      "image_count": 1,
+      "detection_count": 0,
+      "num_classes": 80
+    },
+    "issues": []
+  },
+  "deployment_signal": {
+    "decision": "blocked",
+    "reason": "Actual runtime input shape does not match the model contract."
+  }
+}

@@ -569,6 +569,32 @@ body.file-mode .file-protocol-warning {
   grid-column: 1 / -1;
 }
 
+.problem-case-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.problem-case {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.78);
+  padding: 10px;
+}
+
+.problem-case h4 {
+  margin: 4px 0 8px;
+  font-size: 0.95rem;
+}
+
+.problem-case.blocked {
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.problem-case.review {
+  border-color: rgba(234, 179, 8, 0.35);
+}
+
 .metric-name,
 .metric-value {
   display: block;
@@ -723,6 +749,10 @@ body.file-mode .file-protocol-warning {
   }
 
   .evidence-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .problem-case-grid {
     grid-template-columns: 1fr;
   }
 
