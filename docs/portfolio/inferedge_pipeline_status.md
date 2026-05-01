@@ -7,6 +7,7 @@ This document summarizes the current portfolio status of the InferEdge multi-rep
 InferEdge is an end-to-end edge AI inference validation pipeline. It is designed to turn an ONNX model into deployment evidence by connecting artifact build provenance, runtime profiling, Lab comparison/reporting, optional rule-based diagnosis, and a final deployment decision.
 
 For a compressed recruiter/interviewer entry point, see [InferEdge 1-Page Architecture Summary](inferedge_1page_architecture.md).
+For the current portfolio completion checkpoint, see [InferEdge Final Validation Completion Pass](final_validation_completion.md).
 
 Interview summary:
 
@@ -111,6 +112,9 @@ Compare-key polish status: this limitation has been resolved in InferEdgeRuntime
 Demo readiness: `scripts/demo_pipeline_full.sh` now provides a guided end-to-end portfolio entrypoint for Forge -> Runtime -> Lab -> optional AIGuard. The default mode prints a safe summary, `--run-jetson-command-print` prints the Jetson TensorRT command, and `--run-jetson-local` is reserved for running on the Jetson device. This is demo guidance for a SaaS-ready validation foundation, not production worker orchestration.
 
 ## Implemented vs Planned
+
+Current milestone: **portfolio-grade local-first validation workflow complete**.
+This does not mean production SaaS is complete.
 
 ### Implemented Now
 
