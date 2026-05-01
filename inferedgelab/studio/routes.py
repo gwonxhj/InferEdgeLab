@@ -22,11 +22,17 @@ from inferedgelab.services.deployment_decision import build_deployment_decision
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 DEMO_EVIDENCE_DIR = Path(__file__).resolve().parents[2] / "examples" / "studio_demo"
 VALIDATION_DEMO_DIR = Path(__file__).resolve().parents[2] / "examples" / "validation_demo" / "subset"
+VALIDATION_PROBLEM_DIR = Path(__file__).resolve().parents[2] / "examples" / "validation_demo" / "problem_cases"
 DEMO_EVIDENCE_FILES = (
     "onnxruntime_cpu_result.json",
     "tensorrt_jetson_result.json",
 )
 DEMO_EVALUATION_REPORT = "yolov8_coco_subset_evaluation.json"
+DEMO_PROBLEM_REPORTS = (
+    "annotation_missing_report.json",
+    "invalid_detection_structure_report.json",
+    "contract_shape_mismatch_report.json",
+)
 DEMO_JOB_ID = "demo_yolov8n_trt_vs_onnx"
 STATIC_ASSETS = {
     "app.js": "application/javascript",
@@ -159,10 +165,11 @@ def studio_import(request: Request, payload: dict[str, Any] = Body(...)) -> dict
 def studio_demo_evidence(request: Request) -> dict[str, Any]:
     results = [_load_demo_result(file_name) for file_name in DEMO_EVIDENCE_FILES]
     evaluation_report = _load_demo_evaluation_report()
+    problem_cases = _load_demo_problem_cases()
     imported_results = _get_imported_results(request)
     imported_results.extend(results)
     compare = _build_imported_compare_response(results[0], results[1])
-    demo_job = _build_demo_job(results, compare, evaluation_report)
+    demo_job = _build_demo_job(results, compare, evaluation_report, problem_cases)
     _get_demo_jobs(request)[DEMO_JOB_ID] = demo_job
     return {
         "status": "loaded",
@@ -174,6 +181,7 @@ def studio_demo_evidence(request: Request) -> dict[str, Any]:
         "compare_ready": True,
         "compare": compare,
         "evaluation_report": evaluation_report,
+        "problem_cases": problem_cases,
         "deployment_decision": compare["deployment_decision"],
     }
 
@@ -327,10 +335,42 @@ def _load_demo_evaluation_report() -> dict[str, Any]:
     }
 
 
+def _load_demo_problem_cases() -> list[dict[str, Any]]:
+    return [_load_problem_report(file_name) for file_name in DEMO_PROBLEM_REPORTS]
+
+
+def _load_problem_report(file_name: str) -> dict[str, Any]:
+    path = VALIDATION_PROBLEM_DIR / file_name
+    try:
+        report = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise HTTPException(status_code=500, detail=f"demo problem report not found: {file_name}") from exc
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=500, detail=f"demo problem report is invalid JSON: {file_name}") from exc
+
+    problem_case = report.get("problem_case") if isinstance(report, dict) else None
+    deployment_signal = report.get("deployment_signal") if isinstance(report, dict) else None
+    structural = report.get("structural_validation") if isinstance(report, dict) else None
+    contract = report.get("contract_validation") if isinstance(report, dict) else None
+    accuracy = report.get("accuracy") if isinstance(report, dict) else None
+    if not isinstance(problem_case, str) or not isinstance(deployment_signal, dict):
+        raise HTTPException(status_code=500, detail=f"demo problem report schema error: {file_name}")
+
+    return {
+        "problem_case": problem_case,
+        "source": f"examples/validation_demo/problem_cases/{file_name}",
+        "deployment_signal": deployment_signal,
+        "accuracy": accuracy if isinstance(accuracy, dict) else {},
+        "structural_validation": structural if isinstance(structural, dict) else {},
+        "contract_validation": contract if isinstance(contract, dict) else {},
+    }
+
+
 def _build_demo_job(
     results: list[dict[str, Any]],
     compare: dict[str, Any],
     evaluation_report: dict[str, Any],
+    problem_cases: list[dict[str, Any]],
 ) -> dict[str, Any]:
     now = _utc_now_iso()
     runtime_result = results[-1] if results else {}
@@ -350,6 +390,7 @@ def _build_demo_job(
             "comparison": compare,
             "deployment_decision": compare["deployment_decision"],
             "evaluation_report": evaluation_report,
+            "problem_cases": problem_cases,
             "summary": compare["judgement"]["summary"],
         },
         "error": None,

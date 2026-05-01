@@ -97,6 +97,7 @@ The current cross-repository loop is covered by documentation, fixtures, and smo
 - Lab deployment decision/report evidence smoke for AIGuard worker provenance diagnosis
 - Local Studio local-first workflow UI for viewing Forge -> Runtime -> Lab -> optional AIGuard state, creating in-memory analyze jobs, importing Runtime result JSON, replaying bundled demo evidence, comparing backends, and inspecting Lab-owned deployment decision context
 - YOLOv8 COCO subset evaluation report generated from 10 local images and 89 converted COCO-style person annotations, with mAP@50 0.1410, precision 0.2941, recall 0.1685, and structural validation passed
+- Validation problem case fixtures for annotation-missing review, invalid detection structure blocking, and contract shape mismatch blocking
 
 This means the current product boundary is testable without running the production worker infrastructure.
 
@@ -127,6 +128,7 @@ Demo readiness: `scripts/demo_pipeline_full.sh` now provides a guided end-to-end
 - Guided end-to-end demo entrypoint for portfolio and interview walkthroughs
 - Local Studio at `/studio` for a local-first browser view of Run / Import / Demo Evidence / Compare / Decision / Jetson Helper workflows
 - Contract/preset validation demo with `yolov8_coco`, COCO annotation loading, simplified accuracy metrics, structural validation, and JSON/Markdown/HTML report fixtures
+- Problem-case validation reports that make skipped accuracy, invalid output structure, and contract mismatch visible in Local Studio
 - Cross-repo fixture compatibility across Forge, Runtime, Lab, and AIGuard
 - Rule/evidence based provenance mismatch diagnosis
 
