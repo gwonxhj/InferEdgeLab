@@ -17,6 +17,8 @@ def test_yolov8_coco_subset_demo_report_contains_evaluated_accuracy():
     assert report["preset"]["name"] == "yolov8_coco"
     assert report["runtime_result"]["sample_count"] == 10
     assert report["accuracy"]["status"] == "evaluated"
+    assert report["accuracy"]["metrics"]["backend"] == "simplified"
+    assert report["accuracy"]["metrics"]["note"] == "lightweight simplified mAP50 implementation"
     assert round(report["accuracy"]["metrics"]["map50"], 4) == 0.141
     assert round(report["accuracy"]["metrics"]["precision"], 4) == 0.2941
     assert round(report["accuracy"]["metrics"]["recall"], 4) == 0.1685

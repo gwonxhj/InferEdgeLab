@@ -70,7 +70,7 @@ These are intentionally outside the current completion boundary:
 - file upload product flow
 - production frontend deployment
 - authentication, billing, and multi-user controls
-- full COCO official evaluation
+- making optional official COCO evaluation a required dependency
 - more presets such as `resnet_imagenet`
 
 ## Portfolio Message

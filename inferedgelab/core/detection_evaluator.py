@@ -10,6 +10,8 @@ import numpy as np
 
 from inferedgelab.engines.base import EngineModelIO
 from inferedgelab.engines.registry import create_engine, normalize_engine_name
+from inferedgelab.evaluation.metrics import MetricBackendError
+from inferedgelab.evaluation.metrics import get_metric_backend
 from inferedgelab.validation.coco import load_coco_ground_truths
 from inferedgelab.validation.structural import validate_detection_structure
 
@@ -33,7 +35,7 @@ class DetectionEvalResult:
     engine: str
     device: str
     sample_count: int
-    metrics: Dict[str, float]
+    metrics: Dict[str, Any]
     notes: List[str]
     model_input: Dict[str, Any]
     actual_input_shape: List[int]
@@ -810,8 +812,11 @@ def evaluate_detection_engine(
     use_rgb: bool = True,
     input_size: int = 640,
     debug_samples: int = 0,
+    metric_backend: str = "simplified",
 ) -> DetectionEvalResult:
     engine_name = normalize_engine_name(engine_name)
+    metric_backend_impl = get_metric_backend(metric_backend)
+    metric_backend_impl.ensure_available()
     engine = create_engine(engine_name)
 
     load_kwargs: dict[str, Any] = {}
@@ -912,53 +917,55 @@ def evaluate_detection_engine(
         )
 
         if accuracy_status == "evaluated":
-            precision, recall, f1_score = compute_precision_recall_f1(
-                predictions_by_image,
-                ground_truths_by_image,
-                num_classes=num_classes,
-                iou_threshold=iou_threshold,
-            )
-            map50 = compute_average_precision(
-                predictions_by_image,
-                ground_truths_by_image,
-                num_classes=num_classes,
-                iou_threshold=0.5,
-            )
-            map_thresholds = np.arange(0.5, 1.0, 0.05)
-            map50_95 = float(
-                np.mean(
-                    [
-                        compute_average_precision(
-                            predictions_by_image,
-                            ground_truths_by_image,
-                            num_classes=num_classes,
-                            iou_threshold=float(threshold),
-                        )
-                        for threshold in map_thresholds
-                    ]
+            try:
+                backend_result = metric_backend_impl.evaluate(
+                    predictions_by_image=predictions_by_image,
+                    ground_truths_by_image=ground_truths_by_image,
+                    num_classes=num_classes,
+                    iou_threshold=iou_threshold,
+                    average_precision_fn=compute_average_precision,
+                    precision_recall_fn=compute_precision_recall_f1,
+                    mean_fn=lambda values: float(np.mean(values)),
                 )
-            )
+            except MetricBackendError:
+                raise
+            metrics = backend_result.metrics
+            metric_notes = backend_result.notes
+            metric_warnings = backend_result.warnings
         else:
-            precision = recall = f1_score = map50 = map50_95 = 0.0
+            metrics = {
+                "backend": metric_backend_impl.name,
+                "map50": 0.0,
+                "map50_95": 0.0,
+                "f1_score": 0.0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "note": (
+                    "lightweight simplified mAP50 implementation"
+                    if metric_backend_impl.name == "simplified"
+                    else "accuracy skipped before metric backend execution"
+                ),
+            }
+            metric_notes = [f"Accuracy metrics backend: {metric_backend_impl.name}."]
+            metric_warnings = []
+
+        notes = [
+            "Detection evaluation uses image directory traversal.",
+            "YOLOv8 postprocessing supports single-output and split boxes/scores output layouts.",
+            "Accuracy uses YOLO txt labels or COCO annotations when provided.",
+            "When annotations are missing, InferEdge records accuracy_skipped and structural validation only.",
+            *metric_notes,
+        ]
+        if metric_warnings:
+            notes.extend(f"Metric warning: {warning}" for warning in metric_warnings)
 
         return DetectionEvalResult(
             task="detection",
             engine=engine.name,
             device=engine.device,
             sample_count=len(image_files),
-            metrics={
-                "map50": map50,
-                "map50_95": map50_95,
-                "f1_score": f1_score,
-                "precision": precision,
-                "recall": recall,
-            },
-            notes=[
-                "Detection evaluation uses image directory traversal.",
-                "YOLOv8 postprocessing supports single-output and split boxes/scores output layouts.",
-                "Accuracy uses YOLO txt labels or COCO annotations when provided.",
-                "When annotations are missing, InferEdge records accuracy_skipped and structural validation only.",
-            ],
+            metrics=metrics,
+            notes=notes,
             model_input={
                 "name": model_input.name,
                 "dtype": str(model_input.dtype),
@@ -979,6 +986,7 @@ def evaluate_detection_engine(
                 "input_size": input_size,
                 "rgb": use_rgb,
                 "num_classes": num_classes,
+                "metric_backend": metric_backend_impl.name,
             },
             extra={
                 "engine_path": engine_path,
@@ -991,6 +999,8 @@ def evaluate_detection_engine(
                 "accuracy_status": accuracy_status,
                 "accuracy_skip_reason": accuracy_skip_reason,
                 "structural_validation": structural_validation,
+                "metric_backend": metric_backend_impl.name,
+                "metric_warnings": metric_warnings,
             },
         )
     finally:
