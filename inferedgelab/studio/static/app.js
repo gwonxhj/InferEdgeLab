@@ -28,6 +28,7 @@ let selectedJobId = null;
 let compareData = null;
 let activeDecision = null;
 let importedResult = null;
+let demoEvaluationReport = null;
 const importedResultsByJobId = {};
 
 function createElement(tagName, className, textContent) {
@@ -365,6 +366,7 @@ async function loadDemoEvidence() {
     const payload = await fetchJson("/studio/api/demo-evidence");
     const results = Array.isArray(payload.results) ? payload.results : [];
     importedResult = results[results.length - 1] || null;
+    demoEvaluationReport = payload.evaluation_report || null;
     compareData = payload.compare || null;
     selectedJobId = payload.job_id || payload.job?.job_id || selectedJobId;
     selectedJob = payload.job || selectedJob;
@@ -373,6 +375,7 @@ async function loadDemoEvidence() {
     setStatus("#demo-status", "Success: demo evidence loaded.", "success");
     setStatus("#import-status", "Success: demo ONNX Runtime + TensorRT evidence imported.", "success");
     renderImportEvidence({ result: importedResult });
+    renderDemoEvaluation(demoEvaluationReport);
     renderImportedResult();
     await loadJobs(selectedJobId);
     await loadCompare();
@@ -383,6 +386,32 @@ async function loadDemoEvidence() {
     button.disabled = false;
     renderPipeline();
   }
+}
+
+function renderDemoEvaluation(report) {
+  const target = document.querySelector("#demo-report-summary");
+  if (!target) {
+    return;
+  }
+  target.replaceChildren();
+
+  if (!report) {
+    return;
+  }
+
+  const metrics = report.accuracy?.metrics || {};
+  const structural = report.structural_validation || {};
+  const contract = report.contract_validation?.input_shape || {};
+  target.append(
+    evidenceItem("preset", report.preset || "yolov8_coco"),
+    evidenceItem("samples", report.runtime_result?.sample_count ?? "-"),
+    evidenceItem("mAP50", metrics.map50 === undefined ? "-" : formatNumber(metrics.map50)),
+    evidenceItem("precision", metrics.precision === undefined ? "-" : formatNumber(metrics.precision)),
+    evidenceItem("recall", metrics.recall === undefined ? "-" : formatNumber(metrics.recall)),
+    evidenceItem("structure", structural.status || "-"),
+    evidenceItem("contract", contract.status || "-"),
+    evidenceItem("report", report.source || "-"),
+  );
 }
 
 function renderPipeline() {
@@ -446,6 +475,7 @@ function renderRunPanel() {
   setState("#import-state", "idle");
   setState("#jetson-state", "idle");
   setState("#demo-state", "idle");
+  renderDemoEvaluation(null);
 }
 
 function resetTransientInputs() {

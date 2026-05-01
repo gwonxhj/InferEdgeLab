@@ -982,7 +982,11 @@ def evaluate_detection_engine(
             },
             extra={
                 "engine_path": engine_path,
-                "runtime_artifact_path": getattr(engine.runtime_paths, "runtime_artifact_path", None),
+                "runtime_artifact_path": getattr(
+                    getattr(engine, "runtime_paths", None),
+                    "runtime_artifact_path",
+                    None,
+                ),
                 "image_files": image_files,
                 "accuracy_status": accuracy_status,
                 "accuracy_skip_reason": accuracy_skip_reason,
