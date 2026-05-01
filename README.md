@@ -4,35 +4,31 @@
 
 # InferEdgeLab
 
+End-to-end Edge AI inference validation pipeline  
+(C++ runtime · Jetson execution · validation · deployment decision)
+
 Language: English | [한국어](README.ko.md)
 
 **GitHub description:** Analysis/API layer for end-to-end Edge AI inference validation, reports, jobs, and deployment decisions.
 
-InferEdge is an end-to-end Edge AI inference validation pipeline that connects build provenance, C++ runtime execution, Lab analysis/deployment decision, and optional deterministic diagnosis evidence.
+## Summary
 
-## Portfolio Summary
+- End-to-end validation pipeline: Forge -> Runtime -> Lab -> optional AIGuard
+- Real device execution: Jetson TensorRT + ONNX Runtime CPU
+- Structured comparison: latency, accuracy, and validation evidence
+- Deployment decision: deployable / review / blocked
+- Local Studio: interactive workflow UI for inference validation
 
-**English 5-line summary**
-- InferEdgeLab analyzes runtime benchmark results and produces comparison reports, API responses, async job results, and deployment decisions.
-- It is part of an end-to-end pipeline: Forge build provenance -> Runtime real execution -> Lab analysis/decision -> optional AIGuard diagnostic evidence.
-- Lab integrates InferEdgeForge metadata, InferEdge-Runtime C++ outputs, and optional InferEdgeAIGuard rule/evidence findings.
-- Real manual smokes validated Lab -> C++ Runtime -> ONNX Runtime CPU execution on macOS and Forge manifest + TensorRT engine artifact execution on Jetson Orin Nano.
-- The current scope is a portfolio-grade pipeline foundation, not a fully productionized SaaS platform.
+## What Makes InferEdge Different?
 
-> InferEdgeLab is an edge AI inference validation CLI that turns raw benchmark results into structured, reproducible, and accuracy-aware deployment decisions across different runtimes and hardware.  
-> InferEdgeLab turns benchmark runs into reproducible, comparable **deployment-ready validation evidence**.  
-> Validated on real hardware: RKNN (Odroid M2) and TensorRT (Jetson)  
-> Cross-precision benchmarking on RKNN showed up to **~51% latency reduction with INT8**, with structured comparison and `acceptable_tradeoff` classification across YOLOv8n/s/m
+InferEdge is not a benchmark tool.
 
-InferEdgeLab is designed for workflows where **latency, accuracy, and risk must be evaluated together**.
+It is a validation pipeline that:
 
-InferEdgeLab is a CLI-first validation system that treats benchmarking as a **continuous validation workflow**, not a one-off script.
-
-Instead of a single latency number, InferEdgeLab answers:
-
-- Is the new result actually faster under the **same conditions**?
-- Is INT8 a valid trade-off or a **risky degradation**?
-- Can benchmark results be **reused** in CI and reports?
+- runs real inference on edge devices
+- evaluates accuracy and output validity
+- detects anomalies and contract violations
+- produces deployment-ready decisions
 
 ---
 
@@ -67,8 +63,6 @@ Portfolio entry points: [portfolio submission](docs/portfolio/inferedge_portfoli
 
 Interview one-liner: **InferEdge is an end-to-end inference validation pipeline that converts, runs, compares, diagnoses, and decides whether an edge AI model candidate is ready to deploy.**
 
-Final interview angle: InferEdge has both macOS ONNX Runtime CPU smoke and Jetson Orin Nano TensorRT smoke evidence, while production worker daemon, persistent queue/database, production frontend, auth, and billing remain future work.
-
 ---
 
 ## Real Inference Benchmark Result
@@ -87,10 +81,20 @@ The final local-first validation completion pass is summarized in [docs/portfoli
 The YOLOv8 COCO subset accuracy demo is documented in [docs/portfolio/yolov8_coco_subset_evaluation.md](docs/portfolio/yolov8_coco_subset_evaluation.md).
 Validation problem cases are documented in [docs/portfolio/validation_problem_cases.md](docs/portfolio/validation_problem_cases.md).
 
-## Local Studio Demo Evidence
+## Local Studio (Recommended Demo Entry Point)
+
+InferEdge Local Studio is a local-first browser interface for inspecting the existing CLI workflow, API/job contracts, Runtime evidence, Compare View, Jetson command helper, and Lab-owned deployment decision structure.
+It runs on the user's machine through the FastAPI server and is intended as a local workflow UI foundation, not a production SaaS dashboard or cloud dashboard.
 
 InferEdge Local Studio can replay the bundled portfolio evidence without requiring a live Jetson device during an interview walkthrough.
 The `Load Demo Evidence` flow imports the ONNX Runtime CPU and TensorRT Jetson Runtime JSON fixtures from [examples/studio_demo](examples/studio_demo), refreshes Compare View, and keeps the demo pair selectable in Recent jobs while the local server process is running.
+
+Recommended demo flow:
+
+1. Run `poetry run inferedgelab serve --host 127.0.0.1 --port 8000`
+2. Open `http://localhost:8000/studio`
+3. Click `Load Demo Evidence`
+4. Review TensorRT vs ONNX Runtime comparison and deployment decision context
 
 ![InferEdge Local Studio demo evidence](assets/images/local-studio-demo-evidence.png)
 
@@ -104,7 +108,19 @@ Verified demo fixture values:
 Studio reports this as a `4.57x` TensorRT speedup for the bundled demo pair.
 AIGuard remains optional in this local Studio path; if Guard evidence is not loaded, the deployment decision explains that the Lab comparison is available but diagnosis evidence is not provided.
 The same demo flow also surfaces a small `yolov8_coco` evaluation report summary: 10 images, 89 ground-truth boxes, mAP@50 `0.1410`, precision `0.2941`, recall `0.1685`, structural validation `passed`.
-It also includes problem-case summaries for annotation-missing review, invalid detection structure blocking, and contract shape mismatch blocking.
+It also includes problem-case summaries for annotation-missing review, invalid detection structure blocking, contract shape mismatch blocking, and latency regression review.
+
+What works today:
+
+- Run creates an in-memory analyze job through the existing `/api/analyze` contract.
+- Import accepts a Runtime result JSON path or pasted JSON payload and adds it to the in-memory compare-ready evidence set.
+- Load Demo Evidence imports the bundled ONNX Runtime CPU and TensorRT Jetson fixtures for a stable browser demo.
+- Compare View shows TensorRT vs ONNX Runtime mean latency, p99, FPS, latency diff, and speedup when compatible evidence is loaded.
+- Jetson Helper shows the local command shape for running the Runtime on a Jetson device.
+- Deployment Decision stays Lab-owned; AIGuard is optional deterministic diagnosis evidence.
+
+Current non-goals remain unchanged: no DB, queue, upload service, production auth, billing, or production SaaS worker orchestration.
+Jobs and imported Studio evidence are in-memory and reset when the local server process restarts.
 
 ---
 
@@ -259,19 +275,14 @@ Validated on real edge hardware:
 
 ## Start Here
 
-- [Benchmark reference table](BENCHMARKS.md)
-- [InferEdge pipeline contract](docs/pipeline_contract.md)
 - [InferEdge Portfolio Submission](docs/portfolio/inferedge_portfolio_submission.md)
-- [InferEdge Resume/Interview Summary](docs/portfolio/inferedge_resume_interview_summary.md)
-- [InferEdge 1-Page Architecture Summary](docs/portfolio/inferedge_1page_architecture.md)
 - [InferEdge Pipeline Status](docs/portfolio/inferedge_pipeline_status.md)
 - [YOLOv8n Runtime Comparison Report](docs/portfolio/runtime_compare_yolov8n.md)
-- [Jetson TensorRT validation runbook](docs/validation/jetson_tensorrt_validation.md)
-- [FastAPI API usage guide](docs/api/api_usage.md)
-- [SaaS async job workflow contract](docs/api/saas_job_workflow.md)
-- [Forge/Runtime worker integration contract](docs/api/worker_integration_contract.md)
-- Legacy/reference portfolio notes: [pipeline portfolio summary](docs/portfolio/inferedge_pipeline_portfolio.md), [older PDF draft](docs/portfolio/inferedge_pipeline_portfolio_pdf.md), [EdgeBench-era design notes](docs/portfolio/edgebench_portfolio.md)
-- [Project roadmap](Roadmap.md)
+- [Final Validation Completion](docs/portfolio/final_validation_completion.md)
+- [API usage guide](docs/api/api_usage.md)
+
+Additional reference docs include the [pipeline contract](docs/pipeline_contract.md), [benchmark reference table](BENCHMARKS.md), [Jetson TensorRT validation runbook](docs/validation/jetson_tensorrt_validation.md), [async job workflow contract](docs/api/saas_job_workflow.md), [Forge/Runtime worker integration contract](docs/api/worker_integration_contract.md), and [project roadmap](Roadmap.md).
+Legacy/reference portfolio notes are preserved in [pipeline portfolio summary](docs/portfolio/inferedge_pipeline_portfolio.md), [older PDF draft](docs/portfolio/inferedge_pipeline_portfolio_pdf.md), and [EdgeBench-era design notes](docs/portfolio/edgebench_portfolio.md).
 
 ---
 
@@ -401,43 +412,6 @@ curl "http://127.0.0.1:8000/health"
 - `/api/compare-latest`
 
 More details: [FastAPI API usage guide](docs/api/api_usage.md)
-
----
-
-## Local Studio
-
-InferEdge Local Studio is a local-first browser interface for inspecting the existing CLI workflow, API/job contracts, Runtime evidence, Compare View, Jetson command helper, and Lab-owned deployment decision structure.
-It runs on the user's machine through the FastAPI server and is intended as a local workflow UI foundation, not a production SaaS dashboard or cloud dashboard.
-
-### Run Local Studio
-
-```bash
-poetry run inferedgelab serve --host 127.0.0.1 --port 8000
-```
-
-Open:
-
-```text
-http://localhost:8000/studio
-```
-
-What works today:
-
-- Run creates an in-memory analyze job through the existing `/api/analyze` contract.
-- Import accepts a Runtime result JSON path or pasted JSON payload and adds it to the in-memory compare-ready evidence set.
-- Load Demo Evidence imports the bundled ONNX Runtime CPU and TensorRT Jetson fixtures for a stable browser demo.
-- Compare View shows TensorRT vs ONNX Runtime mean latency, p99, FPS, latency diff, and speedup when compatible evidence is loaded.
-- Jetson Helper shows the local command shape for running the Runtime on a Jetson device.
-- Deployment Decision stays Lab-owned; AIGuard is optional deterministic diagnosis evidence.
-
-Current non-goals remain unchanged: no DB, queue, upload service, production auth, billing, or production SaaS worker orchestration.
-Jobs and imported Studio evidence are in-memory and reset when the local server process restarts.
-
-Recommended portfolio demo flow:
-
-1. Open `/studio`.
-2. Click `Load Demo Evidence` to show the stable ONNX Runtime CPU vs TensorRT Jetson comparison.
-3. Use Run / Import only as supporting controls that demonstrate how the local UI extends the CLI/API workflow.
 
 ---
 
