@@ -356,13 +356,21 @@ def test_studio_demo_evidence_loads_compare_ready_pair():
     assert response["evaluation_report"]["accuracy"]["status"] == "evaluated"
     assert response["evaluation_report"]["accuracy"]["metrics"]["map50"] > 0
     assert response["evaluation_report"]["structural_validation"]["status"] == "passed"
-    assert len(response["problem_cases"]) == 3
+    assert len(response["problem_cases"]) == 4
     assert {case["problem_case"] for case in response["problem_cases"]} == {
         "annotation_missing",
         "invalid_detection_structure",
         "contract_shape_mismatch",
+        "latency_regression",
     }
-    assert {case["deployment_signal"]["decision"] for case in response["problem_cases"]} == {"review", "blocked"}
+    assert {case["deployment_signal"]["decision"] for case in response["problem_cases"]} == {
+        "review",
+        "blocked",
+        "review_required",
+    }
+    latency_case = next(case for case in response["problem_cases"] if case["problem_case"] == "latency_regression")
+    assert latency_case["latency_checks"]["p99_latency"]["delta_pct"] > 20
+    assert latency_case["deployment_signal"]["reason"] == "p99 latency regression detected"
     assert compare["status"] == "ok"
     assert compare["base"]["backend_key"] == "onnxruntime__cpu"
     assert compare["new"]["backend_key"] == "tensorrt__jetson"
@@ -389,6 +397,7 @@ def test_studio_demo_evidence_is_listed_and_selectable_as_job():
     assert detail["result"]["comparison"]["new"]["backend_key"] == "tensorrt__jetson"
     assert detail["result"]["evaluation_report"]["accuracy"]["metrics"]["precision"] > 0
     assert detail["result"]["problem_cases"][1]["structural_validation"]["status"] == "failed"
+    assert detail["result"]["problem_cases"][3]["problem_case"] == "latency_regression"
 
 
 def test_studio_importing_two_compatible_results_returns_compare_data():
