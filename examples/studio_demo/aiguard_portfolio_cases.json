@@ -1,0 +1,985 @@
+{
+  "schema_version": "inferedge-aiguard-portfolio-demo-v1",
+  "source": "InferEdgeAIGuard Phase 6 portfolio demo cases",
+  "scope": "local-first evidence replay",
+  "case_count": 4,
+  "cases": [
+    {
+      "case_id": "normal_pass",
+      "title": "Normal output quality",
+      "category": "normal",
+      "summary": "BBox and score evidence stay within configured thresholds.",
+      "guard_analysis": {
+        "schema_version": "inferedge-aiguard-diagnosis-v1",
+        "source": {
+          "runtime_result_path": "examples/single/fp32_normal.json"
+        },
+        "guard_verdict": "pass",
+        "severity": "low",
+        "confidence": 0.9,
+        "primary_reason": "BBox and score structural evidence is within configured thresholds.",
+        "evidence": [
+          {
+            "type": "bbox_validity",
+            "metric_name": "invalid_bbox_rate",
+            "observed_value": 0.0,
+            "baseline_value": null,
+            "threshold": 0.05,
+            "delta": null,
+            "delta_pct": null,
+            "increase_factor": null,
+            "severity": "low",
+            "status": "passed",
+            "explanation": "invalid_bbox_rate observed value is 0. Threshold is 0.05. This bbox_validity evidence should be reviewed before deployment.",
+            "why_it_matters": "Invalid boxes indicate that detection geometry may be unusable even when latency looks acceptable.",
+            "suspected_causes": [],
+            "recommendation": "BBox validity is within the configured threshold.",
+            "raw_context": {
+              "total_predictions": 3,
+              "invalid_bbox_count": 0,
+              "invalid_bbox_rate": 0.0,
+              "zero_area_count": 0,
+              "out_of_bounds_count": 0,
+              "nan_or_inf_count": 0,
+              "bbox_collapse_count": 0,
+              "bbox_collapse_ratio": 0.0,
+              "boundary_check_enabled": false
+            }
+          },
+          {
+            "type": "bbox_collapse",
+            "metric_name": "bbox_collapse_ratio",
+            "observed_value": 0.0,
+            "baseline_value": null,
+            "threshold": 0.05,
+            "delta": null,
+            "delta_pct": null,
+            "increase_factor": null,
+            "severity": "low",
+            "status": "passed",
+            "explanation": "bbox_collapse_ratio observed value is 0. Threshold is 0.05. This bbox_collapse evidence should be reviewed before deployment.",
+            "why_it_matters": "Near-zero area boxes can indicate decoder mismatch or quantization artifacts that make detections unusable.",
+            "suspected_causes": [],
+            "recommendation": "BBox collapse ratio is within the configured threshold.",
+            "raw_context": {
+              "total_predictions": 3,
+              "invalid_bbox_count": 0,
+              "invalid_bbox_rate": 0.0,
+              "zero_area_count": 0,
+              "out_of_bounds_count": 0,
+              "nan_or_inf_count": 0,
+              "bbox_collapse_count": 0,
+              "bbox_collapse_ratio": 0.0,
+              "boundary_check_enabled": false
+            }
+          },
+          {
+            "type": "score_range_violation",
+            "metric_name": "score_range_violation_count",
+            "observed_value": 0,
+            "baseline_value": null,
+            "threshold": 0,
+            "delta": null,
+            "delta_pct": null,
+            "increase_factor": null,
+            "severity": "low",
+            "status": "passed",
+            "explanation": "score_range_violation_count observed value is 0. Threshold is 0. This score_range_violation evidence should be reviewed before deployment.",
+            "why_it_matters": "Scores outside 0..1 or non-finite scores make ranking and thresholding unreliable.",
+            "suspected_causes": [],
+            "recommendation": "Score range is valid.",
+            "raw_context": {
+              "total_predictions": 3,
+              "min_score": 0.63,
+              "max_score": 0.91,
+              "mean_score": 0.7600000000000001,
+              "std_score": 0.11518101695447332,
+              "low_confidence_ratio": 0.0,
+              "high_confidence_ratio": 0.0,
+              "saturation_ratio": 0.0,
+              "score_range_violation_count": 0,
+              "score_nan_or_inf_count": 0,
+              "low_threshold": 0.01,
+              "high_threshold": 0.99
+            }
+          },
+          {
+            "type": "confidence_saturation",
+            "metric_name": "saturation_ratio",
+            "observed_value": 0.0,
+            "baseline_value": null,
+            "threshold": 0.7,
+            "delta": null,
+            "delta_pct": null,
+            "increase_factor": null,
+            "severity": "low",
+            "status": "passed",
+            "explanation": "saturation_ratio observed value is 0. Threshold is 0.7. This confidence_saturation evidence should be reviewed before deployment.",
+            "why_it_matters": "Confidence saturation can hide ranking quality problems and may indicate quantization or postprocess mistakes.",
+            "suspected_causes": [],
+            "recommendation": "Confidence distribution is within the configured threshold.",
+            "raw_context": {
+              "total_predictions": 3,
+              "min_score": 0.63,
+              "max_score": 0.91,
+              "mean_score": 0.7600000000000001,
+              "std_score": 0.11518101695447332,
+              "low_confidence_ratio": 0.0,
+              "high_confidence_ratio": 0.0,
+              "saturation_ratio": 0.0,
+              "score_range_violation_count": 0,
+              "score_nan_or_inf_count": 0,
+              "low_threshold": 0.01,
+              "high_threshold": 0.99
+            }
+          }
+        ],
+        "suspected_causes": [],
+        "recommendations": [
+          "BBox validity is within the configured threshold.",
+          "BBox collapse ratio is within the configured threshold.",
+          "Score range is valid.",
+          "Confidence distribution is within the configured threshold."
+        ],
+        "thresholds": {
+          "invalid_bbox_rate_review": 0.05,
+          "invalid_bbox_rate_blocked": 0.2,
+          "bbox_collapse_ratio_review": 0.05,
+          "bbox_collapse_ratio_high": 0.1,
+          "score_saturation_low_threshold": 0.01,
+          "score_saturation_high_threshold": 0.99,
+          "saturation_ratio_review": 0.7,
+          "saturation_ratio_high": 0.85
+        },
+        "baseline_summary": {},
+        "candidate_summary": {
+          "model": "yolov8n",
+          "precision": "fp32",
+          "image_id": "sample_001",
+          "bbox": {
+            "total_predictions": 3,
+            "invalid_bbox_count": 0,
+            "invalid_bbox_rate": 0.0,
+            "zero_area_count": 0,
+            "out_of_bounds_count": 0,
+            "nan_or_inf_count": 0,
+            "bbox_collapse_count": 0,
+            "bbox_collapse_ratio": 0.0,
+            "boundary_check_enabled": false
+          },
+          "score": {
+            "total_predictions": 3,
+            "min_score": 0.63,
+            "max_score": 0.91,
+            "mean_score": 0.7600000000000001,
+            "std_score": 0.11518101695447332,
+            "low_confidence_ratio": 0.0,
+            "high_confidence_ratio": 0.0,
+            "saturation_ratio": 0.0,
+            "score_range_violation_count": 0,
+            "score_nan_or_inf_count": 0,
+            "low_threshold": 0.01,
+            "high_threshold": 0.99
+          }
+        },
+        "created_at": "2026-05-02T12:54:53Z"
+      }
+    },
+    {
+      "case_id": "bbox_collapse_blocked",
+      "title": "Latency improvement with bbox collapse",
+      "category": "bbox_quality",
+      "summary": "Candidate latency improves, but bbox collapse increases enough to block deployment review.",
+      "guard_analysis": {
+        "schema_version": "inferedge-aiguard-diagnosis-v1",
+        "source": {
+          "baseline_result_path": "examples/single/fp32_normal.json",
+          "candidate_result_path": "examples/single/int8_bbox_collapse.json"
+        },
+        "guard_verdict": "blocked",
+        "severity": "high",
+        "confidence": 0.92,
+        "primary_reason": "Candidate output quality deviates from the baseline diagnosis profile.",
+        "evidence": [
+          {
+            "type": "baseline_deviation",
+            "metric_name": "invalid_bbox_rate_factor",
+            "observed_value": 500000000.0,
+            "baseline_value": 0.0,
+            "threshold": 5.0,
+            "delta": 0.5,
+            "delta_pct": null,
+            "increase_factor": 500000000.0,
+            "severity": "high",
+            "status": "failed",
+            "explanation": "invalid_bbox_rate changed from 0 in the baseline to 0.5 in the candidate (500000000x). Review threshold is 5x.",
+            "why_it_matters": "A candidate with a much higher invalid bbox rate than the baseline may have unusable detection geometry even if it runs faster.",
+            "suspected_causes": [
+              "Incorrect bbox decoder",
+              "Output tensor layout mismatch",
+              "Preprocessing/postprocess mismatch"
+            ],
+            "recommendation": "Review decoder, output layout, and postprocess settings.",
+            "raw_context": {
+              "baseline_detection_count": 3,
+              "candidate_detection_count": 2,
+              "detection_count_delta": -1,
+              "detection_count_delta_pct": -0.3333333333333333,
+              "detection_count_drop_pct": 0.3333333333333333,
+              "invalid_bbox_rate_factor": 500000000.0,
+              "bbox_collapse_ratio_factor": 500000000.0,
+              "score_saturation_factor": 1.0,
+              "latency_delta_pct": -0.735857362976007,
+              "accuracy_delta_pp": null
+            }
+          },
+          {
+            "type": "baseline_deviation",
+            "metric_name": "bbox_collapse_ratio_factor",
+            "observed_value": 500000000.0,
+            "baseline_value": 0.0,
+            "threshold": 5.0,
+            "delta": 0.5,
+            "delta_pct": null,
+            "increase_factor": 500000000.0,
+            "severity": "high",
+            "status": "failed",
+            "explanation": "bbox_collapse_ratio changed from 0 in the baseline to 0.5 in the candidate (500000000x). Review threshold is 5x.",
+            "why_it_matters": "Near-zero boxes increasing over baseline can indicate decoder or quantization problems that make detections unreliable.",
+            "suspected_causes": [
+              "INT8 quantization artifact",
+              "Incorrect bbox decoder",
+              "Preprocessing/postprocess mismatch"
+            ],
+            "recommendation": "Do not deploy until bbox collapse drift is reviewed.",
+            "raw_context": {
+              "baseline_detection_count": 3,
+              "candidate_detection_count": 2,
+              "detection_count_delta": -1,
+              "detection_count_delta_pct": -0.3333333333333333,
+              "detection_count_drop_pct": 0.3333333333333333,
+              "invalid_bbox_rate_factor": 500000000.0,
+              "bbox_collapse_ratio_factor": 500000000.0,
+              "score_saturation_factor": 1.0,
+              "latency_delta_pct": -0.735857362976007,
+              "accuracy_delta_pp": null
+            }
+          },
+          {
+            "type": "baseline_deviation",
+            "metric_name": "score_saturation_factor",
+            "observed_value": 1.0,
+            "baseline_value": 0.0,
+            "threshold": 5.0,
+            "delta": 0.0,
+            "delta_pct": null,
+            "increase_factor": 1.0,
+            "severity": "low",
+            "status": "passed",
+            "explanation": "saturation_ratio changed from 0 in the baseline to 0 in the candidate (1x). Review threshold is 5x.",
+            "why_it_matters": "Score saturation drift can hide ranking failures and may indicate quantization or score decoder mistakes.",
+            "suspected_causes": [],
+            "recommendation": "Baseline deviation is within threshold.",
+            "raw_context": {
+              "baseline_detection_count": 3,
+              "candidate_detection_count": 2,
+              "detection_count_delta": -1,
+              "detection_count_delta_pct": -0.3333333333333333,
+              "detection_count_drop_pct": 0.3333333333333333,
+              "invalid_bbox_rate_factor": 500000000.0,
+              "bbox_collapse_ratio_factor": 500000000.0,
+              "score_saturation_factor": 1.0,
+              "latency_delta_pct": -0.735857362976007,
+              "accuracy_delta_pp": null
+            }
+          },
+          {
+            "type": "detection_count_drift",
+            "metric_name": "detection_count_drop_pct",
+            "observed_value": 0.3333333333333333,
+            "baseline_value": 3,
+            "threshold": 0.5,
+            "delta": -1,
+            "delta_pct": -0.3333333333333333,
+            "increase_factor": null,
+            "severity": "low",
+            "status": "passed",
+            "explanation": "Candidate detection count changed from 3 to 2 (-0.333 signed delta).",
+            "why_it_matters": "A large detection count drop can mean the candidate became faster by missing objects rather than by improving execution efficiency.",
+            "suspected_causes": [],
+            "recommendation": "Detection count drift is within threshold.",
+            "raw_context": {
+              "baseline_detection_count": 3,
+              "candidate_detection_count": 2,
+              "detection_count_delta": -1,
+              "detection_count_delta_pct": -0.3333333333333333,
+              "detection_count_drop_pct": 0.3333333333333333,
+              "invalid_bbox_rate_factor": 500000000.0,
+              "bbox_collapse_ratio_factor": 500000000.0,
+              "score_saturation_factor": 1.0,
+              "latency_delta_pct": -0.735857362976007,
+              "accuracy_delta_pp": null
+            }
+          },
+          {
+            "type": "latency_quality_tradeoff",
+            "metric_name": "latency_delta_pct",
+            "observed_value": -0.735857362976007,
+            "baseline_value": 45.43,
+            "threshold": 0,
+            "delta": -33.43,
+            "delta_pct": -0.735857362976007,
+            "increase_factor": null,
+            "severity": "high",
+            "status": "failed",
+            "explanation": "Candidate latency improved by 0.736, but baseline comparison evidence indicates output quality risk.",
+            "why_it_matters": "Latency improvement alone is not deployment-ready evidence when bbox, score, or detection count quality regresses.",
+            "suspected_causes": [
+              "Quantization artifact",
+              "Decoder mismatch",
+              "Run configuration mismatch"
+            ],
+            "recommendation": "Treat speedup as review evidence until output quality drift is resolved.",
+            "raw_context": {
+              "baseline_detection_count": 3,
+              "candidate_detection_count": 2,
+              "detection_count_delta": -1,
+              "detection_count_delta_pct": -0.3333333333333333,
+              "detection_count_drop_pct": 0.3333333333333333,
+              "invalid_bbox_rate_factor": 500000000.0,
+              "bbox_collapse_ratio_factor": 500000000.0,
+              "score_saturation_factor": 1.0,
+              "latency_delta_pct": -0.735857362976007,
+              "accuracy_delta_pp": null
+            }
+          }
+        ],
+        "suspected_causes": [
+          "Incorrect bbox decoder",
+          "Output tensor layout mismatch",
+          "Preprocessing/postprocess mismatch",
+          "INT8 quantization artifact",
+          "Quantization artifact",
+          "Decoder mismatch",
+          "Run configuration mismatch"
+        ],
+        "recommendations": [
+          "Review decoder, output layout, and postprocess settings.",
+          "Do not deploy until bbox collapse drift is reviewed.",
+          "Baseline deviation is within threshold.",
+          "Detection count drift is within threshold.",
+          "Treat speedup as review evidence until output quality drift is resolved."
+        ],
+        "thresholds": {
+          "invalid_bbox_rate_review": 0.05,
+          "invalid_bbox_rate_blocked": 0.2,
+          "bbox_collapse_ratio_review": 0.05,
+          "bbox_collapse_ratio_high": 0.1,
+          "score_saturation_low_threshold": 0.01,
+          "score_saturation_high_threshold": 0.99,
+          "saturation_ratio_review": 0.7,
+          "saturation_ratio_high": 0.85,
+          "invalid_bbox_rate_factor_review": 5.0,
+          "invalid_bbox_rate_factor_blocked": 10.0,
+          "bbox_collapse_ratio_factor_review": 5.0,
+          "bbox_collapse_ratio_factor_blocked": 10.0,
+          "score_saturation_factor_review": 5.0,
+          "score_saturation_factor_blocked": 10.0,
+          "detection_count_drop_pct_review": 0.5,
+          "detection_count_drop_pct_blocked": 0.8
+        },
+        "baseline_summary": {
+          "label": "fp32_baseline",
+          "model": "yolov8n",
+          "precision": "fp32",
+          "bbox": {
+            "total_predictions": 3,
+            "invalid_bbox_count": 0,
+            "invalid_bbox_rate": 0.0,
+            "zero_area_count": 0,
+            "out_of_bounds_count": 0,
+            "nan_or_inf_count": 0,
+            "bbox_collapse_count": 0,
+            "bbox_collapse_ratio": 0.0,
+            "boundary_check_enabled": false
+          },
+          "score": {
+            "total_predictions": 3,
+            "min_score": 0.63,
+            "max_score": 0.91,
+            "mean_score": 0.7600000000000001,
+            "std_score": 0.11518101695447332,
+            "low_confidence_ratio": 0.0,
+            "high_confidence_ratio": 0.0,
+            "saturation_ratio": 0.0,
+            "score_range_violation_count": 0,
+            "score_nan_or_inf_count": 0,
+            "low_threshold": 0.01,
+            "high_threshold": 0.99
+          },
+          "latency_ms": 45.43,
+          "accuracy": null
+        },
+        "candidate_summary": {
+          "label": "int8_bbox_collapse",
+          "model": "yolov8n",
+          "precision": "int8",
+          "bbox": {
+            "total_predictions": 2,
+            "invalid_bbox_count": 1,
+            "invalid_bbox_rate": 0.5,
+            "zero_area_count": 1,
+            "out_of_bounds_count": 0,
+            "nan_or_inf_count": 0,
+            "bbox_collapse_count": 1,
+            "bbox_collapse_ratio": 0.5,
+            "boundary_check_enabled": false
+          },
+          "score": {
+            "total_predictions": 2,
+            "min_score": 0.72,
+            "max_score": 0.89,
+            "mean_score": 0.8049999999999999,
+            "std_score": 0.08500000000000002,
+            "low_confidence_ratio": 0.0,
+            "high_confidence_ratio": 0.0,
+            "saturation_ratio": 0.0,
+            "score_range_violation_count": 0,
+            "score_nan_or_inf_count": 0,
+            "low_threshold": 0.01,
+            "high_threshold": 0.99
+          },
+          "latency_ms": 12.0,
+          "accuracy": null,
+          "comparison": {
+            "baseline_detection_count": 3,
+            "candidate_detection_count": 2,
+            "detection_count_delta": -1,
+            "detection_count_delta_pct": -0.3333333333333333,
+            "detection_count_drop_pct": 0.3333333333333333,
+            "invalid_bbox_rate_factor": 500000000.0,
+            "bbox_collapse_ratio_factor": 500000000.0,
+            "score_saturation_factor": 1.0,
+            "latency_delta_pct": -0.735857362976007,
+            "accuracy_delta_pp": null
+          }
+        },
+        "created_at": "2026-05-02T12:54:53Z"
+      }
+    },
+    {
+      "case_id": "score_saturation_blocked",
+      "title": "Confidence score saturation",
+      "category": "confidence_distribution",
+      "summary": "Candidate scores concentrate near 0 or 1, indicating possible quantization or postprocess risk.",
+      "guard_analysis": {
+        "schema_version": "inferedge-aiguard-diagnosis-v1",
+        "source": {
+          "baseline_result_path": "examples/single/fp32_normal.json",
+          "candidate_result_path": "examples/single/int8_conf_saturation.json"
+        },
+        "guard_verdict": "blocked",
+        "severity": "high",
+        "confidence": 0.92,
+        "primary_reason": "Candidate output quality deviates from the baseline diagnosis profile.",
+        "evidence": [
+          {
+            "type": "baseline_deviation",
+            "metric_name": "invalid_bbox_rate_factor",
+            "observed_value": 1.0,
+            "baseline_value": 0.0,
+            "threshold": 5.0,
+            "delta": 0.0,
+            "delta_pct": null,
+            "increase_factor": 1.0,
+            "severity": "low",
+            "status": "passed",
+            "explanation": "invalid_bbox_rate changed from 0 in the baseline to 0 in the candidate (1x). Review threshold is 5x.",
+            "why_it_matters": "A candidate with a much higher invalid bbox rate than the baseline may have unusable detection geometry even if it runs faster.",
+            "suspected_causes": [],
+            "recommendation": "Baseline deviation is within threshold.",
+            "raw_context": {
+              "baseline_detection_count": 3,
+              "candidate_detection_count": 5,
+              "detection_count_delta": 2,
+              "detection_count_delta_pct": 0.6666666666666666,
+              "detection_count_drop_pct": 0.0,
+              "invalid_bbox_rate_factor": 1.0,
+              "bbox_collapse_ratio_factor": 1.0,
+              "score_saturation_factor": 1000000000.0,
+              "latency_delta_pct": -0.6808276469293418,
+              "accuracy_delta_pp": null
+            }
+          },
+          {
+            "type": "baseline_deviation",
+            "metric_name": "bbox_collapse_ratio_factor",
+            "observed_value": 1.0,
+            "baseline_value": 0.0,
+            "threshold": 5.0,
+            "delta": 0.0,
+            "delta_pct": null,
+            "increase_factor": 1.0,
+            "severity": "low",
+            "status": "passed",
+            "explanation": "bbox_collapse_ratio changed from 0 in the baseline to 0 in the candidate (1x). Review threshold is 5x.",
+            "why_it_matters": "Near-zero boxes increasing over baseline can indicate decoder or quantization problems that make detections unreliable.",
+            "suspected_causes": [],
+            "recommendation": "Baseline deviation is within threshold.",
+            "raw_context": {
+              "baseline_detection_count": 3,
+              "candidate_detection_count": 5,
+              "detection_count_delta": 2,
+              "detection_count_delta_pct": 0.6666666666666666,
+              "detection_count_drop_pct": 0.0,
+              "invalid_bbox_rate_factor": 1.0,
+              "bbox_collapse_ratio_factor": 1.0,
+              "score_saturation_factor": 1000000000.0,
+              "latency_delta_pct": -0.6808276469293418,
+              "accuracy_delta_pp": null
+            }
+          },
+          {
+            "type": "baseline_deviation",
+            "metric_name": "score_saturation_factor",
+            "observed_value": 1000000000.0,
+            "baseline_value": 0.0,
+            "threshold": 5.0,
+            "delta": 1.0,
+            "delta_pct": null,
+            "increase_factor": 1000000000.0,
+            "severity": "high",
+            "status": "failed",
+            "explanation": "saturation_ratio changed from 0 in the baseline to 1 in the candidate (1000000000x). Review threshold is 5x.",
+            "why_it_matters": "Score saturation drift can hide ranking failures and may indicate quantization or score decoder mistakes.",
+            "suspected_causes": [
+              "Quantization artifact",
+              "Duplicated sigmoid/postprocess",
+              "Incorrect score decoder"
+            ],
+            "recommendation": "Review score decoder and quantization calibration.",
+            "raw_context": {
+              "baseline_detection_count": 3,
+              "candidate_detection_count": 5,
+              "detection_count_delta": 2,
+              "detection_count_delta_pct": 0.6666666666666666,
+              "detection_count_drop_pct": 0.0,
+              "invalid_bbox_rate_factor": 1.0,
+              "bbox_collapse_ratio_factor": 1.0,
+              "score_saturation_factor": 1000000000.0,
+              "latency_delta_pct": -0.6808276469293418,
+              "accuracy_delta_pp": null
+            }
+          },
+          {
+            "type": "detection_count_drift",
+            "metric_name": "detection_count_drop_pct",
+            "observed_value": 0.0,
+            "baseline_value": 3,
+            "threshold": 0.5,
+            "delta": 2,
+            "delta_pct": 0.6666666666666666,
+            "increase_factor": null,
+            "severity": "low",
+            "status": "passed",
+            "explanation": "Candidate detection count changed from 3 to 5 (0.667 signed delta).",
+            "why_it_matters": "A large detection count drop can mean the candidate became faster by missing objects rather than by improving execution efficiency.",
+            "suspected_causes": [],
+            "recommendation": "Detection count drift is within threshold.",
+            "raw_context": {
+              "baseline_detection_count": 3,
+              "candidate_detection_count": 5,
+              "detection_count_delta": 2,
+              "detection_count_delta_pct": 0.6666666666666666,
+              "detection_count_drop_pct": 0.0,
+              "invalid_bbox_rate_factor": 1.0,
+              "bbox_collapse_ratio_factor": 1.0,
+              "score_saturation_factor": 1000000000.0,
+              "latency_delta_pct": -0.6808276469293418,
+              "accuracy_delta_pp": null
+            }
+          },
+          {
+            "type": "latency_quality_tradeoff",
+            "metric_name": "latency_delta_pct",
+            "observed_value": -0.6808276469293418,
+            "baseline_value": 45.43,
+            "threshold": 0,
+            "delta": -30.93,
+            "delta_pct": -0.6808276469293418,
+            "increase_factor": null,
+            "severity": "high",
+            "status": "failed",
+            "explanation": "Candidate latency improved by 0.681, but baseline comparison evidence indicates output quality risk.",
+            "why_it_matters": "Latency improvement alone is not deployment-ready evidence when bbox, score, or detection count quality regresses.",
+            "suspected_causes": [
+              "Quantization artifact",
+              "Decoder mismatch",
+              "Run configuration mismatch"
+            ],
+            "recommendation": "Treat speedup as review evidence until output quality drift is resolved.",
+            "raw_context": {
+              "baseline_detection_count": 3,
+              "candidate_detection_count": 5,
+              "detection_count_delta": 2,
+              "detection_count_delta_pct": 0.6666666666666666,
+              "detection_count_drop_pct": 0.0,
+              "invalid_bbox_rate_factor": 1.0,
+              "bbox_collapse_ratio_factor": 1.0,
+              "score_saturation_factor": 1000000000.0,
+              "latency_delta_pct": -0.6808276469293418,
+              "accuracy_delta_pp": null
+            }
+          }
+        ],
+        "suspected_causes": [
+          "Quantization artifact",
+          "Duplicated sigmoid/postprocess",
+          "Incorrect score decoder",
+          "Decoder mismatch",
+          "Run configuration mismatch"
+        ],
+        "recommendations": [
+          "Baseline deviation is within threshold.",
+          "Review score decoder and quantization calibration.",
+          "Detection count drift is within threshold.",
+          "Treat speedup as review evidence until output quality drift is resolved."
+        ],
+        "thresholds": {
+          "invalid_bbox_rate_review": 0.05,
+          "invalid_bbox_rate_blocked": 0.2,
+          "bbox_collapse_ratio_review": 0.05,
+          "bbox_collapse_ratio_high": 0.1,
+          "score_saturation_low_threshold": 0.01,
+          "score_saturation_high_threshold": 0.99,
+          "saturation_ratio_review": 0.7,
+          "saturation_ratio_high": 0.85,
+          "invalid_bbox_rate_factor_review": 5.0,
+          "invalid_bbox_rate_factor_blocked": 10.0,
+          "bbox_collapse_ratio_factor_review": 5.0,
+          "bbox_collapse_ratio_factor_blocked": 10.0,
+          "score_saturation_factor_review": 5.0,
+          "score_saturation_factor_blocked": 10.0,
+          "detection_count_drop_pct_review": 0.5,
+          "detection_count_drop_pct_blocked": 0.8
+        },
+        "baseline_summary": {
+          "label": "fp32_baseline",
+          "model": "yolov8n",
+          "precision": "fp32",
+          "bbox": {
+            "total_predictions": 3,
+            "invalid_bbox_count": 0,
+            "invalid_bbox_rate": 0.0,
+            "zero_area_count": 0,
+            "out_of_bounds_count": 0,
+            "nan_or_inf_count": 0,
+            "bbox_collapse_count": 0,
+            "bbox_collapse_ratio": 0.0,
+            "boundary_check_enabled": false
+          },
+          "score": {
+            "total_predictions": 3,
+            "min_score": 0.63,
+            "max_score": 0.91,
+            "mean_score": 0.7600000000000001,
+            "std_score": 0.11518101695447332,
+            "low_confidence_ratio": 0.0,
+            "high_confidence_ratio": 0.0,
+            "saturation_ratio": 0.0,
+            "score_range_violation_count": 0,
+            "score_nan_or_inf_count": 0,
+            "low_threshold": 0.01,
+            "high_threshold": 0.99
+          },
+          "latency_ms": 45.43,
+          "accuracy": null
+        },
+        "candidate_summary": {
+          "label": "int8_score_saturation",
+          "model": "yolov8n",
+          "precision": "int8",
+          "bbox": {
+            "total_predictions": 5,
+            "invalid_bbox_count": 0,
+            "invalid_bbox_rate": 0.0,
+            "zero_area_count": 0,
+            "out_of_bounds_count": 0,
+            "nan_or_inf_count": 0,
+            "bbox_collapse_count": 0,
+            "bbox_collapse_ratio": 0.0,
+            "boundary_check_enabled": false
+          },
+          "score": {
+            "total_predictions": 5,
+            "min_score": 0.002,
+            "max_score": 0.999,
+            "mean_score": 0.5993999999999999,
+            "std_score": 0.48696061442379507,
+            "low_confidence_ratio": 0.4,
+            "high_confidence_ratio": 0.6,
+            "saturation_ratio": 1.0,
+            "score_range_violation_count": 0,
+            "score_nan_or_inf_count": 0,
+            "low_threshold": 0.01,
+            "high_threshold": 0.99
+          },
+          "latency_ms": 14.5,
+          "accuracy": null,
+          "comparison": {
+            "baseline_detection_count": 3,
+            "candidate_detection_count": 5,
+            "detection_count_delta": 2,
+            "detection_count_delta_pct": 0.6666666666666666,
+            "detection_count_drop_pct": 0.0,
+            "invalid_bbox_rate_factor": 1.0,
+            "bbox_collapse_ratio_factor": 1.0,
+            "score_saturation_factor": 1000000000.0,
+            "latency_delta_pct": -0.6808276469293418,
+            "accuracy_delta_pp": null
+          }
+        },
+        "created_at": "2026-05-02T12:54:53Z"
+      }
+    },
+    {
+      "case_id": "temporal_instability_review",
+      "title": "Temporal instability",
+      "category": "temporal_consistency",
+      "summary": "Frame-level detection count variance is high enough to require review before deployment.",
+      "guard_analysis": {
+        "schema_version": "inferedge-aiguard-diagnosis-v1",
+        "source": {
+          "sequence_path": "examples/portfolio_demo/temporal_instability"
+        },
+        "guard_verdict": "review_required",
+        "severity": "medium",
+        "confidence": 0.88,
+        "primary_reason": "Temporal consistency should be reviewed before deployment.",
+        "evidence": [
+          {
+            "type": "temporal_consistency",
+            "metric_name": "frame_to_frame_detection_count_cv",
+            "observed_value": 1.224744871391589,
+            "baseline_value": null,
+            "threshold": 1.0,
+            "delta": null,
+            "delta_pct": null,
+            "increase_factor": null,
+            "severity": "medium",
+            "status": "warning",
+            "explanation": "Frame-to-frame detection count CV is 1.225. Review threshold is 1.",
+            "why_it_matters": "Large detection count variance can indicate unstable output across adjacent frames in the same scene.",
+            "suspected_causes": [
+              "Temporal instability",
+              "Preprocessing/postprocess mismatch",
+              "Confidence threshold instability"
+            ],
+            "recommendation": "Review frame sequence output before deployment.",
+            "raw_context": {
+              "frame_count": 5,
+              "detection_counts": [
+                0,
+                10,
+                0,
+                10,
+                0
+              ],
+              "mean_detection_count": 4.0,
+              "std_detection_count": 4.898979485566356,
+              "frame_to_frame_detection_count_cv": 1.224744871391589,
+              "zero_detection_frame_count": 3,
+              "zero_detection_frame_ratio": 0.6,
+              "bbox_center_jump_mean": 0.0,
+              "bbox_center_jump_p95": 0.0,
+              "bbox_center_jump_unit": "pixels",
+              "class_flip_rate": 0.0,
+              "dominant_classes": [
+                null,
+                0,
+                null,
+                0,
+                null
+              ]
+            }
+          },
+          {
+            "type": "temporal_consistency",
+            "metric_name": "zero_detection_frame_ratio",
+            "observed_value": 0.6,
+            "baseline_value": null,
+            "threshold": 1.0,
+            "delta": null,
+            "delta_pct": null,
+            "increase_factor": null,
+            "severity": "low",
+            "status": "passed",
+            "explanation": "Zero-detection frame ratio is 0.6. Blocked threshold is 1.",
+            "why_it_matters": "Frequent zero-detection frames can mean objects disappear across a sequence even when individual frames appear valid.",
+            "suspected_causes": [],
+            "recommendation": "Zero-detection frame ratio is within threshold.",
+            "raw_context": {
+              "frame_count": 5,
+              "detection_counts": [
+                0,
+                10,
+                0,
+                10,
+                0
+              ],
+              "mean_detection_count": 4.0,
+              "std_detection_count": 4.898979485566356,
+              "frame_to_frame_detection_count_cv": 1.224744871391589,
+              "zero_detection_frame_count": 3,
+              "zero_detection_frame_ratio": 0.6,
+              "bbox_center_jump_mean": 0.0,
+              "bbox_center_jump_p95": 0.0,
+              "bbox_center_jump_unit": "pixels",
+              "class_flip_rate": 0.0,
+              "dominant_classes": [
+                null,
+                0,
+                null,
+                0,
+                null
+              ]
+            }
+          },
+          {
+            "type": "temporal_consistency",
+            "metric_name": "bbox_center_jump_p95",
+            "observed_value": 0.0,
+            "baseline_value": null,
+            "threshold": 0.5,
+            "delta": null,
+            "delta_pct": null,
+            "increase_factor": null,
+            "severity": "low",
+            "status": "passed",
+            "explanation": "BBox center jump p95 is 0 (pixels). Review threshold is 0.5.",
+            "why_it_matters": "Large bbox center jumps across adjacent frames can indicate unstable geometry without requiring a full tracker.",
+            "suspected_causes": [],
+            "recommendation": "BBox center jumps are within threshold.",
+            "raw_context": {
+              "frame_count": 5,
+              "detection_counts": [
+                0,
+                10,
+                0,
+                10,
+                0
+              ],
+              "mean_detection_count": 4.0,
+              "std_detection_count": 4.898979485566356,
+              "frame_to_frame_detection_count_cv": 1.224744871391589,
+              "zero_detection_frame_count": 3,
+              "zero_detection_frame_ratio": 0.6,
+              "bbox_center_jump_mean": 0.0,
+              "bbox_center_jump_p95": 0.0,
+              "bbox_center_jump_unit": "pixels",
+              "class_flip_rate": 0.0,
+              "dominant_classes": [
+                null,
+                0,
+                null,
+                0,
+                null
+              ]
+            }
+          },
+          {
+            "type": "temporal_consistency",
+            "metric_name": "class_flip_rate",
+            "observed_value": 0.0,
+            "baseline_value": null,
+            "threshold": 0.3,
+            "delta": null,
+            "delta_pct": null,
+            "increase_factor": null,
+            "severity": "low",
+            "status": "passed",
+            "explanation": "Dominant class flip rate is 0. Review threshold is 0.3.",
+            "why_it_matters": "Frequent dominant class changes in adjacent non-empty frames can indicate unstable classification in a detection sequence.",
+            "suspected_causes": [],
+            "recommendation": "Dominant class stability is within threshold.",
+            "raw_context": {
+              "frame_count": 5,
+              "detection_counts": [
+                0,
+                10,
+                0,
+                10,
+                0
+              ],
+              "mean_detection_count": 4.0,
+              "std_detection_count": 4.898979485566356,
+              "frame_to_frame_detection_count_cv": 1.224744871391589,
+              "zero_detection_frame_count": 3,
+              "zero_detection_frame_ratio": 0.6,
+              "bbox_center_jump_mean": 0.0,
+              "bbox_center_jump_p95": 0.0,
+              "bbox_center_jump_unit": "pixels",
+              "class_flip_rate": 0.0,
+              "dominant_classes": [
+                null,
+                0,
+                null,
+                0,
+                null
+              ]
+            }
+          }
+        ],
+        "suspected_causes": [
+          "Temporal instability",
+          "Preprocessing/postprocess mismatch",
+          "Confidence threshold instability"
+        ],
+        "recommendations": [
+          "Review frame sequence output before deployment.",
+          "Zero-detection frame ratio is within threshold.",
+          "BBox center jumps are within threshold.",
+          "Dominant class stability is within threshold."
+        ],
+        "thresholds": {
+          "detection_count_cv_review": 1.0,
+          "zero_detection_frame_ratio_blocked": 1.0,
+          "bbox_center_jump_p95_review": 0.5,
+          "class_flip_rate_review": 0.3
+        },
+        "baseline_summary": {},
+        "candidate_summary": {
+          "sequence_id": "temporal_instability_demo",
+          "frame_count": 5,
+          "temporal": {
+            "frame_count": 5,
+            "detection_counts": [
+              0,
+              10,
+              0,
+              10,
+              0
+            ],
+            "mean_detection_count": 4.0,
+            "std_detection_count": 4.898979485566356,
+            "frame_to_frame_detection_count_cv": 1.224744871391589,
+            "zero_detection_frame_count": 3,
+            "zero_detection_frame_ratio": 0.6,
+            "bbox_center_jump_mean": 0.0,
+            "bbox_center_jump_p95": 0.0,
+            "bbox_center_jump_unit": "pixels",
+            "class_flip_rate": 0.0,
+            "dominant_classes": [
+              null,
+              0,
+              null,
+              0,
+              null
+            ]
+          }
+        },
+        "created_at": "2026-05-02T12:54:53Z"
+      }
+    }
+  ]
+}

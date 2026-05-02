@@ -34,6 +34,7 @@ DEMO_PROBLEM_REPORTS = (
     "contract_shape_mismatch_report.json",
 )
 LATENCY_REGRESSION_SUMMARY = "latency_regression_summary.json"
+AIGUARD_PORTFOLIO_CASES = "aiguard_portfolio_cases.json"
 DEMO_JOB_ID = "demo_yolov8n_trt_vs_onnx"
 STATIC_ASSETS = {
     "app.js": "application/javascript",
@@ -172,6 +173,7 @@ def studio_demo_evidence(request: Request) -> dict[str, Any]:
     results = [_load_demo_result(file_name) for file_name in DEMO_EVIDENCE_FILES]
     evaluation_report = _load_demo_evaluation_report()
     problem_cases = _load_demo_problem_cases()
+    guard_demo_cases = _load_aiguard_portfolio_cases()
     imported_results = _get_imported_results(request)
     imported_results.extend(results)
     guard_analysis = _build_demo_guard_analysis(results, evaluation_report)
@@ -181,7 +183,7 @@ def studio_demo_evidence(request: Request) -> dict[str, Any]:
         results[1],
         guard_analysis=guard_analysis,
     )
-    demo_job = _build_demo_job(results, compare, evaluation_report, problem_cases)
+    demo_job = _build_demo_job(results, compare, evaluation_report, problem_cases, guard_demo_cases)
     _get_demo_jobs(request)[DEMO_JOB_ID] = demo_job
     return {
         "status": "loaded",
@@ -194,6 +196,7 @@ def studio_demo_evidence(request: Request) -> dict[str, Any]:
         "compare": compare,
         "evaluation_report": evaluation_report,
         "problem_cases": problem_cases,
+        "guard_demo_cases": guard_demo_cases,
         "guard_analysis": guard_analysis,
         "deployment_decision": compare["deployment_decision"],
     }
@@ -397,6 +400,28 @@ def _load_latency_regression_summary() -> dict[str, Any]:
     }
 
 
+def _load_aiguard_portfolio_cases() -> dict[str, Any]:
+    path = DEMO_EVIDENCE_DIR / AIGUARD_PORTFOLIO_CASES
+    try:
+        bundle = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise HTTPException(status_code=500, detail=f"AIGuard portfolio cases not found: {AIGUARD_PORTFOLIO_CASES}") from exc
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=500, detail=f"AIGuard portfolio cases are invalid JSON: {AIGUARD_PORTFOLIO_CASES}") from exc
+
+    cases = bundle.get("cases") if isinstance(bundle, dict) else None
+    if not isinstance(cases, list):
+        raise HTTPException(status_code=500, detail=f"AIGuard portfolio cases schema error: {AIGUARD_PORTFOLIO_CASES}")
+
+    return {
+        "schema_version": bundle.get("schema_version"),
+        "source": f"examples/studio_demo/{AIGUARD_PORTFOLIO_CASES}",
+        "scope": bundle.get("scope"),
+        "case_count": bundle.get("case_count", len(cases)),
+        "cases": cases,
+    }
+
+
 def _load_problem_report(file_name: str) -> dict[str, Any]:
     path = VALIDATION_PROBLEM_DIR / file_name
     try:
@@ -429,6 +454,7 @@ def _build_demo_job(
     compare: dict[str, Any],
     evaluation_report: dict[str, Any],
     problem_cases: list[dict[str, Any]],
+    guard_demo_cases: dict[str, Any],
 ) -> dict[str, Any]:
     now = _utc_now_iso()
     runtime_result = results[-1] if results else {}
@@ -450,6 +476,7 @@ def _build_demo_job(
             "guard_analysis": compare.get("guard_analysis"),
             "evaluation_report": evaluation_report,
             "problem_cases": problem_cases,
+            "guard_demo_cases": guard_demo_cases,
             "summary": compare["judgement"]["summary"],
         },
         "error": None,

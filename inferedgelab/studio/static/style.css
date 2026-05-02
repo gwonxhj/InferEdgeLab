@@ -767,6 +767,49 @@ body.file-mode .file-protocol-warning {
   margin-top: 4px;
 }
 
+.guard-demo-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.guard-demo-heading {
+  grid-column: 1 / -1;
+}
+
+.guard-demo-heading h3 {
+  margin: 4px 0 6px;
+}
+
+.guard-demo-card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.78);
+  padding: 12px;
+}
+
+.guard-demo-card h4 {
+  margin: 4px 0 8px;
+  font-size: 0.95rem;
+}
+
+.guard-demo-card .evidence-item {
+  margin-top: 8px;
+}
+
+.guard-demo-card.deployable {
+  border-color: rgba(34, 197, 94, 0.32);
+}
+
+.guard-demo-card.review {
+  border-color: rgba(234, 179, 8, 0.35);
+}
+
+.guard-demo-card.blocked {
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
 .decision-card h3 {
   margin-top: 8px;
   font-size: clamp(2rem, 4vw, 3.25rem);
@@ -850,7 +893,8 @@ body.file-mode .file-protocol-warning {
 
   .guard-summary,
   .guard-source,
-  .guard-row {
+  .guard-row,
+  .guard-demo-grid {
     grid-template-columns: 1fr;
   }
 

@@ -31,6 +31,7 @@ let importedResult = null;
 let demoEvaluationReport = null;
 let demoProblemCases = [];
 let activeGuardAnalysis = null;
+let guardDemoCases = null;
 const importedResultsByJobId = {};
 
 function createElement(tagName, className, textContent) {
@@ -373,6 +374,7 @@ async function loadDemoEvidence() {
     importedResult = results[results.length - 1] || null;
     demoEvaluationReport = payload.evaluation_report || null;
     demoProblemCases = Array.isArray(payload.problem_cases) ? payload.problem_cases : [];
+    guardDemoCases = payload.guard_demo_cases || null;
     compareData = payload.compare || null;
     updateGuardEvidence(payload.guard_analysis || payload.compare?.guard_analysis || null);
     selectedJobId = payload.job_id || payload.job?.job_id || selectedJobId;
@@ -384,6 +386,7 @@ async function loadDemoEvidence() {
     renderImportEvidence({ result: importedResult });
     renderDemoEvaluation(demoEvaluationReport);
     renderDemoProblemCases(demoProblemCases);
+    renderGuardDemoCases(guardDemoCases);
     renderImportedResult();
     await loadJobs(selectedJobId);
     await loadCompare();
@@ -415,6 +418,46 @@ function renderDemoProblemCases(problemCases = []) {
       createElement("h4", "", String(signal.decision || "review").toUpperCase()),
       createElement("p", "body-text", signal.reason || "Validation evidence requires review."),
       createElement("p", "caption", problemCaseDetail(problem)),
+    );
+    target.append(card);
+  });
+}
+
+function renderGuardDemoCases(bundle) {
+  const target = document.querySelector("#guard-demo-cases");
+  if (!target) {
+    return;
+  }
+  target.replaceChildren();
+
+  const cases = Array.isArray(bundle?.cases) ? bundle.cases : [];
+  if (!cases.length) {
+    return;
+  }
+
+  const heading = createElement("div", "guard-demo-heading");
+  heading.append(
+    createElement("p", "caption", "Portfolio diagnosis cases"),
+    createElement("h3", "", "AIGuard demo evidence"),
+    createElement(
+      "p",
+      "body-text",
+      "Normal, bbox collapse, score saturation, and temporal instability evidence are replayed from local fixtures.",
+    ),
+  );
+  target.append(heading);
+
+  cases.forEach((item) => {
+    const analysis = item.guard_analysis || {};
+    const verdict = guardVerdict(analysis);
+    const card = createElement("article", `guard-demo-card ${decisionTone(verdict)}`);
+    card.append(
+      createElement("p", "caption", item.category || "diagnosis"),
+      createElement("h4", "", item.title || item.case_id || "AIGuard case"),
+      createElement("p", "body-text", item.summary || analysis.primary_reason || "-"),
+      evidenceItem("guard_verdict", verdict),
+      evidenceItem("severity", analysis.severity || "-"),
+      evidenceItem("primary_metric", primaryGuardMetric(analysis)),
     );
     target.append(card);
   });
@@ -523,6 +566,7 @@ function renderRunPanel() {
   setState("#demo-state", "idle");
   renderDemoEvaluation(null);
   renderDemoProblemCases([]);
+  renderGuardDemoCases(null);
 }
 
 function resetTransientInputs() {
@@ -999,6 +1043,12 @@ function guardEvidenceItems(guardAnalysis = {}) {
     return guardAnalysis.anomalies;
   }
   return [];
+}
+
+function primaryGuardMetric(guardAnalysis = {}) {
+  const evidence = guardEvidenceItems(guardAnalysis);
+  const primary = evidence.find((item) => item.status === "failed" || item.status === "warning") || evidence[0] || {};
+  return primary.metric_name || primary.type || "-";
 }
 
 function decisionReason(decision) {
