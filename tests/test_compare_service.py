@@ -175,6 +175,9 @@ def test_build_compare_bundle_with_guard_runs_optional_reasoning(tmp_path, monke
     def fake_analyze_compare_result(guard_input):
         assert guard_input["comparison_mode"] == "same_precision"
         assert guard_input["precision_pair"] == "fp32_vs_fp32"
+        assert guard_input["source"]["baseline_profile_path"]
+        assert guard_input["source"]["candidate_result_path"]
+        assert guard_input["source"]["runtime_result_path"] == guard_input["source"]["candidate_result_path"]
         assert guard_input["latency_delta_pct"] == pytest.approx(-10.0)
         assert guard_input["base_precision"] == "fp32"
         assert guard_input["candidate_precision"] == "fp32"
@@ -225,6 +228,47 @@ def test_build_compare_bundle_with_guard_runs_optional_reasoning(tmp_path, monke
     assert bundle["data"]["guard_analysis"] == bundle["guard_analysis"]
     assert bundle["data"]["deployment_decision"] == bundle["deployment_decision"]
     assert bundle["deployment_decision"]["decision"] == "deployable"
+
+
+def test_build_compare_bundle_accepts_diagnosis_guard_contract(tmp_path, monkeypatch):
+    def fake_analyze_compare_result(guard_input):
+        return {
+            "schema_version": "inferedge-aiguard-diagnosis-v1",
+            "source": guard_input["source"],
+            "guard_verdict": "review_required",
+            "severity": "medium",
+            "confidence": 0.88,
+            "primary_reason": "Temporal consistency should be reviewed before deployment.",
+            "evidence": [
+                {
+                    "type": "temporal_consistency",
+                    "metric_name": "frame_to_frame_detection_count_cv",
+                    "observed_value": 1.25,
+                    "baseline_value": None,
+                    "threshold": 1.0,
+                    "severity": "medium",
+                    "status": "warning",
+                    "explanation": "Detection count variance exceeds review threshold.",
+                    "recommendation": "Review frame sequence output before deployment.",
+                }
+            ],
+            "suspected_causes": ["Temporal instability"],
+            "recommendations": ["Review adjacent-frame output."],
+        }
+
+    monkeypatch.setattr(compare_service, "analyze_compare_result", fake_analyze_compare_result)
+    base_path = write_result(tmp_path, "base.json", timestamp="2026-04-13T09:00:00Z", precision="fp32")
+    new_path = write_result(tmp_path, "new.json", timestamp="2026-04-13T10:00:00Z", precision="fp32")
+
+    bundle = build_compare_bundle(base_path=base_path, new_path=new_path, with_guard=True)
+
+    assert bundle["guard_analysis"]["guard_verdict"] == "review_required"
+    assert bundle["guard_analysis"]["source"]["runtime_result_path"] == new_path
+    assert bundle["deployment_decision"]["decision"] == "review_required"
+    assert bundle["deployment_decision"]["guard_status"] == "warning"
+    assert bundle["deployment_decision"]["guard_verdict"] == "review_required"
+    assert "frame_to_frame_detection_count_cv" in bundle["markdown"]
+    assert "Temporal consistency should be reviewed before deployment." in bundle["html"]
 
 
 def test_build_compare_bundle_with_guard_skips_when_aiguard_missing(tmp_path, monkeypatch):

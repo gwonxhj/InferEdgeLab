@@ -206,6 +206,28 @@ def test_completed_worker_response_preserves_optional_guard_analysis():
 
     assert completed["result"]["guard_analysis"] == worker_response["guard_analysis"]
     assert completed["result"]["summary"]["guard_status"] == "ok"
+    assert completed["result"]["summary"]["guard_verdict"] == "pass"
+
+
+def test_completed_worker_response_preserves_diagnosis_guard_contract():
+    job = _make_queued_analyze_job(job_id="job_worker_smoke")
+    worker_response = load_fixture("worker_completed_response.json")
+    worker_response["guard_analysis"] = {
+        "schema_version": "inferedge-aiguard-diagnosis-v1",
+        "guard_verdict": "review_required",
+        "severity": "medium",
+        "primary_reason": "Temporal consistency should be reviewed before deployment.",
+        "evidence": [],
+        "created_at": "2026-05-02T00:00:00Z",
+    }
+
+    completed = apply_worker_response_to_job(job, worker_response)
+
+    assert completed["result"]["guard_analysis"] == worker_response["guard_analysis"]
+    assert completed["result"]["summary"]["guard_status"] == "warning"
+    assert completed["result"]["summary"]["guard_verdict"] == "review_required"
+    assert completed["result"]["deployment_decision"]["guard_status"] == "warning"
+    assert completed["result"]["deployment_decision"]["guard_verdict"] == "review_required"
 
 
 def test_completed_worker_response_allows_guard_analysis_absent():
@@ -217,6 +239,7 @@ def test_completed_worker_response_allows_guard_analysis_absent():
 
     assert "guard_analysis" not in completed["result"]
     assert completed["result"]["summary"]["guard_status"] is None
+    assert completed["result"]["summary"]["guard_verdict"] is None
 
 
 def test_worker_failed_response_fixture_satisfies_contract():

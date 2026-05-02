@@ -62,8 +62,17 @@ def assert_api_response_contract(response: dict[str, Any], *, guard_expected: bo
     if guard_expected:
         assert "guard_analysis" in response
         assert isinstance(response["guard_analysis"], dict)
-        assert response["guard_analysis"]["status"] in {"ok", "warning", "error", "skipped"}
-        assert response["summary"]["guard_status"] == response["guard_analysis"]["status"]
+        if "status" in response["guard_analysis"]:
+            assert response["guard_analysis"]["status"] in {"ok", "warning", "error", "skipped"}
+            assert response["summary"]["guard_status"] == response["guard_analysis"]["status"]
+        else:
+            assert response["guard_analysis"]["guard_verdict"] in {
+                "pass",
+                "suspicious",
+                "review_required",
+                "blocked",
+            }
+            assert response["summary"]["guard_status"] in {"ok", "warning", "error"}
     else:
         assert "guard_analysis" not in response
         assert response["summary"]["guard_status"] is None
@@ -152,6 +161,7 @@ def test_build_api_response_bundle_wraps_compare_bundle_with_guard():
         "precision_pair": "fp32_vs_fp32",
         "deployment_decision": "deployable",
         "guard_status": "ok",
+        "guard_verdict": "pass",
     }
     assert response["comparison"]["result"] == bundle["result"]
     assert response["comparison"]["judgement"] == bundle["judgement"]
@@ -193,6 +203,45 @@ def test_build_api_response_bundle_omits_guard_when_absent():
     assert_api_response_contract(response, guard_expected=False)
     assert response["deployment_decision"]["decision"] == "unknown"
     assert response["summary"]["guard_status"] is None
+    assert response["summary"]["guard_verdict"] is None
+
+
+def test_build_api_response_bundle_summarizes_diagnosis_guard_contract():
+    guard_analysis = {
+        "schema_version": "inferedge-aiguard-diagnosis-v1",
+        "guard_verdict": "blocked",
+        "severity": "high",
+        "primary_reason": "Zero-detection frames exceed threshold.",
+        "evidence": [],
+        "created_at": "2026-05-02T00:00:00Z",
+    }
+    bundle = {
+        "result": {
+            "precision": {
+                "comparison_mode": "same_precision",
+                "pair": "fp32_vs_fp32",
+            }
+        },
+        "judgement": {
+            "overall": "improvement",
+        },
+        "deployment_decision": {
+            "decision": "blocked",
+            "reason": "Guard analysis reported an error-level validation issue.",
+            "lab_overall": "improvement",
+            "guard_status": "error",
+            "guard_verdict": "blocked",
+            "recommended_action": "Do not deploy until the Guard anomalies are resolved.",
+        },
+        "guard_analysis": guard_analysis,
+    }
+
+    response = build_api_response_bundle(bundle)
+
+    assert_api_response_contract(response, guard_expected=True)
+    assert response["summary"]["guard_status"] == "error"
+    assert response["summary"]["guard_verdict"] == "blocked"
+    assert response["guard_analysis"] == guard_analysis
 
 
 def test_build_api_response_bundle_preserves_worker_provenance_guard_evidence():

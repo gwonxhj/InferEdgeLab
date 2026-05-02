@@ -10,6 +10,7 @@ from rich.table import Table
 from inferedgelab.compare.comparator import build_runtime_compare_report, compare_group, render_runtime_compare_markdown
 from inferedgelab.result.loader import load_results_grouped_by_compare_key
 from inferedgelab.services.compare_service import build_compare_bundle
+from inferedgelab.services.guard_analysis import guard_status, guard_verdict
 
 
 def _fmt_num(v):
@@ -47,15 +48,19 @@ def _render_guard_analysis(guard_analysis: dict | None) -> None:
     if not guard_analysis:
         return
 
-    if guard_analysis.get("status") == "skipped":
+    normalized_status = guard_status(guard_analysis)
+    if normalized_status == "skipped":
         rprint("[yellow]Warning[/yellow]: InferEdgeAIGuard is not installed. Guard analysis skipped.")
         return
 
     rprint("[bold]Guard Analysis[/bold]")
-    rprint(f"- status: {guard_analysis.get('status')}")
+    rprint(f"- status: {normalized_status}")
+    rprint(f"- guard_verdict: {guard_verdict(guard_analysis)}")
+    if guard_analysis.get("primary_reason"):
+        rprint(f"- primary_reason: {guard_analysis.get('primary_reason')}")
     rprint(f"- confidence: {guard_analysis.get('confidence')}")
 
-    for field in ("anomalies", "suspected_causes", "recommendations"):
+    for field in ("anomalies", "evidence", "suspected_causes", "recommendations"):
         rprint(f"- {field}:")
         values = guard_analysis.get(field) or []
         if values:

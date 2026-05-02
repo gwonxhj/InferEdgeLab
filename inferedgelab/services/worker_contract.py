@@ -5,6 +5,7 @@ from typing import Any
 from inferedgelab.services.api_job_contract import ApiJobContractError
 from inferedgelab.services.api_job_contract import build_api_job_response
 from inferedgelab.services.api_job_contract import validate_api_job_response
+from inferedgelab.services.guard_analysis import guard_status, guard_verdict
 
 
 WORKER_RESPONSE_STATUSES = {"completed", "failed"}
@@ -197,11 +198,13 @@ def _build_completed_job_result(worker_response: dict[str, Any]) -> dict[str, An
 
     runtime_result = worker_response["runtime_result"]
     guard_analysis = worker_response.get("guard_analysis")
+    normalized_guard_status = guard_status(guard_analysis)
     deployment_decision = {
         "decision": "unknown",
         "reason": "Worker response has not been compared by Lab yet.",
         "lab_overall": None,
-        "guard_status": (guard_analysis or {}).get("status"),
+        "guard_status": normalized_guard_status,
+        "guard_verdict": guard_verdict(guard_analysis),
         "recommended_action": "Run Lab compare/report before deployment decision.",
     }
     result = {
@@ -211,7 +214,8 @@ def _build_completed_job_result(worker_response: dict[str, Any]) -> dict[str, An
             "comparison_mode": None,
             "precision_pair": None,
             "deployment_decision": deployment_decision["decision"],
-            "guard_status": deployment_decision["guard_status"],
+            "guard_status": normalized_guard_status,
+            "guard_verdict": deployment_decision["guard_verdict"],
         },
         "comparison": {
             "result": {"runtime_result": runtime_result},

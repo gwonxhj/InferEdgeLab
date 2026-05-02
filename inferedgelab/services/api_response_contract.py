@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from inferedgelab.services.guard_analysis import guard_status, guard_verdict
+
 
 def build_api_response_bundle(
     bundle: dict[str, Any],
@@ -80,7 +82,8 @@ def _build_summary(
         or precision.get("comparison_mode"),
         "precision_pair": judgement.get("precision_pair") or precision.get("pair"),
         "deployment_decision": deployment_decision.get("decision"),
-        "guard_status": (guard_analysis or {}).get("status"),
+        "guard_status": guard_status(guard_analysis),
+        "guard_verdict": guard_verdict(guard_analysis),
     }
 
 

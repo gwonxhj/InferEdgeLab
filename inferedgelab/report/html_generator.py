@@ -3,6 +3,8 @@ from __future__ import annotations
 from html import escape
 from typing import Any, Dict, Optional
 
+from inferedgelab.services.guard_analysis import guard_primary_reason, guard_status, guard_verdict
+
 
 def _fmt_num(v: Optional[float]) -> str:
     if v is None:
@@ -149,15 +151,101 @@ def _guard_values_to_html(values: Any) -> str:
     return "\n".join(f"<li>{escape(str(value))}</li>" for value in values)
 
 
+def _guard_source_to_html(source: Any) -> str:
+    if not isinstance(source, dict) or not source:
+        return ""
+    items = "\n".join(
+        f"<li><strong>{escape(str(key))}</strong>: <code>{escape(str(value))}</code></li>"
+        for key, value in source.items()
+    )
+    return f"<p><strong>source</strong></p><ul>{items}</ul>"
+
+
+def _guard_evidence_to_html(evidence: Any) -> str:
+    if not isinstance(evidence, list) or not evidence:
+        return ""
+    rows: list[str] = []
+    details: list[str] = []
+    for item in evidence:
+        if not isinstance(item, dict):
+            continue
+        rows.append(
+            f"""
+            <tr>
+              <td>{escape(str(item.get("type", "-")))}</td>
+              <td>{escape(str(item.get("metric_name", "-")))}</td>
+              <td>{escape(str(item.get("observed_value", "-")))}</td>
+              <td>{escape(str(item.get("baseline_value", "-")))}</td>
+              <td>{escape(str(item.get("threshold", "-")))}</td>
+              <td>{escape(str(item.get("status", "-")))}</td>
+              <td>{escape(str(item.get("severity", "-")))}</td>
+            </tr>
+            """
+        )
+        explanation = item.get("explanation")
+        recommendation = item.get("recommendation")
+        if explanation:
+            details.append(
+                "<li>"
+                f"<strong>{escape(str(item.get('metric_name', 'evidence')))}</strong>: "
+                f"{escape(str(explanation))}"
+                + (
+                    f"<br><em>recommendation</em>: {escape(str(recommendation))}"
+                    if recommendation
+                    else ""
+                )
+                + "</li>"
+            )
+    if not rows:
+        return ""
+    return f"""
+    <h3>Guard Evidence</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>type</th>
+          <th>metric</th>
+          <th>observed</th>
+          <th>baseline</th>
+          <th>threshold</th>
+          <th>status</th>
+          <th>severity</th>
+        </tr>
+      </thead>
+      <tbody>{''.join(rows)}</tbody>
+    </table>
+    <ul>{''.join(details)}</ul>
+    """
+
+
 def _guard_analysis_to_html(guard_analysis: Dict[str, Any] | None) -> str:
     if guard_analysis is None:
         return ""
 
-    if guard_analysis.get("status") == "skipped":
+    normalized_status = guard_status(guard_analysis)
+    normalized_verdict = guard_verdict(guard_analysis)
+    verdict_html = (
+        f'<p><strong>guard_verdict</strong>: <code>{escape(str(normalized_verdict))}</code></p>'
+        if normalized_verdict is not None
+        else ""
+    )
+    severity_html = (
+        f'<p><strong>severity</strong>: <code>{escape(str(guard_analysis.get("severity")))}</code></p>'
+        if guard_analysis.get("severity") is not None
+        else ""
+    )
+    primary_reason = guard_primary_reason(guard_analysis)
+    primary_reason_html = (
+        f"<p><strong>primary_reason</strong>: {escape(str(primary_reason))}</p>"
+        if primary_reason
+        else ""
+    )
+
+    if normalized_status == "skipped":
         return f"""
   <h2>Guard Analysis</h2>
   <div class="meta">
-    <p><strong>status</strong>: <code>{escape(str(guard_analysis.get("status")))}</code></p>
+    <p><strong>status</strong>: <code>{escape(str(normalized_status))}</code></p>
     <p><strong>reason</strong>: {escape(str(guard_analysis.get("reason")))}</p>
   </div>
         """
@@ -165,14 +253,19 @@ def _guard_analysis_to_html(guard_analysis: Dict[str, Any] | None) -> str:
     return f"""
   <h2>Guard Analysis</h2>
   <div class="meta">
-    <p><strong>status</strong>: <code>{escape(str(guard_analysis.get("status")))}</code></p>
+    <p><strong>status</strong>: <code>{escape(str(normalized_status))}</code></p>
+    {verdict_html}
+    {severity_html}
     <p><strong>confidence</strong>: <code>{escape(str(guard_analysis.get("confidence")))}</code></p>
+    {primary_reason_html}
+    {_guard_source_to_html(guard_analysis.get("source"))}
     <p><strong>anomalies</strong></p>
     <ul>{_guard_values_to_html(guard_analysis.get("anomalies"))}</ul>
     <p><strong>suspected_causes</strong></p>
     <ul>{_guard_values_to_html(guard_analysis.get("suspected_causes"))}</ul>
     <p><strong>recommendations</strong></p>
     <ul>{_guard_values_to_html(guard_analysis.get("recommendations"))}</ul>
+    {_guard_evidence_to_html(guard_analysis.get("evidence"))}
   </div>
     """
 

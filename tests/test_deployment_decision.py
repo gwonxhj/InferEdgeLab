@@ -46,6 +46,7 @@ def test_guard_ok_with_improvement_is_deployable():
     assert decision["decision"] == "deployable"
     assert decision["lab_overall"] == "improvement"
     assert decision["guard_status"] == "ok"
+    assert decision["guard_verdict"] == "pass"
 
 
 def test_guard_ok_with_neutral_is_deployable_with_note():
@@ -75,3 +76,37 @@ def test_risky_tradeoff_requires_review():
     )
 
     assert decision["decision"] == "review_required"
+
+
+def test_diagnosis_guard_verdict_blocked_blocks_deployment():
+    decision = build_deployment_decision(
+        make_judgement(overall="improvement"),
+        {
+            "schema_version": "inferedge-aiguard-diagnosis-v1",
+            "guard_verdict": "blocked",
+            "severity": "high",
+            "primary_reason": "Temporal consistency evidence indicates deployment risk.",
+            "evidence": [],
+        },
+    )
+
+    assert decision["decision"] == "blocked"
+    assert decision["guard_status"] == "error"
+    assert decision["guard_verdict"] == "blocked"
+
+
+def test_diagnosis_guard_verdict_review_requires_lab_review():
+    decision = build_deployment_decision(
+        make_judgement(overall="improvement"),
+        {
+            "schema_version": "inferedge-aiguard-diagnosis-v1",
+            "guard_verdict": "review_required",
+            "severity": "medium",
+            "primary_reason": "Temporal consistency should be reviewed before deployment.",
+            "evidence": [],
+        },
+    )
+
+    assert decision["decision"] == "review_required"
+    assert decision["guard_status"] == "warning"
+    assert decision["guard_verdict"] == "review_required"

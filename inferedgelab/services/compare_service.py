@@ -23,7 +23,12 @@ except ImportError:
     analyze_compare_result = None
 
 
-def _build_guard_compare_input(result: dict[str, Any], judgement: dict[str, Any]) -> dict[str, Any]:
+def _build_guard_compare_input(
+    result: dict[str, Any],
+    judgement: dict[str, Any],
+    *,
+    source: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     accuracy = result.get("accuracy") or {}
     primary_metric = accuracy.get("metric_name")
     primary_accuracy = (accuracy.get("metrics") or {}).get(primary_metric) or {}
@@ -52,18 +57,63 @@ def _build_guard_compare_input(result: dict[str, Any], judgement: dict[str, Any]
         "runtime_provenance": result.get("runtime_provenance"),
         "run_config_diff": result.get("run_config_diff"),
         "shape_context": result.get("shape_context"),
+        "source": source or {},
     }
 
 
-def _run_guard_compare_reasoning(result: dict[str, Any], judgement: dict[str, Any]) -> dict[str, Any]:
+def _run_guard_compare_reasoning(
+    result: dict[str, Any],
+    judgement: dict[str, Any],
+    *,
+    source: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     if analyze_compare_result is None:
         return {
             "status": "skipped",
             "reason": "inferedge_aiguard is not installed",
         }
 
-    guard_input = _build_guard_compare_input(result, judgement)
+    guard_input = _build_guard_compare_input(result, judgement, source=source)
     return analyze_compare_result(guard_input)
+
+
+def _build_guard_source(
+    *,
+    base_path: str,
+    new_path: str,
+    base: dict[str, Any],
+    new: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "baseline_profile_path": base_path,
+        "candidate_result_path": new_path,
+        "runtime_result_path": new_path,
+        "base_runtime_result_path": base_path,
+        "new_runtime_result_path": new_path,
+        "evaluation_report_path": _first_non_empty(
+            new,
+            ("evaluation_report_path", "report_path"),
+        ),
+        "model_contract_path": _first_non_empty(
+            new,
+            ("model_contract_path", "contract_path"),
+        ),
+        "lab_result_path": "inferedgelab.compare_bundle",
+    }
+
+
+def _first_non_empty(data: dict[str, Any], fields: tuple[str, ...]) -> Any:
+    for field in fields:
+        value = data.get(field)
+        if value:
+            return value
+    extra = data.get("extra")
+    if isinstance(extra, dict):
+        for field in fields:
+            value = extra.get(field)
+            if value:
+                return value
+    return None
 
 
 def build_compare_bundle(
@@ -110,7 +160,17 @@ def build_compare_bundle(
         tradeoff_severe_threshold=thresholds["tradeoff_severe_threshold"],
     )
 
-    guard_analysis = _run_guard_compare_reasoning(result, judgement) if with_guard else None
+    guard_source = _build_guard_source(
+        base_path=base_path,
+        new_path=new_path,
+        base=base,
+        new=new,
+    )
+    guard_analysis = (
+        _run_guard_compare_reasoning(result, judgement, source=guard_source)
+        if with_guard
+        else None
+    )
     deployment_decision = build_deployment_decision(judgement, guard_analysis=guard_analysis)
     markdown = generate_compare_markdown(
         result,
