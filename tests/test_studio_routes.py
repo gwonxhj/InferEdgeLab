@@ -60,10 +60,10 @@ def test_studio_route_returns_local_studio_html():
     assert "Import" in html
     assert "Jetson Helper" in html
     assert 'data-critical="studio-dark"' in html
-    assert 'href="/studio/static/style.css?v=17"' in html
-    assert 'href="style.css?v=17"' in html
-    assert 'src="/studio/static/app.js?v=17"' in html
-    assert 'src="app.js?v=17"' in html
+    assert 'href="/studio/static/style.css?v=18"' in html
+    assert 'href="style.css?v=18"' in html
+    assert 'src="/studio/static/app.js?v=18"' in html
+    assert 'src="app.js?v=18"' in html
     assert "file-protocol-warning" in html
     assert 'placeholder="results/latest.json"' in html
     assert 'value="results/latest.json"' not in html
@@ -74,6 +74,8 @@ def test_studio_route_returns_local_studio_html():
     assert 'id="import-backend-preset"' in html
     assert "TensorRT / Jetson" in html
     assert "Lab's local gate" in html
+    assert "AIGuard Evidence" in html
+    assert 'id="guard-evidence-panel"' in html
     assert "Load Demo Evidence" in html
     assert 'id="demo-state"' in html
     assert 'id="demo-report-summary"' in html
@@ -130,6 +132,9 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert "loadDemoEvidence" in app_text
     assert "renderDemoEvaluation" in app_text
     assert "renderDemoProblemCases" in app_text
+    assert "renderGuardEvidence" in app_text
+    assert "guardEvidenceItems" in app_text
+    assert "guard_verdict" in app_text
     assert "/studio/api/demo-evidence" in app_text
     assert "jobDisplayName" in app_text
     assert "jobCaption" in app_text
@@ -148,6 +153,9 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert ".demo-card" in style_text
     assert ".demo-report-summary" in style_text
     assert ".problem-case-grid" in style_text
+    assert ".guard-panel" in style_text
+    assert ".guard-evidence-table" in style_text
+    assert ".guard-row" in style_text
     assert ".compare-stat-list" in style_text
     assert ".job-row .state-pill" in style_text
     assert "flex-wrap: wrap" in style_text
@@ -351,7 +359,10 @@ def test_studio_demo_evidence_loads_compare_ready_pair():
     assert response["results"][1]["mean_ms"] == 9.9375
     assert response["compare"]["status"] == "ok"
     assert response["compare"]["judgement"]["overall"] == "improvement"
-    assert response["deployment_decision"]["decision"] == "unknown"
+    assert response["guard_analysis"]["guard_verdict"] == "review_required"
+    assert response["guard_analysis"]["evidence"][0]["metric_name"] == "map50"
+    assert response["deployment_decision"]["decision"] == "review_required"
+    assert response["deployment_decision"]["guard_verdict"] == "review_required"
     assert response["evaluation_report"]["preset"] == "yolov8_coco"
     assert response["evaluation_report"]["accuracy"]["status"] == "evaluated"
     assert response["evaluation_report"]["accuracy"]["metrics"]["map50"] > 0
@@ -372,6 +383,7 @@ def test_studio_demo_evidence_loads_compare_ready_pair():
     assert latency_case["latency_checks"]["p99_latency"]["delta_pct"] > 20
     assert latency_case["deployment_signal"]["reason"] == "p99 latency regression detected"
     assert compare["status"] == "ok"
+    assert compare["guard_analysis"]["guard_verdict"] == "review_required"
     assert compare["base"]["backend_key"] == "onnxruntime__cpu"
     assert compare["new"]["backend_key"] == "tensorrt__jetson"
 
@@ -393,6 +405,7 @@ def test_studio_demo_evidence_is_listed_and_selectable_as_job():
     assert detail["job_id"] == "demo_yolov8n_trt_vs_onnx"
     assert detail["status"] == "completed"
     assert detail["result"]["runtime_result"]["backend_key"] == "tensorrt__jetson"
+    assert detail["result"]["guard_analysis"]["guard_verdict"] == "review_required"
     assert detail["result"]["comparison"]["base"]["backend_key"] == "onnxruntime__cpu"
     assert detail["result"]["comparison"]["new"]["backend_key"] == "tensorrt__jetson"
     assert detail["result"]["evaluation_report"]["accuracy"]["metrics"]["precision"] > 0

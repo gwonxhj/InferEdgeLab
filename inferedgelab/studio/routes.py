@@ -102,7 +102,11 @@ def studio_job_detail(request: Request, job_id: str) -> dict[str, Any]:
 def studio_compare_latest(request: Request) -> dict[str, Any]:
     imported_results = _get_imported_results(request)
     if len(imported_results) >= 2:
-        return _build_imported_compare_response(imported_results[-2], imported_results[-1])
+        return _build_imported_compare_response(
+            imported_results[-2],
+            imported_results[-1],
+            guard_analysis=_get_studio_guard_analysis(request),
+        )
 
     endpoint = _get_api_endpoint(request.app, "/api/compare-latest")
     try:
@@ -153,6 +157,7 @@ def studio_import(request: Request, payload: dict[str, Any] = Body(...)) -> dict
     result = _apply_backend_override(result, payload.get("backend_override"))
     imported_results = _get_imported_results(request)
     imported_results.append(result)
+    request.app.state.studio_guard_analysis = None
     return {
         "status": "imported",
         "source": "studio-memory",
@@ -169,7 +174,13 @@ def studio_demo_evidence(request: Request) -> dict[str, Any]:
     problem_cases = _load_demo_problem_cases()
     imported_results = _get_imported_results(request)
     imported_results.extend(results)
-    compare = _build_imported_compare_response(results[0], results[1])
+    guard_analysis = _build_demo_guard_analysis(results, evaluation_report)
+    request.app.state.studio_guard_analysis = guard_analysis
+    compare = _build_imported_compare_response(
+        results[0],
+        results[1],
+        guard_analysis=guard_analysis,
+    )
     demo_job = _build_demo_job(results, compare, evaluation_report, problem_cases)
     _get_demo_jobs(request)[DEMO_JOB_ID] = demo_job
     return {
@@ -183,6 +194,7 @@ def studio_demo_evidence(request: Request) -> dict[str, Any]:
         "compare": compare,
         "evaluation_report": evaluation_report,
         "problem_cases": problem_cases,
+        "guard_analysis": guard_analysis,
         "deployment_decision": compare["deployment_decision"],
     }
 
@@ -217,6 +229,7 @@ def register_studio(app: FastAPI, job_store: Any | None = None) -> None:
     app.state.studio_job_store = job_store
     app.state.studio_imported_results = []
     app.state.studio_demo_jobs = {}
+    app.state.studio_guard_analysis = None
     app.include_router(router)
 
 
@@ -238,6 +251,11 @@ def _get_demo_jobs(request: Request) -> dict[str, dict[str, Any]]:
         demo_jobs = {}
         request.app.state.studio_demo_jobs = demo_jobs
     return demo_jobs
+
+
+def _get_studio_guard_analysis(request: Request) -> dict[str, Any] | None:
+    guard_analysis = getattr(request.app.state, "studio_guard_analysis", None)
+    return guard_analysis if isinstance(guard_analysis, dict) else None
 
 
 def _get_api_endpoint(app: FastAPI, path: str) -> Any:
@@ -269,25 +287,33 @@ def _load_import_payload(payload: dict[str, Any]) -> dict[str, Any]:
     return _with_compare_keys(result)
 
 
-def _build_imported_compare_response(base: dict[str, Any], new: dict[str, Any]) -> dict[str, Any]:
+def _build_imported_compare_response(
+    base: dict[str, Any],
+    new: dict[str, Any],
+    guard_analysis: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     result = compare_results(base, new)
     judgement = judge_comparison(result)
-    deployment_decision = build_deployment_decision(judgement)
-    return {
-        "status": "ok",
-        "source": "studio-memory",
-        "data": {
-            "base": base,
-            "new": new,
-            "result": result,
-            "judgement": judgement,
-            "deployment_decision": deployment_decision,
-        },
+    deployment_decision = build_deployment_decision(judgement, guard_analysis=guard_analysis)
+    data = {
         "base": base,
         "new": new,
         "result": result,
         "judgement": judgement,
         "deployment_decision": deployment_decision,
+    }
+    if guard_analysis is not None:
+        data["guard_analysis"] = guard_analysis
+    return {
+        "status": "ok",
+        "source": "studio-memory",
+        "data": data,
+        "base": base,
+        "new": new,
+        "result": result,
+        "judgement": judgement,
+        "deployment_decision": deployment_decision,
+        **({"guard_analysis": guard_analysis} if guard_analysis is not None else {}),
     }
 
 
@@ -421,6 +447,7 @@ def _build_demo_job(
             "runtime_result": runtime_result,
             "comparison": compare,
             "deployment_decision": compare["deployment_decision"],
+            "guard_analysis": compare.get("guard_analysis"),
             "evaluation_report": evaluation_report,
             "problem_cases": problem_cases,
             "summary": compare["judgement"]["summary"],
@@ -431,6 +458,107 @@ def _build_demo_job(
             "compare": "/studio/api/compare/latest",
         },
         "next_actions": ["review_compare"],
+    }
+
+
+def _build_demo_guard_analysis(
+    results: list[dict[str, Any]],
+    evaluation_report: dict[str, Any],
+) -> dict[str, Any]:
+    baseline = results[0] if results else {}
+    candidate = results[-1] if results else {}
+    accuracy_metrics = evaluation_report.get("accuracy", {}).get("metrics", {})
+    structural = evaluation_report.get("structural_validation") or {}
+    contract = evaluation_report.get("contract_validation", {}).get("input_shape") or {}
+    map50 = accuracy_metrics.get("map50")
+    precision = accuracy_metrics.get("precision")
+    recall = accuracy_metrics.get("recall")
+    verdict = "review_required" if isinstance(map50, (int, float)) and map50 < 0.2 else "pass"
+    severity = "medium" if verdict == "review_required" else "low"
+    source = {
+        "runtime_result_path": candidate.get("_source_path") or "examples/studio_demo/tensorrt_jetson_result.json",
+        "baseline_profile_path": baseline.get("_source_path") or "examples/studio_demo/onnxruntime_cpu_result.json",
+        "evaluation_report_path": evaluation_report.get("source"),
+        "model_contract_path": "examples/validation_demo/subset/model_contract.json",
+        "lab_result_path": "studio.demo_evidence",
+    }
+    evidence = [
+        {
+            "type": "accuracy_signal",
+            "metric_name": "map50",
+            "observed_value": map50,
+            "baseline_value": None,
+            "threshold": 0.2,
+            "severity": severity,
+            "status": "warning" if verdict == "review_required" else "passed",
+            "explanation": (
+                "Demo mAP50 is below the review threshold, so Lab should keep this as validation evidence "
+                "instead of treating latency speedup alone as deployment-ready."
+            ),
+            "why_it_matters": "Latency improvement does not prove detection quality is deployment-ready.",
+            "suspected_causes": [
+                "Small validation subset",
+                "Model/preset calibration gap",
+                "Postprocess or threshold tuning needed",
+            ],
+            "recommendation": "Review accuracy evidence with a larger validation subset before deployment.",
+            "raw_context": {
+                "precision": precision,
+                "recall": recall,
+                "structural_status": structural.get("status"),
+                "contract_status": contract.get("status"),
+            },
+        },
+        {
+            "type": "contract_validation",
+            "metric_name": "input_shape_status",
+            "observed_value": contract.get("status"),
+            "baseline_value": "passed",
+            "threshold": "passed",
+            "severity": "low" if contract.get("status") == "passed" else "high",
+            "status": "passed" if contract.get("status") == "passed" else "failed",
+            "explanation": "The demo model contract input shape check is recorded as structured evidence.",
+            "why_it_matters": "Contract mismatch can make accuracy metrics unreliable.",
+            "suspected_causes": [],
+            "recommendation": "Keep model_contract evidence attached to the Lab report.",
+            "raw_context": contract,
+        },
+    ]
+    return {
+        "schema_version": "inferedge-aiguard-diagnosis-v1",
+        "source": source,
+        "guard_verdict": verdict,
+        "severity": severity,
+        "confidence": 0.82,
+        "primary_reason": (
+            "Latency improved, but demo accuracy evidence still requires review."
+            if verdict == "review_required"
+            else "Demo validation evidence is within configured Guard thresholds."
+        ),
+        "evidence": evidence,
+        "suspected_causes": [
+            "Small validation subset",
+            "Detection threshold tuning needed",
+        ]
+        if verdict == "review_required"
+        else [],
+        "recommendations": [
+            "Use this demo as portfolio evidence, then validate with a larger representative dataset before deployment.",
+            "Keep AIGuard evidence optional and let Lab own the final deployment decision.",
+        ],
+        "thresholds": {"map50_review": 0.2},
+        "baseline_summary": {
+            "backend_key": baseline.get("backend_key"),
+            "mean_ms": baseline.get("mean_ms"),
+            "p99_ms": baseline.get("p99_ms"),
+        },
+        "candidate_summary": {
+            "backend_key": candidate.get("backend_key"),
+            "mean_ms": candidate.get("mean_ms"),
+            "p99_ms": candidate.get("p99_ms"),
+            "map50": map50,
+        },
+        "created_at": _utc_now_iso(),
     }
 
 

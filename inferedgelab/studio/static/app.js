@@ -30,6 +30,7 @@ let activeDecision = null;
 let importedResult = null;
 let demoEvaluationReport = null;
 let demoProblemCases = [];
+let activeGuardAnalysis = null;
 const importedResultsByJobId = {};
 
 function createElement(tagName, className, textContent) {
@@ -197,6 +198,7 @@ async function loadJobDetail(jobId) {
     renderJobDetail();
     renderJobList();
     updateDecision(extractDecision(selectedJob));
+    updateGuardEvidence(extractGuardAnalysis(selectedJob));
   } catch (error) {
     selectedJob = null;
     renderJobDetail(`Unable to load ${jobId}: ${formatError(error)}`);
@@ -210,6 +212,7 @@ async function loadCompare() {
     compareData = await fetchJson("/studio/api/compare/latest");
     renderCompare();
     const decision = extractDecision(compareData);
+    updateGuardEvidence(extractGuardAnalysis(compareData));
     if (compareData.status === "empty") {
       activeDecision = null;
       renderDecision(decision);
@@ -219,6 +222,7 @@ async function loadCompare() {
   } catch (error) {
     compareData = { status: "error", error: formatError(error) };
     renderCompare();
+    updateGuardEvidence(null);
     if (!activeDecision) {
       updateDecision(null);
     }
@@ -370,6 +374,7 @@ async function loadDemoEvidence() {
     demoEvaluationReport = payload.evaluation_report || null;
     demoProblemCases = Array.isArray(payload.problem_cases) ? payload.problem_cases : [];
     compareData = payload.compare || null;
+    updateGuardEvidence(payload.guard_analysis || payload.compare?.guard_analysis || null);
     selectedJobId = payload.job_id || payload.job?.job_id || selectedJobId;
     selectedJob = payload.job || selectedJob;
     setState("#demo-state", "completed");
@@ -731,6 +736,123 @@ function updateDecision(decision) {
   renderDecision(decision);
 }
 
+function renderGuardEvidence(guardAnalysis) {
+  const target = document.querySelector("#guard-evidence-panel");
+  if (!target) {
+    return;
+  }
+  target.replaceChildren();
+
+  if (!guardAnalysis) {
+    target.className = "guard-panel idle";
+    target.append(
+      createElement("p", "caption", "AIGuard"),
+      createElement("h3", "", "OPTIONAL"),
+      createElement("p", "body-text", "No AIGuard diagnosis evidence is loaded for this local workflow yet."),
+      createElement("p", "caption", "Load Demo Evidence or run compare with guard-backed diagnosis evidence."),
+    );
+    return;
+  }
+
+  const verdict = guardVerdict(guardAnalysis);
+  target.className = `guard-panel ${decisionTone(verdict)}`;
+  target.append(
+    createElement("p", "caption", "AIGuard diagnosis evidence"),
+    createElement("h3", "", verdict.toUpperCase()),
+    createElement("p", "body-text", guardAnalysis.primary_reason || guardAnalysis.reason || "Guard evidence is available."),
+    guardSummary(guardAnalysis, verdict),
+  );
+
+  const source = guardAnalysis.source || {};
+  if (Object.keys(source).length > 0) {
+    const sourcePanel = createElement("div", "guard-source");
+    sourcePanel.append(createElement("strong", "", "Source"));
+    Object.entries(source).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        sourcePanel.append(evidenceItem(key, value));
+      }
+    });
+    target.append(sourcePanel);
+  }
+
+  const evidence = guardEvidenceItems(guardAnalysis);
+  if (evidence.length > 0) {
+    const table = createElement("div", "guard-evidence-table");
+    table.append(guardEvidenceRow(["type", "metric", "observed", "threshold", "status"], true));
+    evidence.forEach((item) => {
+      table.append(
+        guardEvidenceRow([
+          item.type || "-",
+          item.metric_name || "-",
+          item.observed_value,
+          item.threshold,
+          item.status || item.severity || "-",
+        ]),
+      );
+    });
+    target.append(table);
+    target.append(guardExplanations(evidence));
+  }
+
+  target.append(guardList("Suspected causes", guardAnalysis.suspected_causes));
+  target.append(guardList("Recommendations", guardAnalysis.recommendations));
+}
+
+function updateGuardEvidence(guardAnalysis) {
+  activeGuardAnalysis = guardAnalysis || null;
+  renderGuardEvidence(activeGuardAnalysis);
+}
+
+function guardSummary(guardAnalysis, verdict) {
+  const summary = createElement("div", "guard-summary");
+  summary.append(
+    evidenceItem("guard_verdict", verdict),
+    evidenceItem("severity", guardAnalysis.severity || "-"),
+    evidenceItem("confidence", guardAnalysis.confidence ?? "-"),
+    evidenceItem("schema", guardAnalysis.schema_version || "legacy"),
+  );
+  return summary;
+}
+
+function guardEvidenceRow(values, heading = false) {
+  const row = createElement("div", heading ? "guard-row guard-row-heading" : "guard-row");
+  values.forEach((value) => row.append(createElement("span", "", formatValue(value))));
+  return row;
+}
+
+function guardExplanations(evidence) {
+  const explanations = createElement("div", "guard-explanations");
+  evidence.forEach((item) => {
+    if (!item.explanation && !item.recommendation) {
+      return;
+    }
+    const explanation = createElement("article", "detail-note");
+    explanation.append(
+      createElement("strong", "", item.metric_name || item.type || "evidence"),
+      createElement("p", "body-text", item.explanation || "-"),
+    );
+    if (item.recommendation) {
+      explanation.append(createElement("p", "caption", `Recommendation: ${item.recommendation}`));
+    }
+    explanations.append(explanation);
+  });
+  return explanations;
+}
+
+function guardList(title, values) {
+  const panel = createElement("div", "guard-list");
+  panel.append(createElement("strong", "", title));
+  const list = createElement("ul", "");
+  const items = Array.isArray(values) ? values : values ? [values] : [];
+  if (!items.length) {
+    list.append(createElement("li", "", "-"));
+  } else {
+    items.forEach((value) => list.append(createElement("li", "", formatValue(value))));
+  }
+  panel.append(list);
+  return panel;
+}
+
 function metricTile(label, value) {
   const tile = createElement("div", "metric-tile");
   tile.append(createElement("span", "metric-name", label), createElement("span", "metric-value", value));
@@ -835,6 +957,50 @@ function extractDecision(payload) {
   return payload.deployment_decision || payload.result?.deployment_decision || payload.data?.deployment_decision || null;
 }
 
+function extractGuardAnalysis(payload) {
+  if (!payload) {
+    return null;
+  }
+  return (
+    payload.guard_analysis ||
+    payload.result?.guard_analysis ||
+    payload.data?.guard_analysis ||
+    payload.result?.comparison?.guard_analysis ||
+    payload.result?.comparison?.data?.guard_analysis ||
+    null
+  );
+}
+
+function guardVerdict(guardAnalysis = {}) {
+  if (guardAnalysis.guard_verdict) {
+    return String(guardAnalysis.guard_verdict);
+  }
+  const status = String(guardAnalysis.status || "").toLowerCase();
+  if (status === "ok") {
+    return "pass";
+  }
+  if (status === "warning") {
+    return "review_required";
+  }
+  if (status === "error") {
+    return "blocked";
+  }
+  if (status === "skipped") {
+    return "skipped";
+  }
+  return "unknown";
+}
+
+function guardEvidenceItems(guardAnalysis = {}) {
+  if (Array.isArray(guardAnalysis.evidence)) {
+    return guardAnalysis.evidence;
+  }
+  if (Array.isArray(guardAnalysis.anomalies)) {
+    return guardAnalysis.anomalies;
+  }
+  return [];
+}
+
 function decisionReason(decision) {
   const decisionName = String(decision?.decision || "unknown").toLowerCase();
   if (decisionName === "unknown" && !decision?.guard_status) {
@@ -883,7 +1049,7 @@ function pipelineStatus() {
   const anyCompleted = currentJobs.some((job) => job.status === "completed") || Boolean(importedResult);
   const hasCompareDecision = Boolean(activeDecision);
   const hasImportedEvidence = Boolean(importedResult);
-  const hasGuardEvidence = Boolean(activeDecision?.guard_status);
+  const hasGuardEvidence = Boolean(activeGuardAnalysis || activeDecision?.guard_status || activeDecision?.guard_verdict);
   return {
     forge: importedResult ? "completed" : "idle",
     runtime: hasImportedEvidence || anyCompleted ? "completed" : anyRunning ? "running" : "idle",
@@ -897,7 +1063,7 @@ function normalizeState(state) {
   if (value === "queued") {
     return "running";
   }
-  if (value === "completed" || value === "success" || value === "deployable") {
+  if (value === "completed" || value === "success" || value === "deployable" || value === "pass") {
     return "completed";
   }
   if (value === "failed" || value === "blocked" || value === "error") {
@@ -1064,6 +1230,7 @@ async function initLocalStudio() {
     renderJobDetail();
     renderCompare();
     updateDecision(null);
+    updateGuardEvidence(null);
     await loadJobs();
     await loadCompare();
     await loadJetsonCommand();
