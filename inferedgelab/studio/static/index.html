@@ -137,8 +137,8 @@
         }
       }
     </style>
-    <link rel="stylesheet" href="/studio/static/style.css?v=17" />
-    <link rel="stylesheet" href="style.css?v=17" />
+    <link rel="stylesheet" href="/studio/static/style.css?v=18" />
+    <link rel="stylesheet" href="style.css?v=18" />
   </head>
   <body>
     <main class="shell">
@@ -311,9 +311,20 @@
         <div id="compare-panel" class="compare-grid"></div>
       </section>
 
-      <section class="section-block" aria-labelledby="decision-title">
+      <section class="section-block" aria-labelledby="guard-title">
         <div class="section-heading">
           <p class="section-kicker">05</p>
+          <div>
+            <h2 id="guard-title">AIGuard Evidence</h2>
+            <p>Optional deterministic diagnosis evidence explains why a result should pass, require review, or be blocked.</p>
+          </div>
+        </div>
+        <div id="guard-evidence-panel" class="guard-panel"></div>
+      </section>
+
+      <section class="section-block" aria-labelledby="decision-title">
+        <div class="section-heading">
+          <p class="section-kicker">06</p>
           <div>
             <h2 id="decision-title">Deployment Decision</h2>
             <p>Lab's local gate for deploy, review, or block. AIGuard evidence is optional and not required for this Studio flow.</p>
@@ -333,7 +344,7 @@
       </section>
     </main>
 
-    <script src="/studio/static/app.js?v=17" defer></script>
-    <script src="app.js?v=17" defer></script>
+    <script src="/studio/static/app.js?v=18" defer></script>
+    <script src="app.js?v=18" defer></script>
   </body>
 </html>
