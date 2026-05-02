@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from inferedgelab.services.guard_analysis import guard_status, guard_verdict
+
 
 REVIEW_TRADEOFF_RISKS = {"risky_tradeoff", "severe_tradeoff", "not_beneficial"}
 
@@ -12,6 +14,7 @@ def _decision_payload(
     reason: str,
     lab_overall: Any,
     guard_status: Any,
+    guard_verdict_value: Any,
     recommended_action: str,
 ) -> dict[str, Any]:
     return {
@@ -19,39 +22,42 @@ def _decision_payload(
         "reason": reason,
         "lab_overall": lab_overall,
         "guard_status": guard_status,
+        "guard_verdict": guard_verdict_value,
         "recommended_action": recommended_action,
     }
 
 
 def build_deployment_decision(judgement: dict, guard_analysis: dict | None = None) -> dict[str, Any]:
-    guard_status = (guard_analysis or {}).get("status")
+    normalized_guard_status = guard_status(guard_analysis)
+    normalized_guard_verdict = guard_verdict(guard_analysis)
     lab_overall = judgement.get("overall")
     shape_match = judgement.get("shape_match")
     system_match = judgement.get("system_match")
     tradeoff_risk = judgement.get("tradeoff_risk")
 
-    if guard_status == "error":
+    if normalized_guard_status == "error":
         return _decision_payload(
             decision="blocked",
             reason="Guard analysis reported an error-level validation issue.",
             lab_overall=lab_overall,
-            guard_status=guard_status,
+            guard_status=normalized_guard_status,
+            guard_verdict_value=normalized_guard_verdict,
             recommended_action="Do not deploy until the Guard anomalies are resolved.",
         )
 
-    if guard_status == "warning":
+    if normalized_guard_status == "warning":
         decision = "review_required"
         reason = "Guard analysis reported warning-level validation risks."
         recommended_action = "Review Guard anomalies, suspected causes, and accuracy/provenance evidence before deployment."
-    elif guard_status == "skipped":
+    elif normalized_guard_status == "skipped":
         decision = "unknown"
         reason = "Guard analysis was skipped."
         recommended_action = "Install InferEdgeAIGuard or run validation reasoning before deployment."
-    elif guard_status is None:
+    elif normalized_guard_status is None:
         decision = "unknown"
         reason = "Guard analysis is unavailable."
         recommended_action = "Run compare with --with-guard before deployment decision."
-    elif guard_status == "ok":
+    elif normalized_guard_status == "ok":
         if lab_overall in {"improvement", "tradeoff_faster"}:
             decision = "deployable"
             reason = "Lab judgement is favorable and Guard analysis passed."
@@ -97,6 +103,7 @@ def build_deployment_decision(judgement: dict, guard_analysis: dict | None = Non
         decision=decision,
         reason=reason,
         lab_overall=lab_overall,
-        guard_status=guard_status,
+        guard_status=normalized_guard_status,
+        guard_verdict_value=normalized_guard_verdict,
         recommended_action=recommended_action,
     )

@@ -1,3 +1,8 @@
-from .compare_service import build_compare_bundle, select_latest_compare_pair
+"""Service-layer helpers for InferEdgeLab.
 
-__all__ = ["build_compare_bundle", "select_latest_compare_pair"]
+Keep this package initializer light. Several services are intentionally allowed
+to import report/rendering modules, so importing compare_service here can create
+cycles during direct module imports.
+"""
+
+__all__: list[str] = []

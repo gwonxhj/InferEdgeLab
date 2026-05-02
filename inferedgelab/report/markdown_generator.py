@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
+from inferedgelab.services.guard_analysis import guard_primary_reason, guard_status, guard_verdict
+
 
 def _fmt_num(v: Optional[float]) -> str:
     if v is None:
@@ -42,14 +44,29 @@ def _sorted_accuracy_metric_items(accuracy: Dict[str, Any]) -> list[tuple[str, D
 def _append_guard_analysis(lines: list[str], guard_analysis: Dict[str, Any]) -> None:
     lines.append("## Guard Analysis")
     lines.append("")
-    lines.append(f"- status: {guard_analysis.get('status')}")
+    normalized_status = guard_status(guard_analysis)
+    normalized_verdict = guard_verdict(guard_analysis)
+    lines.append(f"- status: {normalized_status}")
+    if normalized_verdict is not None:
+        lines.append(f"- guard_verdict: {normalized_verdict}")
+    if guard_analysis.get("severity") is not None:
+        lines.append(f"- severity: {guard_analysis.get('severity')}")
 
-    if guard_analysis.get("status") == "skipped":
+    if normalized_status == "skipped":
         lines.append(f"- reason: {guard_analysis.get('reason')}")
         lines.append("")
         return
 
     lines.append(f"- confidence: {guard_analysis.get('confidence')}")
+    primary_reason = guard_primary_reason(guard_analysis)
+    if primary_reason:
+        lines.append(f"- primary_reason: {primary_reason}")
+
+    source = guard_analysis.get("source")
+    if isinstance(source, dict) and source:
+        lines.append("- source:")
+        for key, value in source.items():
+            lines.append(f"  - {key}: `{value}`")
 
     for field in ("anomalies", "suspected_causes", "recommendations"):
         lines.append(f"- {field}:")
@@ -59,6 +76,35 @@ def _append_guard_analysis(lines: list[str], guard_analysis: Dict[str, Any]) -> 
                 lines.append(f"  - {value}")
         else:
             lines.append("  - -")
+    evidence = guard_analysis.get("evidence")
+    if isinstance(evidence, list) and evidence:
+        lines.append("")
+        lines.append("### Guard Evidence")
+        lines.append("")
+        lines.append("| type | metric | observed | baseline | threshold | status | severity |")
+        lines.append("| --- | --- | ---: | ---: | ---: | --- | --- |")
+        for item in evidence:
+            if not isinstance(item, dict):
+                continue
+            lines.append(
+                "| "
+                f"{item.get('type', '-')} | "
+                f"{item.get('metric_name', '-')} | "
+                f"{item.get('observed_value', '-')} | "
+                f"{item.get('baseline_value', '-')} | "
+                f"{item.get('threshold', '-')} | "
+                f"{item.get('status', '-')} | "
+                f"{item.get('severity', '-')} |"
+            )
+        for item in evidence:
+            if not isinstance(item, dict):
+                continue
+            explanation = item.get("explanation")
+            recommendation = item.get("recommendation")
+            if explanation:
+                lines.append(f"- {item.get('metric_name', 'evidence')}: {explanation}")
+            if recommendation:
+                lines.append(f"  - recommendation: {recommendation}")
     lines.append("")
 
 

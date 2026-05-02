@@ -303,6 +303,47 @@ def test_generate_compare_markdown_includes_deployment_decision_section():
     assert "- guard_status: ok" in text
 
 
+def test_generate_compare_markdown_includes_diagnosis_guard_evidence():
+    compare_result = make_compare_result()
+    judgement = make_judgement()
+    guard_analysis = {
+        "schema_version": "inferedge-aiguard-diagnosis-v1",
+        "source": {
+            "runtime_result_path": "results/candidate.json",
+            "model_contract_path": "model_contract.json",
+        },
+        "guard_verdict": "review_required",
+        "severity": "medium",
+        "confidence": 0.88,
+        "primary_reason": "Temporal consistency should be reviewed before deployment.",
+        "evidence": [
+            {
+                "type": "temporal_consistency",
+                "metric_name": "frame_to_frame_detection_count_cv",
+                "observed_value": 1.25,
+                "baseline_value": None,
+                "threshold": 1.0,
+                "severity": "medium",
+                "status": "warning",
+                "explanation": "Detection count variance exceeds review threshold.",
+                "recommendation": "Review frame sequence output before deployment.",
+            }
+        ],
+        "suspected_causes": ["Temporal instability"],
+        "recommendations": ["Review adjacent-frame output."],
+    }
+
+    text = generate_compare_markdown(compare_result, judgement, guard_analysis=guard_analysis)
+
+    assert "- status: warning" in text
+    assert "- guard_verdict: review_required" in text
+    assert "- primary_reason: Temporal consistency should be reviewed before deployment." in text
+    assert "runtime_result_path: `results/candidate.json`" in text
+    assert "### Guard Evidence" in text
+    assert "frame_to_frame_detection_count_cv" in text
+    assert "Detection count variance exceeds review threshold." in text
+
+
 def test_generate_compare_html_includes_primary_metric_summary_and_thresholds():
     compare_result = make_compare_result()
     judgement = make_judgement()
@@ -403,3 +444,43 @@ def test_generate_compare_html_includes_deployment_decision_section():
     assert "Deployment Decision" in html
     assert "deployable" in html
     assert "Deployment can proceed with normal rollout monitoring." in html
+
+
+def test_generate_compare_html_includes_diagnosis_guard_evidence():
+    compare_result = make_compare_result()
+    judgement = make_judgement()
+    guard_analysis = {
+        "schema_version": "inferedge-aiguard-diagnosis-v1",
+        "source": {
+            "runtime_result_path": "results/candidate.json",
+            "model_contract_path": "model_contract.json",
+        },
+        "guard_verdict": "blocked",
+        "severity": "high",
+        "confidence": 0.91,
+        "primary_reason": "Zero-detection frames exceed threshold.",
+        "evidence": [
+            {
+                "type": "temporal_consistency",
+                "metric_name": "zero_detection_frame_ratio",
+                "observed_value": 0.5,
+                "baseline_value": None,
+                "threshold": 0.3,
+                "severity": "high",
+                "status": "failed",
+                "explanation": "Zero-detection frame ratio exceeds blocked threshold.",
+                "recommendation": "Do not deploy until disappearance is explained.",
+            }
+        ],
+        "suspected_causes": ["Detection disappearance"],
+        "recommendations": ["Review frame sequence."],
+    }
+
+    html = generate_compare_html(compare_result, judgement, guard_analysis=guard_analysis)
+
+    assert "guard_verdict" in html
+    assert "blocked" in html
+    assert "runtime_result_path" in html
+    assert "Guard Evidence" in html
+    assert "zero_detection_frame_ratio" in html
+    assert "Zero-detection frame ratio exceeds blocked threshold." in html
