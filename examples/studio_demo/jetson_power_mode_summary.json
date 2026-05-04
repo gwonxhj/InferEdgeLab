@@ -1,0 +1,70 @@
+{
+  "summary_role": "jetson-power-mode-comparison",
+  "schema_version": "inferedge-jetson-power-mode-summary-v1",
+  "model": "yolov8n",
+  "backend_key": "tensorrt__jetson",
+  "precision": "fp16",
+  "compare_key": "yolov8n__b1__h640w640__fp16",
+  "baseline_power_mode": "25W",
+  "candidate_power_mode": "15W",
+  "baseline_source": "examples/studio_demo/tensorrt_jetson_25w_result.json",
+  "candidate_source": "examples/studio_demo/tensorrt_jetson_15w_result.json",
+  "comparison_scope": "same TensorRT FP16 engine, same 640x640 dummy input, same warmup/runs, different Jetson power mode",
+  "run_config_status": "power_mode_changed",
+  "run_config_note": "Power mode differs, so this is system evidence for deployment review rather than a same-run_config latency regression test.",
+  "metrics": {
+    "mean_ms": {
+      "baseline_25w": 10.066401,
+      "candidate_15w": 10.799106,
+      "delta_ms": 0.732705,
+      "delta_pct": 7.278719
+    },
+    "p95_ms": {
+      "baseline_25w": 15.476641,
+      "candidate_15w": 15.43869,
+      "delta_ms": -0.037951,
+      "delta_pct": -0.245215
+    },
+    "p99_ms": {
+      "baseline_25w": 15.548438,
+      "candidate_15w": 15.529218,
+      "delta_ms": -0.01922,
+      "delta_pct": -0.123614
+    },
+    "fps_value": {
+      "baseline_25w": 99.340373,
+      "candidate_15w": 92.600262,
+      "delta": -6.740111,
+      "delta_pct": -6.784866
+    }
+  },
+  "tegrastats": {
+    "baseline_25w": {
+      "status": "parsed",
+      "sample_count": 3,
+      "max_temp_c": 40.656,
+      "max_temp_name": "gpu",
+      "vdd_in_mw_avg": 4863.0,
+      "vdd_in_mw_max": 5827.0
+    },
+    "candidate_15w": {
+      "status": "parsed",
+      "sample_count": 10,
+      "max_temp_c": 42.437,
+      "max_temp_name": "gpu",
+      "vdd_in_mw_avg": 5707.8,
+      "vdd_in_mw_max": 7120.0
+    }
+  },
+  "deployment_signal": {
+    "decision": "review_note",
+    "reason": "power mode changed; compare as Jetson system evidence",
+    "recommended_action": "Record power_mode, p95/p99 latency, FPS, and tegrastats summary with the deployment evidence."
+  },
+  "notes": [
+    "This is a short Runtime smoke, not a sustained thermal benchmark.",
+    "Power readings are supporting evidence from the captured tegrastats samples.",
+    "AIGuard remains optional; Lab owns the final deployment decision."
+  ],
+  "created_at": "2026-05-04T17:20:00Z"
+}
