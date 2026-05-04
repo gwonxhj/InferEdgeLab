@@ -70,24 +70,25 @@ InferEdgeLab
 
 ---
 
-## Page 3. Real Benchmark Result & Contribution
+## Page 3. Current Demo Evidence & Contribution
 
-### Real Image Input Benchmark
+### Local Studio Demo Evidence
 
 - Model: YOLOv8n
-- Input Mode: image
 - Input Shape: `1x3x640x640`
-- `compare_key`: `yolov8n__b1__h640w640__fp32`
-- `input_preprocess`: `opencv_bgr_to_rgb_resize_float32_nchw`
+- ONNX baseline `compare_key`: `yolov8n__b1__h640w640__fp32`
+- TensorRT candidate `compare_key`: `yolov8n__b1__h640w640__fp16`
+- TensorRT power mode: `25W`
 
-| Backend | Input Mode | Mean ms | P99 ms | FPS | Status |
-|---|---|---:|---:|---:|---|
-| TensorRT Jetson | image | 9.9375 | 15.5231 | 100.6293 | success |
-| ONNX Runtime CPU | image | 45.4299 | 49.2128 | 22.0119 | success |
+| Backend | Precision | Power Mode | Mean ms | P99 ms | FPS | Status |
+|---|---|---|---:|---:|---:|---|
+| TensorRT Jetson | FP16 | 25W | 10.066401 | 15.548438 | 99.340373 | success |
+| ONNX Runtime CPU | FP32 | n/a | 45.4299 | 49.2128 | 22.0119 | success |
 
-TensorRT Jetson was 4.6x faster than ONNX Runtime CPU in this real image input benchmark.
+TensorRT Jetson FP16 25W was about 4.51x faster than ONNX Runtime CPU FP32 in the current Local Studio demo evidence.
 
 Runtime latency is measured as end-to-end wall-clock latency and should not be directly compared with trtexec GPU-only latency.
+The historical real-image input benchmark remains documented separately in `runtime_compare_yolov8n.md`.
 
 ### Technical Contribution
 

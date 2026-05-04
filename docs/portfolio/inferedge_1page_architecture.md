@@ -39,12 +39,12 @@ ONNX model
 - `/api/analyze` in-memory job workflow
 - Lab `worker_request` / `worker_response` boundary
 - Lab -> Runtime dev-only minimal execution smoke using `yolov8n.onnx` (ONNX Runtime CPU, success, mean about 47.97 ms, p95 about 51.80 ms, about 20.85 FPS)
-- Jetson Orin Nano TensorRT Runtime smoke using Forge manifest + TensorRT engine artifact (success, manifest applied, mean about 14.00 ms, p99 about 15.50 ms, about 71.44 FPS)
-- Local Studio demo evidence replay at `/studio` using bundled ONNX Runtime CPU and TensorRT Jetson result fixtures: 45.4299 ms vs 9.9375 ms mean latency, 49.2128 ms vs 15.5231 ms p99, 22.0119 vs 100.6293 FPS, and a 4.57x TensorRT speedup for the demo pair
+- Jetson Orin Nano TensorRT Runtime smoke using Forge manifest + TensorRT engine artifact, now recorded as Jetson Evidence Track fixtures for FP16 25W and 15W power modes
+- Local Studio demo evidence replay at `/studio` using bundled ONNX Runtime CPU FP32 and TensorRT Jetson FP16 25W result fixtures: 45.4299 ms vs 10.066401 ms mean latency, 49.2128 ms vs 15.548438 ms p99, 22.0119 vs 99.340373 FPS, and about a 4.51x TensorRT speedup for the demo pair
 - Runtime source-model identity polish for manifest-backed TensorRT engine results (`model.engine` can still keep `compare_model_name=yolov8n` and `compare_key=yolov8n__b1__h640w640__fp32`)
 - Runtime `worker_request` validation and `worker_response` dry-run export
 - Forge worker/runtime summary
-- AIGuard provenance mismatch diagnosis
+- AIGuard evidence diagnosis cases for provenance mismatch, bbox collapse, score saturation, temporal instability, and normal/pass paths
 - Lab decision/report guard evidence smoke
 - all repo README pipeline summaries synced
 
