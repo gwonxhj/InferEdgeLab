@@ -133,6 +133,7 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert "loadDemoEvidence" in app_text
     assert "renderDemoEvaluation" in app_text
     assert "demoJetsonEvidence" in app_text
+    assert "demoPowerModeSummary" in app_text
     assert "renderDemoProblemCases" in app_text
     assert "renderGuardEvidence" in app_text
     assert "renderGuardDemoCases" in app_text
@@ -373,6 +374,11 @@ def test_studio_demo_evidence_loads_compare_ready_pair():
     assert response["jetson_evidence_track"]["runtime_result_source"] == (
         "examples/studio_demo/tensorrt_jetson_25w_result.json"
     )
+    assert response["jetson_power_mode_summary"]["baseline_power_mode"] == "25W"
+    assert response["jetson_power_mode_summary"]["candidate_power_mode"] == "15W"
+    assert response["jetson_power_mode_summary"]["metrics"]["mean_ms"]["delta_pct"] == 7.278719
+    assert response["jetson_power_mode_summary"]["metrics"]["fps_value"]["delta_pct"] == -6.784866
+    assert response["jetson_power_mode_summary"]["deployment_signal"]["decision"] == "review_note"
     assert response["compare"]["status"] == "ok"
     assert response["compare"]["judgement"]["overall"] == "tradeoff_faster"
     assert response["guard_analysis"]["guard_verdict"] == "review_required"
@@ -430,6 +436,7 @@ def test_studio_demo_evidence_is_listed_and_selectable_as_job():
     assert detail["result"]["runtime_result"]["backend_key"] == "tensorrt__jetson"
     assert detail["result"]["runtime_result"]["run_config"]["power_mode"] == "25W"
     assert detail["result"]["jetson_evidence_track"]["power_mode"] == "25W"
+    assert detail["result"]["jetson_power_mode_summary"]["candidate_power_mode"] == "15W"
     assert detail["result"]["guard_analysis"]["guard_verdict"] == "review_required"
     assert detail["result"]["guard_demo_cases"]["case_count"] == 4
     assert detail["result"]["comparison"]["base"]["backend_key"] == "onnxruntime__cpu"

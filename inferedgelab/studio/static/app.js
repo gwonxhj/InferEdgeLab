@@ -33,6 +33,7 @@ let demoProblemCases = [];
 let activeGuardAnalysis = null;
 let guardDemoCases = null;
 let demoJetsonEvidence = null;
+let demoPowerModeSummary = null;
 const importedResultsByJobId = {};
 
 function createElement(tagName, className, textContent) {
@@ -377,6 +378,7 @@ async function loadDemoEvidence() {
     demoProblemCases = Array.isArray(payload.problem_cases) ? payload.problem_cases : [];
     guardDemoCases = payload.guard_demo_cases || null;
     demoJetsonEvidence = payload.jetson_evidence_track || null;
+    demoPowerModeSummary = payload.jetson_power_mode_summary || null;
     compareData = payload.compare || null;
     updateGuardEvidence(payload.guard_analysis || payload.compare?.guard_analysis || null);
     selectedJobId = payload.job_id || payload.job?.job_id || selectedJobId;
@@ -510,6 +512,17 @@ function renderDemoEvaluation(report) {
       evidenceItem("jetson_p95", demoJetsonEvidence.p95_ms === undefined ? "-" : `${formatNumber(demoJetsonEvidence.p95_ms)} ms`),
       evidenceItem("jetson_temp", demoJetsonEvidence.max_temp_c === undefined ? "-" : `${formatNumber(demoJetsonEvidence.max_temp_c)} C`),
       evidenceItem("tegrastats", demoJetsonEvidence.tegrastats_status || "-"),
+    );
+  }
+
+  if (demoPowerModeSummary) {
+    const meanDelta = demoPowerModeSummary.metrics?.mean_ms?.delta_pct;
+    const fpsDelta = demoPowerModeSummary.metrics?.fps_value?.delta_pct;
+    target.append(
+      evidenceItem("power_compare", `${demoPowerModeSummary.baseline_power_mode || "25W"} vs ${demoPowerModeSummary.candidate_power_mode || "15W"}`),
+      evidenceItem("mean_delta", formatPercent(meanDelta)),
+      evidenceItem("fps_delta", formatPercent(fpsDelta)),
+      evidenceItem("power_note", demoPowerModeSummary.run_config_status || "-"),
     );
   }
 }

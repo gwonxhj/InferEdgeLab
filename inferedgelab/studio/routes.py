@@ -35,6 +35,7 @@ DEMO_PROBLEM_REPORTS = (
 )
 LATENCY_REGRESSION_SUMMARY = "latency_regression_summary.json"
 AIGUARD_PORTFOLIO_CASES = "aiguard_portfolio_cases.json"
+JETSON_POWER_MODE_SUMMARY = "jetson_power_mode_summary.json"
 DEMO_JOB_ID = "demo_yolov8n_trt_vs_onnx"
 STATIC_ASSETS = {
     "app.js": "application/javascript",
@@ -175,6 +176,7 @@ def studio_demo_evidence(request: Request) -> dict[str, Any]:
     problem_cases = _load_demo_problem_cases()
     guard_demo_cases = _load_aiguard_portfolio_cases()
     jetson_evidence_track = _build_jetson_evidence_track(results)
+    jetson_power_mode_summary = _load_jetson_power_mode_summary()
     imported_results = _get_imported_results(request)
     imported_results.extend(results)
     guard_analysis = _build_demo_guard_analysis(results, evaluation_report)
@@ -191,6 +193,7 @@ def studio_demo_evidence(request: Request) -> dict[str, Any]:
         problem_cases,
         guard_demo_cases,
         jetson_evidence_track,
+        jetson_power_mode_summary,
     )
     _get_demo_jobs(request)[DEMO_JOB_ID] = demo_job
     return {
@@ -206,6 +209,7 @@ def studio_demo_evidence(request: Request) -> dict[str, Any]:
         "problem_cases": problem_cases,
         "guard_demo_cases": guard_demo_cases,
         "jetson_evidence_track": jetson_evidence_track,
+        "jetson_power_mode_summary": jetson_power_mode_summary,
         "guard_analysis": guard_analysis,
         "deployment_decision": compare["deployment_decision"],
     }
@@ -431,6 +435,25 @@ def _load_aiguard_portfolio_cases() -> dict[str, Any]:
     }
 
 
+def _load_jetson_power_mode_summary() -> dict[str, Any]:
+    path = DEMO_EVIDENCE_DIR / JETSON_POWER_MODE_SUMMARY
+    try:
+        summary = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise HTTPException(status_code=500, detail=f"Jetson power-mode summary not found: {JETSON_POWER_MODE_SUMMARY}") from exc
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=500, detail=f"Jetson power-mode summary is invalid JSON: {JETSON_POWER_MODE_SUMMARY}") from exc
+
+    metrics = summary.get("metrics") if isinstance(summary, dict) else None
+    deployment_signal = summary.get("deployment_signal") if isinstance(summary, dict) else None
+    if not isinstance(metrics, dict) or not isinstance(deployment_signal, dict):
+        raise HTTPException(status_code=500, detail=f"Jetson power-mode summary schema error: {JETSON_POWER_MODE_SUMMARY}")
+
+    enriched = dict(summary)
+    enriched["source"] = f"examples/studio_demo/{JETSON_POWER_MODE_SUMMARY}"
+    return enriched
+
+
 def _load_problem_report(file_name: str) -> dict[str, Any]:
     path = VALIDATION_PROBLEM_DIR / file_name
     try:
@@ -465,6 +488,7 @@ def _build_demo_job(
     problem_cases: list[dict[str, Any]],
     guard_demo_cases: dict[str, Any],
     jetson_evidence_track: dict[str, Any],
+    jetson_power_mode_summary: dict[str, Any],
 ) -> dict[str, Any]:
     now = _utc_now_iso()
     runtime_result = results[-1] if results else {}
@@ -488,6 +512,7 @@ def _build_demo_job(
             "problem_cases": problem_cases,
             "guard_demo_cases": guard_demo_cases,
             "jetson_evidence_track": jetson_evidence_track,
+            "jetson_power_mode_summary": jetson_power_mode_summary,
             "summary": compare["judgement"]["summary"],
         },
         "error": None,
