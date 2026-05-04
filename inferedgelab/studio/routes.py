@@ -25,7 +25,7 @@ VALIDATION_DEMO_DIR = Path(__file__).resolve().parents[2] / "examples" / "valida
 VALIDATION_PROBLEM_DIR = Path(__file__).resolve().parents[2] / "examples" / "validation_demo" / "problem_cases"
 DEMO_EVIDENCE_FILES = (
     "onnxruntime_cpu_result.json",
-    "tensorrt_jetson_result.json",
+    "tensorrt_jetson_25w_result.json",
 )
 DEMO_EVALUATION_REPORT = "yolov8_coco_subset_evaluation.json"
 DEMO_PROBLEM_REPORTS = (
@@ -174,6 +174,7 @@ def studio_demo_evidence(request: Request) -> dict[str, Any]:
     evaluation_report = _load_demo_evaluation_report()
     problem_cases = _load_demo_problem_cases()
     guard_demo_cases = _load_aiguard_portfolio_cases()
+    jetson_evidence_track = _build_jetson_evidence_track(results)
     imported_results = _get_imported_results(request)
     imported_results.extend(results)
     guard_analysis = _build_demo_guard_analysis(results, evaluation_report)
@@ -183,7 +184,14 @@ def studio_demo_evidence(request: Request) -> dict[str, Any]:
         results[1],
         guard_analysis=guard_analysis,
     )
-    demo_job = _build_demo_job(results, compare, evaluation_report, problem_cases, guard_demo_cases)
+    demo_job = _build_demo_job(
+        results,
+        compare,
+        evaluation_report,
+        problem_cases,
+        guard_demo_cases,
+        jetson_evidence_track,
+    )
     _get_demo_jobs(request)[DEMO_JOB_ID] = demo_job
     return {
         "status": "loaded",
@@ -197,6 +205,7 @@ def studio_demo_evidence(request: Request) -> dict[str, Any]:
         "evaluation_report": evaluation_report,
         "problem_cases": problem_cases,
         "guard_demo_cases": guard_demo_cases,
+        "jetson_evidence_track": jetson_evidence_track,
         "guard_analysis": guard_analysis,
         "deployment_decision": compare["deployment_decision"],
     }
@@ -455,6 +464,7 @@ def _build_demo_job(
     evaluation_report: dict[str, Any],
     problem_cases: list[dict[str, Any]],
     guard_demo_cases: dict[str, Any],
+    jetson_evidence_track: dict[str, Any],
 ) -> dict[str, Any]:
     now = _utc_now_iso()
     runtime_result = results[-1] if results else {}
@@ -477,6 +487,7 @@ def _build_demo_job(
             "evaluation_report": evaluation_report,
             "problem_cases": problem_cases,
             "guard_demo_cases": guard_demo_cases,
+            "jetson_evidence_track": jetson_evidence_track,
             "summary": compare["judgement"]["summary"],
         },
         "error": None,
@@ -485,6 +496,51 @@ def _build_demo_job(
             "compare": "/studio/api/compare/latest",
         },
         "next_actions": ["review_compare"],
+    }
+
+
+def _build_jetson_evidence_track(results: list[dict[str, Any]]) -> dict[str, Any]:
+    candidate = next(
+        (
+            result
+            for result in reversed(results)
+            if str(result.get("backend_key") or "").startswith("tensorrt__")
+            and str(result.get("device_name") or _display_value(result.get("device"))).lower() == "jetson"
+        ),
+        {},
+    )
+    jetson_evidence = candidate.get("jetson_evidence") if isinstance(candidate, dict) else {}
+    if not isinstance(jetson_evidence, dict):
+        jetson_evidence = {}
+    run_config = candidate.get("run_config") if isinstance(candidate.get("run_config"), dict) else {}
+    tegrastats_summary = jetson_evidence.get("tegrastats_summary")
+    if not isinstance(tegrastats_summary, dict):
+        tegrastats_summary = {}
+
+    return {
+        "track": "jetson_runtime_evidence",
+        "scope": "Jetson Orin Nano TensorRT FP16 25W Runtime smoke",
+        "runtime_result_source": candidate.get("_source_path") or "examples/studio_demo/tensorrt_jetson_25w_result.json",
+        "backend_key": candidate.get("backend_key"),
+        "compare_key": candidate.get("compare_key"),
+        "precision": candidate.get("precision"),
+        "power_mode": jetson_evidence.get("power_mode") or run_config.get("power_mode"),
+        "jetson_clocks": jetson_evidence.get("jetson_clocks") or run_config.get("jetson_clocks"),
+        "mean_ms": candidate.get("mean_ms"),
+        "p50_ms": candidate.get("p50_ms") or (candidate.get("latency_ms") or {}).get("p50"),
+        "p95_ms": candidate.get("p95_ms") or (candidate.get("latency_ms") or {}).get("p95"),
+        "p99_ms": candidate.get("p99_ms"),
+        "fps_value": candidate.get("fps_value") or candidate.get("fps"),
+        "tegrastats_status": tegrastats_summary.get("status"),
+        "tegrastats_samples": tegrastats_summary.get("sample_count"),
+        "max_temp_c": tegrastats_summary.get("max_temp_c"),
+        "max_temp_name": tegrastats_summary.get("max_temp_name"),
+        "vdd_in_mw_avg": tegrastats_summary.get("vdd_in_mw_avg"),
+        "vdd_in_mw_max": tegrastats_summary.get("vdd_in_mw_max"),
+        "note": (
+            "This is empirical Jetson runtime evidence for the Local Studio demo, "
+            "not a production inference server or cloud benchmark track."
+        ),
     }
 
 
