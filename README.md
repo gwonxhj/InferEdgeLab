@@ -65,17 +65,20 @@ Interview one-liner: **InferEdge is an end-to-end inference validation pipeline 
 
 ---
 
-## Real Inference Benchmark Result
+## Current Validation Evidence
 
-YOLOv8n was validated with a real OpenCV image-input benchmark: InferEdgeRuntime generated compare-ready JSON results, and InferEdgeLab automatically grouped and compared them by `compare_key` and `backend_key`.
+YOLOv8n is validated through the current Local Studio evidence fixtures and Jetson Evidence Track result JSONs.
+InferEdgeRuntime generates compare-ready JSON results, and InferEdgeLab groups and compares them by `compare_key`, `backend_key`, precision, and run context.
 
-| Backend | Input Mode | Mean ms | P99 ms | FPS |
-|---|---|---:|---:|---:|
-| TensorRT Jetson | image | 9.9375 | 15.5231 | 100.6293 |
-| ONNX Runtime CPU | image | 45.4299 | 49.2128 | 22.0119 |
+| Evidence | Backend | Precision | Power Mode | Mean ms | P95 ms | P99 ms | FPS |
+|---|---|---|---|---:|---:|---:|---:|
+| Local Studio baseline | ONNX Runtime CPU | FP32 | n/a | 45.4299 | n/a | 49.2128 | 22.0119 |
+| Local Studio candidate | TensorRT Jetson | FP16 | 25W | 10.066401 | 15.476641 | 15.548438 | 99.340373 |
+| Jetson power-mode evidence | TensorRT Jetson | FP16 | 15W | 10.799106 | 15.438690 | 15.529218 | 92.600262 |
 
-TensorRT Jetson was 4.6x faster than ONNX Runtime CPU in this real image input benchmark.
-The benchmark uses end-to-end Runtime latency, not trtexec GPU-only latency.
+The current Local Studio demo shows TensorRT Jetson FP16 25W as about 4.51x faster than the ONNX Runtime CPU FP32 baseline.
+The Jetson 15W/25W comparison is tracked as system evidence because power mode changes the run configuration.
+These measurements use InferEdgeRuntime end-to-end Runtime latency, not `trtexec` GPU-only latency.
 The full pipeline portfolio summary is available at [docs/portfolio/inferedge_pipeline_portfolio.md](docs/portfolio/inferedge_pipeline_portfolio.md), and the detailed Runtime comparison report is available at [docs/portfolio/runtime_compare_yolov8n.md](docs/portfolio/runtime_compare_yolov8n.md).
 The final local-first validation completion pass is summarized in [docs/portfolio/final_validation_completion.md](docs/portfolio/final_validation_completion.md).
 The YOLOv8 COCO subset accuracy demo is documented in [docs/portfolio/yolov8_coco_subset_evaluation.md](docs/portfolio/yolov8_coco_subset_evaluation.md).
@@ -100,12 +103,12 @@ Recommended demo flow:
 
 Verified demo fixture values:
 
-| Backend | Device | Mean ms | P99 ms | FPS | Compare Key |
-|---|---|---:|---:|---:|---|
-| ONNX Runtime | CPU | 45.4299 | 49.2128 | 22.0119 | `yolov8n__b1__h640w640__fp32` |
-| TensorRT | Jetson | 9.9375 | 15.5231 | 100.6293 | `yolov8n__b1__h640w640__fp32` |
+| Backend | Device | Precision | Power Mode | Mean ms | P95 ms | P99 ms | FPS | Compare Key |
+|---|---|---|---|---:|---:|---:|---:|---|
+| ONNX Runtime | CPU | FP32 | n/a | 45.4299 | n/a | 49.2128 | 22.0119 | `yolov8n__b1__h640w640__fp32` |
+| TensorRT | Jetson | FP16 | 25W | 10.066401 | 15.476641 | 15.548438 | 99.340373 | `yolov8n__b1__h640w640__fp16` |
 
-Studio reports this as a `4.57x` TensorRT speedup for the bundled demo pair.
+Studio reports this as about a `4.51x` TensorRT speedup for the bundled demo pair.
 AIGuard remains optional in this local Studio path; if Guard evidence is not loaded, the deployment decision explains that the Lab comparison is available but diagnosis evidence is not provided.
 The same demo flow also surfaces a small `yolov8_coco` evaluation report summary: 10 images, 89 ground-truth boxes, mAP@50 `0.1410`, precision `0.2941`, recall `0.1685`, structural validation `passed`.
 It also includes problem-case summaries for annotation-missing review, invalid detection structure blocking, contract shape mismatch blocking, and latency regression review.
@@ -153,16 +156,22 @@ This is a compact example of the structured result shape that InferEdgeRuntime e
 
 ```json
 {
-  "compare_key": "yolov8n__b1__h640w640__fp32",
+  "compare_key": "yolov8n__b1__h640w640__fp16",
   "backend_key": "tensorrt__jetson",
-  "mean_ms": 9.9375,
-  "p99_ms": 15.5231,
-  "fps_value": 100.6293,
+  "mean_ms": 10.066401,
+  "p95_ms": 15.476641,
+  "p99_ms": 15.548438,
+  "fps_value": 99.340373,
   "success": true,
   "status": "success",
+  "run_config": {
+    "power_mode": "25W",
+    "jetson_clocks": "on"
+  },
   "extra": {
-    "input_mode": "image",
-    "input_preprocess": "opencv_bgr_to_rgb_resize_float32_nchw"
+    "input_mode": "dummy",
+    "precision": "fp16",
+    "power_mode": "25W"
   }
 }
 ```

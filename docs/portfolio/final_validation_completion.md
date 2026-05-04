@@ -39,8 +39,9 @@ InferEdge is complete for the current portfolio milestone when it can replay a l
 Runtime demo pair:
 
 - ONNX Runtime CPU: 45.4299 ms mean / 49.2128 ms p99 / 22.0119 FPS
-- TensorRT Jetson: 9.9375 ms mean / 15.5231 ms p99 / 100.6293 FPS
-- Studio speedup display: about 4.57x faster
+- TensorRT Jetson FP16 25W: 10.066401 ms mean / 15.548438 ms p99 / 99.340373 FPS
+- Jetson FP16 15W power-mode evidence: 10.799106 ms mean / 15.529218 ms p99 / 92.600262 FPS
+- Studio speedup display: about 4.51x faster for the ONNX Runtime CPU FP32 vs TensorRT Jetson FP16 25W demo pair
 
 YOLOv8 COCO subset evaluation:
 

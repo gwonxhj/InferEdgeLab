@@ -80,30 +80,31 @@ The benchmark workflow is:
 `compare_key` identifies the comparison group for the same model, input shape, and precision.
 `backend_key` identifies the actual backend and device combination, such as `onnxruntime__cpu` or `tensorrt__jetson`.
 
-## 5. Real Image Input Validation Result
+## 5. Current Local Studio Demo Evidence
 
-This validation used YOLOv8n with real image input:
+The current Local Studio demo evidence uses bundled Runtime result fixtures so the comparison can be replayed in a browser without a live Jetson session:
 
 - Model: YOLOv8n
-- Input Mode: image
 - Input Shape: `1x3x640x640`
-- `compare_key`: `yolov8n__b1__h640w640__fp32`
-- `input_preprocess`: `opencv_bgr_to_rgb_resize_float32_nchw`
+- ONNX baseline `compare_key`: `yolov8n__b1__h640w640__fp32`
+- TensorRT candidate `compare_key`: `yolov8n__b1__h640w640__fp16`
+- TensorRT power mode: `25W`
 
-| Backend | Input Mode | Mean ms | P99 ms | FPS | Status |
-|---|---|---:|---:|---:|---|
-| TensorRT Jetson | image | 9.9375 | 15.5231 | 100.6293 | success |
-| ONNX Runtime CPU | image | 45.4299 | 49.2128 | 22.0119 | success |
+| Backend | Precision | Power Mode | Mean ms | P95 ms | P99 ms | FPS | Status |
+|---|---|---|---:|---:|---:|---:|---|
+| TensorRT Jetson | FP16 | 25W | 10.066401 | 15.476641 | 15.548438 | 99.340373 | success |
+| ONNX Runtime CPU | FP32 | n/a | 45.4299 | n/a | 49.2128 | 22.0119 | success |
 
 - Total compare groups: 1
 - Comparable groups count: 1
 - Skipped groups count: 0
 - Fastest backend: `tensorrt__jetson`
 - Slowest backend: `onnxruntime__cpu`
-- Speedup ratio: `4.6x`
-- ONNX Runtime is 4.6x slower than TensorRT.
+- Speedup ratio: about `4.51x`
+- ONNX Runtime CPU is about 4.51x slower than TensorRT Jetson FP16 25W for this demo pair.
 
 The Runtime latency is end-to-end wall-clock latency and should not be directly compared with trtexec GPU-only latency.
+The historical OpenCV real-image input benchmark remains documented in `runtime_compare_yolov8n.md`, while Local Studio now uses the explicit FP16/25W evidence fixture above.
 
 ## 6. Technical Contribution
 

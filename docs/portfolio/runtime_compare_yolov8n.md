@@ -34,9 +34,23 @@ The comparison group used here is:
 - Speedup ratio: `3.4x`
 - ONNX Runtime is 3.4x slower than TensorRT.
 
+## Current Local Studio Demo Evidence
+
+The current Local Studio `Load Demo Evidence` flow uses bundled Runtime result fixtures so reviewers can reproduce the browser comparison without requiring a live Jetson session.
+This fixture pair intentionally records ONNX Runtime CPU FP32 as the baseline and TensorRT Jetson FP16 25W as the candidate.
+
+| Backend | Precision | Power Mode | Mean ms | P95 ms | P99 ms | FPS | Compare Key |
+|---|---|---|---:|---:|---:|---:|---|
+| onnxruntime__cpu | FP32 | n/a | 45.4299 | n/a | 49.2128 | 22.0119 | `yolov8n__b1__h640w640__fp32` |
+| tensorrt__jetson | FP16 | 25W | 10.066401 | 15.476641 | 15.548438 | 99.340373 | `yolov8n__b1__h640w640__fp16` |
+
+- TensorRT Jetson FP16 25W is about `4.51x` faster than the ONNX Runtime CPU FP32 baseline in the current Studio demo evidence.
+- The pair is cross-precision and cross-device evidence, so it is useful for deployment review but should not be described as same-condition regression testing.
+- A second TensorRT Jetson FP16 15W fixture records mean `10.799106 ms`, p95 `15.438690 ms`, p99 `15.529218 ms`, and FPS `92.600262` for power-mode evidence.
+
 ## Real Image Input Validation
 
-The following validation is based on a real JPEG image input, not dummy input.
+The following historical validation is based on a real JPEG image input, not dummy input.
 InferEdgeRuntime loaded the image with OpenCV, preprocessed it, and then benchmarked the Runtime backend path end to end.
 
 The image preprocessing path was:
@@ -64,6 +78,9 @@ Both backend results used the same `compare_key`, so InferEdgeLab grouped them t
 - Slowest backend: `onnxruntime__cpu`
 - Speedup ratio: `4.6x`
 - ONNX Runtime is 4.6x slower than TensorRT.
+
+This historical real-image result is kept as evidence that the Runtime path can benchmark image input.
+The current Local Studio demo evidence above is the active browser demo fixture and includes explicit FP16/power-mode context.
 
 ### Result Reproducibility Note
 

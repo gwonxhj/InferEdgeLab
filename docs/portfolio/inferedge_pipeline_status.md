@@ -97,6 +97,7 @@ The current cross-repository loop is covered by documentation, fixtures, and smo
 - AIGuard worker provenance mismatch diagnosis
 - Lab deployment decision/report evidence smoke for AIGuard worker provenance diagnosis
 - Local Studio local-first workflow UI for viewing Forge -> Runtime -> Lab -> optional AIGuard state, creating in-memory analyze jobs, importing Runtime result JSON, replaying bundled demo evidence, comparing backends, and inspecting Lab-owned deployment decision context
+- Local Studio portfolio demo evidence for ONNX Runtime CPU, TensorRT Jetson FP16 25W, Jetson FP16 15W power-mode evidence, and AIGuard diagnosis cases
 - YOLOv8 COCO subset evaluation report generated from 10 local images and 89 converted COCO-style person annotations, with metric backend `simplified`, mAP@50 0.1410, precision 0.2941, recall 0.1685, and structural validation passed
 - Validation problem case fixtures for annotation-missing review, invalid detection structure blocking, and contract shape mismatch blocking
 
@@ -105,7 +106,10 @@ This means the current product boundary is testable without running the producti
 InferEdge now has two runtime execution evidence paths:
 
 1. macOS ONNX Runtime CPU smoke through Lab's dev-only Runtime execution path using `yolov8n.onnx`. The smoke created Lab job `job_9e2321179256`, called the C++ Runtime CLI through Lab's subprocess path, executed ONNX Runtime on CPU with FP32, and ingested the resulting JSON back into the Lab job result. Runtime reported input shape `[1, 3, 640, 640]`, output shape `[1, 84, 8400]`, `warmup=1`, `runs=5`, benchmark status success, mean latency about 47.97 ms, p50 about 46.95 ms, p95/p99 about 51.80 ms, and about 20.85 FPS. The resulting `deployment_decision` was `unknown`, which is expected for direct Runtime execution before Lab compare/report.
-2. Jetson Orin Nano TensorRT smoke using a Forge-generated manifest and TensorRT engine artifact executed by the C++ Runtime CLI. The manual Jetson smoke ran on Linux `5.15.148-tegra` / `aarch64` from `~/InferEdge-Runtime`, using Forge manifest `/home/risenano01/InferEdgeForge/builds/yolov8n__jetson__tensorrt__jetson_fp16/manifest.json` and artifact `/home/risenano01/InferEdgeForge/builds/yolov8n__jetson__tensorrt__jetson_fp16/model.engine`. The result JSON was `results/jetson/yolov8n_jetson_tensorrt_manifest_smoke.json` and reported `success: true`, `status: success`, `engine_backend: tensorrt`, `device_name: jetson`, `manifest_applied: true`, input shape `[1, 3, 640, 640]`, output shape `[1, 84, 8400]`, mean latency about 14.00 ms, p99 about 15.50 ms, and about 71.44 FPS.
+2. Jetson Orin Nano TensorRT smoke using a Forge-generated manifest and TensorRT engine artifact executed by the C++ Runtime CLI. The current Jetson Evidence Track records TensorRT FP16 short-smoke results with tegrastats summaries for both 25W and 15W power modes:
+   - 25W result: `results/jetson_evidence/yolov8n_trt_fp16_25w_20260504T170039Z.json`, mean `10.066401 ms`, p95 `15.476641 ms`, p99 `15.548438 ms`, FPS `99.340373`.
+   - 15W result: `results/jetson_evidence/yolov8n_trt_fp16_15w_20260504T171959Z.json`, mean `10.799106 ms`, p95 `15.438690 ms`, p99 `15.529218 ms`, FPS `92.600262`.
+   - The 15W vs 25W comparison is treated as system evidence because power mode changes the run configuration; it is not interpreted as same-condition model regression.
 
 Compare-key polish status: this limitation has been resolved in InferEdgeRuntime #37. When a Forge manifest is applied, Runtime now prefers `manifest.source_model.path` for compare naming, so a TensorRT artifact path such as `model.engine` can still produce `compare_model_name=yolov8n` and `compare_key=yolov8n__b1__h640w640__fp32`. This improves provenance and compare-readiness; it does not add production SaaS worker infrastructure.
 
@@ -131,10 +135,11 @@ This does not mean production SaaS is complete.
 - Runtime compare-key identity polish for manifest-backed engine artifacts
 - Guided end-to-end demo entrypoint for portfolio and interview walkthroughs
 - Local Studio at `/studio` for a local-first browser view of Run / Import / Demo Evidence / Compare / Decision / Jetson Helper workflows
+- Jetson Evidence Track short-smoke fixtures with TensorRT FP16 25W and 15W power-mode context, tegrastats summaries, and Lab-compatible Runtime JSON import
 - Contract/preset validation demo with `yolov8_coco`, COCO annotation loading, `--metric-backend simplified` by default, optional `pycocotools` backend contract, structural validation, and JSON/Markdown/HTML report fixtures
 - Problem-case validation reports that make skipped accuracy, invalid output structure, contract mismatch, and latency regression visible in Local Studio
 - Cross-repo fixture compatibility across Forge, Runtime, Lab, and AIGuard
-- Rule/evidence based provenance mismatch diagnosis
+- Rule/evidence based AIGuard diagnosis, including normal/pass, bbox collapse/blocked, score saturation/blocked, temporal instability/review_required, and provenance mismatch cases
 
 ### Planned Later
 
