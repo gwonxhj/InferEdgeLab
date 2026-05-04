@@ -132,6 +132,7 @@ def test_studio_static_assets_include_redesigned_ui_contracts():
     assert "request record only" in app_text
     assert "loadDemoEvidence" in app_text
     assert "renderDemoEvaluation" in app_text
+    assert "demoJetsonEvidence" in app_text
     assert "renderDemoProblemCases" in app_text
     assert "renderGuardEvidence" in app_text
     assert "renderGuardDemoCases" in app_text
@@ -361,9 +362,19 @@ def test_studio_demo_evidence_loads_compare_ready_pair():
     assert response["results"][0]["backend_key"] == "onnxruntime__cpu"
     assert response["results"][1]["backend_key"] == "tensorrt__jetson"
     assert response["results"][0]["mean_ms"] == 45.4299
-    assert response["results"][1]["mean_ms"] == 9.9375
+    assert response["results"][1]["mean_ms"] == 10.066401
+    assert response["results"][1]["precision"] == "fp16"
+    assert response["results"][1]["run_config"]["power_mode"] == "25W"
+    assert response["results"][1]["jetson_evidence"]["tegrastats_summary"]["status"] == "parsed"
+    assert response["jetson_evidence_track"]["power_mode"] == "25W"
+    assert response["jetson_evidence_track"]["mean_ms"] == 10.066401
+    assert response["jetson_evidence_track"]["p95_ms"] == 15.476641
+    assert response["jetson_evidence_track"]["tegrastats_status"] == "parsed"
+    assert response["jetson_evidence_track"]["runtime_result_source"] == (
+        "examples/studio_demo/tensorrt_jetson_25w_result.json"
+    )
     assert response["compare"]["status"] == "ok"
-    assert response["compare"]["judgement"]["overall"] == "improvement"
+    assert response["compare"]["judgement"]["overall"] == "tradeoff_faster"
     assert response["guard_analysis"]["guard_verdict"] == "review_required"
     assert response["guard_analysis"]["evidence"][0]["metric_name"] == "map50"
     assert response["guard_demo_cases"]["schema_version"] == "inferedge-aiguard-portfolio-demo-v1"
@@ -417,6 +428,8 @@ def test_studio_demo_evidence_is_listed_and_selectable_as_job():
     assert detail["job_id"] == "demo_yolov8n_trt_vs_onnx"
     assert detail["status"] == "completed"
     assert detail["result"]["runtime_result"]["backend_key"] == "tensorrt__jetson"
+    assert detail["result"]["runtime_result"]["run_config"]["power_mode"] == "25W"
+    assert detail["result"]["jetson_evidence_track"]["power_mode"] == "25W"
     assert detail["result"]["guard_analysis"]["guard_verdict"] == "review_required"
     assert detail["result"]["guard_demo_cases"]["case_count"] == 4
     assert detail["result"]["comparison"]["base"]["backend_key"] == "onnxruntime__cpu"
