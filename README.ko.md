@@ -49,6 +49,14 @@ Recommended demo flow:
 3. `Load Demo Evidence` 클릭
 4. TensorRT vs ONNX Runtime 비교와 Lab-owned deployment decision context 확인
 
+브라우저를 열지 않고도 같은 evidence 수치를 CLI에서 확인하거나 Markdown으로 export할 수 있습니다.
+
+```bash
+poetry run inferedgelab demo-evidence-summary
+poetry run inferedgelab demo-evidence-summary --format json
+poetry run inferedgelab export-demo-evidence --output reports/studio_demo_evidence.md
+```
+
 Load Demo Evidence는 bundled ONNX Runtime CPU / TensorRT Jetson result fixture를 불러오고, Run / Import / Jetson Helper는 기존 CLI/API workflow를 local UI로 확장하는 보조 기능입니다.
 Studio evidence와 jobs는 in-memory이며 local server process가 재시작되면 초기화됩니다.
 
