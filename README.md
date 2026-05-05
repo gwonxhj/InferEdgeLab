@@ -99,6 +99,14 @@ Recommended demo flow:
 3. Click `Load Demo Evidence`
 4. Review TensorRT vs ONNX Runtime comparison and deployment decision context
 
+The same evidence can be exported from the CLI without opening the browser:
+
+```bash
+poetry run inferedgelab demo-evidence-summary
+poetry run inferedgelab demo-evidence-summary --format json
+poetry run inferedgelab export-demo-evidence --output reports/studio_demo_evidence.md
+```
+
 ![InferEdge Local Studio demo evidence](assets/images/local-studio-demo-evidence.png)
 
 Verified demo fixture values:

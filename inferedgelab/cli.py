@@ -12,6 +12,8 @@ from inferedgelab.commands.compare import compare_cmd
 from inferedgelab.commands.compare_latest import compare_latest_cmd
 from inferedgelab.commands.enrich_pair import enrich_pair_cmd
 from inferedgelab.commands.enrich_result import enrich_result_cmd
+from inferedgelab.commands.demo_evidence import demo_evidence_summary_cmd
+from inferedgelab.commands.demo_evidence import export_demo_evidence_cmd
 from inferedgelab.commands.list_results import list_results_cmd
 from inferedgelab.commands.history_report import history_report_cmd
 from inferedgelab.commands.serve import serve_cmd
@@ -40,6 +42,8 @@ if compare_runtime_dir_cmd is not None:
 app.command("compare-latest", help="Compare the two most recent structured benchmark results")(compare_latest_cmd)
 app.command("enrich-pair", help="Attach accuracy metadata to a base/new structured result pair")(enrich_pair_cmd)
 app.command("enrich-result", help="Attach accuracy metadata to an existing structured benchmark result")(enrich_result_cmd)
+app.command("demo-evidence-summary", help="Print Local Studio demo evidence summary")(demo_evidence_summary_cmd)
+app.command("export-demo-evidence", help="Export Local Studio demo evidence as Markdown")(export_demo_evidence_cmd)
 app.command("list-results", help="List recent structured benchmark results")(list_results_cmd)
 app.command("history-report", help="Generate HTML history report from structured benchmark results")(history_report_cmd)
 app.command("serve", help="Run InferEdgeLab FastAPI server")(serve_cmd)
