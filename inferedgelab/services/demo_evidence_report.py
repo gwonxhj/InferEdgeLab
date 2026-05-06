@@ -20,6 +20,44 @@ from inferedgelab.studio.routes import (
 
 IN_MEMORY_NOTE = "Local Studio demo evidence is in-memory and resets when the server restarts."
 DEMO_ANNOTATIONS_FILE = "yolov8_coco_subset_annotations.json"
+PORTFOLIO_CHECK_SCHEMA_VERSION = "inferedgelab-portfolio-demo-check-v1"
+
+EXPECTED_PORTFOLIO_METRICS = {
+    "onnxruntime_cpu.mean_ms": 45.4299,
+    "onnxruntime_cpu.p99_ms": 49.2128,
+    "onnxruntime_cpu.fps": 22.0119,
+    "tensorrt_jetson_fp16_25w.mean_ms": 10.066401,
+    "tensorrt_jetson_fp16_25w.p95_ms": 15.476641,
+    "tensorrt_jetson_fp16_25w.p99_ms": 15.548438,
+    "tensorrt_jetson_fp16_25w.fps": 99.340373,
+    "tensorrt_jetson_fp16_15w.mean_ms": 10.799106,
+    "tensorrt_jetson_fp16_15w.p99_ms": 15.529218,
+    "tensorrt_jetson_fp16_15w.fps": 92.600262,
+    "comparison.speedup": 4.513023075476529,
+    "evaluation_report.sample_count": 10,
+    "evaluation_report.ground_truth_boxes": 89,
+    "evaluation_report.map50": 0.1409784036,
+    "evaluation_report.precision": 0.2941176471,
+    "evaluation_report.recall": 0.1685393258,
+}
+
+REQUIRED_PORTFOLIO_FILES = [
+    "README.md",
+    "assets/images/local-studio-demo-evidence.png",
+    "docs/portfolio/final_validation_completion.md",
+    "docs/portfolio/runtime_compare_yolov8n.md",
+    "docs/portfolio/yolov8_coco_subset_evaluation.md",
+    "docs/portfolio/validation_problem_cases.md",
+    "examples/studio_demo/onnxruntime_cpu_result.json",
+    "examples/studio_demo/tensorrt_jetson_25w_result.json",
+    "examples/studio_demo/tensorrt_jetson_15w_result.json",
+    "examples/studio_demo/aiguard_portfolio_cases.json",
+    "examples/studio_demo/jetson_power_mode_summary.json",
+    "examples/validation_demo/subset/yolov8_coco_subset_evaluation.json",
+    "inferedgelab/studio/static/index.html",
+    "inferedgelab/studio/static/app.js",
+    "inferedgelab/studio/static/style.css",
+]
 
 
 def build_demo_evidence_summary() -> dict[str, Any]:
@@ -214,6 +252,164 @@ def write_demo_evidence_markdown(output: str | Path) -> Path:
     return path
 
 
+def build_portfolio_demo_check(repo_root: str | Path | None = None) -> dict[str, Any]:
+    """Validate the committed portfolio demo evidence surface.
+
+    This is a pre-submission smoke check. It reads committed local fixtures and
+    documentation references only; it does not start Studio, run workers, or
+    mutate result/compare schemas.
+    """
+
+    root = Path(repo_root) if repo_root is not None else Path.cwd()
+    summary = build_demo_evidence_summary()
+    checks: list[dict[str, Any]] = []
+
+    for relative_path in REQUIRED_PORTFOLIO_FILES:
+        path = root / relative_path
+        checks.append(
+            _check_item(
+                name=f"file:{relative_path}",
+                passed=path.is_file(),
+                details=str(path),
+                category="required_file",
+            )
+        )
+
+    runtime = summary["runtime_evidence"]
+    metric_sources = {
+        "onnxruntime_cpu": runtime["onnxruntime_cpu"],
+        "tensorrt_jetson_fp16_25w": runtime["tensorrt_jetson_fp16_25w"],
+        "tensorrt_jetson_fp16_15w": runtime["tensorrt_jetson_fp16_15w"],
+        "comparison": summary["comparison"],
+        "evaluation_report": summary["evaluation_report"],
+    }
+    for metric_path, expected in EXPECTED_PORTFOLIO_METRICS.items():
+        group, field = metric_path.split(".", 1)
+        observed = _number(metric_sources[group].get(field))
+        passed = _close_enough(observed, expected)
+        checks.append(
+            _check_item(
+                name=f"metric:{metric_path}",
+                passed=passed,
+                expected=expected,
+                observed=observed,
+                category="metric",
+            )
+        )
+
+    checks.append(
+        _check_item(
+            name="studio:in_memory_note",
+            passed=summary["in_memory_note"] == IN_MEMORY_NOTE,
+            expected=IN_MEMORY_NOTE,
+            observed=summary["in_memory_note"],
+            category="contract_note",
+        )
+    )
+    checks.append(
+        _check_item(
+            name="decision:lab_owner_review_required",
+            passed=summary["deployment_decision"].get("decision") == "review_required",
+            expected="review_required",
+            observed=summary["deployment_decision"].get("decision"),
+            category="deployment_decision",
+        )
+    )
+
+    problem_cases = {case["problem_case"] for case in summary["problem_cases"]}
+    expected_problem_cases = {
+        "annotation_missing",
+        "invalid_detection_structure",
+        "contract_shape_mismatch",
+        "latency_regression",
+    }
+    checks.append(
+        _check_item(
+            name="problem_cases:portfolio_bundle",
+            passed=problem_cases == expected_problem_cases,
+            expected=sorted(expected_problem_cases),
+            observed=sorted(problem_cases),
+            category="problem_case",
+        )
+    )
+
+    aiguard_cases = summary["aiguard_cases"]
+    guard_verdicts = {case["guard_verdict"] for case in aiguard_cases}
+    checks.append(
+        _check_item(
+            name="aiguard:portfolio_case_count",
+            passed=len(aiguard_cases) == 4,
+            expected=4,
+            observed=len(aiguard_cases),
+            category="aiguard",
+        )
+    )
+    checks.append(
+        _check_item(
+            name="aiguard:portfolio_verdicts",
+            passed={"pass", "blocked", "review_required"}.issubset(guard_verdicts),
+            expected=["blocked", "pass", "review_required"],
+            observed=sorted(guard_verdicts),
+            category="aiguard",
+        )
+    )
+
+    docs_checks = _documentation_reference_checks(root)
+    checks.extend(docs_checks)
+
+    failed = [check for check in checks if not check["passed"]]
+    return {
+        "schema_version": PORTFOLIO_CHECK_SCHEMA_VERSION,
+        "status": "pass" if not failed else "fail",
+        "generated_at": _utc_now_iso(),
+        "repo_root": str(root),
+        "check_count": len(checks),
+        "failed_count": len(failed),
+        "checks": checks,
+        "core_metrics": {
+            "tensorrt_jetson_fp16_25w_mean_ms": runtime["tensorrt_jetson_fp16_25w"]["mean_ms"],
+            "onnxruntime_cpu_mean_ms": runtime["onnxruntime_cpu"]["mean_ms"],
+            "speedup": summary["comparison"]["speedup"],
+            "tensorrt_fps": runtime["tensorrt_jetson_fp16_25w"]["fps"],
+            "onnxruntime_fps": runtime["onnxruntime_cpu"]["fps"],
+            "map50": summary["evaluation_report"]["map50"],
+            "ground_truth_boxes": summary["evaluation_report"]["ground_truth_boxes"],
+        },
+        "notes": [
+            IN_MEMORY_NOTE,
+            "This check validates committed portfolio evidence only; it does not run production workers or external queues.",
+            "Lab remains the deployment decision owner; AIGuard remains optional deterministic diagnosis evidence.",
+        ],
+    }
+
+
+def build_portfolio_demo_check_text(report: dict[str, Any] | None = None) -> str:
+    report = report or build_portfolio_demo_check()
+    metrics = report["core_metrics"]
+    lines = [
+        "InferEdgeLab Portfolio Demo Check",
+        f"status: {report['status']}",
+        f"checks: {report['check_count']} total / {report['failed_count']} failed",
+        f"TensorRT Jetson FP16 25W mean_ms: {_fmt_number(metrics['tensorrt_jetson_fp16_25w_mean_ms'])}",
+        f"ONNX Runtime CPU mean_ms: {_fmt_number(metrics['onnxruntime_cpu_mean_ms'])}",
+        f"speedup: {_fmt_number(metrics['speedup'])}x faster",
+        f"TensorRT FPS: {_fmt_number(metrics['tensorrt_fps'])}",
+        f"ONNX Runtime FPS: {_fmt_number(metrics['onnxruntime_fps'])}",
+        f"YOLOv8 subset mAP@50: {_fmt_number(metrics['map50'])}",
+        f"YOLOv8 subset GT boxes: {metrics['ground_truth_boxes']}",
+    ]
+    failed = [check for check in report["checks"] if not check["passed"]]
+    if failed:
+        lines.append("")
+        lines.append("Failed checks:")
+        for check in failed:
+            lines.append(f"- {check['name']}: expected={check.get('expected')} observed={check.get('observed')}")
+    else:
+        lines.append("All portfolio demo evidence checks passed.")
+    lines.append("")
+    return "\n".join(lines)
+
+
 def demo_evidence_summary_json(summary: dict[str, Any] | None = None) -> str:
     return json.dumps(summary or build_demo_evidence_summary(), ensure_ascii=False, indent=2) + "\n"
 
@@ -363,6 +559,80 @@ def _power_mode_summary(summary: dict[str, Any]) -> dict[str, Any]:
         "tegrastats": summary.get("tegrastats") or {},
         "deployment_signal": summary.get("deployment_signal") or {},
     }
+
+
+def _documentation_reference_checks(root: Path) -> list[dict[str, Any]]:
+    required_snippets = {
+        "README.md": [
+            "10.066401",
+            "45.4299",
+            "4.51x",
+            "Local Studio",
+            "in-memory",
+        ],
+        "docs/portfolio/final_validation_completion.md": [
+            "10.066401",
+            "45.4299",
+            "4.51x",
+        ],
+        "docs/portfolio/runtime_compare_yolov8n.md": [
+            "10.066401",
+            "45.4299",
+            "4.51x",
+        ],
+        "docs/portfolio/yolov8_coco_subset_evaluation.md": [
+            "0.1410",
+            "0.2941",
+            "0.1685",
+        ],
+    }
+    checks: list[dict[str, Any]] = []
+    for relative_path, snippets in required_snippets.items():
+        path = root / relative_path
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            text = ""
+        for snippet in snippets:
+            checks.append(
+                _check_item(
+                    name=f"doc:{relative_path}:{snippet}",
+                    passed=snippet in text,
+                    expected=f"contains {snippet}",
+                    observed="present" if snippet in text else "missing",
+                    category="documentation_reference",
+                )
+            )
+    return checks
+
+
+def _check_item(
+    *,
+    name: str,
+    passed: bool,
+    category: str,
+    expected: Any | None = None,
+    observed: Any | None = None,
+    details: str | None = None,
+) -> dict[str, Any]:
+    item = {
+        "name": name,
+        "category": category,
+        "passed": bool(passed),
+    }
+    if expected is not None:
+        item["expected"] = expected
+    if observed is not None:
+        item["observed"] = observed
+    if details is not None:
+        item["details"] = details
+    return item
+
+
+def _close_enough(observed: float | None, expected: float) -> bool:
+    if observed is None:
+        return False
+    return abs(observed - expected) <= max(1e-6, abs(expected) * 1e-6)
 
 
 def _demo_ground_truth_box_count() -> int | None:

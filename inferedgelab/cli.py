@@ -14,6 +14,7 @@ from inferedgelab.commands.enrich_pair import enrich_pair_cmd
 from inferedgelab.commands.enrich_result import enrich_result_cmd
 from inferedgelab.commands.demo_evidence import demo_evidence_summary_cmd
 from inferedgelab.commands.demo_evidence import export_demo_evidence_cmd
+from inferedgelab.commands.demo_evidence import portfolio_demo_check_cmd
 from inferedgelab.commands.list_results import list_results_cmd
 from inferedgelab.commands.history_report import history_report_cmd
 from inferedgelab.commands.serve import serve_cmd
@@ -44,6 +45,9 @@ app.command("enrich-pair", help="Attach accuracy metadata to a base/new structur
 app.command("enrich-result", help="Attach accuracy metadata to an existing structured benchmark result")(enrich_result_cmd)
 app.command("demo-evidence-summary", help="Print Local Studio demo evidence summary")(demo_evidence_summary_cmd)
 app.command("export-demo-evidence", help="Export Local Studio demo evidence as Markdown")(export_demo_evidence_cmd)
+app.command("portfolio-demo-check", help="Validate committed portfolio demo evidence before submission")(
+    portfolio_demo_check_cmd
+)
 app.command("list-results", help="List recent structured benchmark results")(list_results_cmd)
 app.command("history-report", help="Generate HTML history report from structured benchmark results")(history_report_cmd)
 app.command("serve", help="Run InferEdgeLab FastAPI server")(serve_cmd)

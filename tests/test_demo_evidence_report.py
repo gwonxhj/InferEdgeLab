@@ -6,10 +6,12 @@ import pytest
 
 from inferedgelab.commands.demo_evidence import demo_evidence_summary_cmd
 from inferedgelab.commands.demo_evidence import export_demo_evidence_cmd
+from inferedgelab.commands.demo_evidence import portfolio_demo_check_cmd
 from inferedgelab.services.demo_evidence_report import (
     IN_MEMORY_NOTE,
     build_demo_evidence_markdown,
     build_demo_evidence_summary,
+    build_portfolio_demo_check,
 )
 
 
@@ -84,3 +86,26 @@ def test_export_demo_evidence_command_writes_markdown(tmp_path, capsys):
     assert "Saved" in output
     assert "# InferEdge Local Studio Demo Evidence Report" in markdown
     assert IN_MEMORY_NOTE in markdown
+
+
+def test_portfolio_demo_check_passes_for_committed_evidence():
+    report = build_portfolio_demo_check()
+
+    assert report["schema_version"] == "inferedgelab-portfolio-demo-check-v1"
+    assert report["status"] == "pass"
+    assert report["failed_count"] == 0
+    assert report["core_metrics"]["tensorrt_jetson_fp16_25w_mean_ms"] == pytest.approx(10.066401)
+    assert report["core_metrics"]["onnxruntime_cpu_mean_ms"] == pytest.approx(45.4299)
+    assert report["core_metrics"]["speedup"] == pytest.approx(4.513023, rel=1e-5)
+    assert any(check["name"] == "aiguard:portfolio_case_count" for check in report["checks"])
+    assert any(check["name"] == "problem_cases:portfolio_bundle" for check in report["checks"])
+
+
+def test_portfolio_demo_check_command_outputs_json(capsys):
+    portfolio_demo_check_cmd(format="json", repo_root=".")
+    out = capsys.readouterr().out
+    report = json.loads(out)
+
+    assert report["schema_version"] == "inferedgelab-portfolio-demo-check-v1"
+    assert report["status"] == "pass"
+    assert report["failed_count"] == 0

@@ -9,6 +9,8 @@ from inferedgelab.services.demo_evidence_report import (
     build_demo_evidence_markdown,
     build_demo_evidence_summary,
     build_demo_evidence_summary_text,
+    build_portfolio_demo_check,
+    build_portfolio_demo_check_text,
     demo_evidence_summary_json,
     write_demo_evidence_markdown,
 )
@@ -48,3 +50,20 @@ def export_demo_evidence_cmd(
 ) -> None:
     path = write_demo_evidence_markdown(output)
     rprint(f"[green]Saved[/green]: {path}")
+
+
+def portfolio_demo_check_cmd(
+    format: str = typer.Option("text", "--format", "-f", help="text/json"),
+    repo_root: str = typer.Option(".", "--repo-root", help="Repository root to check"),
+) -> None:
+    report = build_portfolio_demo_check(repo_root=repo_root)
+    normalized_format = format.strip().lower()
+    if normalized_format == "text":
+        print(build_portfolio_demo_check_text(report), end="")
+    elif normalized_format == "json":
+        print(demo_evidence_summary_json(report), end="")
+    else:
+        raise typer.BadParameter("--format must be one of: text, json")
+
+    if report["status"] != "pass":
+        raise typer.Exit(code=1)
