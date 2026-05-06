@@ -42,6 +42,7 @@ Runtime demo pair:
 - TensorRT Jetson FP16 25W: 10.066401 ms mean / 15.548438 ms p99 / 99.340373 FPS
 - Jetson FP16 15W power-mode evidence: 10.799106 ms mean / 15.529218 ms p99 / 92.600262 FPS
 - Studio speedup display: about 4.51x faster for the ONNX Runtime CPU FP32 vs TensorRT Jetson FP16 25W demo pair
+- Runtime report snapshots: [Jetson evidence summary](https://github.com/gwonxhj/InferEdge-Runtime/blob/main/docs/reports/jetson_evidence_summary.md), [Jetson power-mode comparison](https://github.com/gwonxhj/InferEdge-Runtime/blob/main/docs/reports/jetson_power_mode_comparison.md)
 
 YOLOv8 COCO subset evaluation:
 

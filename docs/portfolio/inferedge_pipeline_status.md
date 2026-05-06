@@ -110,6 +110,7 @@ InferEdge now has two runtime execution evidence paths:
    - 25W result: `results/jetson_evidence/yolov8n_trt_fp16_25w_20260504T170039Z.json`, mean `10.066401 ms`, p95 `15.476641 ms`, p99 `15.548438 ms`, FPS `99.340373`.
    - 15W result: `results/jetson_evidence/yolov8n_trt_fp16_15w_20260504T171959Z.json`, mean `10.799106 ms`, p95 `15.438690 ms`, p99 `15.529218 ms`, FPS `92.600262`.
    - The 15W vs 25W comparison is treated as system evidence because power mode changes the run configuration; it is not interpreted as same-condition model regression.
+   - Runtime report snapshots: [Jetson evidence summary](https://github.com/gwonxhj/InferEdge-Runtime/blob/main/docs/reports/jetson_evidence_summary.md), [Jetson power-mode comparison](https://github.com/gwonxhj/InferEdge-Runtime/blob/main/docs/reports/jetson_power_mode_comparison.md).
 
 Compare-key polish status: this limitation has been resolved in InferEdgeRuntime #37. When a Forge manifest is applied, Runtime now prefers `manifest.source_model.path` for compare naming, so a TensorRT artifact path such as `model.engine` can still produce `compare_model_name=yolov8n` and `compare_key=yolov8n__b1__h640w640__fp32`. This improves provenance and compare-readiness; it does not add production SaaS worker infrastructure.
 
