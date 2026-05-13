@@ -6,6 +6,8 @@ This document summarizes the current portfolio status of the InferEdge multi-rep
 
 InferEdge is an end-to-end edge AI inference validation pipeline. It is designed to turn an ONNX model into deployment evidence by connecting artifact build provenance, runtime profiling, Lab comparison/reporting, optional rule-based diagnosis, and a final deployment decision.
 
+Supporting sidecar: InferEdgeEnv is the local-first run evidence registry / comparability checker. InferEdgeLab remains the validation / decision layer; InferEdgeEnv records whether benchmark evidence can be trusted and compared.
+
 For a compressed recruiter/interviewer entry point, see [InferEdge 1-Page Architecture Summary](inferedge_1page_architecture.md).
 For the current portfolio completion checkpoint, see [InferEdge Final Validation Completion Pass](final_validation_completion.md).
 
@@ -23,6 +25,9 @@ ONNX model
 -> InferEdgeLab compare / API / job workflow / deployment_decision
 -> optional InferEdgeAIGuard provenance diagnosis
 -> deploy / review / blocked decision
+
+Supporting sidecar:
+InferEdgeEnv -> local-first run evidence registry / comparability checker
 ```
 
 The goal is not only to measure latency. The goal is to create reproducible evidence that can support deployment review.
@@ -76,6 +81,18 @@ Current role:
 - uses rule + evidence based detectors instead of abstract LLM guessing
 - diagnoses artifact/source hash mismatch, precision/shape/backend/target mismatch, and missing provenance
 - emits `guard_analysis` that Lab can preserve in report/API bundles and reflect in deployment decisions
+
+### InferEdgeEnv
+
+Env owns local run evidence registry and comparability judgement.
+
+Current role:
+
+- stores Edge AI benchmark runs as local artifacts and SQLite registry rows
+- preserves result bundles through manifest/checksum based export/import
+- records sampler/resource metadata as supplemental evidence
+- judges same-condition / conditional / no comparability without producing a leaderboard or composite score
+- stays separate from Lab's validation / decision ownership
 
 ## Implemented Connections
 

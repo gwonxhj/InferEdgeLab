@@ -4,6 +4,8 @@
 
 InferEdge is an end-to-end Edge AI inference validation pipeline that builds deployment artifacts, runs edge inference, compares results, diagnoses provenance issues, and produces deployment decisions.
 
+Supporting sidecar: InferEdgeEnv is a local-first run evidence registry and comparability checker for Edge AI inference benchmark results.
+
 PDF-ready portfolio draft: [InferEdge Portfolio Submission](inferedge_portfolio_submission.md). Local PDF export uses pandoc + xelatex through `bash scripts/export_portfolio_pdf.sh`.
 
 ## Problem
@@ -23,6 +25,9 @@ ONNX model
 -> optional InferEdgeAIGuard
 -> rule + evidence provenance diagnosis
 -> deploy / review / blocked decision
+
+Supporting sidecar:
+InferEdgeEnv -> local-first run evidence registry / comparability checker
 ```
 
 ## Repository Roles
@@ -31,6 +36,9 @@ ONNX model
 - **InferEdgeRuntime:** C++ execution/result export layer. Validates or runs model/artifact inputs, measures runtime latency, exports Lab-compatible result JSON, and dry-run exports worker responses.
 - **InferEdgeLab:** analysis/API/job/deployment decision owner. Compares Runtime results, generates reports, exposes API/job workflow contracts, preserves optional guard evidence, and owns the final `deployment_decision`.
 - **InferEdgeAIGuard:** optional rule + evidence diagnosis layer. Detects provenance/artifact/config mismatches and returns deterministic `guard_analysis` evidence for Lab to consume.
+- **InferEdgeEnv:** run evidence registry / comparability checker. Records benchmark artifacts, SQLite registry entries, evidence bundles, and comparability judgement without owning Lab deployment decisions.
+
+Portfolio boundary: InferEdgeLab is the validation / decision layer. InferEdgeEnv is the run evidence registry / comparability layer.
 
 ## Implemented Evidence
 

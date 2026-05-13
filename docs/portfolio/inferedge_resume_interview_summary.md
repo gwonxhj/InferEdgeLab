@@ -3,6 +3,7 @@
 ## Final Resume Bullets
 
 - Built InferEdge, an end-to-end Edge AI inference validation pipeline that connects Forge build provenance, C++ Runtime execution, Lab comparison/report/API/job workflows, optional AIGuard diagnosis evidence, and Lab-owned deployment decisions.
+- Positioned InferEdgeEnv as the supporting local-first run evidence registry / comparability checker, separate from InferEdgeLab's validation / decision ownership.
 - Validated real execution paths on both macOS and edge hardware: `yolov8n.onnx` through Lab -> C++ Runtime -> ONNX Runtime CPU -> Lab job result ingestion, and Jetson Orin Nano TensorRT execution through Forge manifest + `model.engine` + C++ Runtime CLI.
 - Documented Jetson TensorRT FP16 evidence with 25W mean `10.066401 ms`, p99 `15.548438 ms`, FPS `99.340373`, plus 15W power-mode comparison evidence.
 - Added Local Studio as a local-first browser workflow UI that can replay bundled ONNX Runtime CPU and TensorRT Jetson demo evidence, showing 45.4299 ms vs 10.066401 ms mean latency and about a 4.51x TensorRT speedup without claiming production SaaS readiness.
@@ -24,7 +25,7 @@ Built the Lab-side orchestration and contract foundation for an edge AI validati
 
 ## Interview: First 30 Seconds
 
-InferEdge는 단순 benchmark tool이 아니라 edge AI 모델의 build provenance, 실제 Runtime execution, 비교/report, optional diagnosis evidence, deployment decision을 연결하는 end-to-end validation pipeline입니다. 저는 macOS에서 `yolov8n.onnx`를 Lab -> C++ Runtime -> ONNX Runtime CPU -> Lab job result로 검증했고, Jetson Orin Nano에서는 Forge manifest와 TensorRT `model.engine`를 C++ Runtime CLI로 실행해 FP16 25W mean 10.066401 ms, p99 15.548438 ms, FPS 99.340373의 evidence를 확보했습니다. 최근에는 Runtime이 manifest source model identity를 보존하도록 보완해, engine artifact도 source model 기반 `compare_key`를 유지할 수 있게 했습니다.
+InferEdge는 단순 benchmark tool이 아니라 edge AI 모델의 build provenance, 실제 Runtime execution, 비교/report, optional diagnosis evidence, deployment decision을 연결하는 end-to-end validation pipeline입니다. InferEdgeLab은 validation / decision layer이고, InferEdgeEnv는 run evidence registry / comparability layer입니다. 저는 macOS에서 `yolov8n.onnx`를 Lab -> C++ Runtime -> ONNX Runtime CPU -> Lab job result로 검증했고, Jetson Orin Nano에서는 Forge manifest와 TensorRT `model.engine`를 C++ Runtime CLI로 실행해 FP16 25W mean 10.066401 ms, p99 15.548438 ms, FPS 99.340373의 evidence를 확보했습니다.
 
 ## Interview: What Actually Works?
 
@@ -38,15 +39,18 @@ InferEdge는 단순 benchmark tool이 아니라 edge AI 모델의 build provenan
 
 - Built InferEdge, an end-to-end Edge AI Inference Validation Pipeline that connects model artifact provenance, real runtime execution, result analysis, diagnosis evidence, and deployment decisions.
 - Implemented InferEdgeLab as the analysis layer that turns Runtime benchmark outputs into comparison reports, API responses, async job results, and Lab-owned deployment decisions.
+- Positioned InferEdgeEnv as a local-first run evidence registry / comparability checker that records benchmark evidence separately from Lab deployment decisions.
 - Aligned Forge, Runtime, Lab, and AIGuard through JSON contracts: Forge for build/provenance, Runtime for C++ execution/result export, Lab for analysis/API/job/decision, and AIGuard for optional deterministic diagnosis evidence.
 - Validated two runtime evidence paths: Lab -> C++ Runtime -> ONNX Runtime CPU -> Lab job result ingestion on macOS with `yolov8n.onnx`, and Jetson Orin Nano TensorRT execution using a Forge manifest plus TensorRT engine artifact.
 - Current scope is a portfolio-grade SaaS API/job/worker contract foundation with dev-only Runtime execution smoke; production worker daemon, persistent queue/database, upload flow, frontend, auth, and billing remain future work.
 
 ## 2. Resume Project Entry: Detailed Version
 
-InferEdge is an end-to-end Edge AI Inference Validation Pipeline built across four repositories. The system is designed to answer a deployment-oriented question: not just "how fast did this model run?", but "which artifact was built, how was it executed, what evidence was produced, and is it safe to deploy?"
+InferEdge is an end-to-end Edge AI Inference Validation Pipeline built across four core repositories, with InferEdgeEnv as a supporting run evidence registry / comparability sidecar. The system is designed to answer a deployment-oriented question: not just "how fast did this model run?", but "which artifact was built, how was it executed, what evidence was produced, can that evidence be compared, and is it safe to deploy?"
 
 InferEdgeForge owns build artifact provenance. It records metadata and manifests such as source model hash, artifact hash, backend, target, precision, shape, preset, and build id. InferEdgeRuntime owns the C++ execution and result export boundary. It validates Lab worker requests, exports Lab-compatible Runtime results, and supports dry-run worker response export. InferEdgeLab owns comparison, reporting, SaaS API/job contracts, and the final deployment decision. InferEdgeAIGuard is optional and provides deterministic rule/evidence diagnosis for provenance or artifact mismatch cases.
+
+InferEdgeEnv is intentionally separate from Lab's validation / decision layer. Env records local benchmark artifacts, SQLite registry entries, export/import evidence bundles, sampler/resource metadata, and same-condition / conditional / no comparability judgement so benchmark evidence can be trusted and moved without turning it into a ranking system.
 
 The Lab side includes `/api/compare`, `/api/analyze`, in-memory job stubs, worker request/response mapping, API response contracts, deployment decision bundles, and report evidence preservation. A recent manual smoke validated a real dev-only Runtime execution path using `yolov8n.onnx`: Lab created an analyze job, invoked the C++ Runtime CLI through subprocess, ONNX Runtime CPU executed the model, and the result JSON was ingested back into the Lab job result. The smoke completed successfully with mean latency about 47.97 ms, p95/p99 about 51.80 ms, and about 20.85 FPS.
 
@@ -62,7 +66,7 @@ InferEdge is my end-to-end Edge AI inference validation pipeline. It does more t
 
 InferEdge started from a simple edge inference benchmarking problem, but I expanded it into an end-to-end validation pipeline. In edge AI, a raw latency number is not enough. You need to know which model produced which artifact, what backend and precision were used, whether the runtime result is compatible with the analysis layer, and whether the result should be deployed, reviewed, or blocked.
 
-I split the system into four repositories with clear responsibilities. InferEdgeForge is the build/provenance layer. It records metadata, manifests, hashes, precision, target, shape, preset, and build id. InferEdgeRuntime is the C++ execution/result export layer. It validates worker request payloads and produces Lab-compatible runtime result or worker response JSON. InferEdgeLab is the analysis and decision owner. It provides compare/report flows, SaaS API response contracts, in-memory job workflow stubs, worker request/response mapping, and deployment decision output. InferEdgeAIGuard remains optional and performs rule/evidence based diagnosis, such as artifact or provenance mismatch detection.
+I split the system into four core repositories with clear responsibilities, plus InferEdgeEnv as a supporting evidence sidecar. InferEdgeForge is the build/provenance layer. It records metadata, manifests, hashes, precision, target, shape, preset, and build id. InferEdgeRuntime is the C++ execution/result export layer. It validates worker request payloads and produces Lab-compatible runtime result or worker response JSON. InferEdgeLab is the validation / decision owner. It provides compare/report flows, SaaS API response contracts, in-memory job workflow stubs, worker request/response mapping, and deployment decision output. InferEdgeAIGuard remains optional and performs rule/evidence based diagnosis, such as artifact or provenance mismatch detection. InferEdgeEnv records whether benchmark evidence can be trusted and compared.
 
 The important recent validation is that this is no longer only contract-level documentation. I ran a manual dev-only smoke using `yolov8n.onnx`: `/api/analyze` created a Lab job, `/api/jobs/{job_id}/run-runtime-dev` invoked the C++ Runtime CLI through subprocess, ONNX Runtime CPU executed the model, and the Runtime JSON was ingested back into the Lab job result. The result completed successfully, with mean latency about 47.97 ms, p95/p99 about 51.80 ms, and about 20.85 FPS. The deployment decision is `unknown` at that direct execution stage because the result has not yet gone through Lab compare/report, which is expected behavior.
 
@@ -116,6 +120,8 @@ So the accurate description is: InferEdgeLab has a SaaS/API/job contract foundat
 
 **InferEdgeRuntime** is the C++ execution/result export layer. It validates or executes model/artifact inputs and emits Lab-compatible runtime result JSON or worker response payloads.
 
-**InferEdgeLab** is the analysis, API/job workflow, report, and deployment decision owner. It consumes Runtime results, compares them, creates reports and API bundles, tracks job state, preserves optional diagnosis evidence, and owns the final deployment decision.
+**InferEdgeLab** is the validation / decision layer and owns analysis, API/job workflow, reports, and deployment decisions. It consumes Runtime results, compares them, creates reports and API bundles, tracks job state, preserves optional diagnosis evidence, and owns the final deployment decision.
 
 **InferEdgeAIGuard** is the optional deterministic diagnosis layer. It is not an LLM guessing system. It uses rule/evidence based detectors to identify artifact mismatch, source model mismatch, precision/shape/backend mismatch, and insufficient provenance evidence. Lab can consume its `guard_analysis`, but Lab remains the final decision owner.
+
+**InferEdgeEnv** is the run evidence registry / comparability layer. It stores Edge AI inference benchmark runs as local artifacts plus SQLite registry rows and judges whether two runs are same-condition comparable, conditionally comparable, or not comparable.

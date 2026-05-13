@@ -6,6 +6,8 @@ InferEdge는 edge AI 모델을 변환, 실행, 비교, 진단하고 최종 배�
 
 InferEdge is not a benchmarking tool, but an end-to-end validation pipeline that connects artifact provenance, runtime behavior, and deployment decisions.
 
+InferEdgeEnv complements this pipeline as a local-first run evidence registry and comparability checker. Lab remains the validation / decision layer; Env records whether benchmark evidence can be trusted and compared.
+
 이 프로젝트는 단순 latency benchmark가 아니라 artifact provenance, runtime result compatibility, deployment decision까지 연결한다. 목표는 "빠른 숫자"를 보여주는 것이 아니라, 어떤 모델과 산출물이 어떤 환경에서 실행되었고 그 결과를 배포해도 되는지 검토 가능한 evidence로 남기는 것이다.
 
 채용 포트폴리오용 5줄 요약:
@@ -26,6 +28,9 @@ ONNX model
 -> InferEdgeLab compare / API / job workflow / deployment_decision
 -> optional InferEdgeAIGuard provenance diagnosis
 -> deploy / review / blocked decision
+
+Supporting sidecar:
+InferEdgeEnv -> local-first run evidence registry / comparability checker
 ```
 
 ## 2. Problem Statement
@@ -44,16 +49,17 @@ InferEdge는 이 질문들을 CLI, JSON schema, report, API contract, worker bou
 
 ## 3. System Architecture
 
-InferEdge는 4개 repository를 하나의 pipeline으로 분리한다.
+InferEdge는 4개 core repository를 하나의 validation/decision pipeline으로 분리하고, InferEdgeEnv를 supporting run evidence sidecar로 둔다.
 
 ```text
 Forge = build / provenance
 Runtime = C++ execution / result export
 Lab = compare / report / API / deployment decision
 AIGuard = optional rule + evidence diagnosis
+Env = local run evidence registry / comparability checker
 ```
 
-이 구조의 핵심은 responsibility boundary다. Forge는 artifact를 만들고 provenance를 남긴다. Runtime은 실제 실행과 profiling evidence를 만든다. Lab은 결과를 비교하고 report/API bundle과 deployment decision을 생성한다. AIGuard는 optional evidence로 provenance mismatch나 failure signal을 진단한다.
+이 구조의 핵심은 responsibility boundary다. Forge는 artifact를 만들고 provenance를 남긴다. Runtime은 실제 실행과 profiling evidence를 만든다. Lab은 결과를 비교하고 report/API bundle과 deployment decision을 생성한다. AIGuard는 optional evidence로 provenance mismatch나 failure signal을 진단한다. InferEdgeEnv는 Lab decision과 분리된 local benchmark artifact, registry row, evidence bundle, comparability judgement를 관리한다.
 
 ## 4. Repository Roles
 
@@ -65,6 +71,7 @@ AIGuard = optional rule + evidence diagnosis
 | InferEdge-Runtime | C++ runtime execution and result export layer for ONNX Runtime/TensorRT edge inference validation. |
 | InferEdgeLab | Analysis/API layer for end-to-end Edge AI inference validation, reports, jobs, and deployment decisions. |
 | InferEdgeAIGuard | Optional deterministic diagnosis layer for provenance mismatch and suspicious inference result evidence. |
+| InferEdgeEnv | Local-first run evidence registry and comparability checker for Edge AI inference benchmark results. |
 
 **InferEdgeForge**  
 Build/provenance layer. ONNX 모델을 TensorRT/RKNN 등 edge deployment artifact로 변환하고, `metadata.json`, `manifest.json`, `worker_runtime_summary`로 source hash, artifact hash, backend, target, precision, shape, preset 정보를 보존한다.
@@ -77,6 +84,9 @@ Analysis/API/job/deployment decision owner. Runtime result JSON을 비교하고 
 
 **InferEdgeAIGuard**  
 Rule + evidence diagnosis layer. Forge summary, Runtime worker_response, Lab result를 기반으로 artifact/source hash mismatch, backend/target/precision/shape mismatch, insufficient provenance 등을 deterministic detector로 진단한다. AIGuard는 LLM 추측이 아니라 rule + evidence 기반 detector 구조다.
+
+**InferEdgeEnv**
+Run evidence registry / comparability checker. Edge AI inference benchmark result를 local artifact와 SQLite registry로 고정하고, same-condition / conditional / no comparability judgement를 제공한다. Env는 deployment decision을 소유하지 않으며, Lab의 validation / decision layer와 분리된 evidence portability boundary다.
 
 ## 5. Key Implemented Features
 
@@ -94,7 +104,8 @@ Rule + evidence diagnosis layer. Forge summary, Runtime worker_response, Lab res
 - AIGuard worker provenance mismatch diagnosis
 - AIGuard guard_analysis preservation in Lab deployment decision/report smoke
 - Local Studio browser workflow for Run, Import, Jetson command helper, demo evidence replay, Compare View, and Lab-owned Deployment Decision inspection
-- 4개 repository README pipeline summary sync
+- InferEdgeEnv run artifact bundle, SQLite registry, export/import, sampler metadata, resource lookup, and comparability-first report UX
+- Core repository README pipeline summary sync plus InferEdgeEnv sidecar positioning
 
 ## 6. Validation Evidence
 
