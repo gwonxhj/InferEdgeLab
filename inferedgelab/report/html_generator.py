@@ -274,14 +274,25 @@ def _deployment_decision_to_html(deployment_decision: Dict[str, Any] | None) -> 
     if deployment_decision is None:
         return ""
 
+    triggered_rules = deployment_decision.get("triggered_rules") or []
+    triggered_rules_html = ""
+    if triggered_rules:
+        triggered_rules_html = (
+            "<p><strong>triggered_rules</strong>: "
+            + ", ".join(f"<code>{escape(str(rule))}</code>" for rule in triggered_rules)
+            + "</p>"
+        )
+
     return f"""
   <h2>Deployment Decision</h2>
   <div class="meta">
+    <p><strong>policy_version</strong>: <code>{escape(str(deployment_decision.get("policy_version")))}</code></p>
     <p><strong>decision</strong>: <code>{escape(str(deployment_decision.get("decision")))}</code></p>
     <p><strong>reason</strong>: {escape(str(deployment_decision.get("reason")))}</p>
     <p><strong>lab_overall</strong>: <code>{escape(str(deployment_decision.get("lab_overall")))}</code></p>
     <p><strong>guard_status</strong>: <code>{escape(str(deployment_decision.get("guard_status")))}</code></p>
     <p><strong>recommended_action</strong>: {escape(str(deployment_decision.get("recommended_action")))}</p>
+    {triggered_rules_html}
   </div>
     """
 

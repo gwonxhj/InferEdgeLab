@@ -34,6 +34,11 @@ def test_demo_evidence_summary_reproduces_portfolio_metrics():
     assert comparison["speedup"] == pytest.approx(4.512994, rel=1e-5)
     assert comparison["lab_overall"] == "tradeoff_faster"
     assert summary["deployment_decision"]["decision"] == "review_required"
+    assert (
+        summary["deployment_decision"]["policy_version"]
+        == "inferedge-lab-decision-policy-v1"
+    )
+    assert "guard_warning_review" in summary["deployment_decision"]["triggered_rules"]
     assert evaluation["metric_backend"] == "simplified"
     assert evaluation["ground_truth_boxes"] == 89
     assert evaluation["map50"] == pytest.approx(0.1409784036)
@@ -60,6 +65,8 @@ def test_demo_evidence_markdown_contains_report_sections():
     assert "ONNX Runtime CPU baseline" in markdown
     assert "4.513x faster" in markdown
     assert "YOLOv8 COCO Subset Evaluation" in markdown
+    assert "inferedge-lab-decision-policy-v1" in markdown
+    assert "guard_warning_review" in markdown
     assert "latency_regression" in markdown
     assert "AIGuard Portfolio Cases" in markdown
     assert "Jetson Power Mode Evidence" in markdown

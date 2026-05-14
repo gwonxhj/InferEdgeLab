@@ -193,6 +193,13 @@ def test_completed_worker_response_maps_to_completed_job():
     assert completed["updated_at"] == worker_response["completed_at"]
     assert completed["error"] is None
     assert completed["result"]["deployment_decision"]["decision"] == "unknown"
+    assert (
+        completed["result"]["deployment_decision"]["policy_version"]
+        == "inferedge-lab-decision-policy-v1"
+    )
+    assert completed["result"]["deployment_decision"]["triggered_rules"] == [
+        "worker_uncompared_unknown"
+    ]
     assert completed["result"]["comparison"]["result"]["runtime_result"] == worker_response["runtime_result"]
     assert completed["result"]["provenance"]["forge_metadata"] == worker_response["forge_metadata"]
     assert completed["next_actions"] == ["review_deployment_decision"]

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from inferedgelab.services.deployment_decision import POLICY_VERSION
 from inferedgelab.services.deployment_decision import build_deployment_decision
 
 
@@ -18,12 +19,21 @@ def make_judgement(
     }
 
 
+def assert_policy(decision: dict, *rules: str) -> None:
+    assert decision["policy_version"] == POLICY_VERSION
+    for rule in rules:
+        assert rule in decision["triggered_rules"]
+    assert decision["policy_summary"]
+    assert decision["policy_summary"][0]["rule"] == decision["triggered_rules"][0]
+
+
 def test_guard_error_blocks_deployment():
     decision = build_deployment_decision(make_judgement(), {"status": "error"})
 
     assert decision["decision"] == "blocked"
     assert decision["reason"] == "Guard analysis reported an error-level validation issue."
     assert decision["recommended_action"] == "Do not deploy until the Guard anomalies are resolved."
+    assert_policy(decision, "guard_error_block")
 
 
 def test_guard_warning_requires_review():
@@ -31,6 +41,7 @@ def test_guard_warning_requires_review():
 
     assert decision["decision"] == "review_required"
     assert decision["reason"] == "Guard analysis reported warning-level validation risks."
+    assert_policy(decision, "guard_warning_review")
 
 
 def test_guard_skipped_is_unknown():
@@ -38,6 +49,7 @@ def test_guard_skipped_is_unknown():
 
     assert decision["decision"] == "unknown"
     assert decision["reason"] == "Guard analysis was skipped."
+    assert_policy(decision, "guard_skipped_unknown")
 
 
 def test_guard_ok_with_improvement_is_deployable():
@@ -47,18 +59,21 @@ def test_guard_ok_with_improvement_is_deployable():
     assert decision["lab_overall"] == "improvement"
     assert decision["guard_status"] == "ok"
     assert decision["guard_verdict"] == "pass"
+    assert_policy(decision, "guard_ok_lab_favorable_deployable")
 
 
 def test_guard_ok_with_neutral_is_deployable_with_note():
     decision = build_deployment_decision(make_judgement(overall="neutral"), {"status": "ok"})
 
     assert decision["decision"] == "deployable_with_note"
+    assert_policy(decision, "guard_ok_lab_neutral_deployable_note")
 
 
 def test_guard_ok_with_regression_requires_review():
     decision = build_deployment_decision(make_judgement(overall="regression"), {"status": "ok"})
 
     assert decision["decision"] == "review_required"
+    assert_policy(decision, "guard_ok_lab_unfavorable_review")
 
 
 def test_shape_mismatch_requires_review_but_guard_error_stays_blocked():
@@ -67,6 +82,8 @@ def test_shape_mismatch_requires_review_but_guard_error_stays_blocked():
 
     assert review_decision["decision"] == "review_required"
     assert blocked_decision["decision"] == "blocked"
+    assert_policy(review_decision, "shape_mismatch_review")
+    assert_policy(blocked_decision, "guard_error_block")
 
 
 def test_risky_tradeoff_requires_review():
@@ -76,6 +93,7 @@ def test_risky_tradeoff_requires_review():
     )
 
     assert decision["decision"] == "review_required"
+    assert_policy(decision, "tradeoff_risk_review")
 
 
 def test_diagnosis_guard_verdict_blocked_blocks_deployment():
@@ -93,6 +111,7 @@ def test_diagnosis_guard_verdict_blocked_blocks_deployment():
     assert decision["decision"] == "blocked"
     assert decision["guard_status"] == "error"
     assert decision["guard_verdict"] == "blocked"
+    assert_policy(decision, "guard_error_block")
 
 
 def test_diagnosis_guard_verdict_review_requires_lab_review():
@@ -110,3 +129,4 @@ def test_diagnosis_guard_verdict_review_requires_lab_review():
     assert decision["decision"] == "review_required"
     assert decision["guard_status"] == "warning"
     assert decision["guard_verdict"] == "review_required"
+    assert_policy(decision, "guard_warning_review")

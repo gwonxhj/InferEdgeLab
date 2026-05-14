@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from inferedgelab.services.deployment_decision import POLICY_VERSION
 from inferedgelab.services.demo_evidence_report import build_demo_evidence_summary
 
 SCHEMA_VERSION = "inferedgelab-core4-conformance-v1"
@@ -265,6 +266,29 @@ def _check_lab_contract(summary: dict[str, Any], checks: list[dict[str, Any]]) -
                 category="lab",
                 expected="non-empty reason",
                 observed=decision.get("reason"),
+            ),
+            _check_item(
+                name="lab:deployment_policy_version",
+                passed=decision.get("policy_version") == POLICY_VERSION,
+                category="lab",
+                expected=POLICY_VERSION,
+                observed=decision.get("policy_version"),
+            ),
+            _check_item(
+                name="lab:deployment_triggered_rules",
+                passed=isinstance(decision.get("triggered_rules"), list)
+                and len(decision["triggered_rules"]) > 0,
+                category="lab",
+                expected="non-empty triggered_rules list",
+                observed=decision.get("triggered_rules"),
+            ),
+            _check_item(
+                name="lab:deployment_policy_summary",
+                passed=isinstance(decision.get("policy_summary"), list)
+                and len(decision["policy_summary"]) > 0,
+                category="lab",
+                expected="non-empty policy_summary list",
+                observed=decision.get("policy_summary"),
             ),
         ]
     )

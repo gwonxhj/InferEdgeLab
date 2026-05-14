@@ -111,11 +111,17 @@ def _append_guard_analysis(lines: list[str], guard_analysis: Dict[str, Any]) -> 
 def _append_deployment_decision(lines: list[str], deployment_decision: Dict[str, Any]) -> None:
     lines.append("## Deployment Decision")
     lines.append("")
+    lines.append(f"- policy_version: {deployment_decision.get('policy_version')}")
     lines.append(f"- decision: {deployment_decision.get('decision')}")
     lines.append(f"- reason: {deployment_decision.get('reason')}")
     lines.append(f"- lab_overall: {deployment_decision.get('lab_overall')}")
     lines.append(f"- guard_status: {deployment_decision.get('guard_status')}")
     lines.append(f"- recommended_action: {deployment_decision.get('recommended_action')}")
+    triggered_rules = deployment_decision.get("triggered_rules") or []
+    if triggered_rules:
+        lines.append("- triggered_rules:")
+        for rule in triggered_rules:
+            lines.append(f"  - {rule}")
     lines.append("")
 
 
