@@ -1,0 +1,24 @@
+{
+  "schema_version": "inferedge-forge-manifest-v1",
+  "build_id": "yolov8n-tensorrt-jetson_fp16-20260424T133518Z",
+  "source_model": {
+    "path": "models/onnx/yolov8n.onnx",
+    "sha256": "4b31ebf8213f2971b8136f7ccca475e27f40559a14bc27e0d8a531a933273eb7"
+  },
+  "artifact": {
+    "path": "builds/yolov8n__jetson__tensorrt__jetson_fp16/model.engine",
+    "sha256": "29484d824f5be2dfd3e1e801e927298f15f8e77af785711ac6fd429a7445ea22",
+    "type": "engine"
+  },
+  "backend": "tensorrt",
+  "target": "jetson",
+  "precision": "fp16",
+  "input_shape": [1, 3, 640, 640],
+  "preset": {
+    "name": "tensorrt/jetson_fp16"
+  },
+  "runtime_handoff": {
+    "compare_key_hint": "yolov8n__b1__h640w640__fp16",
+    "backend_key_hint": "tensorrt__jetson"
+  }
+}
