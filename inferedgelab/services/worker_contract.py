@@ -5,6 +5,8 @@ from typing import Any
 from inferedgelab.services.api_job_contract import ApiJobContractError
 from inferedgelab.services.api_job_contract import build_api_job_response
 from inferedgelab.services.api_job_contract import validate_api_job_response
+from inferedgelab.services.deployment_decision import POLICY_VERSION
+from inferedgelab.services.deployment_decision import policy_summary_for_rules
 from inferedgelab.services.guard_analysis import guard_status, guard_verdict
 
 
@@ -199,13 +201,17 @@ def _build_completed_job_result(worker_response: dict[str, Any]) -> dict[str, An
     runtime_result = worker_response["runtime_result"]
     guard_analysis = worker_response.get("guard_analysis")
     normalized_guard_status = guard_status(guard_analysis)
+    triggered_rules = ["worker_uncompared_unknown"]
     deployment_decision = {
+        "policy_version": POLICY_VERSION,
         "decision": "unknown",
         "reason": "Worker response has not been compared by Lab yet.",
         "lab_overall": None,
         "guard_status": normalized_guard_status,
         "guard_verdict": guard_verdict(guard_analysis),
         "recommended_action": "Run Lab compare/report before deployment decision.",
+        "triggered_rules": triggered_rules,
+        "policy_summary": policy_summary_for_rules(triggered_rules),
     }
     result = {
         "summary": {

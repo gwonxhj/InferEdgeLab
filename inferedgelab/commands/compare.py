@@ -75,9 +75,15 @@ def _render_deployment_decision(deployment_decision: dict | None) -> None:
         return
 
     rprint("[bold]Deployment Decision[/bold]")
+    rprint(f"- policy_version: {deployment_decision.get('policy_version')}")
     rprint(f"- decision: {deployment_decision.get('decision')}")
     rprint(f"- reason: {deployment_decision.get('reason')}")
     rprint(f"- recommended_action: {deployment_decision.get('recommended_action')}")
+    triggered_rules = deployment_decision.get("triggered_rules") or []
+    if triggered_rules:
+        rprint("- triggered_rules:")
+        for rule in triggered_rules:
+            rprint(f"  - {rule}")
 
 
 def compare_cmd(

@@ -61,6 +61,13 @@ def test_analyze_worker_completed_workflow_smoke():
     mapped_completed = apply_worker_response_to_job(queued_job, worker_response)
     assert mapped_completed["status"] == "completed"
     assert mapped_completed["result"]["deployment_decision"]["decision"] == "unknown"
+    assert (
+        mapped_completed["result"]["deployment_decision"]["policy_version"]
+        == "inferedge-lab-decision-policy-v1"
+    )
+    assert mapped_completed["result"]["deployment_decision"]["triggered_rules"] == [
+        "worker_uncompared_unknown"
+    ]
     assert mapped_completed["result"]["guard_analysis"] == worker_response["guard_analysis"]
 
     stored_completed = complete_dev_endpoint(
