@@ -112,11 +112,14 @@ The same evidence can be exported from the CLI without opening the browser:
 poetry run inferedgelab demo-evidence-summary
 poetry run inferedgelab demo-evidence-summary --format json
 poetry run inferedgelab portfolio-demo-check
+poetry run inferedgelab core4-conformance-check
 poetry run inferedgelab export-demo-evidence --output reports/studio_demo_evidence.md
 ```
 
 `portfolio-demo-check` is the pre-submission guardrail for this portfolio demo.
 It validates the committed Studio fixtures, expected README/PPT metrics, portfolio docs, and local Studio assets without starting workers, queues, databases, or a production SaaS service.
+`core4-conformance-check` is the cross-repo contract guardrail.
+It validates the bundled Forge manifest/metadata fixture, Runtime result JSON, Lab compare/deployment decision surface, and AIGuard `guard_analysis` evidence without mutating existing schemas.
 
 ![InferEdge Local Studio demo evidence](assets/images/local-studio-demo-evidence.png)
 
