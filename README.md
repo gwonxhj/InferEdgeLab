@@ -17,7 +17,7 @@ Language: English | [한국어](README.ko.md)
 - Real device execution: Jetson TensorRT + ONNX Runtime CPU
 - Structured comparison: latency, accuracy, and validation evidence
 - Deployment decision: deployable / review / blocked
-- Sidecar evidence registry: InferEdgeEnv records local benchmark evidence and comparability separately from Lab decisions
+- Comparability layer: InferEdgeEnv v0.1.5 records local benchmark evidence and comparability separately from Lab decisions
 - Local Studio: interactive workflow UI for inference validation
 
 ## What Makes InferEdge Different?
@@ -46,8 +46,8 @@ ONNX model
 -> optional InferEdgeAIGuard provenance diagnosis
 -> deploy / review / blocked decision
 
-Supporting sidecar:
-InferEdgeEnv -> local-first run evidence registry / comparability checker
+Experiment hygiene / comparability layer:
+InferEdgeEnv -> v0.1.5 v1-complete local-first run evidence registry / comparability checker
 ```
 
 Repository roles are deliberately split:
@@ -56,9 +56,9 @@ Repository roles are deliberately split:
 - **InferEdgeRuntime:** C++ execution, profiling, result export, and worker response boundary.
 - **InferEdgeLab:** compare/report/API/job workflow and final deployment decision ownership.
 - **InferEdgeAIGuard:** optional rule + evidence based failure and provenance diagnosis.
-- **InferEdgeEnv:** local-first run evidence registry and comparability checker for Edge AI inference benchmark results.
+- **InferEdgeEnv:** v0.1.5 v1-complete experiment hygiene / comparability layer; local-first run evidence registry and comparability checker for Edge AI inference benchmark results.
 
-Portfolio boundary: InferEdgeLab is the validation / decision layer. InferEdgeEnv is the run evidence registry / comparability layer. InferEdge validates whether a model is deployable; InferEdgeEnv records whether benchmark evidence can be trusted and compared.
+Portfolio boundary: InferEdgeLab is the validation / decision layer. InferEdgeEnv is the v0.1.5 v1-complete experiment hygiene / comparability layer. InferEdge validates whether a model is deployable; InferEdgeEnv records whether benchmark evidence can be trusted and compared.
 
 Implemented today: Lab API response contract, `/api/compare`, `/api/analyze` in-memory jobs, worker request/response mappings, Runtime dry-run validation/export, Forge worker/runtime summary, AIGuard provenance mismatch diagnosis, Lab decision/report evidence smoke coverage, dev-only Lab -> Runtime ONNX Runtime smoke using `yolov8n.onnx`, manual Jetson TensorRT Runtime smoke using a Forge manifest plus TensorRT engine artifact, and Runtime source-model identity preservation for compare-ready TensorRT engine results.
 

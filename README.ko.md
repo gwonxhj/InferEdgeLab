@@ -17,8 +17,8 @@ ONNX model
 -> optional InferEdgeAIGuard deterministic diagnosis evidence
 -> deploy / review / blocked decision
 
-Supporting sidecar:
-InferEdgeEnv -> local-first run evidence registry / comparability checker
+Experiment hygiene / comparability layer:
+InferEdgeEnv -> v0.1.5 v1-complete local-first run evidence registry / comparability checker
 ```
 
 ## Summary
@@ -27,7 +27,7 @@ InferEdgeEnv -> local-first run evidence registry / comparability checker
 - Real device execution: Jetson TensorRT + ONNX Runtime CPU
 - Structured comparison: latency, accuracy, validation evidence
 - Deployment decision: deployable / review / blocked
-- Sidecar evidence registry: InferEdgeEnv는 Lab decision과 분리된 local benchmark evidence와 comparability를 기록
+- Comparability layer: InferEdgeEnv `v0.1.5`는 Lab decision과 분리된 local benchmark evidence와 comparability를 기록
 - Local Studio: inference validation을 브라우저에서 확인하는 local-first workflow UI
 
 ## What Makes InferEdge Different?
@@ -113,9 +113,9 @@ bash scripts/demo_pipeline_full.sh --run-jetson-command-print
 - **InferEdge-Runtime:** Forge artifact 또는 Lab worker request를 받아 C++ 실행/검증 결과 JSON을 생성합니다.
 - **InferEdgeLab:** 결과를 비교/리포트/API/job/deployment decision으로 정리하는 owner입니다.
 - **InferEdgeAIGuard:** provenance mismatch나 suspicious result를 rule/evidence 기반으로 진단하는 optional evidence layer입니다.
-- **InferEdgeEnv:** Edge AI inference benchmark result를 local artifact와 SQLite registry로 고정하고 비교 가능성을 판정하는 local-first run evidence registry입니다.
+- **InferEdgeEnv:** `v0.1.5` v1-complete experiment hygiene / comparability layer로, Edge AI inference benchmark result를 local artifact와 SQLite registry로 고정하고 비교 가능성을 판정합니다.
 
-포트폴리오 경계: InferEdgeLab은 validation / decision layer이고, InferEdgeEnv는 run evidence registry / comparability layer입니다. InferEdge는 모델이 배포 가능한지 검증하고, InferEdgeEnv는 benchmark evidence가 신뢰 가능하고 비교 가능한 형태로 기록됐는지 관리합니다.
+포트폴리오 경계: InferEdgeLab은 validation / decision layer이고, InferEdgeEnv는 `v0.1.5` v1-complete experiment hygiene / comparability layer입니다. InferEdge는 모델이 배포 가능한지 검증하고, InferEdgeEnv는 benchmark evidence가 신뢰 가능하고 비교 가능한 형태로 기록됐는지 관리합니다.
 
 ## 현재 범위와 future work
 
