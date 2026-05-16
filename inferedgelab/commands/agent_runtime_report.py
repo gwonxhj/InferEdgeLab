@@ -1,0 +1,70 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import typer
+from rich import print as rprint
+
+from inferedgelab.services.agent_runtime_report import (
+    agent_runtime_reliability_json,
+    build_agent_runtime_reliability_markdown,
+    load_agent_runtime_reliability_bundle,
+)
+
+
+def agent_runtime_report_cmd(
+    orchestration_summary: str = typer.Option(
+        ...,
+        "--orchestration-summary",
+        help="Path to InferEdgeOrchestrator orchestration_summary JSON",
+    ),
+    guard_analysis: str = typer.Option(
+        "",
+        "--guard-analysis",
+        help="Optional AIGuard runtime reliability guard_analysis JSON",
+    ),
+    format: str = typer.Option("text", "--format", "-f", help="text/json/markdown"),
+    output: str = typer.Option("", "--output", "-o", help="Optional output path"),
+) -> None:
+    report = load_agent_runtime_reliability_bundle(
+        orchestration_summary_path=orchestration_summary,
+        guard_analysis_path=guard_analysis or None,
+    )
+    normalized_format = format.strip().lower()
+    if normalized_format == "json":
+        text = agent_runtime_reliability_json(report)
+    elif normalized_format in {"markdown", "md"}:
+        text = build_agent_runtime_reliability_markdown(report)
+    elif normalized_format == "text":
+        text = _text_summary(report)
+    else:
+        raise typer.BadParameter("--format must be one of: text, json, markdown")
+
+    if output:
+        path = Path(output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        rprint(f"[green]Saved[/green]: {path}")
+    else:
+        print(text, end="")
+
+
+def _text_summary(report: dict) -> str:
+    metrics = report["agent_runtime_summary"]["metrics"]
+    decision = report["agent_deployment_decision"]
+    guard = report["guard_summary"]
+    lines = [
+        "InferEdge Agent Runtime Reliability Report",
+        f"schema_version: {report['schema_version']}",
+        f"decision: {decision['decision']}",
+        f"policy_version: {decision['policy_version']}",
+        f"reason: {decision['reason']}",
+        f"guard_verdict: {guard.get('guard_verdict')}",
+        f"drop_rate: {metrics['drop_rate']:.6g}",
+        f"fallback_rate: {metrics['fallback_rate']:.6g}",
+        f"deadline_miss_rate: {metrics['deadline_miss_rate']:.6g}",
+        "triggered_rules:",
+    ]
+    lines.extend(f"- {rule}" for rule in decision["triggered_rules"])
+    lines.append("")
+    return "\n".join(lines)

@@ -58,11 +58,16 @@ Recommended demo flow:
 ```bash
 poetry run inferedgelab demo-evidence-summary
 poetry run inferedgelab demo-evidence-summary --format json
+poetry run inferedgelab agent-runtime-report \
+  --orchestration-summary examples/agent_runtime/agent_3_orchestration_summary.json \
+  --guard-analysis examples/agent_runtime/aiguard_runtime_guard_analysis.json
 poetry run inferedgelab export-demo-evidence --output reports/studio_demo_evidence.md
 ```
 
 Load Demo Evidence는 bundled ONNX Runtime CPU / TensorRT Jetson result fixture를 불러오고, Run / Import / Jetson Helper는 기존 CLI/API workflow를 local UI로 확장하는 보조 기능입니다.
 Studio evidence와 jobs는 in-memory이며 local server process가 재시작되면 초기화됩니다.
+
+`agent-runtime-report`는 Orchestrator scheduling evidence와 AIGuard runtime reliability `guard_analysis`를 Lab-owned agent deployment decision context로 묶는 additive report path입니다. 기존 Runtime result나 compare contract는 변경하지 않습니다.
 
 ## 이 레포의 역할
 

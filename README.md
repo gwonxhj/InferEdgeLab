@@ -113,6 +113,9 @@ poetry run inferedgelab demo-evidence-summary
 poetry run inferedgelab demo-evidence-summary --format json
 poetry run inferedgelab portfolio-demo-check
 poetry run inferedgelab core4-conformance-check
+poetry run inferedgelab agent-runtime-report \
+  --orchestration-summary examples/agent_runtime/agent_3_orchestration_summary.json \
+  --guard-analysis examples/agent_runtime/aiguard_runtime_guard_analysis.json
 poetry run inferedgelab export-demo-evidence --output reports/studio_demo_evidence.md
 ```
 
@@ -121,6 +124,9 @@ It validates the committed Studio fixtures, expected README/PPT metrics, portfol
 `core4-conformance-check` is the cross-repo contract guardrail.
 It validates the bundled Forge manifest/metadata fixture, Runtime result JSON, Lab compare/deployment decision surface, and AIGuard `guard_analysis` evidence without mutating existing schemas.
 The Lab decision surface now also exposes `policy_version`, `triggered_rules`, and `policy_summary` so reviewers can see which local policy rules produced deploy/review/block/unknown outcomes.
+
+`agent-runtime-report` is an additive reliable edge agent runtime report path.
+It bundles Orchestrator scheduling evidence and AIGuard runtime reliability `guard_analysis` into a Lab-owned agent deployment decision context without changing existing Runtime result or compare contracts.
 
 ![InferEdge Local Studio demo evidence](assets/images/local-studio-demo-evidence.png)
 

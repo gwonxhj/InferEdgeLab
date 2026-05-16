@@ -16,6 +16,7 @@ from inferedgelab.commands.demo_evidence import demo_evidence_summary_cmd
 from inferedgelab.commands.demo_evidence import export_demo_evidence_cmd
 from inferedgelab.commands.demo_evidence import portfolio_demo_check_cmd
 from inferedgelab.commands.core4_conformance import core4_conformance_check_cmd
+from inferedgelab.commands.agent_runtime_report import agent_runtime_report_cmd
 from inferedgelab.commands.list_results import list_results_cmd
 from inferedgelab.commands.history_report import history_report_cmd
 from inferedgelab.commands.serve import serve_cmd
@@ -51,6 +52,9 @@ app.command("portfolio-demo-check", help="Validate committed portfolio demo evid
 )
 app.command("core4-conformance-check", help="Validate Forge/Runtime/Lab/AIGuard contract conformance")(
     core4_conformance_check_cmd
+)
+app.command("agent-runtime-report", help="Generate Agent Runtime Reliability report from Orchestrator/AIGuard evidence")(
+    agent_runtime_report_cmd
 )
 app.command("list-results", help="List recent structured benchmark results")(list_results_cmd)
 app.command("history-report", help="Generate HTML history report from structured benchmark results")(history_report_cmd)
