@@ -1,0 +1,57 @@
+{
+  "schema_version": "inferedge-aiguard-diagnosis-v1",
+  "source": {
+    "orchestration_summary_schema_version": "inferedge-orchestration-summary-v1"
+  },
+  "guard_verdict": "blocked",
+  "severity": "high",
+  "confidence": 0.88,
+  "primary_reason": "drop_rate indicates runtime reliability risk under orchestrated multi-agent load.",
+  "evidence": [
+    {
+      "type": "excessive_drop_rate",
+      "metric_name": "drop_rate",
+      "observed_value": 0.5833333333333334,
+      "baseline_value": null,
+      "threshold": 0.2,
+      "delta": null,
+      "delta_pct": null,
+      "increase_factor": null,
+      "severity": "high",
+      "status": "failed",
+      "explanation": "Drop rate crossed the configured review threshold under synthetic 3-agent load.",
+      "why_it_matters": "High drop rate can make camera or command workloads stale even if selected high-priority tasks are protected.",
+      "suspected_causes": [
+        "queue_backlog",
+        "overload_load_shedding",
+        "producer_rate_exceeds_runtime_capacity"
+      ],
+      "recommendation": "Tune target FPS, queue size, drop policy, or fallback policy for affected agents.",
+      "raw_context": {
+        "executed_count": 10,
+        "dropped_count": 14
+      }
+    }
+  ],
+  "suspected_causes": [
+    "queue_backlog",
+    "overload_load_shedding",
+    "producer_rate_exceeds_runtime_capacity"
+  ],
+  "recommendations": [
+    "Tune target FPS, queue size, drop policy, or fallback policy for affected agents."
+  ],
+  "thresholds": {
+    "drop_rate_review": 0.2,
+    "drop_rate_blocked": 0.5
+  },
+  "baseline_summary": {},
+  "candidate_summary": {
+    "runtime_reliability": {
+      "drop_rate": 0.5833333333333334,
+      "fallback_rate": 0.5833333333333334,
+      "deadline_miss_rate": 0.1
+    }
+  },
+  "created_at": "2026-05-17T00:00:00Z"
+}
