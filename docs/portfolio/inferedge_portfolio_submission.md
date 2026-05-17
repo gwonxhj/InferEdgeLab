@@ -111,11 +111,11 @@ Run evidence registry / comparability checker. Edge AI inference benchmark resul
 
 Recent validation evidence:
 
-- InferEdgeLab: `poetry run python3 -m pytest -q` -> 262 passed
-- InferEdgeForge: `python -m pytest -q` -> 89 passed
+- InferEdgeLab: `poetry run python3 -m pytest -q` -> 300 passed
+- InferEdgeForge: `poetry run pytest -q` -> 92 passed
 - InferEdgeRuntime: `python3 tests/test_lab_worker_adapter_contract.py` -> 12 tests passed
 - InferEdgeRuntime: `scripts/smoke_default.sh` -> success
-- InferEdgeAIGuard: `python -m pytest -q` -> 110 passed
+- InferEdgeAIGuard: `python -m pytest -q -p no:cacheprovider` -> 139 passed
 - GitHub Actions: Lab Benchmarks success, Runtime CI success
 - Lab PR #171 기준 1-page architecture summary 문서화 완료
 - Lab -> Runtime manual smoke using `yolov8n.onnx`: `/api/analyze` created job `job_9e2321179256`, Lab invoked the C++ Runtime CLI through the dev-only subprocess path, ONNX Runtime executed the model successfully, and the latency/provenance JSON was ingested back into the Lab job result. The smoke reported ONNX Runtime backend available, benchmark status success, mean latency about 47.97 ms, p50 about 46.95 ms, p95/p99 about 51.80 ms, and about 20.85 FPS.
