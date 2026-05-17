@@ -16,6 +16,11 @@ It connects:
 This is a local-first report path. It is not a production cloud orchestration
 dashboard and does not add DB/queue/auth/billing behavior.
 
+Current demo scope: the committed evidence is a synthetic/dummy sustained
+high-load 3-agent scenario. It proves the report and decision contract before
+real lightweight workload contention or device-specific sustained validation is
+added.
+
 ## Demo Bundle
 
 Committed lightweight fixtures:
