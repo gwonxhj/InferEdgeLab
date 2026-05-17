@@ -31,15 +31,41 @@
         "executed_count": 10,
         "dropped_count": 14
       }
+    },
+    {
+      "type": "sustained_overload_risk",
+      "metric_name": "max_total_queue_depth",
+      "observed_value": 6,
+      "baseline_value": null,
+      "threshold": 3,
+      "delta": null,
+      "delta_pct": null,
+      "increase_factor": null,
+      "severity": "medium",
+      "status": "failed",
+      "explanation": "Queue depth grew under sustained high-load mode.",
+      "why_it_matters": "Sustained queue depth growth shows that incoming workload pressure can exceed edge-device execution capacity.",
+      "suspected_causes": [
+        "sustained_multi_agent_overload",
+        "producer_rate_exceeds_scheduler_capacity"
+      ],
+      "recommendation": "Lower producer rate, tighten stale-frame drop policy, or move lower priority work behind a fallback path before deployment.",
+      "raw_context": {
+        "scenario_mode": "sustained_high_load",
+        "queue_depth_sample_count": 1,
+        "latency_sample_count": 1
+      }
     }
   ],
   "suspected_causes": [
     "queue_backlog",
     "overload_load_shedding",
-    "producer_rate_exceeds_runtime_capacity"
+    "producer_rate_exceeds_runtime_capacity",
+    "sustained_multi_agent_overload"
   ],
   "recommendations": [
-    "Tune target FPS, queue size, drop policy, or fallback policy for affected agents."
+    "Tune target FPS, queue size, drop policy, or fallback policy for affected agents.",
+    "Lower producer rate, tighten stale-frame drop policy, or move lower priority work behind a fallback path before deployment."
   ],
   "thresholds": {
     "drop_rate_review": 0.2,
@@ -50,7 +76,9 @@
     "runtime_reliability": {
       "drop_rate": 0.5833333333333334,
       "fallback_rate": 0.5833333333333334,
-      "deadline_miss_rate": 0.1
+      "deadline_miss_rate": 0.1,
+      "max_total_queue_depth": 6,
+      "scenario_mode": "sustained_high_load"
     }
   },
   "created_at": "2026-05-17T00:00:00Z"

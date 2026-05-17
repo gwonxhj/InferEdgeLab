@@ -18,6 +18,11 @@ from inferedgelab.services.agent_runtime_report import (
 def orchestration_summary() -> dict:
     return {
         "schema_version": "inferedge-orchestration-summary-v1",
+        "run": {
+            "name": "agent_3_workload_sustained_high_load",
+            "scenario_mode": "sustained_high_load",
+            "frame_interval_ms": 5.0,
+        },
         "agent_runtime_summary": {
             "schema_version": "inferedge-orchestration-summary-v1",
             "source_contracts": {
@@ -49,11 +54,47 @@ def orchestration_summary() -> dict:
                 "overload_event_count": 14,
             },
         },
+        "sustained_runtime_summary": {
+            "schema_version": "inferedge-orchestrator-sustained-summary-v1",
+            "scenario_mode": "sustained_high_load",
+            "queue_depth_sample_count": 1,
+            "latency_sample_count": 1,
+            "max_total_queue_depth": 6,
+        },
+        "queue_depth_timeline": [
+            {
+                "cycle": 1,
+                "stage": "before_policy",
+                "queue_depth": {
+                    "vision_agent": 4,
+                    "voice_command_agent": 2,
+                    "safety_monitor_agent": 0,
+                },
+                "total_queue_depth": 6,
+            }
+        ],
+        "latency_timeline": [
+            {
+                "agent_id": "vision_agent",
+                "task_id": "task_vision_agent",
+                "latency_ms": 41.0,
+                "latency_budget_ms": 33.0,
+                "deadline_missed": True,
+            }
+        ],
         "policy_decision_log": [
             {
                 "agent_id": "vision_agent",
                 "decision": "load_shedding",
                 "reason": "queue_backlog_threshold_exceeded",
+                "decision_reason": "queue_backlog_threshold_exceeded",
+                "total_backlog_before": 6,
+                "backlog_threshold": 3,
+                "queue_depth_snapshot": {
+                    "vision_agent": 4,
+                    "voice_command_agent": 2,
+                    "safety_monitor_agent": 0,
+                },
                 "protected_agent_id": "safety_monitor_agent",
             }
         ],
@@ -90,6 +131,42 @@ def guard_analysis() -> dict:
     }
 
 
+def sustained_guard_analysis() -> dict:
+    data = guard_analysis()
+    data["evidence"].append(
+        {
+            "type": "sustained_overload_risk",
+            "metric_name": "max_total_queue_depth",
+            "observed_value": 6,
+            "baseline_value": None,
+            "threshold": 3,
+            "delta": None,
+            "delta_pct": None,
+            "increase_factor": None,
+            "severity": "medium",
+            "status": "failed",
+            "explanation": "Queue depth grew under sustained high-load mode.",
+            "why_it_matters": "Queue growth indicates multi-agent runtime pressure.",
+            "suspected_causes": ["sustained_multi_agent_overload"],
+            "recommendation": "Lower producer rate or tighten stale-frame drop policy.",
+            "raw_context": {
+                "scenario_mode": "sustained_high_load",
+                "queue_depth_sample_count": 1,
+                "latency_sample_count": 1,
+            },
+        }
+    )
+    data["suspected_causes"] = [
+        "queue_backlog",
+        "sustained_multi_agent_overload",
+    ]
+    data["recommendations"] = [
+        "Tune scheduling policy.",
+        "Lower producer rate or tighten stale-frame drop policy.",
+    ]
+    return data
+
+
 def test_compute_agent_runtime_metrics_from_orchestrator_summary():
     metrics = compute_agent_runtime_metrics(orchestration_summary())
 
@@ -97,12 +174,20 @@ def test_compute_agent_runtime_metrics_from_orchestrator_summary():
     assert metrics["drop_rate"] == pytest.approx(14 / 24)
     assert metrics["fallback_rate"] == pytest.approx(14 / 24)
     assert metrics["queue_backlog_policy_decision_count"] == 1
+    assert metrics["scenario_mode"] == "sustained_high_load"
+    assert metrics["max_total_queue_depth"] == 6
+    assert metrics["queue_depth_sample_count"] == 1
+    assert metrics["latency_sample_count"] == 1
+    assert metrics["top_policy_decision_reason"] == "queue_backlog_threshold_exceeded"
+    assert metrics["policy_decision_reasons"] == {
+        "queue_backlog_threshold_exceeded": 1
+    }
 
 
 def test_agent_runtime_report_blocks_when_guard_blocks():
     report = build_agent_runtime_reliability_report(
         orchestration_summary=orchestration_summary(),
-        guard_analysis=guard_analysis(),
+        guard_analysis=sustained_guard_analysis(),
     )
 
     decision = report["agent_deployment_decision"]
@@ -117,13 +202,28 @@ def test_agent_runtime_report_blocks_when_guard_blocks():
     assert decision["decision"] == "blocked"
     assert "guard_blocked_runtime_block" in decision["triggered_rules"]
     assert "drop_rate_block" in decision["triggered_rules"]
+    assert "sustained_overload_review" in decision["triggered_rules"]
     assert report["guard_summary"]["guard_verdict"] == "blocked"
+    assert "sustained_overload_risk" in report["guard_summary"]["evidence_types"]
+    assert report["agent_runtime_summary"]["timeline_summary"] == {
+        "scenario_mode": "sustained_high_load",
+        "queue_depth_sample_count": 1,
+        "latency_sample_count": 1,
+        "max_total_queue_depth": 6,
+        "top_policy_decision_reason": "queue_backlog_threshold_exceeded",
+        "policy_decision_reasons": {"queue_backlog_threshold_exceeded": 1},
+        "has_queue_depth_timeline": True,
+        "has_latency_timeline": True,
+    }
+    assert {
+        item["type"] for item in report["runtime_reliability_evidence"]
+    } == {"excessive_drop_rate", "sustained_overload_risk"}
 
 
 def test_agent_runtime_report_markdown_contains_sections():
     report = build_agent_runtime_reliability_report(
         orchestration_summary=orchestration_summary(),
-        guard_analysis=guard_analysis(),
+        guard_analysis=sustained_guard_analysis(),
     )
     markdown = build_agent_runtime_reliability_markdown(report)
 
@@ -133,6 +233,8 @@ def test_agent_runtime_report_markdown_contains_sections():
     assert "AIGuard Runtime Reliability Evidence" in markdown
     assert "Lab Agent Deployment Decision" in markdown
     assert "guard_blocked_runtime_block" in markdown
+    assert "sustained_overload_risk" in markdown
+    assert "max_total_queue_depth" in markdown
     assert "not a production cloud orchestration dashboard" in markdown
 
 

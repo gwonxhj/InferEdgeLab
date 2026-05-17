@@ -26,6 +26,8 @@ DEFAULT_AGENT_RUNTIME_THRESHOLDS = {
     "fallback_rate_review": 0.20,
     "fallback_rate_blocked": 0.50,
     "queue_backlog_policy_decision_count_review": 1,
+    "max_total_queue_depth_review": 3,
+    "max_total_queue_depth_blocked": 8,
 }
 
 AGENT_RUNTIME_POLICY_RULES: dict[str, dict[str, str]] = {
@@ -68,6 +70,14 @@ AGENT_RUNTIME_POLICY_RULES: dict[str, dict[str, str]] = {
     "queue_backlog_review": {
         "effect": "review_required",
         "description": "Queue backlog policy intervention was observed.",
+    },
+    "sustained_overload_block": {
+        "effect": "blocked",
+        "description": "Sustained queue depth crossed the blocking threshold.",
+    },
+    "sustained_overload_review": {
+        "effect": "review_required",
+        "description": "Sustained queue depth crossed the review threshold.",
     },
     "runtime_reliability_pass_note": {
         "effect": "deployable_with_note",
@@ -115,9 +125,12 @@ def build_agent_runtime_reliability_report(
             "agents": _agent_summaries(runtime_summary),
             "totals": _totals(runtime_summary),
             "metrics": metrics,
+            "timeline_summary": _timeline_summary(orchestration_summary, metrics),
+            "policy_decision_reasons": metrics["policy_decision_reasons"],
             "policy_decision_log_count": len(_policy_log(orchestration_summary)),
         },
         "guard_summary": _guard_summary(guard_analysis),
+        "runtime_reliability_evidence": _runtime_reliability_evidence(guard_analysis),
         "agent_deployment_decision": decision,
         "notes": [
             "This report is local-first runtime reliability evidence, not a production cloud orchestration dashboard.",
@@ -178,6 +191,14 @@ def build_agent_runtime_deployment_decision(
         >= policy["queue_backlog_policy_decision_count_review"]
     ):
         triggered_rules.append("queue_backlog_review")
+    _append_metric_rules(
+        triggered_rules,
+        metric_value=metrics["max_total_queue_depth"],
+        review=policy["max_total_queue_depth_review"],
+        blocked=policy["max_total_queue_depth_blocked"],
+        review_rule="sustained_overload_review",
+        blocked_rule="sustained_overload_block",
+    )
 
     if not triggered_rules:
         triggered_rules.append("runtime_reliability_pass_note")
@@ -228,20 +249,38 @@ def build_agent_runtime_deployment_decision(
 
 def compute_agent_runtime_metrics(orchestration_summary: dict[str, Any]) -> dict[str, Any]:
     runtime_summary = _agent_runtime_summary(orchestration_summary)
+    sustained_summary = _sustained_runtime_summary(orchestration_summary)
     totals = _totals(runtime_summary)
+    queue_depth_timeline = _dict_list(orchestration_summary.get("queue_depth_timeline"))
+    latency_timeline = _dict_list(orchestration_summary.get("latency_timeline"))
     executed_count = _non_negative_number(totals.get("executed_count"))
     dropped_count = _non_negative_number(totals.get("dropped_count"))
-    deadline_missed_count = _non_negative_number(totals.get("deadline_missed_count"))
+    timeline_deadline_missed_count = sum(
+        1 for item in latency_timeline if bool(item.get("deadline_missed"))
+    )
+    deadline_missed_count = max(
+        _non_negative_number(totals.get("deadline_missed_count")),
+        float(timeline_deadline_missed_count),
+    )
     fallback_count = _non_negative_number(totals.get("fallback_count"))
+    if executed_count <= 0 and latency_timeline:
+        executed_count = float(len(latency_timeline))
     total_task_events = executed_count + dropped_count
     policy_log = _policy_log(orchestration_summary)
+    policy_decision_reasons = _policy_decision_reasons(policy_log)
     queue_backlog_count = sum(
         1
         for item in policy_log
         if "backlog" in str(item.get("reason", "")).lower()
+        or "backlog" in str(item.get("decision_reason", "")).lower()
         or "backlog" in str(item.get("decision", "")).lower()
     )
+    max_total_queue_depth = max(
+        _non_negative_number(sustained_summary.get("max_total_queue_depth")),
+        _max_total_queue_depth(queue_depth_timeline),
+    )
     return {
+        "scenario_mode": _scenario_mode(orchestration_summary),
         "executed_count": executed_count,
         "dropped_count": dropped_count,
         "deadline_missed_count": deadline_missed_count,
@@ -255,6 +294,11 @@ def compute_agent_runtime_metrics(orchestration_summary: dict[str, Any]) -> dict
         "drop_rate": _ratio(dropped_count, total_task_events),
         "fallback_rate": _ratio(fallback_count, total_task_events),
         "queue_backlog_policy_decision_count": queue_backlog_count,
+        "max_total_queue_depth": max_total_queue_depth,
+        "queue_depth_sample_count": len(queue_depth_timeline),
+        "latency_sample_count": len(latency_timeline),
+        "policy_decision_reasons": policy_decision_reasons,
+        "top_policy_decision_reason": _top_reason(policy_decision_reasons),
     }
 
 
@@ -323,6 +367,10 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             f"| drop_rate | {_fmt_number(metrics['drop_rate'])} |",
             f"| fallback_rate | {_fmt_number(metrics['fallback_rate'])} |",
             f"| queue_backlog_policy_decision_count | {_fmt_number(metrics['queue_backlog_policy_decision_count'])} |",
+            f"| max_total_queue_depth | {_fmt_number(metrics['max_total_queue_depth'])} |",
+            f"| queue_depth_sample_count | {_fmt_number(metrics['queue_depth_sample_count'])} |",
+            f"| latency_sample_count | {_fmt_number(metrics['latency_sample_count'])} |",
+            f"| top_policy_decision_reason | {metrics.get('top_policy_decision_reason') or '-'} |",
             "",
             "## AIGuard Runtime Reliability Evidence",
             "",
@@ -331,6 +379,11 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             f"- severity: `{guard.get('severity')}`",
             f"- primary_reason: {guard.get('primary_reason')}",
             f"- evidence_count: `{guard.get('evidence_count')}`",
+            "- evidence_types:",
+            *[
+                f"  - `{item['type']}`: {item.get('metric_name')}={_fmt_number(item.get('observed_value'))} ({item.get('status')})"
+                for item in report.get("runtime_reliability_evidence", [])
+            ],
             "",
             "## Lab Agent Deployment Decision",
             "",
@@ -368,6 +421,11 @@ def _agent_runtime_summary(orchestration_summary: dict[str, Any]) -> dict[str, A
     return value if isinstance(value, dict) else {}
 
 
+def _sustained_runtime_summary(orchestration_summary: dict[str, Any]) -> dict[str, Any]:
+    value = orchestration_summary.get("sustained_runtime_summary")
+    return value if isinstance(value, dict) else {}
+
+
 def _totals(runtime_summary: dict[str, Any]) -> dict[str, Any]:
     value = runtime_summary.get("totals")
     return value if isinstance(value, dict) else {}
@@ -385,6 +443,7 @@ def _agent_summaries(runtime_summary: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _guard_summary(guard_analysis: dict[str, Any] | None) -> dict[str, Any]:
+    evidence = guard_evidence_items(guard_analysis)
     return {
         "schema_version": guard_analysis.get("schema_version")
         if isinstance(guard_analysis, dict)
@@ -393,7 +452,10 @@ def _guard_summary(guard_analysis: dict[str, Any] | None) -> dict[str, Any]:
         "guard_verdict": guard_verdict(guard_analysis),
         "severity": guard_analysis.get("severity") if isinstance(guard_analysis, dict) else None,
         "primary_reason": guard_primary_reason(guard_analysis),
-        "evidence_count": len(guard_evidence_items(guard_analysis)),
+        "evidence_count": len(evidence),
+        "evidence_types": [
+            item.get("type") for item in evidence if isinstance(item, dict) and item.get("type")
+        ],
     }
 
 
@@ -423,6 +485,92 @@ def _policy_log(orchestration_summary: dict[str, Any]) -> list[dict[str, Any]]:
     if not isinstance(value, list):
         return []
     return [item for item in value if isinstance(item, dict)]
+
+
+def _dict_list(value: Any) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, dict)]
+
+
+def _scenario_mode(orchestration_summary: dict[str, Any]) -> str:
+    run = orchestration_summary.get("run")
+    if isinstance(run, dict) and isinstance(run.get("scenario_mode"), str):
+        return run["scenario_mode"]
+    sustained_summary = _sustained_runtime_summary(orchestration_summary)
+    if isinstance(sustained_summary.get("scenario_mode"), str):
+        return sustained_summary["scenario_mode"]
+    return "unknown"
+
+
+def _max_total_queue_depth(queue_depth_timeline: list[dict[str, Any]]) -> float:
+    max_depth = 0.0
+    for item in queue_depth_timeline:
+        max_depth = max(max_depth, _non_negative_number(item.get("total_queue_depth")))
+        queue_depth = item.get("queue_depth")
+        if isinstance(queue_depth, dict):
+            max_depth = max(
+                max_depth,
+                sum(_non_negative_number(value) for value in queue_depth.values()),
+            )
+    return max_depth
+
+
+def _policy_decision_reasons(policy_log: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for item in policy_log:
+        reason = item.get("decision_reason") or item.get("reason") or item.get("decision")
+        if not isinstance(reason, str) or not reason:
+            reason = "unknown"
+        counts[reason] = counts.get(reason, 0) + 1
+    return counts
+
+
+def _top_reason(reasons: dict[str, int]) -> str | None:
+    if not reasons:
+        return None
+    return max(reasons.items(), key=lambda item: (item[1], item[0]))[0]
+
+
+def _runtime_reliability_evidence(
+    guard_analysis: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    evidence = guard_evidence_items(guard_analysis)
+    return [
+        {
+            "type": item.get("type"),
+            "metric_name": item.get("metric_name"),
+            "observed_value": item.get("observed_value"),
+            "threshold": item.get("threshold"),
+            "severity": item.get("severity"),
+            "status": item.get("status"),
+            "explanation": item.get("explanation"),
+            "recommendation": item.get("recommendation"),
+            "why_it_matters": item.get("why_it_matters"),
+        }
+        for item in evidence
+        if isinstance(item, dict)
+    ]
+
+
+def _timeline_summary(
+    orchestration_summary: dict[str, Any],
+    metrics: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "scenario_mode": metrics["scenario_mode"],
+        "queue_depth_sample_count": metrics["queue_depth_sample_count"],
+        "latency_sample_count": metrics["latency_sample_count"],
+        "max_total_queue_depth": metrics["max_total_queue_depth"],
+        "top_policy_decision_reason": metrics.get("top_policy_decision_reason"),
+        "policy_decision_reasons": dict(metrics.get("policy_decision_reasons") or {}),
+        "has_queue_depth_timeline": bool(
+            _dict_list(orchestration_summary.get("queue_depth_timeline"))
+        ),
+        "has_latency_timeline": bool(
+            _dict_list(orchestration_summary.get("latency_timeline"))
+        ),
+    }
 
 
 def _load_json_dict(path: str | Path | None) -> dict[str, Any] | None:
