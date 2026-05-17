@@ -127,6 +127,7 @@ The Lab decision surface now also exposes `policy_version`, `triggered_rules`, a
 
 `agent-runtime-report` is an additive reliable edge agent runtime report path.
 It bundles Orchestrator scheduling evidence and AIGuard runtime reliability `guard_analysis` into a Lab-owned agent deployment decision context without changing existing Runtime result or compare contracts.
+The report preserves sustained queue-depth, policy decision reason, and `sustained_overload_risk` evidence as local-first deployment review context.
 
 ![InferEdge Local Studio demo evidence](assets/images/local-studio-demo-evidence.png)
 

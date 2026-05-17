@@ -1,5 +1,10 @@
 {
   "schema_version": "inferedge-orchestration-summary-v1",
+  "run": {
+    "name": "agent_3_workload_sustained_high_load",
+    "scenario_mode": "sustained_high_load",
+    "frame_interval_ms": 5.0
+  },
   "agent_runtime_summary": {
     "schema_version": "inferedge-orchestration-summary-v1",
     "source_contracts": {
@@ -41,12 +46,53 @@
       "overload_event_count": 14
     }
   },
+  "sustained_runtime_summary": {
+    "schema_version": "inferedge-orchestrator-sustained-summary-v1",
+    "scenario_mode": "sustained_high_load",
+    "queue_depth_sample_count": 1,
+    "latency_sample_count": 1,
+    "max_total_queue_depth": 6,
+    "deadline_missed_count": 1,
+    "dropped_count": 14,
+    "fallback_count": 14,
+    "policy_decision_count": 14,
+    "overload_event_count": 14
+  },
+  "queue_depth_timeline": [
+    {
+      "cycle": 1,
+      "stage": "before_policy",
+      "queue_depth": {
+        "vision_agent": 4,
+        "voice_command_agent": 2,
+        "safety_monitor_agent": 0
+      },
+      "total_queue_depth": 6
+    }
+  ],
+  "latency_timeline": [
+    {
+      "agent_id": "vision_agent",
+      "task_id": "task_vision_agent",
+      "latency_ms": 41.0,
+      "latency_budget_ms": 33.0,
+      "deadline_missed": true
+    }
+  ],
   "policy_decision_log": [
     {
       "agent_id": "vision_agent",
       "task_id": "task_vision_agent",
       "decision": "load_shedding",
       "reason": "queue_backlog_threshold_exceeded",
+      "decision_reason": "queue_backlog_threshold_exceeded",
+      "total_backlog_before": 6,
+      "backlog_threshold": 3,
+      "queue_depth_snapshot": {
+        "vision_agent": 4,
+        "voice_command_agent": 2,
+        "safety_monitor_agent": 0
+      },
       "fallback_used": true,
       "protected_agent_id": "safety_monitor_agent"
     }

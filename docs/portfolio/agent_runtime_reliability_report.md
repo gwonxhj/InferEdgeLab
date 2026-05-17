@@ -45,6 +45,12 @@ poetry run inferedgelab agent-runtime-report \
 | fallback_rate | 0.583333 |
 | deadline_miss_rate | 0.1 |
 | queue_backlog_policy_decision_count | 1 |
+| max_total_queue_depth | 6 |
+| top_policy_decision_reason | queue_backlog_threshold_exceeded |
+
+AIGuard `guard_analysis` also includes `sustained_overload_risk`, which Lab
+preserves as report evidence and reflects in the agent deployment decision
+context.
 
 ## Lab Decision Context
 
@@ -67,6 +73,7 @@ Triggered rules:
 - `fallback_rate_block`
 - `deadline_miss_review`
 - `queue_backlog_review`
+- `sustained_overload_review`
 
 ## Boundary
 
