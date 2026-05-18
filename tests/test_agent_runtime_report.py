@@ -98,6 +98,93 @@ def orchestration_summary() -> dict:
                 "protected_agent_id": "safety_monitor_agent",
             }
         ],
+        "queue_state_summary": {
+            "schema_version": "inferedge-orchestrator-queue-state-v1",
+            "sample_count": 1,
+            "overload_backlog_threshold": 3,
+            "max_total_queue_depth": 6,
+            "average_total_queue_depth": 6.0,
+            "final_queue_depth": {
+                "vision_agent": 4,
+                "voice_command_agent": 2,
+                "safety_monitor_agent": 0,
+            },
+            "max_queue_depth_by_task": {
+                "vision_agent": 4,
+                "voice_command_agent": 2,
+                "safety_monitor_agent": 0,
+            },
+            "queue_pressure_state": "overloaded",
+        },
+        "worker_health_snapshot": {
+            "schema_version": "inferedge-orchestrator-worker-health-v1",
+            "workers": {
+                "safety_monitor_agent": {
+                    "task": "safety_monitor_agent",
+                    "agent_id": "safety_monitor_agent",
+                    "task_id": "task_safety_monitor_agent",
+                    "agent_type": "safety",
+                    "worker": "dummy",
+                    "health_state": "healthy",
+                    "executed_count": 2,
+                    "dropped_count": 0,
+                    "deadline_missed_count": 0,
+                    "fallback_count": 0,
+                    "mean_latency_ms": 6.0,
+                },
+                "vision_agent": {
+                    "task": "vision_agent",
+                    "agent_id": "vision_agent",
+                    "task_id": "task_vision_agent",
+                    "agent_type": "vision",
+                    "worker": "dummy",
+                    "health_state": "degraded",
+                    "executed_count": 8,
+                    "dropped_count": 14,
+                    "deadline_missed_count": 1,
+                    "fallback_count": 14,
+                    "mean_latency_ms": 41.0,
+                },
+            },
+        },
+        "runtime_event_summary": {
+            "schema_version": "inferedge-orchestrator-runtime-event-summary-v1",
+            "event_count": 4,
+            "event_type_counts": {
+                "queue_snapshot": 1,
+                "policy_decision": 1,
+                "drop": 1,
+                "execution": 1,
+            },
+        },
+        "runtime_event_timeline": [
+            {
+                "event_index": 0,
+                "event_type": "queue_snapshot",
+                "reason": "queue_depth_sampled",
+            },
+            {
+                "event_index": 1,
+                "event_type": "policy_decision",
+                "agent_id": "vision_agent",
+                "task_id": "task_vision_agent",
+                "reason": "queue_backlog_threshold_exceeded",
+            },
+            {
+                "event_index": 2,
+                "event_type": "drop",
+                "agent_id": "vision_agent",
+                "task_id": "task_vision_agent",
+                "reason": "load_shedding_backlog_threshold_exceeded",
+            },
+            {
+                "event_index": 3,
+                "event_type": "execution",
+                "agent_id": "vision_agent",
+                "task_id": "task_vision_agent",
+                "reason": "deadline_missed",
+            },
+        ],
     }
 
 
@@ -182,6 +269,16 @@ def test_compute_agent_runtime_metrics_from_orchestrator_summary():
     assert metrics["policy_decision_reasons"] == {
         "queue_backlog_threshold_exceeded": 1
     }
+    assert metrics["queue_pressure_state"] == "overloaded"
+    assert metrics["runtime_event_count"] == 4
+    assert metrics["runtime_event_type_counts"] == {
+        "queue_snapshot": 1,
+        "policy_decision": 1,
+        "drop": 1,
+        "execution": 1,
+    }
+    assert metrics["degraded_worker_count"] == 1
+    assert metrics["healthy_worker_count"] == 1
 
 
 def test_agent_runtime_report_blocks_when_guard_blocks():
@@ -218,6 +315,37 @@ def test_agent_runtime_report_blocks_when_guard_blocks():
     assert {
         item["type"] for item in report["runtime_reliability_evidence"]
     } == {"excessive_drop_rate", "sustained_overload_risk"}
+    operation_context = report["agent_runtime_summary"]["operation_context"]
+    assert operation_context["queue_state_summary"]["queue_pressure_state"] == "overloaded"
+    assert operation_context["worker_health_counts"] == {
+        "healthy": 1,
+        "degraded": 1,
+    }
+    assert operation_context["runtime_event_summary"]["event_type_counts"]["drop"] == 1
+    assert operation_context["runtime_event_timeline_count"] == 4
+    assert operation_context["runtime_event_timeline_sample"][1]["event_type"] == (
+        "policy_decision"
+    )
+
+
+def test_agent_runtime_report_keeps_legacy_orchestrator_summary_compatible():
+    legacy_summary = orchestration_summary()
+    legacy_summary.pop("queue_state_summary")
+    legacy_summary.pop("worker_health_snapshot")
+    legacy_summary.pop("runtime_event_summary")
+    legacy_summary.pop("runtime_event_timeline")
+
+    report = build_agent_runtime_reliability_report(
+        orchestration_summary=legacy_summary,
+        guard_analysis=sustained_guard_analysis(),
+    )
+
+    operation_context = report["agent_runtime_summary"]["operation_context"]
+    assert operation_context["queue_state_summary"]["schema_version"] is None
+    assert operation_context["queue_state_summary"]["max_total_queue_depth"] == 6
+    assert operation_context["worker_health_snapshot"]["workers"] == {}
+    assert operation_context["runtime_event_summary"]["event_count"] == 0
+    assert report["agent_deployment_decision"]["decision"] == "blocked"
 
 
 def test_agent_runtime_report_markdown_contains_sections():
@@ -230,6 +358,12 @@ def test_agent_runtime_report_markdown_contains_sections():
     assert "# InferEdge Agent Runtime Reliability Report" in markdown
     assert "Agent Runtime Summary" in markdown
     assert "Runtime Reliability Metrics" in markdown
+    assert "Orchestrator Operation Context" in markdown
+    assert "Queue State" in markdown
+    assert "Worker Health" in markdown
+    assert "Runtime Event Summary" in markdown
+    assert "queue_pressure_state" in markdown
+    assert "policy_decision" in markdown
     assert "AIGuard Runtime Reliability Evidence" in markdown
     assert "Lab Agent Deployment Decision" in markdown
     assert "guard_blocked_runtime_block" in markdown
