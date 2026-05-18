@@ -126,6 +126,7 @@ def build_agent_runtime_reliability_report(
             "totals": _totals(runtime_summary),
             "metrics": metrics,
             "timeline_summary": _timeline_summary(orchestration_summary, metrics),
+            "operation_context": _operation_context(orchestration_summary, metrics),
             "policy_decision_reasons": metrics["policy_decision_reasons"],
             "policy_decision_log_count": len(_policy_log(orchestration_summary)),
         },
@@ -267,6 +268,11 @@ def compute_agent_runtime_metrics(orchestration_summary: dict[str, Any]) -> dict
         executed_count = float(len(latency_timeline))
     total_task_events = executed_count + dropped_count
     policy_log = _policy_log(orchestration_summary)
+    queue_state = _queue_state_summary(orchestration_summary)
+    worker_health = _worker_health_snapshot(orchestration_summary)
+    worker_health_counts = _worker_health_counts(worker_health)
+    runtime_events = _runtime_event_timeline(orchestration_summary)
+    runtime_event_summary = _runtime_event_summary(orchestration_summary, runtime_events)
     policy_decision_reasons = _policy_decision_reasons(policy_log)
     queue_backlog_count = sum(
         1
@@ -297,6 +303,26 @@ def compute_agent_runtime_metrics(orchestration_summary: dict[str, Any]) -> dict
         "max_total_queue_depth": max_total_queue_depth,
         "queue_depth_sample_count": len(queue_depth_timeline),
         "latency_sample_count": len(latency_timeline),
+        "queue_pressure_state": queue_state.get("queue_pressure_state") or "unknown",
+        "queue_state_sample_count": _non_negative_number(queue_state.get("sample_count")),
+        "queue_state_max_total_queue_depth": _non_negative_number(
+            queue_state.get("max_total_queue_depth")
+        ),
+        "queue_state_average_total_queue_depth": _non_negative_number(
+            queue_state.get("average_total_queue_depth")
+        ),
+        "worker_health_counts": worker_health_counts,
+        "degraded_worker_count": _non_negative_number(worker_health_counts.get("degraded")),
+        "constrained_worker_count": _non_negative_number(
+            worker_health_counts.get("constrained")
+        ),
+        "healthy_worker_count": _non_negative_number(worker_health_counts.get("healthy")),
+        "runtime_event_count": _non_negative_number(
+            runtime_event_summary.get("event_count")
+        ),
+        "runtime_event_type_counts": dict(
+            runtime_event_summary.get("event_type_counts") or {}
+        ),
         "policy_decision_reasons": policy_decision_reasons,
         "top_policy_decision_reason": _top_reason(policy_decision_reasons),
     }
@@ -370,7 +396,75 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             f"| max_total_queue_depth | {_fmt_number(metrics['max_total_queue_depth'])} |",
             f"| queue_depth_sample_count | {_fmt_number(metrics['queue_depth_sample_count'])} |",
             f"| latency_sample_count | {_fmt_number(metrics['latency_sample_count'])} |",
+            f"| queue_pressure_state | {metrics.get('queue_pressure_state') or '-'} |",
+            f"| runtime_event_count | {_fmt_number(metrics.get('runtime_event_count'))} |",
+            f"| degraded_worker_count | {_fmt_number(metrics.get('degraded_worker_count'))} |",
+            f"| constrained_worker_count | {_fmt_number(metrics.get('constrained_worker_count'))} |",
             f"| top_policy_decision_reason | {metrics.get('top_policy_decision_reason') or '-'} |",
+            "",
+            "## Orchestrator Operation Context",
+            "",
+            "### Queue State",
+            "",
+            "| Field | Value |",
+            "|---|---:|",
+            f"| queue_pressure_state | {runtime['operation_context']['queue_state_summary'].get('queue_pressure_state') or '-'} |",
+            f"| overload_backlog_threshold | {_fmt_number(runtime['operation_context']['queue_state_summary'].get('overload_backlog_threshold'))} |",
+            f"| max_total_queue_depth | {_fmt_number(runtime['operation_context']['queue_state_summary'].get('max_total_queue_depth'))} |",
+            f"| average_total_queue_depth | {_fmt_number(runtime['operation_context']['queue_state_summary'].get('average_total_queue_depth'))} |",
+            "",
+            "### Worker Health",
+            "",
+            "| Worker | Health | Executed | Dropped | Deadline Missed | Fallback | Mean Latency ms |",
+            "|---|---|---:|---:|---:|---:|---:|",
+            *[
+                "| "
+                f"{worker.get('task') or task_name} | "
+                f"{worker.get('health_state') or '-'} | "
+                f"{_fmt_number(worker.get('executed_count'))} | "
+                f"{_fmt_number(worker.get('dropped_count'))} | "
+                f"{_fmt_number(worker.get('deadline_missed_count'))} | "
+                f"{_fmt_number(worker.get('fallback_count'))} | "
+                f"{_fmt_number(worker.get('mean_latency_ms'))} |"
+                for task_name, worker in runtime["operation_context"][
+                    "worker_health_snapshot"
+                ]
+                .get("workers", {})
+                .items()
+                if isinstance(worker, dict)
+            ],
+            "",
+            "### Runtime Event Summary",
+            "",
+            "| Event Type | Count |",
+            "|---|---:|",
+            *[
+                f"| {event_type} | {_fmt_number(count)} |"
+                for event_type, count in sorted(
+                    (
+                        runtime["operation_context"]["runtime_event_summary"].get(
+                            "event_type_counts"
+                        )
+                        or {}
+                    ).items()
+                )
+            ],
+            "",
+            "Runtime event timeline sample:",
+            "",
+            "| # | Type | Agent | Task | Reason |",
+            "|---:|---|---|---|---|",
+            *[
+                "| "
+                f"{_fmt_number(event.get('event_index'))} | "
+                f"{event.get('event_type') or '-'} | "
+                f"{event.get('agent_id') or '-'} | "
+                f"{event.get('task_id') or event.get('task') or '-'} | "
+                f"{event.get('reason') or event.get('decision_reason') or '-'} |"
+                for event in runtime["operation_context"][
+                    "runtime_event_timeline_sample"
+                ]
+            ],
             "",
             "## AIGuard Runtime Reliability Evidence",
             "",
@@ -571,6 +665,138 @@ def _timeline_summary(
             _dict_list(orchestration_summary.get("latency_timeline"))
         ),
     }
+
+
+def _operation_context(
+    orchestration_summary: dict[str, Any],
+    metrics: dict[str, Any],
+) -> dict[str, Any]:
+    runtime_events = _runtime_event_timeline(orchestration_summary)
+    queue_state = _queue_state_summary(orchestration_summary)
+    worker_health = _worker_health_snapshot(orchestration_summary)
+    runtime_event_summary = _runtime_event_summary(orchestration_summary, runtime_events)
+    return {
+        "queue_state_summary": queue_state,
+        "worker_health_snapshot": worker_health,
+        "worker_health_counts": dict(metrics.get("worker_health_counts") or {}),
+        "runtime_event_summary": runtime_event_summary,
+        "runtime_event_timeline_count": len(runtime_events),
+        "runtime_event_timeline_sample": runtime_events[:8],
+    }
+
+
+def _queue_state_summary(orchestration_summary: dict[str, Any]) -> dict[str, Any]:
+    value = orchestration_summary.get("queue_state_summary")
+    if isinstance(value, dict):
+        return dict(value)
+
+    queue_depth_timeline = _dict_list(orchestration_summary.get("queue_depth_timeline"))
+    max_total_queue_depth = _max_total_queue_depth(queue_depth_timeline)
+    final_queue_depth: dict[str, Any] = {}
+    if queue_depth_timeline:
+        queue_depth = queue_depth_timeline[-1].get("queue_depth")
+        if isinstance(queue_depth, dict):
+            final_queue_depth = dict(queue_depth)
+    return {
+        "schema_version": None,
+        "sample_count": len(queue_depth_timeline),
+        "overload_backlog_threshold": None,
+        "max_total_queue_depth": max_total_queue_depth,
+        "average_total_queue_depth": _average_total_queue_depth(queue_depth_timeline),
+        "final_queue_depth": final_queue_depth,
+        "max_queue_depth_by_task": _max_queue_depth_by_task(queue_depth_timeline),
+        "queue_pressure_state": _derived_queue_pressure_state(max_total_queue_depth),
+    }
+
+
+def _worker_health_snapshot(orchestration_summary: dict[str, Any]) -> dict[str, Any]:
+    value = orchestration_summary.get("worker_health_snapshot")
+    if isinstance(value, dict):
+        return dict(value)
+    return {"schema_version": None, "workers": {}}
+
+
+def _runtime_event_summary(
+    orchestration_summary: dict[str, Any],
+    runtime_events: list[dict[str, Any]],
+) -> dict[str, Any]:
+    value = orchestration_summary.get("runtime_event_summary")
+    if isinstance(value, dict):
+        summary = dict(value)
+        if "event_type_counts" not in summary:
+            summary["event_type_counts"] = _runtime_event_type_counts(runtime_events)
+        if "event_count" not in summary:
+            summary["event_count"] = len(runtime_events)
+        return summary
+    return {
+        "schema_version": None,
+        "event_count": len(runtime_events),
+        "event_type_counts": _runtime_event_type_counts(runtime_events),
+    }
+
+
+def _runtime_event_timeline(orchestration_summary: dict[str, Any]) -> list[dict[str, Any]]:
+    return _dict_list(orchestration_summary.get("runtime_event_timeline"))
+
+
+def _runtime_event_type_counts(runtime_events: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for event in runtime_events:
+        event_type = event.get("event_type")
+        if not isinstance(event_type, str) or not event_type:
+            event_type = "unknown"
+        counts[event_type] = counts.get(event_type, 0) + 1
+    return counts
+
+
+def _worker_health_counts(worker_health_snapshot: dict[str, Any]) -> dict[str, int]:
+    workers = worker_health_snapshot.get("workers")
+    if not isinstance(workers, dict):
+        return {}
+    counts: dict[str, int] = {}
+    for worker in workers.values():
+        if not isinstance(worker, dict):
+            continue
+        state = worker.get("health_state")
+        if not isinstance(state, str) or not state:
+            state = "unknown"
+        counts[state] = counts.get(state, 0) + 1
+    return counts
+
+
+def _average_total_queue_depth(queue_depth_timeline: list[dict[str, Any]]) -> float:
+    values = [
+        _non_negative_number(item.get("total_queue_depth"))
+        for item in queue_depth_timeline
+        if item.get("total_queue_depth") is not None
+    ]
+    if not values:
+        return 0.0
+    return sum(values) / len(values)
+
+
+def _max_queue_depth_by_task(
+    queue_depth_timeline: list[dict[str, Any]],
+) -> dict[str, float]:
+    result: dict[str, float] = {}
+    for item in queue_depth_timeline:
+        queue_depth = item.get("queue_depth")
+        if not isinstance(queue_depth, dict):
+            continue
+        for task_name, depth in queue_depth.items():
+            result[str(task_name)] = max(
+                result.get(str(task_name), 0.0),
+                _non_negative_number(depth),
+            )
+    return result
+
+
+def _derived_queue_pressure_state(max_total_queue_depth: float) -> str:
+    if max_total_queue_depth >= 8:
+        return "overloaded"
+    if max_total_queue_depth >= 3:
+        return "elevated"
+    return "nominal"
 
 
 def _load_json_dict(path: str | Path | None) -> dict[str, Any] | None:

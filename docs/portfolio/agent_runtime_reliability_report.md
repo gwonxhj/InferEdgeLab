@@ -57,6 +57,23 @@ AIGuard `guard_analysis` also includes `sustained_overload_risk`, which Lab
 preserves as report evidence and reflects in the agent deployment decision
 context.
 
+The report also preserves the Orchestrator operation-health fields added for
+runtime operation review:
+
+- `queue_state_summary` for queue pressure, max backlog, final queue depth, and
+  overload threshold.
+- `worker_health_snapshot` for healthy/constrained/degraded worker state,
+  executed/drop/deadline/fallback counts, and latency context.
+- `runtime_event_summary` for event type counts.
+- `runtime_event_timeline` sample rows for queue snapshots, policy decisions,
+  drops, and execution outcomes.
+
+These fields make the report path explicit:
+
+```text
+Orchestrator operation evidence -> AIGuard reliability explanation -> Lab-owned deployment risk context
+```
+
 ## Lab Decision Context
 
 Expected decision:
@@ -83,6 +100,7 @@ Triggered rules:
 ## Boundary
 
 - Orchestrator records scheduling and policy evidence.
+- Orchestrator operation-health fields are displayed as local runtime evidence.
 - AIGuard explains runtime reliability risk.
 - Lab remains the final deployment decision owner.
 - This report is an additive agent-runtime path and does not change existing
