@@ -79,6 +79,10 @@ AGENT_RUNTIME_POLICY_RULES: dict[str, dict[str, str]] = {
         "effect": "review_required",
         "description": "Sustained queue depth crossed the review threshold.",
     },
+    "runtime_timeout_observed_review": {
+        "effect": "review_required",
+        "description": "Runtime result reported a latency timeout observation threshold breach.",
+    },
     "runtime_reliability_pass_note": {
         "effect": "deployable_with_note",
         "description": "Runtime reliability evidence stayed within configured thresholds.",
@@ -103,6 +107,7 @@ def build_agent_runtime_reliability_report(
     decision = build_agent_runtime_deployment_decision(
         metrics=metrics,
         guard_analysis=guard_analysis,
+        runtime_result_context=runtime_result_context,
         thresholds=policy,
     )
 
@@ -153,6 +158,7 @@ def build_agent_runtime_deployment_decision(
     *,
     metrics: dict[str, Any],
     guard_analysis: dict[str, Any] | None,
+    runtime_result_context: dict[str, Any] | None = None,
     thresholds: dict[str, float] | None = None,
 ) -> dict[str, Any]:
     policy = {**DEFAULT_AGENT_RUNTIME_THRESHOLDS, **(thresholds or {})}
@@ -208,6 +214,8 @@ def build_agent_runtime_deployment_decision(
         review_rule="sustained_overload_review",
         blocked_rule="sustained_overload_block",
     )
+    if _runtime_timeout_observed(runtime_result_context):
+        triggered_rules.append("runtime_timeout_observed_review")
 
     if not triggered_rules:
         triggered_rules.append("runtime_reliability_pass_note")
@@ -493,7 +501,9 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             f"| backend_key | {runtime_result_context.get('backend_key') or '-'} |",
             f"| runtime_status | {runtime_health.get('status') or runtime_result_context.get('status') or '-'} |",
             f"| runtime_error_category | {runtime_error.get('category') or '-'} |",
-            f"| timeout_observed | {runtime_health.get('timeout_observed', runtime_error.get('timeout_observed', '-'))} |",
+            f"| timeout_policy | {runtime_health.get('timeout_policy', runtime_error.get('timeout_policy', '-'))} |",
+            f"| timeout_budget_ms | {_fmt_number(runtime_health.get('timeout_budget_ms', runtime_error.get('timeout_budget_ms')))} |",
+            f"| runtime_timeout_observed | {runtime_result_context.get('runtime_timeout_observed', False)} |",
             f"| runtime_event_count | {_fmt_number(runtime_event_summary.get('event_count'))} |",
             "",
             "Runtime result event sample:",
@@ -615,6 +625,39 @@ def _append_metric_rules(
 
 def _rule_effect(rule: str) -> str:
     return AGENT_RUNTIME_POLICY_RULES.get(rule, {}).get("effect", "unknown")
+
+
+def _runtime_timeout_observed(runtime_result_context: dict[str, Any] | None) -> bool:
+    if not isinstance(runtime_result_context, dict):
+        return False
+    if bool(runtime_result_context.get("runtime_timeout_observed")):
+        return True
+    return _runtime_timeout_observed_from_parts(
+        health=runtime_result_context.get("runtime_health_snapshot"),
+        error=runtime_result_context.get("runtime_error_classification"),
+        runtime_events=_dict_list(runtime_result_context.get("runtime_event_sample")),
+    )
+
+
+def _runtime_timeout_observed_from_parts(
+    *,
+    health: Any,
+    error: Any,
+    runtime_events: list[dict[str, Any]],
+) -> bool:
+    if isinstance(health, dict) and bool(health.get("timeout_observed")):
+        return True
+    if isinstance(error, dict):
+        if bool(error.get("timeout_observed")):
+            return True
+        if error.get("category") == "runtime_timeout_observed":
+            return True
+    for event in runtime_events:
+        if bool(event.get("timeout_observed")):
+            return True
+        if event.get("category") == "runtime_timeout_observed":
+            return True
+    return False
 
 
 def _policy_log(orchestration_summary: dict[str, Any]) -> list[dict[str, Any]]:
@@ -740,6 +783,7 @@ def _runtime_result_operation_context(
             "backend_key": None,
             "status": None,
             "success": None,
+            "runtime_timeout_observed": False,
             "runtime_health_snapshot": {},
             "runtime_error_classification": {},
             "runtime_event_summary": {
@@ -759,6 +803,11 @@ def _runtime_result_operation_context(
         "backend_key": runtime_result.get("backend_key"),
         "status": runtime_result.get("status"),
         "success": runtime_result.get("success"),
+        "runtime_timeout_observed": _runtime_timeout_observed_from_parts(
+            health=health,
+            error=error,
+            runtime_events=runtime_events,
+        ),
         "runtime_health_snapshot": dict(health) if isinstance(health, dict) else {},
         "runtime_error_classification": dict(error) if isinstance(error, dict) else {},
         "runtime_event_summary": {
