@@ -90,6 +90,7 @@ def build_agent_runtime_reliability_report(
     *,
     orchestration_summary: dict[str, Any],
     guard_analysis: dict[str, Any] | None = None,
+    runtime_result: dict[str, Any] | None = None,
     source: dict[str, Any] | None = None,
     thresholds: dict[str, float] | None = None,
 ) -> dict[str, Any]:
@@ -98,6 +99,7 @@ def build_agent_runtime_reliability_report(
     policy = {**DEFAULT_AGENT_RUNTIME_THRESHOLDS, **(thresholds or {})}
     metrics = compute_agent_runtime_metrics(orchestration_summary)
     runtime_summary = _agent_runtime_summary(orchestration_summary)
+    runtime_result_context = _runtime_result_operation_context(runtime_result)
     decision = build_agent_runtime_deployment_decision(
         metrics=metrics,
         guard_analysis=guard_analysis,
@@ -119,6 +121,11 @@ def build_agent_runtime_reliability_report(
                 if isinstance(guard_analysis, dict)
                 else None
             ),
+            "runtime_result": (
+                runtime_result.get("schema_version")
+                if isinstance(runtime_result, dict)
+                else None
+            ),
             "source_contracts": runtime_summary.get("source_contracts", {}),
         },
         "agent_runtime_summary": {
@@ -127,6 +134,7 @@ def build_agent_runtime_reliability_report(
             "metrics": metrics,
             "timeline_summary": _timeline_summary(orchestration_summary, metrics),
             "operation_context": _operation_context(orchestration_summary, metrics),
+            "runtime_result_context": runtime_result_context,
             "policy_decision_reasons": metrics["policy_decision_reasons"],
             "policy_decision_log_count": len(_policy_log(orchestration_summary)),
         },
@@ -332,16 +340,22 @@ def load_agent_runtime_reliability_bundle(
     *,
     orchestration_summary_path: str | Path,
     guard_analysis_path: str | Path | None = None,
+    runtime_result_path: str | Path | None = None,
 ) -> dict[str, Any]:
     orchestration_summary = _load_json_dict(orchestration_summary_path)
     guard_analysis = _load_json_dict(guard_analysis_path) if guard_analysis_path else None
+    runtime_result = _load_json_dict(runtime_result_path) if runtime_result_path else None
     return build_agent_runtime_reliability_report(
         orchestration_summary=orchestration_summary,
         guard_analysis=guard_analysis,
+        runtime_result=runtime_result,
         source={
             "orchestration_summary_path": str(orchestration_summary_path),
             "guard_analysis_path": str(guard_analysis_path)
             if guard_analysis_path
+            else None,
+            "runtime_result_path": str(runtime_result_path)
+            if runtime_result_path
             else None,
         },
     )
@@ -352,6 +366,10 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
     metrics = runtime["metrics"]
     decision = report["agent_deployment_decision"]
     guard = report["guard_summary"]
+    runtime_result_context = runtime.get("runtime_result_context") or {}
+    runtime_health = runtime_result_context.get("runtime_health_snapshot") or {}
+    runtime_error = runtime_result_context.get("runtime_error_classification") or {}
+    runtime_event_summary = runtime_result_context.get("runtime_event_summary") or {}
 
     lines = [
         "# InferEdge Agent Runtime Reliability Report",
@@ -464,6 +482,33 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
                 for event in runtime["operation_context"][
                     "runtime_event_timeline_sample"
                 ]
+            ],
+            "",
+            "## Runtime Result Operation Evidence",
+            "",
+            "| Field | Value |",
+            "|---|---|",
+            f"| runtime_result_schema | {runtime_result_context.get('source_schema_version') or '-'} |",
+            f"| compare_key | {runtime_result_context.get('compare_key') or '-'} |",
+            f"| backend_key | {runtime_result_context.get('backend_key') or '-'} |",
+            f"| runtime_status | {runtime_health.get('status') or runtime_result_context.get('status') or '-'} |",
+            f"| runtime_error_category | {runtime_error.get('category') or '-'} |",
+            f"| timeout_observed | {runtime_health.get('timeout_observed', runtime_error.get('timeout_observed', '-'))} |",
+            f"| runtime_event_count | {_fmt_number(runtime_event_summary.get('event_count'))} |",
+            "",
+            "Runtime result event sample:",
+            "",
+            "| # | Type | Status | Detail |",
+            "|---:|---|---|---|",
+            *[
+                "| "
+                f"{index} | "
+                f"{event.get('type') or event.get('event_type') or '-'} | "
+                f"{event.get('status') or '-'} | "
+                f"{event.get('category') or event.get('reason') or event.get('engine_backend') or '-'} |"
+                for index, event in enumerate(
+                    runtime_result_context.get("runtime_event_sample") or []
+                )
             ],
             "",
             "## AIGuard Runtime Reliability Evidence",
@@ -685,6 +730,46 @@ def _operation_context(
     }
 
 
+def _runtime_result_operation_context(
+    runtime_result: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if not isinstance(runtime_result, dict):
+        return {
+            "source_schema_version": None,
+            "compare_key": None,
+            "backend_key": None,
+            "status": None,
+            "success": None,
+            "runtime_health_snapshot": {},
+            "runtime_error_classification": {},
+            "runtime_event_summary": {
+                "schema_version": None,
+                "event_count": 0,
+                "event_type_counts": {},
+            },
+            "runtime_event_sample": [],
+        }
+
+    health = runtime_result.get("runtime_health_snapshot")
+    error = runtime_result.get("runtime_error_classification")
+    runtime_events = _dict_list(runtime_result.get("runtime_events"))
+    return {
+        "source_schema_version": runtime_result.get("schema_version"),
+        "compare_key": runtime_result.get("compare_key"),
+        "backend_key": runtime_result.get("backend_key"),
+        "status": runtime_result.get("status"),
+        "success": runtime_result.get("success"),
+        "runtime_health_snapshot": dict(health) if isinstance(health, dict) else {},
+        "runtime_error_classification": dict(error) if isinstance(error, dict) else {},
+        "runtime_event_summary": {
+            "schema_version": "inferedgelab-runtime-result-event-summary-v1",
+            "event_count": len(runtime_events),
+            "event_type_counts": _runtime_result_event_type_counts(runtime_events),
+        },
+        "runtime_event_sample": runtime_events[:8],
+    }
+
+
 def _queue_state_summary(orchestration_summary: dict[str, Any]) -> dict[str, Any]:
     value = orchestration_summary.get("queue_state_summary")
     if isinstance(value, dict):
@@ -743,6 +828,16 @@ def _runtime_event_type_counts(runtime_events: list[dict[str, Any]]) -> dict[str
     counts: dict[str, int] = {}
     for event in runtime_events:
         event_type = event.get("event_type")
+        if not isinstance(event_type, str) or not event_type:
+            event_type = "unknown"
+        counts[event_type] = counts.get(event_type, 0) + 1
+    return counts
+
+
+def _runtime_result_event_type_counts(runtime_events: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for event in runtime_events:
+        event_type = event.get("type") or event.get("event_type")
         if not isinstance(event_type, str) or not event_type:
             event_type = "unknown"
         counts[event_type] = counts.get(event_type, 0) + 1

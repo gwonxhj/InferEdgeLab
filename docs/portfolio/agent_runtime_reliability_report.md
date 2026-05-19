@@ -67,11 +67,16 @@ runtime operation review:
 - `runtime_event_summary` for event type counts.
 - `runtime_event_timeline` sample rows for queue snapshots, policy decisions,
   drops, and execution outcomes.
+- Optional Runtime result operation evidence through `--runtime-result`,
+  including `runtime_health_snapshot`, `runtime_error_classification`, and
+  `runtime_events`.
 
 These fields make the report path explicit:
 
 ```text
-Orchestrator operation evidence -> AIGuard reliability explanation -> Lab-owned deployment risk context
+Runtime result operation evidence + Orchestrator operation evidence
+-> AIGuard reliability explanation
+-> Lab-owned deployment risk context
 ```
 
 ## Lab Decision Context

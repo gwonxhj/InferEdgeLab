@@ -218,6 +218,66 @@ def guard_analysis() -> dict:
     }
 
 
+def runtime_result_with_operation_evidence() -> dict:
+    return {
+        "schema_version": "inferedge-runtime-result-v1",
+        "compare_key": "yolov8n__b1__h224w224__fp32",
+        "backend_key": "onnxruntime__cpu",
+        "status": "skipped",
+        "success": False,
+        "runtime_health_snapshot": {
+            "schema_version": "inferedge-runtime-health-v1",
+            "status": "degraded",
+            "engine_backend": "onnxruntime",
+            "device": "cpu",
+            "input_mode": "dummy",
+            "input_preprocess": "synthetic",
+            "warmup": 1,
+            "runs": 1,
+            "run_once": False,
+            "success": False,
+            "latency_mean_ms": 0.0,
+            "latency_p95_ms": 0.0,
+            "latency_p99_ms": 0.0,
+            "fps": 0.0,
+            "power_mode": "unknown",
+            "jetson_clocks": "unknown",
+            "timeout_policy": "not_configured",
+            "timeout_observed": False,
+        },
+        "runtime_error_classification": {
+            "schema_version": "inferedge-runtime-error-v1",
+            "status": "classified",
+            "category": "runtime_execution_skipped",
+            "message": "backend is not available in this build",
+            "timeout_observed": False,
+            "retryable": False,
+        },
+        "runtime_events": [
+            {
+                "type": "runtime_configured",
+                "status": "ok",
+                "engine_backend": "onnxruntime",
+                "device": "cpu",
+                "input_mode": "dummy",
+            },
+            {
+                "type": "benchmark_completed",
+                "status": "skipped",
+                "success": False,
+                "warmup": 1,
+                "runs": 1,
+                "mean_ms": 0.0,
+            },
+            {
+                "type": "runtime_error_classified",
+                "status": "classified",
+                "category": "runtime_execution_skipped",
+            },
+        ],
+    }
+
+
 def sustained_guard_analysis() -> dict:
     data = guard_analysis()
     data["evidence"].append(
@@ -285,6 +345,7 @@ def test_agent_runtime_report_blocks_when_guard_blocks():
     report = build_agent_runtime_reliability_report(
         orchestration_summary=orchestration_summary(),
         guard_analysis=sustained_guard_analysis(),
+        runtime_result=runtime_result_with_operation_evidence(),
     )
 
     decision = report["agent_deployment_decision"]
@@ -295,6 +356,7 @@ def test_agent_runtime_report_blocks_when_guard_blocks():
     assert report["contracts"]["aiguard_guard_analysis"] == (
         "inferedge-aiguard-diagnosis-v1"
     )
+    assert report["contracts"]["runtime_result"] == "inferedge-runtime-result-v1"
     assert decision["policy_version"] == AGENT_RUNTIME_POLICY_VERSION
     assert decision["decision"] == "blocked"
     assert "guard_blocked_runtime_block" in decision["triggered_rules"]
@@ -326,6 +388,18 @@ def test_agent_runtime_report_blocks_when_guard_blocks():
     assert operation_context["runtime_event_timeline_sample"][1]["event_type"] == (
         "policy_decision"
     )
+    runtime_context = report["agent_runtime_summary"]["runtime_result_context"]
+    assert runtime_context["source_schema_version"] == "inferedge-runtime-result-v1"
+    assert runtime_context["runtime_health_snapshot"]["status"] == "degraded"
+    assert runtime_context["runtime_error_classification"]["category"] == (
+        "runtime_execution_skipped"
+    )
+    assert runtime_context["runtime_event_summary"]["event_count"] == 3
+    assert runtime_context["runtime_event_summary"]["event_type_counts"] == {
+        "runtime_configured": 1,
+        "benchmark_completed": 1,
+        "runtime_error_classified": 1,
+    }
 
 
 def test_agent_runtime_report_keeps_legacy_orchestrator_summary_compatible():
@@ -352,6 +426,7 @@ def test_agent_runtime_report_markdown_contains_sections():
     report = build_agent_runtime_reliability_report(
         orchestration_summary=orchestration_summary(),
         guard_analysis=sustained_guard_analysis(),
+        runtime_result=runtime_result_with_operation_evidence(),
     )
     markdown = build_agent_runtime_reliability_markdown(report)
 
@@ -362,6 +437,8 @@ def test_agent_runtime_report_markdown_contains_sections():
     assert "Queue State" in markdown
     assert "Worker Health" in markdown
     assert "Runtime Event Summary" in markdown
+    assert "Runtime Result Operation Evidence" in markdown
+    assert "runtime_execution_skipped" in markdown
     assert "queue_pressure_state" in markdown
     assert "policy_decision" in markdown
     assert "AIGuard Runtime Reliability Evidence" in markdown
@@ -383,10 +460,15 @@ def test_agent_runtime_report_loads_committed_fixtures():
     assert len(report["agent_runtime_summary"]["agents"]) == 3
 
 
-def test_agent_runtime_report_command_outputs_json(capsys):
+def test_agent_runtime_report_command_outputs_json(tmp_path, capsys):
+    runtime_result_path = tmp_path / "runtime_operation_result.json"
+    with runtime_result_path.open("w", encoding="utf-8") as file:
+        json.dump(runtime_result_with_operation_evidence(), file)
+
     agent_runtime_report_cmd(
         orchestration_summary="examples/agent_runtime/agent_3_orchestration_summary.json",
         guard_analysis="examples/agent_runtime/aiguard_runtime_guard_analysis.json",
+        runtime_result=str(runtime_result_path),
         format="json",
         output="",
     )
@@ -395,3 +477,5 @@ def test_agent_runtime_report_command_outputs_json(capsys):
 
     assert report["schema_version"] == AGENT_RUNTIME_REPORT_SCHEMA_VERSION
     assert report["agent_deployment_decision"]["decision"] == "blocked"
+    runtime_context = report["agent_runtime_summary"]["runtime_result_context"]
+    assert runtime_context["runtime_health_snapshot"]["status"] == "degraded"
