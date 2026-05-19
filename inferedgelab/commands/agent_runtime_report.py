@@ -23,12 +23,18 @@ def agent_runtime_report_cmd(
         "--guard-analysis",
         help="Optional AIGuard runtime reliability guard_analysis JSON",
     ),
+    runtime_result: str = typer.Option(
+        "",
+        "--runtime-result",
+        help="Optional InferEdge-Runtime result JSON with runtime_health_snapshot/runtime_events",
+    ),
     format: str = typer.Option("text", "--format", "-f", help="text/json/markdown"),
     output: str = typer.Option("", "--output", "-o", help="Optional output path"),
 ) -> None:
     report = load_agent_runtime_reliability_bundle(
         orchestration_summary_path=orchestration_summary,
         guard_analysis_path=guard_analysis or None,
+        runtime_result_path=runtime_result or None,
     )
     normalized_format = format.strip().lower()
     if normalized_format == "json":
@@ -53,6 +59,9 @@ def _text_summary(report: dict) -> str:
     metrics = report["agent_runtime_summary"]["metrics"]
     decision = report["agent_deployment_decision"]
     guard = report["guard_summary"]
+    runtime_context = report["agent_runtime_summary"].get("runtime_result_context") or {}
+    health = runtime_context.get("runtime_health_snapshot") or {}
+    error = runtime_context.get("runtime_error_classification") or {}
     lines = [
         "InferEdge Agent Runtime Reliability Report",
         f"schema_version: {report['schema_version']}",
@@ -63,6 +72,8 @@ def _text_summary(report: dict) -> str:
         f"drop_rate: {metrics['drop_rate']:.6g}",
         f"fallback_rate: {metrics['fallback_rate']:.6g}",
         f"deadline_miss_rate: {metrics['deadline_miss_rate']:.6g}",
+        f"runtime_health_status: {health.get('status')}",
+        f"runtime_error_category: {error.get('category')}",
         "triggered_rules:",
     ]
     lines.extend(f"- {rule}" for rule in decision["triggered_rules"])
