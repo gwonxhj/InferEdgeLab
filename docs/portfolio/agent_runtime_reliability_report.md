@@ -70,6 +70,11 @@ runtime operation review:
 - Optional Runtime result operation evidence through `--runtime-result`,
   including `runtime_health_snapshot`, `runtime_error_classification`, and
   `runtime_events`.
+- Runtime timeout observation context, including `timeout_policy`,
+  `timeout_budget_ms`, and `runtime_timeout_observed`. A timeout observation is
+  treated as Lab `review_required` evidence because it means the configured
+  latency threshold was breached; it does not claim production request
+  cancellation.
 
 These fields make the report path explicit:
 
@@ -101,6 +106,8 @@ Triggered rules:
 - `deadline_miss_review`
 - `queue_backlog_review`
 - `sustained_overload_review`
+- `runtime_timeout_observed_review` when a Runtime result reports a latency
+  timeout observation threshold breach.
 
 ## Boundary
 

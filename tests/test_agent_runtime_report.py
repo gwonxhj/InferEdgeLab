@@ -278,6 +278,112 @@ def runtime_result_with_operation_evidence() -> dict:
     }
 
 
+def runtime_result_with_timeout_observed() -> dict:
+    data = runtime_result_with_operation_evidence()
+    data["status"] = "completed"
+    data["success"] = True
+    data["runtime_health_snapshot"].update(
+        {
+            "status": "degraded",
+            "success": True,
+            "latency_mean_ms": 12.5,
+            "latency_p95_ms": 15.0,
+            "latency_p99_ms": 18.0,
+            "fps": 80.0,
+            "timeout_policy": "latency_threshold",
+            "timeout_budget_ms": 10,
+            "timeout_observed": True,
+        }
+    )
+    data["runtime_error_classification"].update(
+        {
+            "category": "runtime_timeout_observed",
+            "message": "mean latency exceeded configured timeout observation threshold",
+            "timeout_observed": True,
+            "retryable": True,
+        }
+    )
+    data["runtime_events"][-1].update(
+        {
+            "category": "runtime_timeout_observed",
+            "timeout_policy": "latency_threshold",
+            "timeout_observed": True,
+        }
+    )
+    return data
+
+
+def quiet_orchestration_summary() -> dict:
+    data = orchestration_summary()
+    data["agent_runtime_summary"]["totals"] = {
+        "executed_count": 10,
+        "dropped_count": 0,
+        "deadline_missed_count": 0,
+        "fallback_count": 0,
+        "policy_decision_count": 0,
+        "overload_event_count": 0,
+    }
+    data["sustained_runtime_summary"].update(
+        {
+            "scenario_mode": "normal",
+            "queue_depth_sample_count": 1,
+            "latency_sample_count": 1,
+            "max_total_queue_depth": 0,
+        }
+    )
+    data["queue_depth_timeline"] = [
+        {
+            "cycle": 1,
+            "stage": "before_policy",
+            "queue_depth": {
+                "vision_agent": 0,
+                "voice_command_agent": 0,
+                "safety_monitor_agent": 0,
+            },
+            "total_queue_depth": 0,
+        }
+    ]
+    data["latency_timeline"] = []
+    data["policy_decision_log"] = []
+    data["queue_state_summary"].update(
+        {
+            "max_total_queue_depth": 0,
+            "average_total_queue_depth": 0.0,
+            "final_queue_depth": {
+                "vision_agent": 0,
+                "voice_command_agent": 0,
+                "safety_monitor_agent": 0,
+            },
+            "max_queue_depth_by_task": {
+                "vision_agent": 0,
+                "voice_command_agent": 0,
+                "safety_monitor_agent": 0,
+            },
+            "queue_pressure_state": "normal",
+        }
+    )
+    data["runtime_event_summary"] = {
+        "schema_version": "inferedge-orchestrator-runtime-event-summary-v1",
+        "event_count": 0,
+        "event_type_counts": {},
+    }
+    data["runtime_event_timeline"] = []
+    return data
+
+
+def passing_guard_analysis() -> dict:
+    return {
+        "schema_version": "inferedge-aiguard-diagnosis-v1",
+        "status": "pass",
+        "guard_verdict": "pass",
+        "severity": "low",
+        "confidence": 0.96,
+        "primary_reason": "Runtime reliability guard evidence stayed within thresholds.",
+        "evidence": [],
+        "created_at": "2026-05-17T00:00:00Z",
+    }
+
+
 def sustained_guard_analysis() -> dict:
     data = guard_analysis()
     data["evidence"].append(
@@ -400,6 +506,29 @@ def test_agent_runtime_report_blocks_when_guard_blocks():
         "benchmark_completed": 1,
         "runtime_error_classified": 1,
     }
+
+
+def test_agent_runtime_report_marks_runtime_timeout_as_review():
+    report = build_agent_runtime_reliability_report(
+        orchestration_summary=quiet_orchestration_summary(),
+        guard_analysis=passing_guard_analysis(),
+        runtime_result=runtime_result_with_timeout_observed(),
+    )
+
+    decision = report["agent_deployment_decision"]
+    assert decision["decision"] == "review_required"
+    assert "runtime_timeout_observed_review" in decision["triggered_rules"]
+    assert "guard_blocked_runtime_block" not in decision["triggered_rules"]
+    runtime_context = report["agent_runtime_summary"]["runtime_result_context"]
+    assert runtime_context["runtime_timeout_observed"] is True
+    assert runtime_context["runtime_health_snapshot"]["timeout_policy"] == (
+        "latency_threshold"
+    )
+
+    markdown = build_agent_runtime_reliability_markdown(report)
+    assert "runtime_timeout_observed" in markdown
+    assert "latency_threshold" in markdown
+    assert "runtime_timeout_observed_review" in markdown
 
 
 def test_agent_runtime_report_keeps_legacy_orchestrator_summary_compatible():
