@@ -68,6 +68,7 @@ def _text_summary(report: dict) -> str:
     runtime_context = report["agent_runtime_summary"].get("runtime_result_context") or {}
     remote_context = report["agent_runtime_summary"].get("remote_dispatch_context") or {}
     remote_execution_result = remote_context.get("remote_execution_result") or {}
+    fallback_execution_result = remote_context.get("fallback_execution_result") or {}
     health = runtime_context.get("runtime_health_snapshot") or {}
     error = runtime_context.get("runtime_error_classification") or {}
     lines = [
@@ -87,6 +88,8 @@ def _text_summary(report: dict) -> str:
         f"remote_execution_status: {remote_execution_result.get('status')}",
         f"remote_execution_transport: {remote_execution_result.get('transport')}",
         f"remote_execution_error_category: {remote_execution_result.get('error_category')}",
+        f"remote_fallback_status: {fallback_execution_result.get('final_status')}",
+        f"remote_fallback_workers: {', '.join(fallback_execution_result.get('attempted_worker_ids') or [])}",
         "triggered_rules:",
     ]
     lines.extend(f"- {rule}" for rule in decision["triggered_rules"])

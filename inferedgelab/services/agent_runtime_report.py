@@ -429,6 +429,9 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
     remote_execution_result = (
         remote_dispatch_context.get("remote_execution_result") or {}
     )
+    fallback_execution_result = (
+        remote_dispatch_context.get("fallback_execution_result") or {}
+    )
     retry_fallback_plan = remote_dispatch_context.get("retry_fallback_plan") or {}
     worker_selection = remote_dispatch_context.get("worker_selection") or {}
 
@@ -619,6 +622,9 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             f"| execution_http_status | {_fmt_number(remote_execution_result.get('http_status'))} |",
             f"| execution_exit_code | {_fmt_number(remote_execution_result.get('exit_code'))} |",
             f"| execution_fallback_performed | {remote_execution_result.get('fallback_execution_performed', '-')} |",
+            f"| fallback_final_status | {fallback_execution_result.get('final_status') or retry_fallback_plan.get('fallback_final_status') or '-'} |",
+            f"| fallback_reason | {fallback_execution_result.get('fallback_reason') or '-'} |",
+            f"| fallback_attempted_worker_ids | {', '.join(fallback_execution_result.get('attempted_worker_ids') or retry_fallback_plan.get('fallback_attempted_worker_ids') or []) or '-'} |",
             f"| fallback_worker_ids | {', '.join(worker_selection.get('fallback_worker_ids') or []) or '-'} |",
             f"| retry_max_attempts | {_fmt_number(retry_fallback_plan.get('max_attempts'))} |",
             f"| retry_execution_performed | {retry_fallback_plan.get('execution_performed', '-')} |",
@@ -635,6 +641,18 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             f"| error_message | {remote_execution_result.get('error_message') or '-'} |",
             f"| elapsed_ms | {_fmt_number(remote_execution_result.get('elapsed_ms'))} |",
             f"| note | {remote_execution_result.get('note') or 'starter evidence only; not production remote execution'} |",
+            "",
+            "Remote fallback starter evidence:",
+            "",
+            "| Field | Value |",
+            "|---|---|",
+            f"| fallback_requested | {fallback_execution_result.get('fallback_requested', '-')} |",
+            f"| primary_worker_id | {fallback_execution_result.get('primary_worker_id') or '-'} |",
+            f"| fallback_reason | {fallback_execution_result.get('fallback_reason') or '-'} |",
+            f"| attempted_worker_ids | {', '.join(fallback_execution_result.get('attempted_worker_ids') or []) or '-'} |",
+            f"| final_status | {fallback_execution_result.get('final_status') or '-'} |",
+            f"| attempt_count | {_fmt_number(len(fallback_execution_result.get('attempts') or []))} |",
+            f"| production_remote_execution | {fallback_execution_result.get('production_remote_execution', '-')} |",
             "",
             "Remote worker selection sample:",
             "",
@@ -1042,6 +1060,7 @@ def _remote_dispatch_context(
             "remote_execution": {},
             "remote_execution_plan": {},
             "remote_execution_result": _empty_remote_execution_result(),
+            "fallback_execution_result": _empty_fallback_execution_result(),
             "worker_selection": {
                 "schema_version": None,
                 "selected_worker_id": None,
@@ -1067,6 +1086,7 @@ def _remote_dispatch_context(
     remote_execution_plan = remote_dispatch.get("remote_execution_plan")
     remote_execution = remote_dispatch.get("remote_execution")
     remote_execution_result = remote_dispatch.get("remote_execution_result")
+    fallback_execution_result = remote_dispatch.get("fallback_execution_result")
     runtime_events = _dict_list(remote_dispatch.get("runtime_events"))
     evaluations = _dict_list(worker_selection.get("evaluations"))
     return {
@@ -1082,6 +1102,9 @@ def _remote_dispatch_context(
         else {},
         "remote_execution_result": _remote_execution_result_context(
             remote_execution_result
+        ),
+        "fallback_execution_result": _fallback_execution_result_context(
+            fallback_execution_result
         ),
         "worker_selection": dict(worker_selection),
         "retry_fallback_plan": dict(retry_fallback_plan)
@@ -1108,11 +1131,38 @@ def _empty_remote_execution_result() -> dict[str, Any]:
     }
 
 
+def _empty_fallback_execution_result() -> dict[str, Any]:
+    return {
+        "schema_version": None,
+        "fallback_requested": False,
+        "fallback_reason": None,
+        "primary_worker_id": None,
+        "attempted_worker_ids": [],
+        "final_status": None,
+        "attempts": [],
+        "production_remote_execution": False,
+    }
+
+
 def _remote_execution_result_context(value: Any) -> dict[str, Any]:
     if not isinstance(value, dict):
         return _empty_remote_execution_result()
     context = _empty_remote_execution_result()
     context.update(dict(value))
+    return context
+
+
+def _fallback_execution_result_context(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        return _empty_fallback_execution_result()
+    context = _empty_fallback_execution_result()
+    context.update(dict(value))
+    context["attempts"] = _dict_list(context.get("attempts"))
+    if not isinstance(context.get("attempted_worker_ids"), list):
+        context["attempted_worker_ids"] = []
+    context["attempted_worker_ids"] = [
+        item for item in context["attempted_worker_ids"] if isinstance(item, str)
+    ]
     return context
 
 

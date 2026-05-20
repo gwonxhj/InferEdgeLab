@@ -446,6 +446,54 @@ def remote_dispatch_failed_execution_result() -> dict:
     return data
 
 
+def remote_dispatch_fallback_recovered_result() -> dict:
+    data = remote_dispatch_failed_execution_result()
+    data["retry_fallback_plan"].update(
+        {
+            "fallback_execution_performed": True,
+            "fallback_attempted_worker_ids": ["jetson-fallback"],
+            "fallback_final_status": "succeeded",
+            "last_execution_status": "succeeded",
+        }
+    )
+    data["fallback_execution_result"] = {
+        "schema_version": "inferedge-remote-fallback-execution-v1",
+        "fallback_requested": True,
+        "fallback_reason": "connection_error",
+        "primary_worker_id": "jetson-nano-01",
+        "attempted_worker_ids": ["jetson-fallback"],
+        "final_status": "succeeded",
+        "attempts": [
+            {
+                "schema_version": "inferedge-remote-execution-result-v1",
+                "execution_requested": True,
+                "execution_performed": True,
+                "production_remote_execution": False,
+                "status": "succeeded",
+                "transport": "http",
+                "selected_worker_id": "jetson-fallback",
+                "task_id": "task_vision_001",
+                "agent_id": "vision_agent",
+                "http_status": 200,
+                "fallback_attempt": 1,
+                "fallback_for_worker_id": "jetson-nano-01",
+                "response_json": {"status": "ok"},
+            }
+        ],
+        "production_remote_execution": False,
+    }
+    data["runtime_events"].append(
+        {
+            "event": "remote_fallback_execution_completed",
+            "task_id": "task_vision_001",
+            "agent_id": "vision_agent",
+            "selected_worker_id": "jetson-fallback",
+            "status": "succeeded",
+        }
+    )
+    return data
+
+
 def remote_execution_guard_analysis() -> dict:
     data = passing_guard_analysis()
     data.update(
@@ -486,6 +534,51 @@ def remote_execution_guard_analysis() -> dict:
             },
         }
     ]
+    return data
+
+
+def remote_fallback_recovered_guard_analysis() -> dict:
+    data = remote_execution_guard_analysis()
+    data["primary_reason"] = (
+        "Remote execution starter failed on the primary worker and recovered via fallback."
+    )
+    data["evidence"].append(
+        {
+            "type": "remote_execution_recovered_by_fallback",
+            "metric_name": "fallback_final_status",
+            "observed_value": "succeeded",
+            "baseline_value": "primary_execution_succeeded_without_fallback",
+            "threshold": "succeeded",
+            "delta": None,
+            "delta_pct": None,
+            "increase_factor": None,
+            "severity": "medium",
+            "status": "warning",
+            "explanation": (
+                "Fallback recovered explicit starter execution after the primary "
+                "remote worker failed."
+            ),
+            "why_it_matters": (
+                "Fallback recovery proves a resilience path exists, but the primary "
+                "worker path is not clean operation evidence."
+            ),
+            "suspected_causes": [
+                "primary_worker_unstable",
+                "connection_error",
+                "remote_worker_endpoint_unreachable",
+            ],
+            "recommendation": (
+                "Keep fallback enabled and inspect the primary worker before relying "
+                "on this path for deployment."
+            ),
+            "raw_context": {
+                "remote_dispatch": {
+                    "fallback_final_status": "succeeded",
+                    "fallback_attempted_worker_ids": ["jetson-fallback"],
+                }
+            },
+        }
+    )
     return data
 
 
@@ -869,6 +962,47 @@ def test_agent_runtime_report_surfaces_remote_execution_failure():
     assert "connection_error" in markdown
     assert "remote_execution_failed" in markdown
     assert "starter evidence only; not production remote execution" in markdown
+
+
+def test_agent_runtime_report_surfaces_remote_fallback_recovery():
+    report = build_agent_runtime_reliability_report(
+        orchestration_summary=quiet_orchestration_summary(),
+        guard_analysis=remote_fallback_recovered_guard_analysis(),
+        remote_dispatch=remote_dispatch_fallback_recovered_result(),
+    )
+
+    remote_context = report["agent_runtime_summary"]["remote_dispatch_context"]
+    fallback_context = remote_context["fallback_execution_result"]
+    decision = report["agent_deployment_decision"]
+
+    assert fallback_context["schema_version"] == (
+        "inferedge-remote-fallback-execution-v1"
+    )
+    assert fallback_context["fallback_requested"] is True
+    assert fallback_context["primary_worker_id"] == "jetson-nano-01"
+    assert fallback_context["attempted_worker_ids"] == ["jetson-fallback"]
+    assert fallback_context["final_status"] == "succeeded"
+    assert len(fallback_context["attempts"]) == 1
+    assert decision["decision"] == "review_required"
+    assert "guard_warning_runtime_review" in decision["triggered_rules"]
+    assert {
+        item["type"] for item in report["runtime_reliability_evidence"]
+    } == {
+        "remote_execution_failed",
+        "remote_execution_recovered_by_fallback",
+    }
+
+    markdown = build_agent_runtime_reliability_markdown(report)
+    assert "Remote fallback starter evidence" in markdown
+    assert "remote_execution_recovered_by_fallback" in markdown
+    assert "jetson-fallback" in markdown
+    recovery_evidence = next(
+        item
+        for item in report["runtime_reliability_evidence"]
+        if item["type"] == "remote_execution_recovered_by_fallback"
+    )
+    assert "primary worker" in recovery_evidence["recommendation"]
+    assert "production remote execution" in markdown
 
 
 def test_agent_runtime_report_command_outputs_json(tmp_path, capsys):
