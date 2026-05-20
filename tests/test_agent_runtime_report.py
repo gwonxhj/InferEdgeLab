@@ -412,6 +412,83 @@ def remote_dispatch_result() -> dict:
     }
 
 
+def remote_dispatch_failed_execution_result() -> dict:
+    data = remote_dispatch_result()
+    data["remote_execution_plan"] = {
+        **data["remote_execution_plan"],
+        "mode": "execute_plan",
+        "network_execution_performed": True,
+        "transport": "http",
+        "endpoint_type": "http",
+    }
+    data["remote_execution_result"] = {
+        "status": "failed",
+        "transport": "http",
+        "execution_requested": True,
+        "execution_performed": True,
+        "fallback_execution_performed": False,
+        "error_category": "connection_error",
+        "error_message": "worker endpoint refused connection",
+        "http_status": None,
+        "exit_code": None,
+        "elapsed_ms": 42.5,
+        "note": "starter evidence only; not production remote execution",
+    }
+    data["runtime_events"].append(
+        {
+            "event": "remote_execution_failed",
+            "task_id": "task_vision_001",
+            "agent_id": "vision_agent",
+            "selected_worker_id": "jetson-nano-01",
+            "error_category": "connection_error",
+        }
+    )
+    return data
+
+
+def remote_execution_guard_analysis() -> dict:
+    data = passing_guard_analysis()
+    data.update(
+        {
+            "guard_verdict": "review_required",
+            "severity": "medium",
+            "confidence": 0.86,
+            "primary_reason": (
+                "Remote execution starter reported connection_error."
+            ),
+        }
+    )
+    data["evidence"] = [
+        {
+            "type": "remote_execution_failed",
+            "metric_name": "remote_execution_failed",
+            "observed_value": 1,
+            "baseline_value": None,
+            "threshold": 0,
+            "delta": None,
+            "delta_pct": None,
+            "increase_factor": None,
+            "severity": "medium",
+            "status": "failed",
+            "explanation": "Remote execution starter failed before task completion.",
+            "why_it_matters": (
+                "A selected worker that cannot execute the task is deployment "
+                "review evidence."
+            ),
+            "suspected_causes": ["remote_worker_unreachable"],
+            "recommendation": "Check worker endpoint, tunnel, or SSH access.",
+            "raw_context": {
+                "remote_execution": {
+                    "status": "failed",
+                    "transport": "http",
+                    "error_category": "connection_error",
+                }
+            },
+        }
+    ]
+    return data
+
+
 def runtime_result_with_timeout_observed() -> dict:
     data = runtime_result_with_operation_evidence()
     data["status"] = "completed"
@@ -665,6 +742,7 @@ def test_agent_runtime_report_blocks_when_guard_blocks():
     assert remote_context["remote_execution"]["production_remote_execution"] is False
     assert remote_context["remote_execution_plan"]["mode"] == "plan_only"
     assert remote_context["remote_execution_plan"]["network_execution_performed"] is False
+    assert remote_context["remote_execution_result"]["execution_performed"] is False
     assert remote_context["worker_selection"]["schema_version"] == (
         "inferedge-remote-worker-selection-v1"
     )
@@ -736,9 +814,11 @@ def test_agent_runtime_report_markdown_contains_sections():
     assert "runtime_latency_budget_overrun" in markdown
     assert "check_backend_availability" in markdown
     assert "Remote Dispatch Context" in markdown
+    assert "Remote execution starter evidence" in markdown
     assert "jetson-nano-01" in markdown
     assert "plan_only" in markdown
     assert "network_execution_performed" in markdown
+    assert "starter evidence only; not production remote execution" in markdown
     assert "retry_max_attempts" in markdown
     assert "runtime_execution_skipped" in markdown
     assert "queue_pressure_state" in markdown
@@ -760,6 +840,35 @@ def test_agent_runtime_report_loads_committed_fixtures():
     assert report["agent_deployment_decision"]["decision"] == "blocked"
     assert report["agent_runtime_summary"]["metrics"]["drop_rate"] == pytest.approx(14 / 24)
     assert len(report["agent_runtime_summary"]["agents"]) == 3
+
+
+def test_agent_runtime_report_surfaces_remote_execution_failure():
+    report = build_agent_runtime_reliability_report(
+        orchestration_summary=quiet_orchestration_summary(),
+        guard_analysis=remote_execution_guard_analysis(),
+        remote_dispatch=remote_dispatch_failed_execution_result(),
+    )
+
+    remote_context = report["agent_runtime_summary"]["remote_dispatch_context"]
+    remote_result = remote_context["remote_execution_result"]
+    decision = report["agent_deployment_decision"]
+
+    assert remote_result["status"] == "failed"
+    assert remote_result["transport"] == "http"
+    assert remote_result["execution_requested"] is True
+    assert remote_result["execution_performed"] is True
+    assert remote_result["error_category"] == "connection_error"
+    assert decision["decision"] == "review_required"
+    assert "guard_warning_runtime_review" in decision["triggered_rules"]
+    assert {
+        item["type"] for item in report["runtime_reliability_evidence"]
+    } == {"remote_execution_failed"}
+
+    markdown = build_agent_runtime_reliability_markdown(report)
+    assert "Remote execution starter evidence" in markdown
+    assert "connection_error" in markdown
+    assert "remote_execution_failed" in markdown
+    assert "starter evidence only; not production remote execution" in markdown
 
 
 def test_agent_runtime_report_command_outputs_json(tmp_path, capsys):

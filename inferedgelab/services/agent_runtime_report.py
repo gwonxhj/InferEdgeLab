@@ -426,6 +426,9 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
     runtime_event_summary = runtime_result_context.get("runtime_event_summary") or {}
     remote_execution = remote_dispatch_context.get("remote_execution") or {}
     remote_execution_plan = remote_dispatch_context.get("remote_execution_plan") or {}
+    remote_execution_result = (
+        remote_dispatch_context.get("remote_execution_result") or {}
+    )
     retry_fallback_plan = remote_dispatch_context.get("retry_fallback_plan") or {}
     worker_selection = remote_dispatch_context.get("worker_selection") or {}
 
@@ -608,9 +611,30 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             f"| execution_plan_mode | {remote_execution_plan.get('mode') or '-'} |",
             f"| network_execution_performed | {remote_execution_plan.get('network_execution_performed', '-')} |",
             f"| planned_transport | {remote_execution_plan.get('transport') or '-'} |",
+            f"| execution_requested | {remote_execution_result.get('execution_requested', '-')} |",
+            f"| execution_performed | {remote_execution_result.get('execution_performed', '-')} |",
+            f"| execution_status | {remote_execution_result.get('status') or '-'} |",
+            f"| execution_transport | {remote_execution_result.get('transport') or '-'} |",
+            f"| execution_error_category | {remote_execution_result.get('error_category') or '-'} |",
+            f"| execution_http_status | {_fmt_number(remote_execution_result.get('http_status'))} |",
+            f"| execution_exit_code | {_fmt_number(remote_execution_result.get('exit_code'))} |",
+            f"| execution_fallback_performed | {remote_execution_result.get('fallback_execution_performed', '-')} |",
             f"| fallback_worker_ids | {', '.join(worker_selection.get('fallback_worker_ids') or []) or '-'} |",
             f"| retry_max_attempts | {_fmt_number(retry_fallback_plan.get('max_attempts'))} |",
             f"| retry_execution_performed | {retry_fallback_plan.get('execution_performed', '-')} |",
+            "",
+            "Remote execution starter evidence:",
+            "",
+            "| Field | Value |",
+            "|---|---|",
+            f"| status | {remote_execution_result.get('status') or '-'} |",
+            f"| transport | {remote_execution_result.get('transport') or '-'} |",
+            f"| execution_requested | {remote_execution_result.get('execution_requested', '-')} |",
+            f"| execution_performed | {remote_execution_result.get('execution_performed', '-')} |",
+            f"| error_category | {remote_execution_result.get('error_category') or '-'} |",
+            f"| error_message | {remote_execution_result.get('error_message') or '-'} |",
+            f"| elapsed_ms | {_fmt_number(remote_execution_result.get('elapsed_ms'))} |",
+            f"| note | {remote_execution_result.get('note') or 'starter evidence only; not production remote execution'} |",
             "",
             "Remote worker selection sample:",
             "",
@@ -1017,6 +1041,7 @@ def _remote_dispatch_context(
             "decision_reason": None,
             "remote_execution": {},
             "remote_execution_plan": {},
+            "remote_execution_result": _empty_remote_execution_result(),
             "worker_selection": {
                 "schema_version": None,
                 "selected_worker_id": None,
@@ -1041,6 +1066,7 @@ def _remote_dispatch_context(
     retry_fallback_plan = remote_dispatch.get("retry_fallback_plan")
     remote_execution_plan = remote_dispatch.get("remote_execution_plan")
     remote_execution = remote_dispatch.get("remote_execution")
+    remote_execution_result = remote_dispatch.get("remote_execution_result")
     runtime_events = _dict_list(remote_dispatch.get("runtime_events"))
     evaluations = _dict_list(worker_selection.get("evaluations"))
     return {
@@ -1054,6 +1080,9 @@ def _remote_dispatch_context(
         "remote_execution_plan": dict(remote_execution_plan)
         if isinstance(remote_execution_plan, dict)
         else {},
+        "remote_execution_result": _remote_execution_result_context(
+            remote_execution_result
+        ),
         "worker_selection": dict(worker_selection),
         "retry_fallback_plan": dict(retry_fallback_plan)
         if isinstance(retry_fallback_plan, dict)
@@ -1061,6 +1090,30 @@ def _remote_dispatch_context(
         "worker_evaluations": evaluations[:8],
         "runtime_event_sample": runtime_events[:8],
     }
+
+
+def _empty_remote_execution_result() -> dict[str, Any]:
+    return {
+        "status": None,
+        "transport": None,
+        "execution_requested": False,
+        "execution_performed": False,
+        "fallback_execution_performed": False,
+        "error_category": None,
+        "error_message": None,
+        "http_status": None,
+        "exit_code": None,
+        "elapsed_ms": None,
+        "note": None,
+    }
+
+
+def _remote_execution_result_context(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        return _empty_remote_execution_result()
+    context = _empty_remote_execution_result()
+    context.update(dict(value))
+    return context
 
 
 def _queue_state_summary(orchestration_summary: dict[str, Any]) -> dict[str, Any]:
