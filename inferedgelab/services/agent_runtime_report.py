@@ -19,6 +19,14 @@ ORCHESTRATION_SCHEMA_VERSION = "inferedge-orchestration-summary-v1"
 AIGUARD_DIAGNOSIS_SCHEMA_VERSION = "inferedge-aiguard-diagnosis-v1"
 REMOTE_DISPATCH_SCHEMA_VERSION = "inferedge-remote-dispatch-result-v1"
 
+RUNTIME_OPERATION_GUARD_EVIDENCE_TYPES = {
+    "runtime_backend_unavailable",
+    "runtime_latency_budget_overrun",
+    "runtime_error_classification",
+    "runtime_thermal_memory_evidence_missing",
+    "runtime_operation_health",
+}
+
 DEFAULT_AGENT_RUNTIME_THRESHOLDS = {
     "deadline_miss_rate_review": 0.05,
     "deadline_miss_rate_blocked": 0.20,
@@ -84,6 +92,14 @@ AGENT_RUNTIME_POLICY_RULES: dict[str, dict[str, str]] = {
         "effect": "review_required",
         "description": "Runtime result reported a latency timeout observation threshold breach.",
     },
+    "runtime_operation_guard_block": {
+        "effect": "blocked",
+        "description": "AIGuard Runtime operation evidence reported failed backend, latency, or error-classification risk.",
+    },
+    "runtime_operation_guard_review": {
+        "effect": "review_required",
+        "description": "AIGuard Runtime operation evidence reported warning-level runtime context risk.",
+    },
     "runtime_reliability_pass_note": {
         "effect": "deployable_with_note",
         "description": "Runtime reliability evidence stayed within configured thresholds.",
@@ -107,10 +123,12 @@ def build_agent_runtime_reliability_report(
     runtime_summary = _agent_runtime_summary(orchestration_summary)
     runtime_result_context = _runtime_result_operation_context(runtime_result)
     remote_dispatch_context = _remote_dispatch_context(remote_dispatch)
+    runtime_operation_guard_summary = _runtime_operation_guard_summary(guard_analysis)
     decision = build_agent_runtime_deployment_decision(
         metrics=metrics,
         guard_analysis=guard_analysis,
         runtime_result_context=runtime_result_context,
+        runtime_operation_guard_summary=runtime_operation_guard_summary,
         thresholds=policy,
     )
 
@@ -153,6 +171,7 @@ def build_agent_runtime_reliability_report(
             "policy_decision_log_count": len(_policy_log(orchestration_summary)),
         },
         "guard_summary": _guard_summary(guard_analysis),
+        "runtime_operation_guard_summary": runtime_operation_guard_summary,
         "runtime_reliability_evidence": _runtime_reliability_evidence(guard_analysis),
         "agent_deployment_decision": decision,
         "notes": [
@@ -168,6 +187,7 @@ def build_agent_runtime_deployment_decision(
     metrics: dict[str, Any],
     guard_analysis: dict[str, Any] | None,
     runtime_result_context: dict[str, Any] | None = None,
+    runtime_operation_guard_summary: dict[str, Any] | None = None,
     thresholds: dict[str, float] | None = None,
 ) -> dict[str, Any]:
     policy = {**DEFAULT_AGENT_RUNTIME_THRESHOLDS, **(thresholds or {})}
@@ -225,6 +245,13 @@ def build_agent_runtime_deployment_decision(
     )
     if _runtime_timeout_observed(runtime_result_context):
         triggered_rules.append("runtime_timeout_observed_review")
+    runtime_guard = runtime_operation_guard_summary
+    if runtime_guard is None:
+        runtime_guard = _runtime_operation_guard_summary(guard_analysis)
+    if _runtime_operation_guard_blocking(runtime_guard):
+        triggered_rules.append("runtime_operation_guard_block")
+    elif _runtime_operation_guard_review(runtime_guard):
+        triggered_rules.append("runtime_operation_guard_review")
 
     if not triggered_rules:
         triggered_rules.append("runtime_reliability_pass_note")
@@ -391,6 +418,7 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
     metrics = runtime["metrics"]
     decision = report["agent_deployment_decision"]
     guard = report["guard_summary"]
+    runtime_guard = report.get("runtime_operation_guard_summary") or {}
     runtime_result_context = runtime.get("runtime_result_context") or {}
     remote_dispatch_context = runtime.get("remote_dispatch_context") or {}
     runtime_health = runtime_result_context.get("runtime_health_snapshot") or {}
@@ -527,6 +555,31 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             f"| timeout_budget_ms | {_fmt_number(runtime_health.get('timeout_budget_ms', runtime_error.get('timeout_budget_ms')))} |",
             f"| runtime_timeout_observed | {runtime_result_context.get('runtime_timeout_observed', False)} |",
             f"| runtime_event_count | {_fmt_number(runtime_event_summary.get('event_count'))} |",
+            "",
+            "## AIGuard Runtime Operation Evidence",
+            "",
+            "| Field | Value |",
+            "|---|---|",
+            f"| evidence_count | {_fmt_number(runtime_guard.get('evidence_count'))} |",
+            f"| failed_count | {_fmt_number(runtime_guard.get('failed_count'))} |",
+            f"| warning_count | {_fmt_number(runtime_guard.get('warning_count'))} |",
+            f"| evidence_types | {', '.join(runtime_guard.get('evidence_types') or []) or '-'} |",
+            f"| retry_hints | {', '.join(runtime_guard.get('retry_hints') or []) or '-'} |",
+            "",
+            "Runtime operation guard evidence:",
+            "",
+            "| Type | Metric | Observed | Severity | Status | Recommendation |",
+            "|---|---|---:|---|---|---|",
+            *[
+                "| "
+                f"{item.get('type') or '-'} | "
+                f"{item.get('metric_name') or '-'} | "
+                f"{_fmt_number(item.get('observed_value'))} | "
+                f"{item.get('severity') or '-'} | "
+                f"{item.get('status') or '-'} | "
+                f"{item.get('recommendation') or '-'} |"
+                for item in runtime_guard.get("evidence", [])
+            ],
             "",
             "Runtime result event sample:",
             "",
@@ -786,6 +839,87 @@ def _runtime_reliability_evidence(
         for item in evidence
         if isinstance(item, dict)
     ]
+
+
+def _runtime_operation_guard_summary(
+    guard_analysis: dict[str, Any] | None,
+) -> dict[str, Any]:
+    evidence = [
+        item
+        for item in guard_evidence_items(guard_analysis)
+        if isinstance(item, dict)
+        and item.get("type") in RUNTIME_OPERATION_GUARD_EVIDENCE_TYPES
+    ]
+    failed = [item for item in evidence if item.get("status") == "failed"]
+    warnings = [item for item in evidence if item.get("status") == "warning"]
+    retry_hints = sorted(
+        {
+            retry_hint
+            for item in evidence
+            for retry_hint in [_runtime_operation_retry_hint(item)]
+            if isinstance(retry_hint, str) and retry_hint
+        }
+    )
+    return {
+        "evidence_count": len(evidence),
+        "failed_count": len(failed),
+        "warning_count": len(warnings),
+        "evidence_types": [
+            item.get("type") for item in evidence if isinstance(item.get("type"), str)
+        ],
+        "metric_names": [
+            item.get("metric_name")
+            for item in evidence
+            if isinstance(item.get("metric_name"), str)
+        ],
+        "retry_hints": retry_hints,
+        "evidence": [
+            {
+                "type": item.get("type"),
+                "metric_name": item.get("metric_name"),
+                "observed_value": item.get("observed_value"),
+                "threshold": item.get("threshold"),
+                "severity": item.get("severity"),
+                "status": item.get("status"),
+                "explanation": item.get("explanation"),
+                "recommendation": item.get("recommendation"),
+                "why_it_matters": item.get("why_it_matters"),
+                "retry_hint": _runtime_operation_retry_hint(item),
+            }
+            for item in evidence
+        ],
+    }
+
+
+def _runtime_operation_guard_blocking(summary: dict[str, Any]) -> bool:
+    for item in _dict_list(summary.get("evidence")):
+        if item.get("status") != "failed":
+            continue
+        if item.get("severity") in {"high", "critical"}:
+            return True
+        if item.get("type") in {
+            "runtime_backend_unavailable",
+            "runtime_latency_budget_overrun",
+        }:
+            return True
+    return False
+
+
+def _runtime_operation_guard_review(summary: dict[str, Any]) -> bool:
+    if _runtime_operation_guard_blocking(summary):
+        return False
+    return bool(summary.get("failed_count") or summary.get("warning_count"))
+
+
+def _runtime_operation_retry_hint(evidence_item: dict[str, Any]) -> str | None:
+    raw_context = evidence_item.get("raw_context")
+    if not isinstance(raw_context, dict):
+        return None
+    runtime_operation = raw_context.get("runtime_operation")
+    if not isinstance(runtime_operation, dict):
+        return None
+    retry_hint = runtime_operation.get("retry_hint")
+    return retry_hint if isinstance(retry_hint, str) and retry_hint else None
 
 
 def _timeline_summary(

@@ -218,6 +218,78 @@ def guard_analysis() -> dict:
     }
 
 
+def runtime_operation_guard_analysis() -> dict:
+    data = guard_analysis()
+    data["primary_reason"] = (
+        "runtime_error_severity indicates runtime reliability risk."
+    )
+    data["evidence"].extend(
+        [
+            {
+                "type": "runtime_backend_unavailable",
+                "metric_name": "engine_available",
+                "observed_value": 0,
+                "baseline_value": None,
+                "threshold": 1,
+                "delta": None,
+                "delta_pct": None,
+                "increase_factor": None,
+                "severity": "high",
+                "status": "failed",
+                "explanation": "Runtime could not confirm backend availability.",
+                "why_it_matters": (
+                    "Runtime backend availability is required before using the "
+                    "result as deployment evidence."
+                ),
+                "suspected_causes": ["backend_runtime_unavailable"],
+                "recommendation": "Check backend installation and engine load logs.",
+                "raw_context": {
+                    "runtime_operation": {
+                        "engine_available": False,
+                        "retry_hint": "check_backend_availability",
+                    }
+                },
+            },
+            {
+                "type": "runtime_latency_budget_overrun",
+                "metric_name": "latency_budget_exceeded",
+                "observed_value": 1,
+                "baseline_value": None,
+                "threshold": 50.0,
+                "delta": 22.5,
+                "delta_pct": 0.45,
+                "increase_factor": None,
+                "severity": "high",
+                "status": "failed",
+                "explanation": "Runtime latency exceeded the configured budget.",
+                "why_it_matters": (
+                    "Latency budget overrun means the runtime result did not "
+                    "satisfy the expected timing contract."
+                ),
+                "suspected_causes": ["runtime_latency_spike"],
+                "recommendation": "Review runtime event log and fallback policy.",
+                "raw_context": {
+                    "runtime_operation": {
+                        "latency_budget_ms": 50.0,
+                        "observed_mean_ms": 72.5,
+                    }
+                },
+            },
+        ]
+    )
+    data["suspected_causes"] = [
+        "queue_backlog",
+        "backend_runtime_unavailable",
+        "runtime_latency_spike",
+    ]
+    data["recommendations"] = [
+        "Tune scheduling policy.",
+        "Check backend installation and engine load logs.",
+        "Review runtime event log and fallback policy.",
+    ]
+    return data
+
+
 def runtime_result_with_operation_evidence() -> dict:
     return {
         "schema_version": "inferedge-runtime-result-v1",
@@ -512,7 +584,7 @@ def test_compute_agent_runtime_metrics_from_orchestrator_summary():
 def test_agent_runtime_report_blocks_when_guard_blocks():
     report = build_agent_runtime_reliability_report(
         orchestration_summary=orchestration_summary(),
-        guard_analysis=sustained_guard_analysis(),
+        guard_analysis=runtime_operation_guard_analysis(),
         runtime_result=runtime_result_with_operation_evidence(),
         remote_dispatch=remote_dispatch_result(),
     )
@@ -534,8 +606,19 @@ def test_agent_runtime_report_blocks_when_guard_blocks():
     assert "guard_blocked_runtime_block" in decision["triggered_rules"]
     assert "drop_rate_block" in decision["triggered_rules"]
     assert "sustained_overload_review" in decision["triggered_rules"]
+    assert "runtime_operation_guard_block" in decision["triggered_rules"]
     assert report["guard_summary"]["guard_verdict"] == "blocked"
-    assert "sustained_overload_risk" in report["guard_summary"]["evidence_types"]
+    assert "runtime_backend_unavailable" in report["guard_summary"]["evidence_types"]
+    runtime_guard = report["runtime_operation_guard_summary"]
+    assert runtime_guard["evidence_count"] == 2
+    assert runtime_guard["failed_count"] == 2
+    assert runtime_guard["retry_hints"] == ["check_backend_availability"]
+    assert {
+        item["type"] for item in runtime_guard["evidence"]
+    } == {
+        "runtime_backend_unavailable",
+        "runtime_latency_budget_overrun",
+    }
     assert report["agent_runtime_summary"]["timeline_summary"] == {
         "scenario_mode": "sustained_high_load",
         "queue_depth_sample_count": 1,
@@ -548,7 +631,11 @@ def test_agent_runtime_report_blocks_when_guard_blocks():
     }
     assert {
         item["type"] for item in report["runtime_reliability_evidence"]
-    } == {"excessive_drop_rate", "sustained_overload_risk"}
+    } == {
+        "excessive_drop_rate",
+        "runtime_backend_unavailable",
+        "runtime_latency_budget_overrun",
+    }
     operation_context = report["agent_runtime_summary"]["operation_context"]
     assert operation_context["queue_state_summary"]["queue_pressure_state"] == "overloaded"
     assert operation_context["worker_health_counts"] == {
@@ -630,7 +717,7 @@ def test_agent_runtime_report_keeps_legacy_orchestrator_summary_compatible():
 def test_agent_runtime_report_markdown_contains_sections():
     report = build_agent_runtime_reliability_report(
         orchestration_summary=orchestration_summary(),
-        guard_analysis=sustained_guard_analysis(),
+        guard_analysis=runtime_operation_guard_analysis(),
         runtime_result=runtime_result_with_operation_evidence(),
         remote_dispatch=remote_dispatch_result(),
     )
@@ -644,6 +731,10 @@ def test_agent_runtime_report_markdown_contains_sections():
     assert "Worker Health" in markdown
     assert "Runtime Event Summary" in markdown
     assert "Runtime Result Operation Evidence" in markdown
+    assert "AIGuard Runtime Operation Evidence" in markdown
+    assert "runtime_backend_unavailable" in markdown
+    assert "runtime_latency_budget_overrun" in markdown
+    assert "check_backend_availability" in markdown
     assert "Remote Dispatch Context" in markdown
     assert "jetson-nano-01" in markdown
     assert "plan_only" in markdown
@@ -655,7 +746,7 @@ def test_agent_runtime_report_markdown_contains_sections():
     assert "AIGuard Runtime Reliability Evidence" in markdown
     assert "Lab Agent Deployment Decision" in markdown
     assert "guard_blocked_runtime_block" in markdown
-    assert "sustained_overload_risk" in markdown
+    assert "runtime_operation_guard_block" in markdown
     assert "max_total_queue_depth" in markdown
     assert "not a production cloud orchestration dashboard" in markdown
 

@@ -79,6 +79,11 @@ runtime operation review:
   treated as Lab `review_required` evidence because it means the configured
   latency threshold was breached; it does not claim production request
   cancellation.
+- AIGuard Runtime operation evidence, including
+  `runtime_backend_unavailable`, `runtime_latency_budget_overrun`,
+  `runtime_error_classification`, and
+  `runtime_thermal_memory_evidence_missing` when Runtime health/error/event
+  fields are analyzed by AIGuard.
 
 These fields make the report path explicit:
 
@@ -117,6 +122,11 @@ Triggered rules:
 - `sustained_overload_review`
 - `runtime_timeout_observed_review` when a Runtime result reports a latency
   timeout observation threshold breach.
+- `runtime_operation_guard_block` when AIGuard reports failed high-severity
+  Runtime operation evidence such as backend unavailable or latency budget
+  overrun.
+- `runtime_operation_guard_review` when AIGuard reports warning-level Runtime
+  operation evidence such as missing Jetson thermal/memory context.
 
 ## Boundary
 
@@ -124,7 +134,8 @@ Triggered rules:
 - Orchestrator operation-health fields are displayed as local runtime evidence.
 - Orchestrator remote dispatch result fields are displayed as plan-only worker
   selection evidence when provided.
-- AIGuard explains runtime reliability risk.
+- AIGuard explains runtime reliability risk, including additive Runtime
+  health/error/event warning evidence when provided.
 - Lab remains the final deployment decision owner.
 - This report is an additive agent-runtime path and does not change existing
   Runtime result, compare output, or classic deployment decision contracts.
