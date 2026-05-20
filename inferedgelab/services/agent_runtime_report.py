@@ -17,6 +17,7 @@ AGENT_RUNTIME_REPORT_SCHEMA_VERSION = "inferedgelab-agent-runtime-reliability-re
 AGENT_RUNTIME_POLICY_VERSION = "inferedge-lab-agent-runtime-policy-v1"
 ORCHESTRATION_SCHEMA_VERSION = "inferedge-orchestration-summary-v1"
 AIGUARD_DIAGNOSIS_SCHEMA_VERSION = "inferedge-aiguard-diagnosis-v1"
+REMOTE_DISPATCH_SCHEMA_VERSION = "inferedge-remote-dispatch-result-v1"
 
 DEFAULT_AGENT_RUNTIME_THRESHOLDS = {
     "deadline_miss_rate_review": 0.05,
@@ -95,6 +96,7 @@ def build_agent_runtime_reliability_report(
     orchestration_summary: dict[str, Any],
     guard_analysis: dict[str, Any] | None = None,
     runtime_result: dict[str, Any] | None = None,
+    remote_dispatch: dict[str, Any] | None = None,
     source: dict[str, Any] | None = None,
     thresholds: dict[str, float] | None = None,
 ) -> dict[str, Any]:
@@ -104,6 +106,7 @@ def build_agent_runtime_reliability_report(
     metrics = compute_agent_runtime_metrics(orchestration_summary)
     runtime_summary = _agent_runtime_summary(orchestration_summary)
     runtime_result_context = _runtime_result_operation_context(runtime_result)
+    remote_dispatch_context = _remote_dispatch_context(remote_dispatch)
     decision = build_agent_runtime_deployment_decision(
         metrics=metrics,
         guard_analysis=guard_analysis,
@@ -131,6 +134,11 @@ def build_agent_runtime_reliability_report(
                 if isinstance(runtime_result, dict)
                 else None
             ),
+            "remote_dispatch": (
+                remote_dispatch.get("schema_version")
+                if isinstance(remote_dispatch, dict)
+                else None
+            ),
             "source_contracts": runtime_summary.get("source_contracts", {}),
         },
         "agent_runtime_summary": {
@@ -140,6 +148,7 @@ def build_agent_runtime_reliability_report(
             "timeline_summary": _timeline_summary(orchestration_summary, metrics),
             "operation_context": _operation_context(orchestration_summary, metrics),
             "runtime_result_context": runtime_result_context,
+            "remote_dispatch_context": remote_dispatch_context,
             "policy_decision_reasons": metrics["policy_decision_reasons"],
             "policy_decision_log_count": len(_policy_log(orchestration_summary)),
         },
@@ -349,14 +358,19 @@ def load_agent_runtime_reliability_bundle(
     orchestration_summary_path: str | Path,
     guard_analysis_path: str | Path | None = None,
     runtime_result_path: str | Path | None = None,
+    remote_dispatch_path: str | Path | None = None,
 ) -> dict[str, Any]:
     orchestration_summary = _load_json_dict(orchestration_summary_path)
     guard_analysis = _load_json_dict(guard_analysis_path) if guard_analysis_path else None
     runtime_result = _load_json_dict(runtime_result_path) if runtime_result_path else None
+    remote_dispatch = (
+        _load_json_dict(remote_dispatch_path) if remote_dispatch_path else None
+    )
     return build_agent_runtime_reliability_report(
         orchestration_summary=orchestration_summary,
         guard_analysis=guard_analysis,
         runtime_result=runtime_result,
+        remote_dispatch=remote_dispatch,
         source={
             "orchestration_summary_path": str(orchestration_summary_path),
             "guard_analysis_path": str(guard_analysis_path)
@@ -364,6 +378,9 @@ def load_agent_runtime_reliability_bundle(
             else None,
             "runtime_result_path": str(runtime_result_path)
             if runtime_result_path
+            else None,
+            "remote_dispatch_path": str(remote_dispatch_path)
+            if remote_dispatch_path
             else None,
         },
     )
@@ -375,9 +392,14 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
     decision = report["agent_deployment_decision"]
     guard = report["guard_summary"]
     runtime_result_context = runtime.get("runtime_result_context") or {}
+    remote_dispatch_context = runtime.get("remote_dispatch_context") or {}
     runtime_health = runtime_result_context.get("runtime_health_snapshot") or {}
     runtime_error = runtime_result_context.get("runtime_error_classification") or {}
     runtime_event_summary = runtime_result_context.get("runtime_event_summary") or {}
+    remote_execution = remote_dispatch_context.get("remote_execution") or {}
+    remote_execution_plan = remote_dispatch_context.get("remote_execution_plan") or {}
+    retry_fallback_plan = remote_dispatch_context.get("retry_fallback_plan") or {}
+    worker_selection = remote_dispatch_context.get("worker_selection") or {}
 
     lines = [
         "# InferEdge Agent Runtime Reliability Report",
@@ -519,6 +541,37 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
                 for index, event in enumerate(
                     runtime_result_context.get("runtime_event_sample") or []
                 )
+            ],
+            "",
+            "## Remote Dispatch Context",
+            "",
+            "| Field | Value |",
+            "|---|---|",
+            f"| remote_dispatch_schema | {remote_dispatch_context.get('source_schema_version') or '-'} |",
+            f"| dispatch_status | {remote_dispatch_context.get('dispatch_status') or '-'} |",
+            f"| selected_worker_id | {remote_dispatch_context.get('selected_worker_id') or '-'} |",
+            f"| decision_reason | {remote_dispatch_context.get('decision_reason') or '-'} |",
+            f"| production_remote_execution | {remote_execution.get('production_remote_execution', '-')} |",
+            f"| execution_plan_mode | {remote_execution_plan.get('mode') or '-'} |",
+            f"| network_execution_performed | {remote_execution_plan.get('network_execution_performed', '-')} |",
+            f"| planned_transport | {remote_execution_plan.get('transport') or '-'} |",
+            f"| fallback_worker_ids | {', '.join(worker_selection.get('fallback_worker_ids') or []) or '-'} |",
+            f"| retry_max_attempts | {_fmt_number(retry_fallback_plan.get('max_attempts'))} |",
+            f"| retry_execution_performed | {retry_fallback_plan.get('execution_performed', '-')} |",
+            "",
+            "Remote worker selection sample:",
+            "",
+            "| Worker | Eligible | Status | Health | Endpoint | Reason |",
+            "|---|---|---|---|---|---|",
+            *[
+                "| "
+                f"{item.get('worker_id') or '-'} | "
+                f"{item.get('eligible')} | "
+                f"{item.get('status') or '-'} | "
+                f"{item.get('health_state') or '-'} | "
+                f"{item.get('endpoint_type') or '-'} | "
+                f"{item.get('decision_reason') or '-'} |"
+                for item in remote_dispatch_context.get("worker_evaluations", [])
             ],
             "",
             "## AIGuard Runtime Reliability Evidence",
@@ -815,6 +868,63 @@ def _runtime_result_operation_context(
             "event_count": len(runtime_events),
             "event_type_counts": _runtime_result_event_type_counts(runtime_events),
         },
+        "runtime_event_sample": runtime_events[:8],
+    }
+
+
+def _remote_dispatch_context(
+    remote_dispatch: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if not isinstance(remote_dispatch, dict):
+        return {
+            "source_schema_version": None,
+            "dispatch_status": None,
+            "selected_worker_id": None,
+            "decision_reason": None,
+            "remote_execution": {},
+            "remote_execution_plan": {},
+            "worker_selection": {
+                "schema_version": None,
+                "selected_worker_id": None,
+                "candidate_worker_ids": [],
+                "fallback_worker_ids": [],
+                "evaluations": [],
+            },
+            "retry_fallback_plan": {},
+            "worker_evaluations": [],
+            "runtime_event_sample": [],
+        }
+
+    worker_selection = remote_dispatch.get("worker_selection")
+    if not isinstance(worker_selection, dict):
+        worker_selection = {
+            "schema_version": None,
+            "selected_worker_id": remote_dispatch.get("selected_worker_id"),
+            "candidate_worker_ids": [],
+            "fallback_worker_ids": [],
+            "evaluations": [],
+        }
+    retry_fallback_plan = remote_dispatch.get("retry_fallback_plan")
+    remote_execution_plan = remote_dispatch.get("remote_execution_plan")
+    remote_execution = remote_dispatch.get("remote_execution")
+    runtime_events = _dict_list(remote_dispatch.get("runtime_events"))
+    evaluations = _dict_list(worker_selection.get("evaluations"))
+    return {
+        "source_schema_version": remote_dispatch.get("schema_version"),
+        "dispatch_status": remote_dispatch.get("dispatch_status"),
+        "selected_worker_id": remote_dispatch.get("selected_worker_id"),
+        "decision_reason": remote_dispatch.get("decision_reason"),
+        "remote_execution": dict(remote_execution)
+        if isinstance(remote_execution, dict)
+        else {},
+        "remote_execution_plan": dict(remote_execution_plan)
+        if isinstance(remote_execution_plan, dict)
+        else {},
+        "worker_selection": dict(worker_selection),
+        "retry_fallback_plan": dict(retry_fallback_plan)
+        if isinstance(retry_fallback_plan, dict)
+        else {},
+        "worker_evaluations": evaluations[:8],
         "runtime_event_sample": runtime_events[:8],
     }
 

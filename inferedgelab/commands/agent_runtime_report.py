@@ -28,6 +28,11 @@ def agent_runtime_report_cmd(
         "--runtime-result",
         help="Optional InferEdge-Runtime result JSON with runtime_health_snapshot/runtime_events",
     ),
+    remote_dispatch: str = typer.Option(
+        "",
+        "--remote-dispatch",
+        help="Optional InferEdgeOrchestrator remote dispatch result JSON",
+    ),
     format: str = typer.Option("text", "--format", "-f", help="text/json/markdown"),
     output: str = typer.Option("", "--output", "-o", help="Optional output path"),
 ) -> None:
@@ -35,6 +40,7 @@ def agent_runtime_report_cmd(
         orchestration_summary_path=orchestration_summary,
         guard_analysis_path=guard_analysis or None,
         runtime_result_path=runtime_result or None,
+        remote_dispatch_path=remote_dispatch or None,
     )
     normalized_format = format.strip().lower()
     if normalized_format == "json":
@@ -60,6 +66,7 @@ def _text_summary(report: dict) -> str:
     decision = report["agent_deployment_decision"]
     guard = report["guard_summary"]
     runtime_context = report["agent_runtime_summary"].get("runtime_result_context") or {}
+    remote_context = report["agent_runtime_summary"].get("remote_dispatch_context") or {}
     health = runtime_context.get("runtime_health_snapshot") or {}
     error = runtime_context.get("runtime_error_classification") or {}
     lines = [
@@ -74,6 +81,8 @@ def _text_summary(report: dict) -> str:
         f"deadline_miss_rate: {metrics['deadline_miss_rate']:.6g}",
         f"runtime_health_status: {health.get('status')}",
         f"runtime_error_category: {error.get('category')}",
+        f"remote_dispatch_status: {remote_context.get('dispatch_status')}",
+        f"remote_selected_worker_id: {remote_context.get('selected_worker_id')}",
         "triggered_rules:",
     ]
     lines.extend(f"- {rule}" for rule in decision["triggered_rules"])

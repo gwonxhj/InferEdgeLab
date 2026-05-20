@@ -34,6 +34,7 @@ Generate a Markdown report:
 poetry run inferedgelab agent-runtime-report \
   --orchestration-summary examples/agent_runtime/agent_3_orchestration_summary.json \
   --guard-analysis examples/agent_runtime/aiguard_runtime_guard_analysis.json \
+  --remote-dispatch /tmp/inferedge_agent_runtime_e2e/06_remote_dispatch_result.json \
   --format markdown \
   --output reports/agent_runtime_reliability_report.md
 ```
@@ -70,6 +71,9 @@ runtime operation review:
 - Optional Runtime result operation evidence through `--runtime-result`,
   including `runtime_health_snapshot`, `runtime_error_classification`, and
   `runtime_events`.
+- Optional Orchestrator remote dispatch evidence through `--remote-dispatch`,
+  including file-based worker selection, selected worker id, plan-only remote
+  execution context, and retry/fallback plan fields.
 - Runtime timeout observation context, including `timeout_policy`,
   `timeout_budget_ms`, and `runtime_timeout_observed`. A timeout observation is
   treated as Lab `review_required` evidence because it means the configured
@@ -80,9 +84,14 @@ These fields make the report path explicit:
 
 ```text
 Runtime result operation evidence + Orchestrator operation evidence
+-> optional remote worker-selection context
 -> AIGuard reliability explanation
 -> Lab-owned deployment risk context
 ```
+
+Remote dispatch remains a starter contract. It records worker-selection and
+fallback-plan evidence for review, but it does not claim production SSH/HTTP
+execution, secure tunnel operation, or long-lived remote worker readiness.
 
 ## Lab Decision Context
 
@@ -113,6 +122,8 @@ Triggered rules:
 
 - Orchestrator records scheduling and policy evidence.
 - Orchestrator operation-health fields are displayed as local runtime evidence.
+- Orchestrator remote dispatch result fields are displayed as plan-only worker
+  selection evidence when provided.
 - AIGuard explains runtime reliability risk.
 - Lab remains the final deployment decision owner.
 - This report is an additive agent-runtime path and does not change existing
