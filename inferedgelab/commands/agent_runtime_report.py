@@ -67,6 +67,7 @@ def _text_summary(report: dict) -> str:
     guard = report["guard_summary"]
     runtime_context = report["agent_runtime_summary"].get("runtime_result_context") or {}
     remote_context = report["agent_runtime_summary"].get("remote_dispatch_context") or {}
+    remote_execution_result = remote_context.get("remote_execution_result") or {}
     health = runtime_context.get("runtime_health_snapshot") or {}
     error = runtime_context.get("runtime_error_classification") or {}
     lines = [
@@ -83,6 +84,9 @@ def _text_summary(report: dict) -> str:
         f"runtime_error_category: {error.get('category')}",
         f"remote_dispatch_status: {remote_context.get('dispatch_status')}",
         f"remote_selected_worker_id: {remote_context.get('selected_worker_id')}",
+        f"remote_execution_status: {remote_execution_result.get('status')}",
+        f"remote_execution_transport: {remote_execution_result.get('transport')}",
+        f"remote_execution_error_category: {remote_execution_result.get('error_category')}",
         "triggered_rules:",
     ]
     lines.extend(f"- {rule}" for rule in decision["triggered_rules"])

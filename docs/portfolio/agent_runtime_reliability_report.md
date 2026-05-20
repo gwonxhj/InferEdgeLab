@@ -132,8 +132,11 @@ Triggered rules:
 
 - Orchestrator records scheduling and policy evidence.
 - Orchestrator operation-health fields are displayed as local runtime evidence.
-- Orchestrator remote dispatch result fields are displayed as plan-only worker
-  selection evidence when provided.
+- Orchestrator remote dispatch result fields are displayed as worker-selection,
+  retry/fallback, and remote execution starter evidence when provided.
+- If explicit HTTP/SSH starter execution was requested by Orchestrator, Lab
+  preserves the `remote_execution_result` status, transport, and error category
+  as local deployment review context.
 - AIGuard explains runtime reliability risk, including additive Runtime
   health/error/event warning evidence when provided.
 - Lab remains the final deployment decision owner.
