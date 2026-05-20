@@ -278,6 +278,68 @@ def runtime_result_with_operation_evidence() -> dict:
     }
 
 
+def remote_dispatch_result() -> dict:
+    return {
+        "schema_version": "inferedge-remote-dispatch-result-v1",
+        "dispatch_status": "accepted",
+        "selected_worker_id": "jetson-nano-01",
+        "decision_reason": (
+            "selected online worker matching backend/device requirements"
+        ),
+        "remote_execution": {
+            "mode": "file_contract_starter",
+            "production_remote_execution": False,
+            "registry_path": "examples/remote_worker_registry.json",
+            "request_path": "examples/remote_task_request.json",
+        },
+        "remote_execution_plan": {
+            "schema_version": "inferedge-remote-execution-plan-v1",
+            "mode": "plan_only",
+            "network_execution_performed": False,
+            "transport": "file_contract",
+            "endpoint_type": "file_contract",
+            "selected_worker_id": "jetson-nano-01",
+            "task_id": "task_vision_001",
+            "agent_id": "vision_agent",
+        },
+        "worker_selection": {
+            "schema_version": "inferedge-remote-worker-selection-v1",
+            "selected_worker_id": "jetson-nano-01",
+            "candidate_worker_ids": ["jetson-nano-01"],
+            "fallback_worker_ids": [],
+            "evaluations": [
+                {
+                    "worker_id": "jetson-nano-01",
+                    "eligible": True,
+                    "status": "online",
+                    "health_state": "healthy",
+                    "endpoint_type": "file_contract",
+                    "decision_reason": "eligible",
+                }
+            ],
+        },
+        "retry_fallback_plan": {
+            "schema_version": "inferedge-remote-retry-fallback-plan-v1",
+            "max_attempts": 1,
+            "fallback_on": ["timeout", "worker_unhealthy", "runtime_error"],
+            "primary_worker_id": "jetson-nano-01",
+            "fallback_worker_ids": [],
+            "execution_performed": False,
+        },
+        "runtime_events": [
+            {
+                "event": "remote_dispatch_selected",
+                "task_id": "task_vision_001",
+                "agent_id": "vision_agent",
+                "selected_worker_id": "jetson-nano-01",
+                "reason": (
+                    "selected online worker matching backend/device requirements"
+                ),
+            }
+        ],
+    }
+
+
 def runtime_result_with_timeout_observed() -> dict:
     data = runtime_result_with_operation_evidence()
     data["status"] = "completed"
@@ -452,6 +514,7 @@ def test_agent_runtime_report_blocks_when_guard_blocks():
         orchestration_summary=orchestration_summary(),
         guard_analysis=sustained_guard_analysis(),
         runtime_result=runtime_result_with_operation_evidence(),
+        remote_dispatch=remote_dispatch_result(),
     )
 
     decision = report["agent_deployment_decision"]
@@ -463,6 +526,9 @@ def test_agent_runtime_report_blocks_when_guard_blocks():
         "inferedge-aiguard-diagnosis-v1"
     )
     assert report["contracts"]["runtime_result"] == "inferedge-runtime-result-v1"
+    assert report["contracts"]["remote_dispatch"] == (
+        "inferedge-remote-dispatch-result-v1"
+    )
     assert decision["policy_version"] == AGENT_RUNTIME_POLICY_VERSION
     assert decision["decision"] == "blocked"
     assert "guard_blocked_runtime_block" in decision["triggered_rules"]
@@ -506,6 +572,16 @@ def test_agent_runtime_report_blocks_when_guard_blocks():
         "benchmark_completed": 1,
         "runtime_error_classified": 1,
     }
+    remote_context = report["agent_runtime_summary"]["remote_dispatch_context"]
+    assert remote_context["dispatch_status"] == "accepted"
+    assert remote_context["selected_worker_id"] == "jetson-nano-01"
+    assert remote_context["remote_execution"]["production_remote_execution"] is False
+    assert remote_context["remote_execution_plan"]["mode"] == "plan_only"
+    assert remote_context["remote_execution_plan"]["network_execution_performed"] is False
+    assert remote_context["worker_selection"]["schema_version"] == (
+        "inferedge-remote-worker-selection-v1"
+    )
+    assert remote_context["worker_evaluations"][0]["worker_id"] == "jetson-nano-01"
 
 
 def test_agent_runtime_report_marks_runtime_timeout_as_review():
@@ -556,6 +632,7 @@ def test_agent_runtime_report_markdown_contains_sections():
         orchestration_summary=orchestration_summary(),
         guard_analysis=sustained_guard_analysis(),
         runtime_result=runtime_result_with_operation_evidence(),
+        remote_dispatch=remote_dispatch_result(),
     )
     markdown = build_agent_runtime_reliability_markdown(report)
 
@@ -567,6 +644,11 @@ def test_agent_runtime_report_markdown_contains_sections():
     assert "Worker Health" in markdown
     assert "Runtime Event Summary" in markdown
     assert "Runtime Result Operation Evidence" in markdown
+    assert "Remote Dispatch Context" in markdown
+    assert "jetson-nano-01" in markdown
+    assert "plan_only" in markdown
+    assert "network_execution_performed" in markdown
+    assert "retry_max_attempts" in markdown
     assert "runtime_execution_skipped" in markdown
     assert "queue_pressure_state" in markdown
     assert "policy_decision" in markdown
@@ -593,11 +675,15 @@ def test_agent_runtime_report_command_outputs_json(tmp_path, capsys):
     runtime_result_path = tmp_path / "runtime_operation_result.json"
     with runtime_result_path.open("w", encoding="utf-8") as file:
         json.dump(runtime_result_with_operation_evidence(), file)
+    remote_dispatch_path = tmp_path / "remote_dispatch_result.json"
+    with remote_dispatch_path.open("w", encoding="utf-8") as file:
+        json.dump(remote_dispatch_result(), file)
 
     agent_runtime_report_cmd(
         orchestration_summary="examples/agent_runtime/agent_3_orchestration_summary.json",
         guard_analysis="examples/agent_runtime/aiguard_runtime_guard_analysis.json",
         runtime_result=str(runtime_result_path),
+        remote_dispatch=str(remote_dispatch_path),
         format="json",
         output="",
     )
@@ -608,3 +694,8 @@ def test_agent_runtime_report_command_outputs_json(tmp_path, capsys):
     assert report["agent_deployment_decision"]["decision"] == "blocked"
     runtime_context = report["agent_runtime_summary"]["runtime_result_context"]
     assert runtime_context["runtime_health_snapshot"]["status"] == "degraded"
+    remote_context = report["agent_runtime_summary"]["remote_dispatch_context"]
+    assert remote_context["selected_worker_id"] == "jetson-nano-01"
+    assert remote_context["worker_selection"]["candidate_worker_ids"] == [
+        "jetson-nano-01"
+    ]

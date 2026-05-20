@@ -128,8 +128,10 @@ The Lab decision surface now also exposes `policy_version`, `triggered_rules`, a
 `agent-runtime-report` is an additive reliable edge agent runtime report path.
 It bundles Orchestrator scheduling evidence and AIGuard runtime reliability `guard_analysis` into a Lab-owned agent deployment decision context without changing existing Runtime result or compare contracts.
 The current bundled evidence is a synthetic/dummy sustained high-load 3-agent scenario.
-The report preserves sustained queue-depth, worker health, Runtime result health/error/event evidence, runtime event summary/timeline, policy decision reason, and `sustained_overload_risk` evidence as local-first deployment review context.
+The report preserves sustained queue-depth, worker health, Runtime result health/error/event evidence, optional remote dispatch worker-selection context, runtime event summary/timeline, policy decision reason, and `sustained_overload_risk` evidence as local-first deployment review context.
 When a Runtime result JSON with `runtime_health_snapshot` / `runtime_events` is available, add `--runtime-result <path>` to include Runtime-side operation context in the same Lab report.
+When an InferEdgeOrchestrator `inferedge-remote-dispatch-result-v1` JSON is available, add `--remote-dispatch <path>` to include file-based worker selection, retry/fallback plan, and plan-only remote execution context.
+This is remote dispatch evidence for local-first review; it does not claim production remote execution.
 
 ![InferEdge Local Studio demo evidence](assets/images/local-studio-demo-evidence.png)
 
