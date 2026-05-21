@@ -106,6 +106,10 @@ def test_portfolio_demo_check_passes_for_committed_evidence():
     assert report["core_metrics"]["speedup"] == pytest.approx(4.513023, rel=1e-5)
     assert any(check["name"] == "aiguard:portfolio_case_count" for check in report["checks"])
     assert any(check["name"] == "problem_cases:portfolio_bundle" for check in report["checks"])
+    assert any(
+        check["name"] == "edgeenv_regression_handoff:lab_review_required"
+        for check in report["checks"]
+    )
 
 
 def test_portfolio_demo_check_command_outputs_json(capsys):

@@ -1,0 +1,75 @@
+{
+  "baseline_run_id": "edgeenv-smoke-baseline",
+  "candidate_run_id": "edgeenv-smoke-candidate",
+  "comparability": {
+    "comparable": "Yes",
+    "mode": "same-condition",
+    "reasons": [
+      "Same model hash",
+      "Same input shape",
+      "Same precision",
+      "Same benchmark protocol"
+    ]
+  },
+  "comparable": true,
+  "evidence": {
+    "baseline": {
+      "latency_mean_ms": 100.0,
+      "latency_p95_ms": 120.0,
+      "latency_p99_ms": 130.0,
+      "memory_peak_mb": 512.0,
+      "throughput_fps": 50.0
+    },
+    "candidate": {
+      "latency_mean_ms": 118.0,
+      "latency_p95_ms": 132.0,
+      "latency_p99_ms": 171.6,
+      "memory_peak_mb": 716.8,
+      "throughput_fps": 39.0
+    },
+    "fps_delta_pct": -22.0,
+    "mean_delta_pct": 18.0,
+    "memory_peak_delta_pct": 40.0,
+    "p95_delta_pct": 10.0,
+    "p99_delta_pct": 32.0,
+    "triggered_thresholds": [
+      {
+        "metric": "latency_mean_ms",
+        "name": "mean_latency_review",
+        "observed": 18.0,
+        "severity": "medium",
+        "threshold": 15.0,
+        "type": "latency"
+      },
+      {
+        "metric": "latency_p99_ms",
+        "name": "p99_latency_high",
+        "observed": 32.0,
+        "severity": "high",
+        "threshold": 25.0,
+        "type": "latency"
+      },
+      {
+        "metric": "throughput_fps",
+        "name": "fps_drop_review",
+        "observed": -22.0,
+        "severity": "medium",
+        "threshold": -20.0,
+        "type": "latency"
+      },
+      {
+        "metric": "memory_peak_mb",
+        "name": "memory_peak_warning",
+        "observed": 40.0,
+        "severity": "warning",
+        "threshold": 30.0,
+        "type": "resource"
+      }
+    ]
+  },
+  "mode": "same-condition",
+  "recommendation": "review_required",
+  "regression_detected": true,
+  "regression_type": "mixed",
+  "severity": "high"
+}
