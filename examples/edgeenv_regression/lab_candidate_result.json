@@ -1,0 +1,35 @@
+{
+  "accuracy": {
+    "metrics": {
+      "map50": 0.5
+    },
+    "sample_count": 10,
+    "task": "object-detection"
+  },
+  "batch": 1,
+  "compare_key": "local-regression-demo-model__b1__h224w224__fp32",
+  "device": "local-machine",
+  "engine": "local-python",
+  "fps": 39.0,
+  "height": 224,
+  "mean_ms": 118.0,
+  "model": "local-regression-demo-model",
+  "p95_ms": 132.0,
+  "p99_ms": 171.6,
+  "precision": "fp32",
+  "run_config": {
+    "include_postprocess": true,
+    "include_preprocess": true,
+    "runs": 100,
+    "task": "object-detection",
+    "warmup": 10
+  },
+  "system": {
+    "cpu_count_logical": 8,
+    "machine": "x86_64",
+    "os": "Linux",
+    "python": "3.11.0"
+  },
+  "timestamp": "2026-05-21T00:05:00Z",
+  "width": 224
+}

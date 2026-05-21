@@ -17,6 +17,7 @@ from inferedgelab.studio.routes import (
     _load_demo_result,
     _load_jetson_power_mode_summary,
 )
+from inferedgelab.services.compare_service import build_compare_bundle
 
 IN_MEMORY_NOTE = "Local Studio demo evidence is in-memory and resets when the server restarts."
 DEMO_ANNOTATIONS_FILE = "yolov8_coco_subset_annotations.json"
@@ -46,8 +47,12 @@ REQUIRED_PORTFOLIO_FILES = [
     "assets/images/local-studio-demo-evidence.png",
     "docs/portfolio/final_validation_completion.md",
     "docs/portfolio/runtime_compare_yolov8n.md",
+    "docs/portfolio/edgeenv_runtime_regression_lab_handoff.md",
     "docs/portfolio/yolov8_coco_subset_evaluation.md",
     "docs/portfolio/validation_problem_cases.md",
+    "examples/edgeenv_regression/lab_baseline_result.json",
+    "examples/edgeenv_regression/lab_candidate_result.json",
+    "examples/edgeenv_regression/edgeenv_runtime_regression.json",
     "examples/studio_demo/onnxruntime_cpu_result.json",
     "examples/studio_demo/tensorrt_jetson_25w_result.json",
     "examples/studio_demo/tensorrt_jetson_15w_result.json",
@@ -359,6 +364,7 @@ def build_portfolio_demo_check(repo_root: str | Path | None = None) -> dict[str,
 
     docs_checks = _documentation_reference_checks(root)
     checks.extend(docs_checks)
+    checks.extend(_edgeenv_regression_handoff_checks(root))
 
     failed = [check for check in checks if not check["passed"]]
     return {
@@ -608,6 +614,74 @@ def _documentation_reference_checks(root: Path) -> list[dict[str, Any]]:
                     category="documentation_reference",
                 )
             )
+    return checks
+
+
+def _edgeenv_regression_handoff_checks(root: Path) -> list[dict[str, Any]]:
+    baseline_path = root / "examples/edgeenv_regression/lab_baseline_result.json"
+    candidate_path = root / "examples/edgeenv_regression/lab_candidate_result.json"
+    regression_path = root / "examples/edgeenv_regression/edgeenv_runtime_regression.json"
+    checks: list[dict[str, Any]] = []
+    try:
+        bundle = build_compare_bundle(
+            base_path=str(baseline_path),
+            new_path=str(candidate_path),
+            edgeenv_regression_path=str(regression_path),
+        )
+    except Exception as exc:
+        return [
+            _check_item(
+                name="edgeenv_regression_handoff:bundle",
+                passed=False,
+                observed=type(exc).__name__,
+                details=str(exc),
+                category="edgeenv_regression_handoff",
+            )
+        ]
+
+    decision = bundle["deployment_decision"]
+    evidence = bundle.get("edgeenv_runtime_regression") or {}
+    triggered_rules = decision.get("triggered_rules", [])
+    checks.append(
+        _check_item(
+            name="edgeenv_regression_handoff:loaded",
+            passed=evidence.get("mode") == "same-condition"
+            and evidence.get("regression_detected") is True,
+            expected={"mode": "same-condition", "regression_detected": True},
+            observed={
+                "mode": evidence.get("mode"),
+                "regression_detected": evidence.get("regression_detected"),
+            },
+            category="edgeenv_regression_handoff",
+        )
+    )
+    checks.append(
+        _check_item(
+            name="edgeenv_regression_handoff:lab_review_required",
+            passed=decision.get("decision") == "review_required",
+            expected="review_required",
+            observed=decision.get("decision"),
+            category="edgeenv_regression_handoff",
+        )
+    )
+    checks.append(
+        _check_item(
+            name="edgeenv_regression_handoff:policy_rule",
+            passed="edgeenv_runtime_regression_review" in triggered_rules,
+            expected="edgeenv_runtime_regression_review",
+            observed=triggered_rules,
+            category="edgeenv_regression_handoff",
+        )
+    )
+    checks.append(
+        _check_item(
+            name="edgeenv_regression_handoff:markdown_section",
+            passed="## Runtime Regression Evidence" in bundle["markdown"],
+            expected="Runtime Regression Evidence",
+            observed="present" if "## Runtime Regression Evidence" in bundle["markdown"] else "missing",
+            category="edgeenv_regression_handoff",
+        )
+    )
     return checks
 
 
