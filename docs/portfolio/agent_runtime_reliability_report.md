@@ -81,6 +81,10 @@ runtime operation review:
   treated as Lab `review_required` evidence because it means the configured
   latency threshold was breached; it does not claim production request
   cancellation.
+- Retryable Runtime error context, including `runtime_error_retryable` and
+  `runtime_error_retry_hint`. For example, `runtime_execution_skipped` with
+  `retry_hint: check_backend_availability` becomes Lab `review_required`
+  evidence without turning Runtime or Lab into a production retry loop.
 - AIGuard Runtime operation evidence, including
   `runtime_backend_unavailable`, `runtime_latency_budget_overrun`,
   `runtime_error_classification`, and
