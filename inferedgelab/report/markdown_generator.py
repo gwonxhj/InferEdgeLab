@@ -125,11 +125,64 @@ def _append_deployment_decision(lines: list[str], deployment_decision: Dict[str,
     lines.append("")
 
 
+def _append_edgeenv_regression(lines: list[str], edgeenv_regression: Dict[str, Any]) -> None:
+    evidence = edgeenv_regression.get("evidence") or {}
+    comparability = edgeenv_regression.get("comparability") or {}
+    triggered = evidence.get("triggered_thresholds") or []
+    lines.append("## Runtime Regression Evidence")
+    lines.append("")
+    lines.append("- source: EdgeEnv Runtime Regression Monitor")
+    lines.append(f"- comparable: {edgeenv_regression.get('comparable')}")
+    lines.append(f"- mode: {edgeenv_regression.get('mode')}")
+    lines.append(f"- regression_detected: {edgeenv_regression.get('regression_detected')}")
+    lines.append(f"- regression_type: {edgeenv_regression.get('regression_type')}")
+    lines.append(f"- severity: {edgeenv_regression.get('severity')}")
+    lines.append(f"- recommendation: {edgeenv_regression.get('recommendation')}")
+    lines.append(f"- comparability_judgement: {comparability.get('comparable')}")
+    reasons = comparability.get("reasons") or []
+    if reasons:
+        lines.append("- comparability_reasons:")
+        for reason in reasons:
+            lines.append(f"  - {reason}")
+    lines.append("")
+    lines.append("| Evidence | Value |")
+    lines.append("|---|---:|")
+    for field in (
+        "mean_delta_pct",
+        "p95_delta_pct",
+        "p99_delta_pct",
+        "fps_delta_pct",
+        "memory_peak_delta_pct",
+    ):
+        lines.append(f"| {field} | {_fmt_pct(evidence.get(field))} |")
+    if triggered:
+        lines.append("")
+        lines.append("### Triggered Thresholds")
+        lines.append("")
+        lines.append("| name | metric | observed | threshold | severity |")
+        lines.append("|---|---|---:|---:|---|")
+        for item in triggered:
+            if not isinstance(item, dict):
+                continue
+            lines.append(
+                "| "
+                f"{item.get('name', '-')} | "
+                f"{item.get('metric', '-')} | "
+                f"{_fmt_num(item.get('observed'))} | "
+                f"{_fmt_num(item.get('threshold'))} | "
+                f"{item.get('severity', '-')} |"
+            )
+    lines.append("")
+    lines.append("> EdgeEnv regression evidence is local-first report context, not cloud monitoring, ranking, or production observability.")
+    lines.append("")
+
+
 def generate_compare_markdown(
     compare_result: Dict[str, Any],
     judgement: Dict[str, Any],
     guard_analysis: Dict[str, Any] | None = None,
     deployment_decision: Dict[str, Any] | None = None,
+    edgeenv_regression: Dict[str, Any] | None = None,
 ) -> str:
     """
     compare_results() 출력 dict를 Markdown 문서 문자열로 변환한다.
@@ -319,6 +372,9 @@ def generate_compare_markdown(
 
     if guard_analysis is not None:
         _append_guard_analysis(lines, guard_analysis)
+
+    if edgeenv_regression is not None:
+        _append_edgeenv_regression(lines, edgeenv_regression)
 
     if deployment_decision is not None:
         _append_deployment_decision(lines, deployment_decision)

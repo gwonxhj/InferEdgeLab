@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from inferedgelab.compare.comparator import compare_results
@@ -129,6 +130,7 @@ def build_compare_bundle(
     tradeoff_severe_threshold: float | None = None,
     pyproject_path: str = "pyproject.toml",
     with_guard: bool = False,
+    edgeenv_regression_path: str | None = None,
 ) -> dict[str, Any]:
     """
     Build a compare bundle for API use while preserving legacy top-level fields
@@ -171,18 +173,29 @@ def build_compare_bundle(
         if with_guard
         else None
     )
-    deployment_decision = build_deployment_decision(judgement, guard_analysis=guard_analysis)
+    edgeenv_regression = (
+        _load_edgeenv_regression(edgeenv_regression_path)
+        if edgeenv_regression_path
+        else None
+    )
+    deployment_decision = build_deployment_decision(
+        judgement,
+        guard_analysis=guard_analysis,
+        edgeenv_regression=edgeenv_regression,
+    )
     markdown = generate_compare_markdown(
         result,
         judgement,
         guard_analysis=guard_analysis,
         deployment_decision=deployment_decision,
+        edgeenv_regression=edgeenv_regression,
     )
     html = generate_compare_html(
         result,
         judgement,
         guard_analysis=guard_analysis,
         deployment_decision=deployment_decision,
+        edgeenv_regression=edgeenv_regression,
     )
     legacy_warning = bool(base.get("legacy_result") or new.get("legacy_result"))
     bundle = {
@@ -205,6 +218,8 @@ def build_compare_bundle(
     }
     if with_guard:
         bundle["data"]["guard_analysis"] = guard_analysis
+    if edgeenv_regression is not None:
+        bundle["data"]["edgeenv_runtime_regression"] = edgeenv_regression
 
     response = {
         **bundle,
@@ -221,7 +236,22 @@ def build_compare_bundle(
     }
     if with_guard:
         response["guard_analysis"] = guard_analysis
+    if edgeenv_regression is not None:
+        response["edgeenv_runtime_regression"] = edgeenv_regression
     return response
+
+
+def _load_edgeenv_regression(path: str) -> dict[str, Any]:
+    try:
+        with open(path, "r", encoding="utf-8") as file:
+            payload = json.load(file)
+    except OSError as exc:
+        raise ValueError(f"EdgeEnv regression report not found: {path}") from exc
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Invalid EdgeEnv regression JSON: {path}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError(f"EdgeEnv regression report must be a JSON object: {path}")
+    return payload
 
 
 def build_compare_latest_bundle(
