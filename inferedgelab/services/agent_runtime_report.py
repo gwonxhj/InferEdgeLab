@@ -338,6 +338,18 @@ def compute_agent_runtime_metrics(orchestration_summary: dict[str, Any]) -> dict
         _max_total_queue_depth(queue_depth_timeline),
     )
     return {
+        "scenario_label": _scenario_metadata(orchestration_summary, "scenario_label")
+        or "unknown",
+        "scenario_category": _scenario_metadata(
+            orchestration_summary,
+            "scenario_category",
+        )
+        or "unknown",
+        "scenario_description": _scenario_metadata(
+            orchestration_summary,
+            "scenario_description",
+        )
+        or "unknown",
         "scenario_mode": _scenario_mode(orchestration_summary),
         "executed_count": executed_count,
         "dropped_count": dropped_count,
@@ -467,6 +479,10 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             "",
             "| Metric | Value |",
             "|---|---:|",
+            f"| scenario_label | {metrics.get('scenario_label') or '-'} |",
+            f"| scenario_category | {metrics.get('scenario_category') or '-'} |",
+            f"| scenario_description | {metrics.get('scenario_description') or '-'} |",
+            f"| scenario_mode | {metrics.get('scenario_mode') or '-'} |",
             f"| executed_count | {_fmt_number(metrics['executed_count'])} |",
             f"| dropped_count | {_fmt_number(metrics['dropped_count'])} |",
             f"| deadline_missed_count | {_fmt_number(metrics['deadline_missed_count'])} |",
@@ -824,13 +840,35 @@ def _dict_list(value: Any) -> list[dict[str, Any]]:
 
 
 def _scenario_mode(orchestration_summary: dict[str, Any]) -> str:
-    run = orchestration_summary.get("run")
-    if isinstance(run, dict) and isinstance(run.get("scenario_mode"), str):
-        return run["scenario_mode"]
-    sustained_summary = _sustained_runtime_summary(orchestration_summary)
-    if isinstance(sustained_summary.get("scenario_mode"), str):
-        return sustained_summary["scenario_mode"]
+    mode = _scenario_metadata(orchestration_summary, "scenario_mode")
+    if isinstance(mode, str) and mode:
+        return mode
     return "unknown"
+
+
+def _scenario_metadata(orchestration_summary: dict[str, Any], key: str) -> str | None:
+    run = orchestration_summary.get("run")
+    if isinstance(run, dict) and isinstance(run.get(key), str) and run.get(key):
+        return run[key]
+    runtime_summary = _agent_runtime_summary(orchestration_summary)
+    if (
+        isinstance(runtime_summary.get(key), str)
+        and runtime_summary.get(key)
+    ):
+        return runtime_summary[key]
+    sustained_summary = _sustained_runtime_summary(orchestration_summary)
+    if isinstance(sustained_summary.get(key), str) and sustained_summary.get(key):
+        return sustained_summary[key]
+    multi_workload_summary = orchestration_summary.get("multi_workload_sustained_summary")
+    if (
+        isinstance(multi_workload_summary, dict)
+        and isinstance(multi_workload_summary.get(key), str)
+        and multi_workload_summary.get(key)
+    ):
+        return multi_workload_summary[key]
+    if isinstance(orchestration_summary.get(key), str) and orchestration_summary.get(key):
+        return orchestration_summary[key]
+    return None
 
 
 def _max_total_queue_depth(queue_depth_timeline: list[dict[str, Any]]) -> float:
@@ -969,6 +1007,9 @@ def _timeline_summary(
     metrics: dict[str, Any],
 ) -> dict[str, Any]:
     return {
+        "scenario_label": metrics.get("scenario_label"),
+        "scenario_category": metrics.get("scenario_category"),
+        "scenario_description": metrics.get("scenario_description"),
         "scenario_mode": metrics["scenario_mode"],
         "queue_depth_sample_count": metrics["queue_depth_sample_count"],
         "latency_sample_count": metrics["latency_sample_count"],
