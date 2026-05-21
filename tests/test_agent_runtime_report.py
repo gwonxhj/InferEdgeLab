@@ -20,6 +20,12 @@ def orchestration_summary() -> dict:
         "schema_version": "inferedge-orchestration-summary-v1",
         "run": {
             "name": "agent_3_workload_sustained_high_load",
+            "scenario_label": "producer_backed_sustained_high_load",
+            "scenario_category": "sustained",
+            "scenario_description": (
+                "Producer-backed sustained multi-workload smoke with Vision, "
+                "Voice, and Safety workload pressure."
+            ),
             "scenario_mode": "sustained_high_load",
             "frame_interval_ms": 5.0,
         },
@@ -731,6 +737,9 @@ def test_compute_agent_runtime_metrics_from_orchestrator_summary():
     assert metrics["drop_rate"] == pytest.approx(14 / 24)
     assert metrics["fallback_rate"] == pytest.approx(14 / 24)
     assert metrics["queue_backlog_policy_decision_count"] == 1
+    assert metrics["scenario_label"] == "producer_backed_sustained_high_load"
+    assert metrics["scenario_category"] == "sustained"
+    assert "Producer-backed sustained" in metrics["scenario_description"]
     assert metrics["scenario_mode"] == "sustained_high_load"
     assert metrics["max_total_queue_depth"] == 6
     assert metrics["queue_depth_sample_count"] == 1
@@ -790,6 +799,12 @@ def test_agent_runtime_report_blocks_when_guard_blocks():
         "runtime_latency_budget_overrun",
     }
     assert report["agent_runtime_summary"]["timeline_summary"] == {
+        "scenario_label": "producer_backed_sustained_high_load",
+        "scenario_category": "sustained",
+        "scenario_description": (
+            "Producer-backed sustained multi-workload smoke with Vision, "
+            "Voice, and Safety workload pressure."
+        ),
         "scenario_mode": "sustained_high_load",
         "queue_depth_sample_count": 1,
         "latency_sample_count": 1,
@@ -897,6 +912,10 @@ def test_agent_runtime_report_markdown_contains_sections():
     assert "# InferEdge Agent Runtime Reliability Report" in markdown
     assert "Agent Runtime Summary" in markdown
     assert "Runtime Reliability Metrics" in markdown
+    assert "scenario_label" in markdown
+    assert "producer_backed_sustained_high_load" in markdown
+    assert "scenario_category" in markdown
+    assert "sustained" in markdown
     assert "Orchestrator Operation Context" in markdown
     assert "Queue State" in markdown
     assert "Worker Health" in markdown
