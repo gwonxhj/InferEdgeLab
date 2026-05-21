@@ -387,6 +387,19 @@ def compute_agent_runtime_metrics(orchestration_summary: dict[str, Any]) -> dict
         "runtime_event_type_counts": dict(
             runtime_event_summary.get("event_type_counts") or {}
         ),
+        "runtime_event_reason_counts": dict(
+            runtime_event_summary.get("reason_counts") or {}
+        ),
+        "policy_decision_reason_counts": dict(
+            runtime_event_summary.get("policy_decision_reason_counts") or {}
+        ),
+        "drop_reason_counts": dict(runtime_event_summary.get("drop_reason_counts") or {}),
+        "scheduler_delay_event_count": _non_negative_number(
+            runtime_event_summary.get("scheduler_delay_event_count")
+        ),
+        "fallback_decision_count": _non_negative_number(
+            runtime_event_summary.get("fallback_decision_count")
+        ),
         "policy_decision_reasons": policy_decision_reasons,
         "top_policy_decision_reason": _top_reason(policy_decision_reasons),
     }
@@ -496,6 +509,8 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             f"| latency_sample_count | {_fmt_number(metrics['latency_sample_count'])} |",
             f"| queue_pressure_state | {metrics.get('queue_pressure_state') or '-'} |",
             f"| runtime_event_count | {_fmt_number(metrics.get('runtime_event_count'))} |",
+            f"| scheduler_delay_event_count | {_fmt_number(metrics.get('scheduler_delay_event_count'))} |",
+            f"| fallback_decision_count | {_fmt_number(metrics.get('fallback_decision_count'))} |",
             f"| degraded_worker_count | {_fmt_number(metrics.get('degraded_worker_count'))} |",
             f"| constrained_worker_count | {_fmt_number(metrics.get('constrained_worker_count'))} |",
             f"| top_policy_decision_reason | {metrics.get('top_policy_decision_reason') or '-'} |",
@@ -513,16 +528,20 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             "",
             "### Worker Health",
             "",
-            "| Worker | Health | Executed | Dropped | Deadline Missed | Fallback | Mean Latency ms |",
-            "|---|---|---:|---:|---:|---:|---:|",
+            "| Worker | Health | Reasons | Executed | Dropped | Drop Rate | Deadline Missed | Deadline Miss Rate | Fallback | Fallback Rate | Mean Latency ms |",
+            "|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
             *[
                 "| "
                 f"{worker.get('task') or task_name} | "
                 f"{worker.get('health_state') or '-'} | "
+                f"{_fmt_list(worker.get('health_reasons'))} | "
                 f"{_fmt_number(worker.get('executed_count'))} | "
                 f"{_fmt_number(worker.get('dropped_count'))} | "
+                f"{_fmt_number(worker.get('drop_rate'))} | "
                 f"{_fmt_number(worker.get('deadline_missed_count'))} | "
+                f"{_fmt_number(worker.get('deadline_miss_rate'))} | "
                 f"{_fmt_number(worker.get('fallback_count'))} | "
+                f"{_fmt_number(worker.get('fallback_rate'))} | "
                 f"{_fmt_number(worker.get('mean_latency_ms'))} |"
                 for task_name, worker in runtime["operation_context"][
                     "worker_health_snapshot"
@@ -530,6 +549,23 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
                 .get("workers", {})
                 .items()
                 if isinstance(worker, dict)
+            ],
+            "",
+            "Worker health state counts:",
+            "",
+            "| Health State | Count |",
+            "|---|---:|",
+            *[
+                f"| {state} | {_fmt_number(count)} |"
+                for state, count in sorted(
+                    (
+                        runtime["operation_context"]["worker_health_snapshot"].get(
+                            "health_state_counts"
+                        )
+                        or runtime["operation_context"].get("worker_health_counts")
+                        or {}
+                    ).items()
+                )
             ],
             "",
             "### Runtime Event Summary",
@@ -548,17 +584,58 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
                 )
             ],
             "",
+            "Policy decision reasons:",
+            "",
+            "| Reason | Count |",
+            "|---|---:|",
+            *[
+                f"| {reason} | {_fmt_number(count)} |"
+                for reason, count in sorted(
+                    (
+                        runtime["operation_context"]["runtime_event_summary"].get(
+                            "policy_decision_reason_counts"
+                        )
+                        or metrics.get("policy_decision_reasons")
+                        or {}
+                    ).items()
+                )
+            ],
+            "",
+            "Drop reasons:",
+            "",
+            "| Reason | Count |",
+            "|---|---:|",
+            *[
+                f"| {reason} | {_fmt_number(count)} |"
+                for reason, count in sorted(
+                    (
+                        runtime["operation_context"]["runtime_event_summary"].get(
+                            "drop_reason_counts"
+                        )
+                        or {}
+                    ).items()
+                )
+            ],
+            "",
+            "| Runtime Event Signal | Value |",
+            "|---|---:|",
+            f"| scheduler_delay_event_count | {_fmt_number(runtime['operation_context']['runtime_event_summary'].get('scheduler_delay_event_count'))} |",
+            f"| fallback_decision_count | {_fmt_number(runtime['operation_context']['runtime_event_summary'].get('fallback_decision_count'))} |",
+            f"| deadline_missed_count | {_fmt_number(runtime['operation_context']['runtime_event_summary'].get('deadline_missed_count'))} |",
+            "",
             "Runtime event timeline sample:",
             "",
-            "| # | Type | Agent | Task | Reason |",
-            "|---:|---|---|---|---|",
+            "| # | Type | Agent | Task | Reason | Scheduler Delay Cycles | Queue Wait ms |",
+            "|---:|---|---|---|---|---:|---:|",
             *[
                 "| "
                 f"{_fmt_number(event.get('event_index'))} | "
                 f"{event.get('event_type') or '-'} | "
                 f"{event.get('agent_id') or '-'} | "
                 f"{event.get('task_id') or event.get('task') or '-'} | "
-                f"{event.get('reason') or event.get('decision_reason') or '-'} |"
+                f"{event.get('reason') or event.get('decision_reason') or '-'} | "
+                f"{_fmt_number(event.get('scheduler_delay_cycles'))} | "
+                f"{_fmt_number(event.get('queue_wait_ms'))} |"
                 for event in runtime["operation_context"][
                     "runtime_event_timeline_sample"
                 ]
@@ -1363,3 +1440,12 @@ def _fmt_number(value: Any) -> str:
     if isinstance(value, float):
         return f"{value:.6g}"
     return str(value)
+
+
+def _fmt_list(value: Any) -> str:
+    if isinstance(value, list):
+        items = [str(item) for item in value if item not in (None, "")]
+        return ", ".join(items) if items else "-"
+    if isinstance(value, str) and value:
+        return value
+    return "-"
