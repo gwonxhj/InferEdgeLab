@@ -27,6 +27,11 @@ RUNTIME_OPERATION_GUARD_EVIDENCE_TYPES = {
     "runtime_operation_health",
 }
 
+ORCHESTRATOR_OPERATION_GUARD_EVIDENCE_TYPES = {
+    "worker_health_degradation",
+    "scheduler_delay_pattern",
+}
+
 DEFAULT_AGENT_RUNTIME_THRESHOLDS = {
     "deadline_miss_rate_review": 0.05,
     "deadline_miss_rate_blocked": 0.20,
@@ -124,6 +129,10 @@ def build_agent_runtime_reliability_report(
     runtime_result_context = _runtime_result_operation_context(runtime_result)
     remote_dispatch_context = _remote_dispatch_context(remote_dispatch)
     runtime_operation_guard_summary = _runtime_operation_guard_summary(guard_analysis)
+    orchestrator_operation_guard_summary = _orchestrator_operation_guard_summary(
+        guard_analysis,
+        metrics=metrics,
+    )
     decision = build_agent_runtime_deployment_decision(
         metrics=metrics,
         guard_analysis=guard_analysis,
@@ -172,6 +181,9 @@ def build_agent_runtime_reliability_report(
         },
         "guard_summary": _guard_summary(guard_analysis),
         "runtime_operation_guard_summary": runtime_operation_guard_summary,
+        "orchestrator_operation_guard_summary": (
+            orchestrator_operation_guard_summary
+        ),
         "runtime_reliability_evidence": _runtime_reliability_evidence(guard_analysis),
         "agent_deployment_decision": decision,
         "notes": [
@@ -444,6 +456,7 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
     decision = report["agent_deployment_decision"]
     guard = report["guard_summary"]
     runtime_guard = report.get("runtime_operation_guard_summary") or {}
+    orchestrator_guard = report.get("orchestrator_operation_guard_summary") or {}
     runtime_result_context = runtime.get("runtime_result_context") or {}
     remote_dispatch_context = runtime.get("remote_dispatch_context") or {}
     runtime_health = runtime_result_context.get("runtime_health_snapshot") or {}
@@ -693,6 +706,34 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
                 for index, event in enumerate(
                     runtime_result_context.get("runtime_event_sample") or []
                 )
+            ],
+            "",
+            "## AIGuard Orchestrator Operation Evidence",
+            "",
+            "| Field | Value |",
+            "|---|---|",
+            f"| evidence_count | {_fmt_number(orchestrator_guard.get('evidence_count'))} |",
+            f"| failed_count | {_fmt_number(orchestrator_guard.get('failed_count'))} |",
+            f"| warning_count | {_fmt_number(orchestrator_guard.get('warning_count'))} |",
+            f"| evidence_types | {', '.join(orchestrator_guard.get('evidence_types') or []) or '-'} |",
+            f"| worker reason summary | {', '.join(orchestrator_guard.get('health_reasons') or []) or '-'} |",
+            f"| policy_decision_reasons | {_fmt_mapping(orchestrator_guard.get('policy_decision_reason_counts'))} |",
+            f"| drop_reasons | {_fmt_mapping(orchestrator_guard.get('drop_reason_counts'))} |",
+            f"| scheduler_delay_event_count | {_fmt_number(orchestrator_guard.get('scheduler_delay_event_count'))} |",
+            "",
+            "Orchestrator operation guard evidence:",
+            "",
+            "| Type | Metric | Observed | Severity | Status | Recommendation |",
+            "|---|---|---:|---|---|---|",
+            *[
+                "| "
+                f"{item.get('type') or '-'} | "
+                f"{item.get('metric_name') or '-'} | "
+                f"{_fmt_number(item.get('observed_value'))} | "
+                f"{item.get('severity') or '-'} | "
+                f"{item.get('status') or '-'} | "
+                f"{item.get('recommendation') or '-'} |"
+                for item in orchestrator_guard.get("evidence", [])
             ],
             "",
             "## Remote Dispatch Context",
@@ -1045,6 +1086,118 @@ def _runtime_operation_guard_summary(
             }
             for item in evidence
         ],
+    }
+
+
+def _orchestrator_operation_guard_summary(
+    guard_analysis: dict[str, Any] | None,
+    *,
+    metrics: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    evidence = [
+        item
+        for item in guard_evidence_items(guard_analysis)
+        if isinstance(item, dict)
+        and item.get("type") in ORCHESTRATOR_OPERATION_GUARD_EVIDENCE_TYPES
+    ]
+    failed = [item for item in evidence if item.get("status") == "failed"]
+    warnings = [item for item in evidence if item.get("status") == "warning"]
+    health_reason_counts: dict[str, int] = {}
+    policy_decision_reason_counts: dict[str, int] = {}
+    drop_reason_counts: dict[str, int] = {}
+    scheduler_delay_event_count = 0.0
+    for item in evidence:
+        detail = _orchestrator_operation_guard_detail(item)
+        health_reason_counts = _merge_count_maps(
+            health_reason_counts,
+            detail.get("health_reason_counts"),
+        )
+        policy_decision_reason_counts = _merge_count_maps(
+            policy_decision_reason_counts,
+            detail.get("policy_decision_reason_counts"),
+        )
+        drop_reason_counts = _merge_count_maps(
+            drop_reason_counts,
+            detail.get("drop_reason_counts"),
+        )
+        scheduler_delay_event_count = max(
+            scheduler_delay_event_count,
+            _non_negative_number(detail.get("scheduler_delay_event_count")),
+        )
+    metric_context = metrics if isinstance(metrics, dict) else {}
+    if not policy_decision_reason_counts:
+        policy_decision_reason_counts = _count_mapping(
+            metric_context.get("policy_decision_reason_counts")
+            or metric_context.get("policy_decision_reasons")
+        )
+    if not drop_reason_counts:
+        drop_reason_counts = _count_mapping(metric_context.get("drop_reason_counts"))
+    scheduler_delay_event_count = max(
+        scheduler_delay_event_count,
+        _non_negative_number(metric_context.get("scheduler_delay_event_count")),
+    )
+    risk_health_reason_counts = {
+        reason: count
+        for reason, count in health_reason_counts.items()
+        if reason != "healthy_without_runtime_risk"
+    }
+    return {
+        "evidence_count": len(evidence),
+        "failed_count": len(failed),
+        "warning_count": len(warnings),
+        "evidence_types": [
+            item.get("type") for item in evidence if isinstance(item.get("type"), str)
+        ],
+        "metric_names": [
+            item.get("metric_name")
+            for item in evidence
+            if isinstance(item.get("metric_name"), str)
+        ],
+        "health_reason_counts": risk_health_reason_counts,
+        "health_reasons": sorted(risk_health_reason_counts),
+        "policy_decision_reason_counts": policy_decision_reason_counts,
+        "drop_reason_counts": drop_reason_counts,
+        "scheduler_delay_event_count": scheduler_delay_event_count,
+        "evidence": [
+            {
+                "type": item.get("type"),
+                "metric_name": item.get("metric_name"),
+                "observed_value": item.get("observed_value"),
+                "threshold": item.get("threshold"),
+                "severity": item.get("severity"),
+                "status": item.get("status"),
+                "explanation": item.get("explanation"),
+                "recommendation": item.get("recommendation"),
+                "why_it_matters": item.get("why_it_matters"),
+                **_orchestrator_operation_guard_detail(item),
+            }
+            for item in evidence
+        ],
+    }
+
+
+def _orchestrator_operation_guard_detail(
+    evidence_item: dict[str, Any],
+) -> dict[str, Any]:
+    raw_context = evidence_item.get("raw_context")
+    if not isinstance(raw_context, dict):
+        return {}
+    worker_health = raw_context.get("worker_health")
+    health_reason_counts = {}
+    if isinstance(worker_health, dict):
+        health_reason_counts = _count_mapping(worker_health.get("health_reason_counts"))
+    return {
+        "health_reason_counts": health_reason_counts,
+        "policy_decision_reason_counts": _count_mapping(
+            raw_context.get("policy_decision_reason_counts")
+        ),
+        "drop_reason_counts": _count_mapping(raw_context.get("drop_reason_counts")),
+        "runtime_event_reason_counts": _count_mapping(
+            raw_context.get("runtime_event_reason_counts")
+        ),
+        "scheduler_delay_event_count": _non_negative_number(
+            raw_context.get("scheduler_delay_event_count")
+        ),
     }
 
 
@@ -1424,6 +1577,23 @@ def _non_negative_number(value: Any) -> float:
     return 0.0
 
 
+def _count_mapping(value: Any) -> dict[str, int]:
+    if not isinstance(value, dict):
+        return {}
+    result: dict[str, int] = {}
+    for key, count in value.items():
+        name = key if isinstance(key, str) and key else "unknown"
+        result[name] = result.get(name, 0) + int(_non_negative_number(count))
+    return result
+
+
+def _merge_count_maps(left: dict[str, int], right: Any) -> dict[str, int]:
+    result = dict(left)
+    for key, count in _count_mapping(right).items():
+        result[key] = result.get(key, 0) + count
+    return result
+
+
 def _ratio(numerator: float, denominator: float) -> float:
     if denominator <= 0:
         return 0.0
@@ -1449,3 +1619,12 @@ def _fmt_list(value: Any) -> str:
     if isinstance(value, str) and value:
         return value
     return "-"
+
+
+def _fmt_mapping(value: Any) -> str:
+    if not isinstance(value, dict) or not value:
+        return "-"
+    return ", ".join(
+        f"{key}={_fmt_number(count)}"
+        for key, count in sorted(value.items())
+    )
