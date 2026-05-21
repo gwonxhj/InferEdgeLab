@@ -492,6 +492,7 @@ def runtime_result_with_operation_evidence() -> dict:
             "runs": 1,
             "run_once": False,
             "success": False,
+            "health_reason": "backend_unavailable_or_not_enabled",
             "latency_mean_ms": 0.0,
             "latency_p95_ms": 0.0,
             "latency_p99_ms": 0.0,
@@ -530,10 +531,51 @@ def runtime_result_with_operation_evidence() -> dict:
                 "type": "runtime_error_classified",
                 "status": "classified",
                 "category": "runtime_execution_skipped",
+                "health_reason": "backend_unavailable_or_not_enabled",
                 "retryable": True,
                 "retry_hint": "check_backend_availability",
             },
+            {
+                "schema_version": "inferedge-runtime-event-v1",
+                "event_index": 3,
+                "type": "runtime_operation_summary_recorded",
+                "status": "degraded",
+                "health_reason": "backend_unavailable_or_not_enabled",
+                "recommended_action": "check_backend_availability",
+                "risk_labels": [
+                    "runtime_execution_skipped",
+                    "backend_unavailable",
+                ],
+                "evidence_gaps": [
+                    "timeout_policy_not_configured",
+                    "thermal_memory_evidence_missing",
+                ],
+            },
         ],
+        "runtime_operation_summary": {
+            "schema_version": "inferedge-runtime-operation-summary-v1",
+            "observation_scope": "single_runtime_result",
+            "decision_owner": "lab",
+            "scheduler_owner": "orchestrator",
+            "production_cancellation": False,
+            "health_status": "degraded",
+            "health_reason": "backend_unavailable_or_not_enabled",
+            "error_category": "runtime_execution_skipped",
+            "retryable": True,
+            "recommended_action": "check_backend_availability",
+            "risk_labels": [
+                "runtime_execution_skipped",
+                "backend_unavailable",
+            ],
+            "evidence_gaps": [
+                "timeout_policy_not_configured",
+                "thermal_memory_evidence_missing",
+            ],
+            "timeout_observed": False,
+            "latency_budget_exceeded": False,
+            "deadline_missed": False,
+            "thermal_memory_evidence_available": False,
+        },
     }
 
 
@@ -777,6 +819,7 @@ def runtime_result_with_timeout_observed() -> dict:
         {
             "status": "degraded",
             "success": True,
+            "health_reason": "timeout_threshold_exceeded",
             "latency_mean_ms": 12.5,
             "latency_p95_ms": 15.0,
             "latency_p99_ms": 18.0,
@@ -792,12 +835,42 @@ def runtime_result_with_timeout_observed() -> dict:
             "message": "mean latency exceeded configured timeout observation threshold",
             "timeout_observed": True,
             "retryable": True,
+            "retry_hint": "retry_or_degrade",
         }
     )
-    data["runtime_events"][-1].update(
+    runtime_error_event = next(
+        event
+        for event in data["runtime_events"]
+        if event.get("type") == "runtime_error_classified"
+    )
+    runtime_error_event.update(
         {
             "category": "runtime_timeout_observed",
+            "health_reason": "timeout_threshold_exceeded",
             "timeout_policy": "latency_threshold",
+            "timeout_observed": True,
+        }
+    )
+    runtime_summary_event = next(
+        event
+        for event in data["runtime_events"]
+        if event.get("type") == "runtime_operation_summary_recorded"
+    )
+    runtime_summary_event.update(
+        {
+            "health_reason": "timeout_threshold_exceeded",
+            "recommended_action": "review_latency_budget_or_degrade",
+            "risk_labels": ["runtime_timeout_observed"],
+            "evidence_gaps": ["thermal_memory_evidence_missing"],
+        }
+    )
+    data["runtime_operation_summary"].update(
+        {
+            "health_reason": "timeout_threshold_exceeded",
+            "error_category": "runtime_timeout_observed",
+            "recommended_action": "review_latency_budget_or_degrade",
+            "risk_labels": ["runtime_timeout_observed"],
+            "evidence_gaps": ["thermal_memory_evidence_missing"],
             "timeout_observed": True,
         }
     )
@@ -1109,11 +1182,12 @@ def test_agent_runtime_report_blocks_when_guard_blocks():
     assert runtime_context["runtime_error_classification"]["category"] == (
         "runtime_execution_skipped"
     )
-    assert runtime_context["runtime_event_summary"]["event_count"] == 3
+    assert runtime_context["runtime_event_summary"]["event_count"] == 4
     assert runtime_context["runtime_event_summary"]["event_type_counts"] == {
         "runtime_configured": 1,
         "benchmark_completed": 1,
         "runtime_error_classified": 1,
+        "runtime_operation_summary_recorded": 1,
     }
     remote_context = report["agent_runtime_summary"]["remote_dispatch_context"]
     assert remote_context["dispatch_status"] == "accepted"
@@ -1183,9 +1257,17 @@ def test_agent_runtime_report_marks_runtime_timeout_as_review():
     decision = report["agent_deployment_decision"]
     assert decision["decision"] == "review_required"
     assert "runtime_timeout_observed_review" in decision["triggered_rules"]
+    assert "runtime_operation_summary_review" in decision["triggered_rules"]
     assert "guard_blocked_runtime_block" not in decision["triggered_rules"]
     runtime_context = report["agent_runtime_summary"]["runtime_result_context"]
     assert runtime_context["runtime_timeout_observed"] is True
+    assert runtime_context["runtime_operation_summary"]["recommended_action"] == (
+        "review_latency_budget_or_degrade"
+    )
+    assert runtime_context["runtime_operation_summary"]["decision_owner"] == "lab"
+    assert runtime_context["runtime_operation_summary"]["scheduler_owner"] == (
+        "orchestrator"
+    )
     assert runtime_context["runtime_health_snapshot"]["timeout_policy"] == (
         "latency_threshold"
     )
@@ -1193,7 +1275,10 @@ def test_agent_runtime_report_marks_runtime_timeout_as_review():
     markdown = build_agent_runtime_reliability_markdown(report)
     assert "runtime_timeout_observed" in markdown
     assert "latency_threshold" in markdown
+    assert "operation_summary_recommended_action" in markdown
+    assert "review_latency_budget_or_degrade" in markdown
     assert "runtime_timeout_observed_review" in markdown
+    assert "runtime_operation_summary_review" in markdown
 
 
 def test_agent_runtime_report_marks_retryable_runtime_error_as_review():
@@ -1206,6 +1291,7 @@ def test_agent_runtime_report_marks_retryable_runtime_error_as_review():
     decision = report["agent_deployment_decision"]
     assert decision["decision"] == "review_required"
     assert "runtime_retryable_error_review" in decision["triggered_rules"]
+    assert "runtime_operation_summary_review" in decision["triggered_rules"]
     assert "runtime_timeout_observed_review" not in decision["triggered_rules"]
     runtime_context = report["agent_runtime_summary"]["runtime_result_context"]
     assert runtime_context["runtime_error_classification"]["category"] == (
@@ -1215,11 +1301,27 @@ def test_agent_runtime_report_marks_retryable_runtime_error_as_review():
     assert runtime_context["runtime_error_classification"]["retry_hint"] == (
         "check_backend_availability"
     )
+    assert runtime_context["runtime_operation_summary"]["health_reason"] == (
+        "backend_unavailable_or_not_enabled"
+    )
+    assert runtime_context["runtime_operation_summary"]["risk_labels"] == [
+        "runtime_execution_skipped",
+        "backend_unavailable",
+    ]
+    assert runtime_context["runtime_operation_summary"]["evidence_gaps"] == [
+        "timeout_policy_not_configured",
+        "thermal_memory_evidence_missing",
+    ]
 
     markdown = build_agent_runtime_reliability_markdown(report)
+    assert "| runtime_health_reason | backend_unavailable_or_not_enabled |" in markdown
     assert "| runtime_error_retryable | True |" in markdown
     assert "| runtime_error_retry_hint | check_backend_availability |" in markdown
+    assert "| operation_summary_recommended_action | check_backend_availability |" in markdown
+    assert "runtime_execution_skipped, backend_unavailable" in markdown
+    assert "timeout_policy_not_configured, thermal_memory_evidence_missing" in markdown
     assert "runtime_retryable_error_review" in markdown
+    assert "runtime_operation_summary_review" in markdown
 
 
 def test_agent_runtime_report_keeps_legacy_orchestrator_summary_compatible():

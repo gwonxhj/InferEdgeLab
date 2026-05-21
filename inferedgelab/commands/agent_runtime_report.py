@@ -71,6 +71,7 @@ def _text_summary(report: dict) -> str:
     fallback_execution_result = remote_context.get("fallback_execution_result") or {}
     health = runtime_context.get("runtime_health_snapshot") or {}
     error = runtime_context.get("runtime_error_classification") or {}
+    operation_summary = runtime_context.get("runtime_operation_summary") or {}
     lines = [
         "InferEdge Agent Runtime Reliability Report",
         f"schema_version: {report['schema_version']}",
@@ -85,7 +86,9 @@ def _text_summary(report: dict) -> str:
         f"device_local_event_count: {metrics.get('device_local_event_count')}",
         f"producer_sources: {', '.join(metrics.get('runtime_event_producer_sources') or [])}",
         f"runtime_health_status: {health.get('status')}",
+        f"runtime_health_reason: {health.get('health_reason') or operation_summary.get('health_reason')}",
         f"runtime_error_category: {error.get('category')}",
+        f"runtime_operation_recommended_action: {operation_summary.get('recommended_action')}",
         f"remote_dispatch_status: {remote_context.get('dispatch_status')}",
         f"remote_selected_worker_id: {remote_context.get('selected_worker_id')}",
         f"remote_execution_status: {remote_execution_result.get('status')}",

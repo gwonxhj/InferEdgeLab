@@ -101,6 +101,10 @@ AGENT_RUNTIME_POLICY_RULES: dict[str, dict[str, str]] = {
         "effect": "review_required",
         "description": "Runtime result reported a retryable execution error or skipped benchmark classification.",
     },
+    "runtime_operation_summary_review": {
+        "effect": "review_required",
+        "description": "Runtime operation summary reported risk labels or a review action for Lab decision context.",
+    },
     "runtime_operation_guard_block": {
         "effect": "blocked",
         "description": "AIGuard Runtime operation evidence reported failed backend, latency, or error-classification risk.",
@@ -263,6 +267,8 @@ def build_agent_runtime_deployment_decision(
         triggered_rules.append("runtime_timeout_observed_review")
     if _runtime_retryable_error_observed(runtime_result_context):
         triggered_rules.append("runtime_retryable_error_review")
+    if _runtime_operation_summary_review_required(runtime_result_context):
+        triggered_rules.append("runtime_operation_summary_review")
     runtime_guard = runtime_operation_guard_summary
     if runtime_guard is None:
         runtime_guard = _runtime_operation_guard_summary(guard_analysis)
@@ -497,6 +503,9 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
     remote_dispatch_context = runtime.get("remote_dispatch_context") or {}
     runtime_health = runtime_result_context.get("runtime_health_snapshot") or {}
     runtime_error = runtime_result_context.get("runtime_error_classification") or {}
+    runtime_operation_summary = (
+        runtime_result_context.get("runtime_operation_summary") or {}
+    )
     runtime_event_summary = runtime_result_context.get("runtime_event_summary") or {}
     remote_execution = remote_dispatch_context.get("remote_execution") or {}
     remote_execution_plan = remote_dispatch_context.get("remote_execution_plan") or {}
@@ -766,6 +775,7 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             f"| compare_key | {runtime_result_context.get('compare_key') or '-'} |",
             f"| backend_key | {runtime_result_context.get('backend_key') or '-'} |",
             f"| runtime_status | {runtime_health.get('status') or runtime_result_context.get('status') or '-'} |",
+            f"| runtime_health_reason | {runtime_health.get('health_reason') or runtime_operation_summary.get('health_reason') or '-'} |",
             f"| runtime_error_category | {runtime_error.get('category') or '-'} |",
             f"| runtime_error_retryable | {runtime_error.get('retryable', False)} |",
             f"| runtime_error_retry_hint | {runtime_error.get('retry_hint') or '-'} |",
@@ -773,6 +783,14 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             f"| timeout_budget_ms | {_fmt_number(runtime_health.get('timeout_budget_ms', runtime_error.get('timeout_budget_ms')))} |",
             f"| runtime_timeout_observed | {runtime_result_context.get('runtime_timeout_observed', False)} |",
             f"| runtime_event_count | {_fmt_number(runtime_event_summary.get('event_count'))} |",
+            f"| operation_summary_schema | {runtime_operation_summary.get('schema_version') or '-'} |",
+            f"| operation_summary_health_status | {runtime_operation_summary.get('health_status') or '-'} |",
+            f"| operation_summary_error_category | {runtime_operation_summary.get('error_category') or '-'} |",
+            f"| operation_summary_recommended_action | {runtime_operation_summary.get('recommended_action') or '-'} |",
+            f"| operation_summary_risk_labels | {_fmt_list(runtime_operation_summary.get('risk_labels'))} |",
+            f"| operation_summary_evidence_gaps | {_fmt_list(runtime_operation_summary.get('evidence_gaps'))} |",
+            f"| operation_summary_decision_owner | {runtime_operation_summary.get('decision_owner') or '-'} |",
+            f"| operation_summary_scheduler_owner | {runtime_operation_summary.get('scheduler_owner') or '-'} |",
             "",
             "## AIGuard Runtime Operation Evidence",
             "",
@@ -1060,6 +1078,23 @@ def _runtime_retryable_error_observed(
         return False
     category = error.get("category")
     return isinstance(category, str) and category not in {"", "none"}
+
+
+def _runtime_operation_summary_review_required(
+    runtime_result_context: dict[str, Any] | None,
+) -> bool:
+    if not isinstance(runtime_result_context, dict):
+        return False
+    summary = runtime_result_context.get("runtime_operation_summary")
+    if not isinstance(summary, dict):
+        return False
+    recommended_action = summary.get("recommended_action")
+    if isinstance(recommended_action, str) and recommended_action not in {"", "none"}:
+        return True
+    risk_labels = summary.get("risk_labels")
+    return isinstance(risk_labels, list) and any(
+        isinstance(label, str) and label for label in risk_labels
+    )
 
 
 def _policy_log(orchestration_summary: dict[str, Any]) -> list[dict[str, Any]]:
@@ -1426,6 +1461,7 @@ def _runtime_result_operation_context(
             "runtime_timeout_observed": False,
             "runtime_health_snapshot": {},
             "runtime_error_classification": {},
+            "runtime_operation_summary": {},
             "runtime_event_summary": {
                 "schema_version": None,
                 "event_count": 0,
@@ -1436,6 +1472,7 @@ def _runtime_result_operation_context(
 
     health = runtime_result.get("runtime_health_snapshot")
     error = runtime_result.get("runtime_error_classification")
+    operation_summary = runtime_result.get("runtime_operation_summary")
     runtime_events = _dict_list(runtime_result.get("runtime_events"))
     return {
         "source_schema_version": runtime_result.get("schema_version"),
@@ -1450,6 +1487,9 @@ def _runtime_result_operation_context(
         ),
         "runtime_health_snapshot": dict(health) if isinstance(health, dict) else {},
         "runtime_error_classification": dict(error) if isinstance(error, dict) else {},
+        "runtime_operation_summary": (
+            dict(operation_summary) if isinstance(operation_summary, dict) else {}
+        ),
         "runtime_event_summary": {
             "schema_version": "inferedgelab-runtime-result-event-summary-v1",
             "event_count": len(runtime_events),
