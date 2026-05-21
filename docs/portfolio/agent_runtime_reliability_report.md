@@ -86,6 +86,11 @@ runtime operation review:
   `runtime_error_classification`, and
   `runtime_thermal_memory_evidence_missing` when Runtime health/error/event
   fields are analyzed by AIGuard.
+- AIGuard Orchestrator operation evidence, including
+  `worker_health_degradation` and `scheduler_delay_pattern` when Orchestrator
+  worker health or runtime event telemetry is analyzed by AIGuard.
+  Lab preserves health reasons, policy/drop reason counts, and scheduler delay
+  counts as deployment context without making AIGuard the final decision owner.
 
 These fields make the report path explicit:
 
@@ -130,6 +135,13 @@ Triggered rules:
 - `runtime_operation_guard_review` when AIGuard reports warning-level Runtime
   operation evidence such as missing Jetson thermal/memory context.
 
+The report also surfaces Orchestrator operation guard evidence as context. For
+example, `worker_health_degradation` shows degraded/constrained worker reasons
+such as fallback policy use or dropped frames, while `scheduler_delay_pattern`
+shows scheduler delay counts and related policy/drop reasons. These evidence
+items contribute through AIGuard's overall guard verdict and remain separate
+from Lab's final policy ownership.
+
 ## Boundary
 
 - Orchestrator records scheduling and policy evidence.
@@ -140,7 +152,8 @@ Triggered rules:
   preserves the `remote_execution_result` status, transport, and error category
   as local deployment review context.
 - AIGuard explains runtime reliability risk, including additive Runtime
-  health/error/event warning evidence when provided.
+  health/error/event warning evidence and Orchestrator worker/event telemetry
+  warning evidence when provided.
 - Lab remains the final deployment decision owner.
 - This report is an additive agent-runtime path and does not change existing
   Runtime result, compare output, or classic deployment decision contracts.

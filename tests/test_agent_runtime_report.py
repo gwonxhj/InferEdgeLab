@@ -333,6 +333,96 @@ def runtime_operation_guard_analysis() -> dict:
     return data
 
 
+def orchestrator_operation_guard_analysis() -> dict:
+    data = runtime_operation_guard_analysis()
+    data["evidence"].extend(
+        [
+            {
+                "type": "worker_health_degradation",
+                "metric_name": "degraded_or_constrained_worker_count",
+                "observed_value": 2,
+                "baseline_value": 0,
+                "threshold": 1,
+                "delta": None,
+                "delta_pct": None,
+                "increase_factor": None,
+                "severity": "medium",
+                "status": "warning",
+                "explanation": "Worker health degradation was observed.",
+                "why_it_matters": (
+                    "Worker health degradation explains which runtime loops were "
+                    "marked degraded by Orchestrator."
+                ),
+                "suspected_causes": [
+                    "fallback_policy_used",
+                    "frames_dropped",
+                    "queue_reached_capacity",
+                ],
+                "recommendation": (
+                    "Inspect worker_health_snapshot health_reasons and queue pressure."
+                ),
+                "raw_context": {
+                    "worker_health": {
+                        "degraded_worker_count": 2,
+                        "degraded_workers": [
+                            "vision_agent",
+                            "voice_command_agent",
+                        ],
+                        "health_reason_counts": {
+                            "fallback_policy_used": 2,
+                            "frames_dropped": 2,
+                            "queue_reached_capacity": 2,
+                        },
+                    },
+                },
+            },
+            {
+                "type": "scheduler_delay_pattern",
+                "metric_name": "scheduler_delay_event_count",
+                "observed_value": 2,
+                "baseline_value": 0,
+                "threshold": 1,
+                "delta": None,
+                "delta_pct": None,
+                "increase_factor": None,
+                "severity": "medium",
+                "status": "failed",
+                "explanation": "Scheduler delay events were observed.",
+                "why_it_matters": (
+                    "Scheduler delay can make edge workloads stale even when "
+                    "execution latency remains within budget."
+                ),
+                "suspected_causes": ["scheduler_queue_wait"],
+                "recommendation": (
+                    "Inspect scheduler_delay_cycles, queue_wait_ms, and policy reasons."
+                ),
+                "raw_context": {
+                    "scheduler_delay_event_count": 2,
+                    "policy_decision_reason_counts": {
+                        "queue_backlog_threshold_exceeded": 1,
+                    },
+                    "drop_reason_counts": {
+                        "load_shedding_backlog_threshold_exceeded": 1,
+                    },
+                    "runtime_event_reason_counts": {
+                        "scheduler_delay_observed": 2,
+                    },
+                },
+            },
+        ]
+    )
+    data["suspected_causes"] = [
+        *data["suspected_causes"],
+        "fallback_policy_used",
+        "scheduler_queue_wait",
+    ]
+    data["recommendations"] = [
+        *data["recommendations"],
+        "Inspect worker health reasons and scheduler delay timeline.",
+    ]
+    return data
+
+
 def runtime_result_with_operation_evidence() -> dict:
     return {
         "schema_version": "inferedge-runtime-result-v1",
@@ -915,6 +1005,51 @@ def test_agent_runtime_report_blocks_when_guard_blocks():
     assert remote_context["worker_evaluations"][0]["worker_id"] == "jetson-nano-01"
 
 
+def test_agent_runtime_report_summarizes_orchestrator_operation_guard_evidence():
+    report = build_agent_runtime_reliability_report(
+        orchestration_summary=orchestration_summary(),
+        guard_analysis=orchestrator_operation_guard_analysis(),
+    )
+
+    orchestrator_guard = report["orchestrator_operation_guard_summary"]
+    assert orchestrator_guard["evidence_count"] == 2
+    assert orchestrator_guard["failed_count"] == 1
+    assert orchestrator_guard["warning_count"] == 1
+    assert orchestrator_guard["evidence_types"] == [
+        "worker_health_degradation",
+        "scheduler_delay_pattern",
+    ]
+    assert orchestrator_guard["health_reasons"] == [
+        "fallback_policy_used",
+        "frames_dropped",
+        "queue_reached_capacity",
+    ]
+    assert orchestrator_guard["health_reason_counts"] == {
+        "fallback_policy_used": 2,
+        "frames_dropped": 2,
+        "queue_reached_capacity": 2,
+    }
+    assert orchestrator_guard["policy_decision_reason_counts"] == {
+        "queue_backlog_threshold_exceeded": 1,
+    }
+    assert orchestrator_guard["drop_reason_counts"] == {
+        "load_shedding_backlog_threshold_exceeded": 1,
+    }
+    assert orchestrator_guard["scheduler_delay_event_count"] == 2
+    assert orchestrator_guard["evidence"][1]["runtime_event_reason_counts"] == {
+        "scheduler_delay_observed": 2,
+    }
+
+    markdown = build_agent_runtime_reliability_markdown(report)
+    assert "AIGuard Orchestrator Operation Evidence" in markdown
+    assert "worker_health_degradation" in markdown
+    assert "scheduler_delay_pattern" in markdown
+    assert "policy_decision_reasons" in markdown
+    assert "queue_backlog_threshold_exceeded=1" in markdown
+    assert "drop_reasons" in markdown
+    assert "load_shedding_backlog_threshold_exceeded=1" in markdown
+
+
 def test_agent_runtime_report_marks_runtime_timeout_as_review():
     report = build_agent_runtime_reliability_report(
         orchestration_summary=quiet_orchestration_summary(),
@@ -961,7 +1096,7 @@ def test_agent_runtime_report_keeps_legacy_orchestrator_summary_compatible():
 def test_agent_runtime_report_markdown_contains_sections():
     report = build_agent_runtime_reliability_report(
         orchestration_summary=orchestration_summary(),
-        guard_analysis=runtime_operation_guard_analysis(),
+        guard_analysis=orchestrator_operation_guard_analysis(),
         runtime_result=runtime_result_with_operation_evidence(),
         remote_dispatch=remote_dispatch_result(),
     )
@@ -977,7 +1112,7 @@ def test_agent_runtime_report_markdown_contains_sections():
     assert "Orchestrator Operation Context" in markdown
     assert "Queue State" in markdown
     assert "Worker Health" in markdown
-    assert "health_reasons" not in markdown
+    assert "worker reason summary" in markdown
     assert "fallback_policy_used" in markdown
     assert "Drop reasons" in markdown
     assert "load_shedding_backlog_threshold_exceeded" in markdown
@@ -989,6 +1124,9 @@ def test_agent_runtime_report_markdown_contains_sections():
     assert "runtime_backend_unavailable" in markdown
     assert "runtime_latency_budget_overrun" in markdown
     assert "check_backend_availability" in markdown
+    assert "AIGuard Orchestrator Operation Evidence" in markdown
+    assert "worker_health_degradation" in markdown
+    assert "scheduler_delay_pattern" in markdown
     assert "Remote Dispatch Context" in markdown
     assert "Remote execution starter evidence" in markdown
     assert "jetson-nano-01" in markdown
