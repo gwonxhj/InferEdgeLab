@@ -76,8 +76,12 @@ runtime operation review:
 - `runtime_event_timeline` sample rows for queue snapshots, policy decisions,
   drops, execution outcomes, scheduler delay cycles, and queue wait evidence.
 - Optional Runtime result operation evidence through `--runtime-result`,
-  including `runtime_health_snapshot`, `runtime_error_classification`, and
-  `runtime_events`.
+  including `runtime_health_snapshot`, `runtime_error_classification`,
+  `runtime_events`, and `runtime_operation_summary`.
+- Runtime operation summary context, including `health_reason`, `risk_labels`,
+  `evidence_gaps`, and conservative `recommended_action`. Lab preserves
+  `decision_owner: lab` and `scheduler_owner: orchestrator` in the report so
+  this remains deployment review evidence, not Runtime-owned deployment policy.
 - Optional Orchestrator remote dispatch evidence through `--remote-dispatch`,
   including file-based worker selection, selected worker id, plan-only remote
   execution context, and retry/fallback plan fields.
