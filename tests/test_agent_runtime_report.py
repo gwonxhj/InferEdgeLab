@@ -456,7 +456,8 @@ def runtime_result_with_operation_evidence() -> dict:
             "category": "runtime_execution_skipped",
             "message": "backend is not available in this build",
             "timeout_observed": False,
-            "retryable": False,
+            "retryable": True,
+            "retry_hint": "check_backend_availability",
         },
         "runtime_events": [
             {
@@ -478,6 +479,8 @@ def runtime_result_with_operation_evidence() -> dict:
                 "type": "runtime_error_classified",
                 "status": "classified",
                 "category": "runtime_execution_skipped",
+                "retryable": True,
+                "retry_hint": "check_backend_availability",
             },
         ],
     }
@@ -1071,6 +1074,32 @@ def test_agent_runtime_report_marks_runtime_timeout_as_review():
     assert "runtime_timeout_observed" in markdown
     assert "latency_threshold" in markdown
     assert "runtime_timeout_observed_review" in markdown
+
+
+def test_agent_runtime_report_marks_retryable_runtime_error_as_review():
+    report = build_agent_runtime_reliability_report(
+        orchestration_summary=quiet_orchestration_summary(),
+        guard_analysis=passing_guard_analysis(),
+        runtime_result=runtime_result_with_operation_evidence(),
+    )
+
+    decision = report["agent_deployment_decision"]
+    assert decision["decision"] == "review_required"
+    assert "runtime_retryable_error_review" in decision["triggered_rules"]
+    assert "runtime_timeout_observed_review" not in decision["triggered_rules"]
+    runtime_context = report["agent_runtime_summary"]["runtime_result_context"]
+    assert runtime_context["runtime_error_classification"]["category"] == (
+        "runtime_execution_skipped"
+    )
+    assert runtime_context["runtime_error_classification"]["retryable"] is True
+    assert runtime_context["runtime_error_classification"]["retry_hint"] == (
+        "check_backend_availability"
+    )
+
+    markdown = build_agent_runtime_reliability_markdown(report)
+    assert "| runtime_error_retryable | True |" in markdown
+    assert "| runtime_error_retry_hint | check_backend_availability |" in markdown
+    assert "runtime_retryable_error_review" in markdown
 
 
 def test_agent_runtime_report_keeps_legacy_orchestrator_summary_compatible():

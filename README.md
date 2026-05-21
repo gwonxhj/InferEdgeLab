@@ -130,6 +130,7 @@ It bundles Orchestrator scheduling evidence and AIGuard runtime reliability `gua
 The current bundled evidence is a synthetic/dummy sustained high-load 3-agent scenario.
 The report preserves sustained queue-depth, worker health, Runtime result health/error/event evidence, optional remote dispatch worker-selection context, runtime event summary/timeline, policy decision reason, and `sustained_overload_risk` evidence as local-first deployment review context.
 When a Runtime result JSON with `runtime_health_snapshot` / `runtime_events` is available, add `--runtime-result <path>` to include Runtime-side operation context in the same Lab report.
+Retryable Runtime error classifications such as `runtime_execution_skipped` are surfaced as Lab `review_required` evidence with the Runtime-provided `retry_hint`; this remains report evidence, not a production retry loop.
 When an InferEdgeOrchestrator `inferedge-remote-dispatch-result-v1` JSON is available, add `--remote-dispatch <path>` to include file-based worker selection, retry/fallback plan, and remote execution starter context.
 If Orchestrator was run with explicit HTTP/SSH execution, Lab preserves the starter `remote_execution_result` status, transport, error category, and additive `fallback_execution_result` recovery context as local review evidence.
 This is remote dispatch starter evidence for local-first review; it does not claim production remote execution.

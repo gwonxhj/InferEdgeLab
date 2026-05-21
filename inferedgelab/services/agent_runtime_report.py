@@ -97,6 +97,10 @@ AGENT_RUNTIME_POLICY_RULES: dict[str, dict[str, str]] = {
         "effect": "review_required",
         "description": "Runtime result reported a latency timeout observation threshold breach.",
     },
+    "runtime_retryable_error_review": {
+        "effect": "review_required",
+        "description": "Runtime result reported a retryable execution error or skipped benchmark classification.",
+    },
     "runtime_operation_guard_block": {
         "effect": "blocked",
         "description": "AIGuard Runtime operation evidence reported failed backend, latency, or error-classification risk.",
@@ -257,6 +261,8 @@ def build_agent_runtime_deployment_decision(
     )
     if _runtime_timeout_observed(runtime_result_context):
         triggered_rules.append("runtime_timeout_observed_review")
+    if _runtime_retryable_error_observed(runtime_result_context):
+        triggered_rules.append("runtime_retryable_error_review")
     runtime_guard = runtime_operation_guard_summary
     if runtime_guard is None:
         runtime_guard = _runtime_operation_guard_summary(guard_analysis)
@@ -278,7 +284,7 @@ def build_agent_runtime_deployment_decision(
         decision = "review_required"
         reason = "Agent runtime reliability evidence requires deployment review."
         recommended_action = (
-            "Review Orchestrator policy decisions, AIGuard evidence, and agent priority budgets."
+            "Review Orchestrator policy decisions, Runtime error hints, AIGuard evidence, and agent priority budgets."
         )
     elif "guard_missing_unknown" in triggered_rules:
         decision = "unknown"
@@ -663,6 +669,8 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             f"| backend_key | {runtime_result_context.get('backend_key') or '-'} |",
             f"| runtime_status | {runtime_health.get('status') or runtime_result_context.get('status') or '-'} |",
             f"| runtime_error_category | {runtime_error.get('category') or '-'} |",
+            f"| runtime_error_retryable | {runtime_error.get('retryable', False)} |",
+            f"| runtime_error_retry_hint | {runtime_error.get('retry_hint') or '-'} |",
             f"| timeout_policy | {runtime_health.get('timeout_policy', runtime_error.get('timeout_policy', '-'))} |",
             f"| timeout_budget_ms | {_fmt_number(runtime_health.get('timeout_budget_ms', runtime_error.get('timeout_budget_ms')))} |",
             f"| runtime_timeout_observed | {runtime_result_context.get('runtime_timeout_observed', False)} |",
@@ -940,6 +948,20 @@ def _runtime_timeout_observed_from_parts(
         if event.get("category") == "runtime_timeout_observed":
             return True
     return False
+
+
+def _runtime_retryable_error_observed(
+    runtime_result_context: dict[str, Any] | None,
+) -> bool:
+    if not isinstance(runtime_result_context, dict):
+        return False
+    error = runtime_result_context.get("runtime_error_classification")
+    if not isinstance(error, dict):
+        return False
+    if not bool(error.get("retryable")):
+        return False
+    category = error.get("category")
+    return isinstance(category, str) and category not in {"", "none"}
 
 
 def _policy_log(orchestration_summary: dict[str, Any]) -> list[dict[str, Any]]:
