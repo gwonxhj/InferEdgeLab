@@ -121,6 +121,31 @@ def orchestration_summary() -> dict:
                 "safety_monitor_agent": 0,
             },
             "queue_pressure_state": "overloaded",
+            "queue_pressure_reason": (
+                "max_total_queue_depth_exceeded_overload_threshold"
+            ),
+            "max_pressure_task": "vision_agent",
+            "device_local_task_count": 3,
+            "device_local_tasks": [
+                "safety_monitor_agent",
+                "vision_agent",
+                "voice_command_agent",
+            ],
+            "device_local_producer_sources": [
+                "resource_snapshot_fixture",
+                "image_file",
+                "fastapi_request_fixture",
+            ],
+            "producer_sources_by_task": {
+                "safety_monitor_agent": ["resource_snapshot_fixture"],
+                "vision_agent": ["image_file"],
+                "voice_command_agent": ["fastapi_request_fixture"],
+            },
+            "policy_decision_reasons": ["queue_backlog_threshold_exceeded"],
+            "drop_reason_counts": {
+                "load_shedding_backlog_threshold_exceeded": 1,
+            },
+            "overload_event_count": 14,
         },
         "worker_health_snapshot": {
             "schema_version": "inferedge-orchestrator-worker-health-v1",
@@ -146,7 +171,13 @@ def orchestration_summary() -> dict:
                     "deadline_miss_rate": 0.0,
                     "fallback_rate": 0.0,
                     "health_reasons": ["healthy_without_runtime_risk"],
+                    "primary_health_reason": "healthy_without_runtime_risk",
+                    "operation_risk_summary": "healthy_without_runtime_risk",
                     "mean_latency_ms": 6.0,
+                    "device_local_validation": True,
+                    "producer_stage": "device_local_starter",
+                    "producer_sources": ["resource_snapshot_fixture"],
+                    "producer_event_count": 2,
                 },
                 "vision_agent": {
                     "task": "vision_agent",
@@ -167,7 +198,13 @@ def orchestration_summary() -> dict:
                         "fallback_policy_used",
                         "frames_dropped",
                     ],
+                    "primary_health_reason": "deadline_missed",
+                    "operation_risk_summary": "latency_or_fallback_risk",
                     "mean_latency_ms": 41.0,
+                    "device_local_validation": True,
+                    "producer_stage": "device_local_starter",
+                    "producer_sources": ["image_file"],
+                    "producer_event_count": 8,
                 },
             },
         },
@@ -192,15 +229,28 @@ def orchestration_summary() -> dict:
             "drop_reason_counts": {
                 "load_shedding_backlog_threshold_exceeded": 1,
             },
+            "queue_pressure_reason_counts": {
+                "queue_backlog_threshold_exceeded": 1,
+            },
             "deadline_missed_count": 1,
             "fallback_decision_count": 1,
             "scheduler_delay_event_count": 1,
+            "producer_sources": [
+                "resource_snapshot_fixture",
+                "image_file",
+                "fastapi_request_fixture",
+            ],
+            "producer_event_count": 10,
+            "device_local_event_count": 4,
+            "latest_event_type": "execution",
         },
         "runtime_event_timeline": [
             {
                 "event_index": 0,
                 "event_type": "queue_snapshot",
                 "reason": "queue_depth_sampled",
+                "queue_pressure_state": "overloaded",
+                "queue_pressure_reason": "queue_backlog_threshold_exceeded",
             },
             {
                 "event_index": 1,
@@ -226,6 +276,7 @@ def orchestration_summary() -> dict:
                 "deadline_missed": True,
                 "scheduler_delay_cycles": 2,
                 "queue_wait_ms": 10.0,
+                "producer_context": {"producer_source": "image_file"},
             },
         ],
     }
@@ -879,12 +930,42 @@ def test_compute_agent_runtime_metrics_from_orchestrator_summary():
         "queue_backlog_threshold_exceeded": 1
     }
     assert metrics["queue_pressure_state"] == "overloaded"
+    assert metrics["queue_pressure_reason"] == (
+        "max_total_queue_depth_exceeded_overload_threshold"
+    )
+    assert metrics["max_pressure_task"] == "vision_agent"
+    assert metrics["device_local_task_count"] == 3
+    assert set(metrics["device_local_producer_sources"]) == {
+        "resource_snapshot_fixture",
+        "image_file",
+        "fastapi_request_fixture",
+    }
+    assert metrics["producer_sources_by_task"]["vision_agent"] == ["image_file"]
     assert metrics["runtime_event_count"] == 4
     assert metrics["runtime_event_type_counts"] == {
         "queue_snapshot": 1,
         "policy_decision": 1,
         "drop": 1,
         "execution": 1,
+    }
+    assert metrics["queue_pressure_reason_counts"] == {
+        "queue_backlog_threshold_exceeded": 1,
+    }
+    assert metrics["runtime_event_producer_sources"] == [
+        "resource_snapshot_fixture",
+        "image_file",
+        "fastapi_request_fixture",
+    ]
+    assert metrics["producer_event_count"] == 10
+    assert metrics["device_local_event_count"] == 4
+    assert metrics["latest_runtime_event_type"] == "execution"
+    assert metrics["primary_health_reason_counts"] == {
+        "healthy_without_runtime_risk": 1,
+        "deadline_missed": 1,
+    }
+    assert metrics["operation_risk_summary_counts"] == {
+        "healthy_without_runtime_risk": 1,
+        "latency_or_fallback_risk": 1,
     }
     assert metrics["degraded_worker_count"] == 1
     assert metrics["healthy_worker_count"] == 1
@@ -953,6 +1034,28 @@ def test_agent_runtime_report_blocks_when_guard_blocks():
     }
     operation_context = report["agent_runtime_summary"]["operation_context"]
     assert operation_context["queue_state_summary"]["queue_pressure_state"] == "overloaded"
+    assert operation_context["queue_state_summary"]["queue_pressure_reason"] == (
+        "max_total_queue_depth_exceeded_overload_threshold"
+    )
+    assert operation_context["queue_state_summary"]["max_pressure_task"] == (
+        "vision_agent"
+    )
+    assert set(
+        operation_context["device_local_operation_context"][
+            "device_local_producer_sources"
+        ]
+    ) == {
+        "resource_snapshot_fixture",
+        "image_file",
+        "fastapi_request_fixture",
+    }
+    assert operation_context["device_local_operation_context"][
+        "producer_sources_by_task"
+    ]["vision_agent"] == ["image_file"]
+    assert operation_context["operation_risk_summary_counts"] == {
+        "healthy_without_runtime_risk": 1,
+        "latency_or_fallback_risk": 1,
+    }
     assert operation_context["worker_health_counts"] == {
         "healthy": 1,
         "degraded": 1,
@@ -968,6 +1071,12 @@ def test_agent_runtime_report_blocks_when_guard_blocks():
         "fallback_policy_used",
         "frames_dropped",
     ]
+    assert operation_context["worker_health_snapshot"]["workers"]["vision_agent"][
+        "primary_health_reason"
+    ] == "deadline_missed"
+    assert operation_context["worker_health_snapshot"]["workers"]["vision_agent"][
+        "operation_risk_summary"
+    ] == "latency_or_fallback_risk"
     assert operation_context["runtime_event_summary"]["event_type_counts"]["drop"] == 1
     assert operation_context["runtime_event_summary"]["policy_decision_reason_counts"] == {
         "queue_backlog_threshold_exceeded": 1,
@@ -975,6 +1084,17 @@ def test_agent_runtime_report_blocks_when_guard_blocks():
     assert operation_context["runtime_event_summary"]["drop_reason_counts"] == {
         "load_shedding_backlog_threshold_exceeded": 1,
     }
+    assert operation_context["runtime_event_summary"][
+        "queue_pressure_reason_counts"
+    ] == {
+        "queue_backlog_threshold_exceeded": 1,
+    }
+    assert operation_context["runtime_event_summary"]["producer_sources"] == [
+        "resource_snapshot_fixture",
+        "image_file",
+        "fastapi_request_fixture",
+    ]
+    assert operation_context["runtime_event_summary"]["device_local_event_count"] == 4
     assert operation_context["runtime_event_summary"]["scheduler_delay_event_count"] == 1
     assert operation_context["runtime_event_timeline_count"] == 4
     assert operation_context["runtime_event_timeline_sample"][1]["event_type"] == (
@@ -1165,6 +1285,16 @@ def test_agent_runtime_report_markdown_contains_sections():
     assert "retry_max_attempts" in markdown
     assert "runtime_execution_skipped" in markdown
     assert "queue_pressure_state" in markdown
+    assert "queue_pressure_reason" in markdown
+    assert "max_total_queue_depth_exceeded_overload_threshold" in markdown
+    assert "max_pressure_task" in markdown
+    assert "device_local_producer_sources" in markdown
+    assert "resource_snapshot_fixture" in markdown
+    assert "Worker producer context" in markdown
+    assert "latency_or_fallback_risk" in markdown
+    assert "Queue pressure reasons" in markdown
+    assert "producer_event_count" in markdown
+    assert "device_local_event_count" in markdown
     assert "policy_decision" in markdown
     assert "AIGuard Runtime Reliability Evidence" in markdown
     assert "Lab Agent Deployment Decision" in markdown

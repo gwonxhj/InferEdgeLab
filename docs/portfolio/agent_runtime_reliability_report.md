@@ -62,12 +62,17 @@ The report also preserves the Orchestrator operation-health fields added for
 runtime operation review:
 
 - `queue_state_summary` for queue pressure, max backlog, final queue depth, and
-  overload threshold.
+  overload threshold. Newer Orchestrator summaries also surface
+  `queue_pressure_reason`, `max_pressure_task`, policy/drop reason rollups, and
+  `device_local_producer_sources` so Lab can explain why queue pressure became
+  review evidence.
 - `worker_health_snapshot` for healthy/constrained/degraded worker state,
   executed/drop/deadline/fallback counts, health reasons, per-worker
-  drop/deadline/fallback rates, and latency context.
+  drop/deadline/fallback rates, primary health reason, operation risk summary,
+  producer context, and latency context.
 - `runtime_event_summary` for event type counts, policy/drop reason counts,
-  fallback decision counts, and scheduler-delay event counts.
+  queue pressure reason counts, producer source coverage, device-local event
+  counts, fallback decision counts, and scheduler-delay event counts.
 - `runtime_event_timeline` sample rows for queue snapshots, policy decisions,
   drops, execution outcomes, scheduler delay cycles, and queue wait evidence.
 - Optional Runtime result operation evidence through `--runtime-result`,
