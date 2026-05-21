@@ -64,10 +64,12 @@ runtime operation review:
 - `queue_state_summary` for queue pressure, max backlog, final queue depth, and
   overload threshold.
 - `worker_health_snapshot` for healthy/constrained/degraded worker state,
-  executed/drop/deadline/fallback counts, and latency context.
-- `runtime_event_summary` for event type counts.
+  executed/drop/deadline/fallback counts, health reasons, per-worker
+  drop/deadline/fallback rates, and latency context.
+- `runtime_event_summary` for event type counts, policy/drop reason counts,
+  fallback decision counts, and scheduler-delay event counts.
 - `runtime_event_timeline` sample rows for queue snapshots, policy decisions,
-  drops, and execution outcomes.
+  drops, execution outcomes, scheduler delay cycles, and queue wait evidence.
 - Optional Runtime result operation evidence through `--runtime-result`,
   including `runtime_health_snapshot`, `runtime_error_classification`, and
   `runtime_events`.

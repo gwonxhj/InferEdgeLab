@@ -124,6 +124,12 @@ def orchestration_summary() -> dict:
         },
         "worker_health_snapshot": {
             "schema_version": "inferedge-orchestrator-worker-health-v1",
+            "health_state_counts": {
+                "healthy": 1,
+                "degraded": 1,
+            },
+            "degraded_workers": ["vision_agent"],
+            "constrained_workers": [],
             "workers": {
                 "safety_monitor_agent": {
                     "task": "safety_monitor_agent",
@@ -136,6 +142,10 @@ def orchestration_summary() -> dict:
                     "dropped_count": 0,
                     "deadline_missed_count": 0,
                     "fallback_count": 0,
+                    "drop_rate": 0.0,
+                    "deadline_miss_rate": 0.0,
+                    "fallback_rate": 0.0,
+                    "health_reasons": ["healthy_without_runtime_risk"],
                     "mean_latency_ms": 6.0,
                 },
                 "vision_agent": {
@@ -149,6 +159,14 @@ def orchestration_summary() -> dict:
                     "dropped_count": 14,
                     "deadline_missed_count": 1,
                     "fallback_count": 14,
+                    "drop_rate": 0.636,
+                    "deadline_miss_rate": 0.125,
+                    "fallback_rate": 0.636,
+                    "health_reasons": [
+                        "deadline_missed",
+                        "fallback_policy_used",
+                        "frames_dropped",
+                    ],
                     "mean_latency_ms": 41.0,
                 },
             },
@@ -162,6 +180,21 @@ def orchestration_summary() -> dict:
                 "drop": 1,
                 "execution": 1,
             },
+            "reason_counts": {
+                "queue_depth_sampled": 1,
+                "queue_backlog_threshold_exceeded": 1,
+                "load_shedding_backlog_threshold_exceeded": 1,
+                "deadline_missed": 1,
+            },
+            "policy_decision_reason_counts": {
+                "queue_backlog_threshold_exceeded": 1,
+            },
+            "drop_reason_counts": {
+                "load_shedding_backlog_threshold_exceeded": 1,
+            },
+            "deadline_missed_count": 1,
+            "fallback_decision_count": 1,
+            "scheduler_delay_event_count": 1,
         },
         "runtime_event_timeline": [
             {
@@ -175,6 +208,7 @@ def orchestration_summary() -> dict:
                 "agent_id": "vision_agent",
                 "task_id": "task_vision_agent",
                 "reason": "queue_backlog_threshold_exceeded",
+                "fallback_used": True,
             },
             {
                 "event_index": 2,
@@ -189,6 +223,9 @@ def orchestration_summary() -> dict:
                 "agent_id": "vision_agent",
                 "task_id": "task_vision_agent",
                 "reason": "deadline_missed",
+                "deadline_missed": True,
+                "scheduler_delay_cycles": 2,
+                "queue_wait_ms": 10.0,
             },
         ],
     }
@@ -827,11 +864,32 @@ def test_agent_runtime_report_blocks_when_guard_blocks():
         "healthy": 1,
         "degraded": 1,
     }
+    assert operation_context["worker_health_snapshot"]["health_state_counts"] == {
+        "healthy": 1,
+        "degraded": 1,
+    }
+    assert operation_context["worker_health_snapshot"]["workers"]["vision_agent"][
+        "health_reasons"
+    ] == [
+        "deadline_missed",
+        "fallback_policy_used",
+        "frames_dropped",
+    ]
     assert operation_context["runtime_event_summary"]["event_type_counts"]["drop"] == 1
+    assert operation_context["runtime_event_summary"]["policy_decision_reason_counts"] == {
+        "queue_backlog_threshold_exceeded": 1,
+    }
+    assert operation_context["runtime_event_summary"]["drop_reason_counts"] == {
+        "load_shedding_backlog_threshold_exceeded": 1,
+    }
+    assert operation_context["runtime_event_summary"]["scheduler_delay_event_count"] == 1
     assert operation_context["runtime_event_timeline_count"] == 4
     assert operation_context["runtime_event_timeline_sample"][1]["event_type"] == (
         "policy_decision"
     )
+    assert operation_context["runtime_event_timeline_sample"][3][
+        "scheduler_delay_cycles"
+    ] == 2
     runtime_context = report["agent_runtime_summary"]["runtime_result_context"]
     assert runtime_context["source_schema_version"] == "inferedge-runtime-result-v1"
     assert runtime_context["runtime_health_snapshot"]["status"] == "degraded"
@@ -919,6 +977,12 @@ def test_agent_runtime_report_markdown_contains_sections():
     assert "Orchestrator Operation Context" in markdown
     assert "Queue State" in markdown
     assert "Worker Health" in markdown
+    assert "health_reasons" not in markdown
+    assert "fallback_policy_used" in markdown
+    assert "Drop reasons" in markdown
+    assert "load_shedding_backlog_threshold_exceeded" in markdown
+    assert "scheduler_delay_event_count" in markdown
+    assert "Scheduler Delay Cycles" in markdown
     assert "Runtime Event Summary" in markdown
     assert "Runtime Result Operation Evidence" in markdown
     assert "AIGuard Runtime Operation Evidence" in markdown
