@@ -64,6 +64,10 @@ POLICY_RULES: dict[str, dict[str, str]] = {
         "effect": "unknown",
         "description": "Worker result has not been compared by Lab yet.",
     },
+    "edgeenv_runtime_regression_review": {
+        "effect": "review_required",
+        "description": "EdgeEnv same-condition runtime regression evidence requires review.",
+    },
 }
 
 
@@ -103,7 +107,11 @@ def _decision_payload(
     }
 
 
-def build_deployment_decision(judgement: dict, guard_analysis: dict | None = None) -> dict[str, Any]:
+def build_deployment_decision(
+    judgement: dict,
+    guard_analysis: dict | None = None,
+    edgeenv_regression: dict | None = None,
+) -> dict[str, Any]:
     normalized_guard_status = guard_status(guard_analysis)
     normalized_guard_verdict = guard_verdict(guard_analysis)
     lab_overall = judgement.get("overall")
@@ -188,6 +196,16 @@ def build_deployment_decision(judgement: dict, guard_analysis: dict | None = Non
         recommended_action = "Review accuracy trade-off and provenance evidence before deployment."
         triggered_rules.append("tradeoff_risk_review")
 
+    if decision != "blocked" and _edgeenv_runtime_regression_observed(
+        edgeenv_regression
+    ):
+        decision = "review_required"
+        reason = "EdgeEnv runtime regression evidence requires deployment review."
+        recommended_action = (
+            "Review EdgeEnv comparability judgement, latency/resource deltas, and Lab comparison evidence before deployment."
+        )
+        triggered_rules.append("edgeenv_runtime_regression_review")
+
     return _decision_payload(
         decision=decision,
         reason=reason,
@@ -196,4 +214,12 @@ def build_deployment_decision(judgement: dict, guard_analysis: dict | None = Non
         guard_verdict_value=normalized_guard_verdict,
         recommended_action=recommended_action,
         triggered_rules=triggered_rules,
+    )
+
+
+def _edgeenv_runtime_regression_observed(edgeenv_regression: dict | None) -> bool:
+    if not isinstance(edgeenv_regression, dict):
+        return False
+    return bool(edgeenv_regression.get("regression_detected")) and (
+        edgeenv_regression.get("mode") == "same-condition"
     )

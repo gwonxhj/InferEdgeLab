@@ -164,6 +164,37 @@ def make_judgement(
     }
 
 
+def make_edgeenv_regression() -> dict:
+    return {
+        "regression_detected": True,
+        "regression_type": "latency",
+        "severity": "high",
+        "comparable": True,
+        "mode": "same-condition",
+        "recommendation": "review_required",
+        "comparability": {
+            "comparable": True,
+            "reasons": ["All strict regression keys match."],
+        },
+        "evidence": {
+            "mean_delta_pct": 18.4,
+            "p95_delta_pct": 21.2,
+            "p99_delta_pct": 32.1,
+            "fps_delta_pct": -20.5,
+            "memory_peak_delta_pct": 5.0,
+            "triggered_thresholds": [
+                {
+                    "name": "p99_latency_high",
+                    "metric": "p99_delta_pct",
+                    "observed": 32.1,
+                    "threshold": 25.0,
+                    "severity": "high",
+                }
+            ],
+        },
+    }
+
+
 def test_generate_compare_markdown_includes_classification_primary_metric_and_summary():
     compare_result = make_compare_result()
     judgement = make_judgement()
@@ -305,6 +336,24 @@ def test_generate_compare_markdown_includes_deployment_decision_section():
     assert "- decision: deployable" in text
     assert "- guard_status: ok" in text
     assert "guard_ok_lab_favorable_deployable" in text
+
+
+def test_generate_compare_markdown_includes_edgeenv_regression_evidence():
+    compare_result = make_compare_result()
+    judgement = make_judgement()
+
+    text = generate_compare_markdown(
+        compare_result,
+        judgement,
+        edgeenv_regression=make_edgeenv_regression(),
+    )
+
+    assert "## Runtime Regression Evidence" in text
+    assert "- source: EdgeEnv Runtime Regression Monitor" in text
+    assert "- mode: same-condition" in text
+    assert "| mean_delta_pct | +18.40% |" in text
+    assert "p99_latency_high" in text
+    assert "not cloud monitoring, ranking, or production observability" in text
 
 
 def test_generate_compare_markdown_includes_diagnosis_guard_evidence():
@@ -452,6 +501,25 @@ def test_generate_compare_html_includes_deployment_decision_section():
     assert "deployable" in html
     assert "Deployment can proceed with normal rollout monitoring." in html
     assert "guard_ok_lab_favorable_deployable" in html
+
+
+def test_generate_compare_html_includes_edgeenv_regression_evidence():
+    compare_result = make_compare_result()
+    judgement = make_judgement()
+
+    html = generate_compare_html(
+        compare_result,
+        judgement,
+        edgeenv_regression=make_edgeenv_regression(),
+    )
+
+    assert "Runtime Regression Evidence" in html
+    assert "EdgeEnv Runtime Regression Monitor" in html
+    assert "same-condition" in html
+    assert "mean_delta_pct" in html
+    assert "+18.40%" in html
+    assert "p99_latency_high" in html
+    assert "not cloud monitoring, ranking, or production observability" in html
 
 
 def test_generate_compare_html_includes_diagnosis_guard_evidence():

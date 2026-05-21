@@ -297,11 +297,96 @@ def _deployment_decision_to_html(deployment_decision: Dict[str, Any] | None) -> 
     """
 
 
+def _edgeenv_regression_to_html(edgeenv_regression: Dict[str, Any] | None) -> str:
+    if edgeenv_regression is None:
+        return ""
+    evidence = edgeenv_regression.get("evidence") or {}
+    comparability = edgeenv_regression.get("comparability") or {}
+    triggered = evidence.get("triggered_thresholds") or []
+    evidence_rows = []
+    for field in (
+        "mean_delta_pct",
+        "p95_delta_pct",
+        "p99_delta_pct",
+        "fps_delta_pct",
+        "memory_peak_delta_pct",
+    ):
+        evidence_rows.append(
+            f"""
+            <tr>
+              <td>{escape(field)}</td>
+              <td>{escape(_fmt_pct(evidence.get(field)))}</td>
+            </tr>
+            """
+        )
+    threshold_rows = []
+    for item in triggered:
+        if not isinstance(item, dict):
+            continue
+        threshold_rows.append(
+            f"""
+            <tr>
+              <td>{escape(str(item.get("name", "-")))}</td>
+              <td>{escape(str(item.get("metric", "-")))}</td>
+              <td>{escape(_fmt_num(item.get("observed")))}</td>
+              <td>{escape(_fmt_num(item.get("threshold")))}</td>
+              <td>{escape(str(item.get("severity", "-")))}</td>
+            </tr>
+            """
+        )
+    threshold_html = ""
+    if threshold_rows:
+        threshold_html = f"""
+        <h3>Triggered Thresholds</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>name</th>
+              <th>metric</th>
+              <th>observed</th>
+              <th>threshold</th>
+              <th>severity</th>
+            </tr>
+          </thead>
+          <tbody>{''.join(threshold_rows)}</tbody>
+        </table>
+        """
+    reasons = comparability.get("reasons") or []
+    reasons_html = _guard_values_to_html(reasons)
+    return f"""
+  <h2>Runtime Regression Evidence</h2>
+  <div class="meta">
+    <p><strong>source</strong>: EdgeEnv Runtime Regression Monitor</p>
+    <p><strong>comparable</strong>: <code>{escape(str(edgeenv_regression.get("comparable")))}</code></p>
+    <p><strong>mode</strong>: <code>{escape(str(edgeenv_regression.get("mode")))}</code></p>
+    <p><strong>regression_detected</strong>: <code>{escape(str(edgeenv_regression.get("regression_detected")))}</code></p>
+    <p><strong>regression_type</strong>: <code>{escape(str(edgeenv_regression.get("regression_type")))}</code></p>
+    <p><strong>severity</strong>: <code>{escape(str(edgeenv_regression.get("severity")))}</code></p>
+    <p><strong>recommendation</strong>: {escape(str(edgeenv_regression.get("recommendation")))}</p>
+    <p><strong>comparability_judgement</strong>: <code>{escape(str(comparability.get("comparable")))}</code></p>
+    <p><strong>comparability_reasons</strong></p>
+    <ul>{reasons_html}</ul>
+    <table>
+      <thead>
+        <tr>
+          <th>Evidence</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody>{''.join(evidence_rows)}</tbody>
+    </table>
+    {threshold_html}
+    <p><em>EdgeEnv regression evidence is local-first report context, not cloud monitoring, ranking, or production observability.</em></p>
+  </div>
+    """
+
+
 def generate_compare_html(
     compare_result: Dict[str, Any],
     judgement: Dict[str, Any],
     guard_analysis: Dict[str, Any] | None = None,
     deployment_decision: Dict[str, Any] | None = None,
+    edgeenv_regression: Dict[str, Any] | None = None,
 ) -> str:
     base_id = compare_result["base_id"]
     new_id = compare_result["new_id"]
@@ -404,6 +489,7 @@ def generate_compare_html(
     notes_html = _notes_to_html(judgement["notes"])
     threshold_rows = _threshold_rows(thresholds)
     guard_analysis_html = _guard_analysis_to_html(guard_analysis)
+    edgeenv_regression_html = _edgeenv_regression_to_html(edgeenv_regression)
     deployment_decision_html = _deployment_decision_to_html(deployment_decision)
 
     warning_html = ""
@@ -710,6 +796,7 @@ def generate_compare_html(
     </tbody>
   </table>
   {guard_analysis_html}
+  {edgeenv_regression_html}
   {deployment_decision_html}
 </body>
 </html>

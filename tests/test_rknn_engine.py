@@ -10,8 +10,15 @@ import numpy as np
 import pytest
 
 
+def _optional_module_available(name: str) -> bool:
+    try:
+        return importlib.util.find_spec(name) is not None
+    except ValueError:
+        return name in sys.modules
+
+
 def _install_optional_dependency_stubs() -> None:
-    if importlib.util.find_spec("onnx") is None:
+    if not _optional_module_available("onnx"):
         onnx_stub = types.ModuleType("onnx")
         onnx_stub.TensorProto = types.SimpleNamespace(
             FLOAT=1,
@@ -24,7 +31,7 @@ def _install_optional_dependency_stubs() -> None:
         )
         sys.modules["onnx"] = onnx_stub
 
-    if importlib.util.find_spec("onnxruntime") is None:
+    if not _optional_module_available("onnxruntime"):
         sys.modules["onnxruntime"] = types.ModuleType("onnxruntime")
 
 

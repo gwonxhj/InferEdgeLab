@@ -76,6 +76,47 @@ def test_guard_ok_with_regression_requires_review():
     assert_policy(decision, "guard_ok_lab_unfavorable_review")
 
 
+def test_edgeenv_same_condition_runtime_regression_requires_review():
+    decision = build_deployment_decision(
+        make_judgement(overall="improvement"),
+        {"status": "ok"},
+        edgeenv_regression={
+            "regression_detected": True,
+            "regression_type": "latency",
+            "severity": "high",
+            "comparable": True,
+            "mode": "same-condition",
+            "recommendation": "review_required",
+        },
+    )
+
+    assert decision["decision"] == "review_required"
+    assert decision["reason"] == "EdgeEnv runtime regression evidence requires deployment review."
+    assert_policy(
+        decision,
+        "guard_ok_lab_favorable_deployable",
+        "edgeenv_runtime_regression_review",
+    )
+
+
+def test_edgeenv_runtime_comparison_does_not_force_review():
+    decision = build_deployment_decision(
+        make_judgement(overall="improvement"),
+        {"status": "ok"},
+        edgeenv_regression={
+            "regression_detected": True,
+            "regression_type": "runtime_mismatch",
+            "severity": "review",
+            "comparable": True,
+            "mode": "runtime-comparison",
+            "recommendation": "compare_as_runtime_evidence_only",
+        },
+    )
+
+    assert decision["decision"] == "deployable"
+    assert "edgeenv_runtime_regression_review" not in decision["triggered_rules"]
+
+
 def test_shape_mismatch_requires_review_but_guard_error_stays_blocked():
     review_decision = build_deployment_decision(make_judgement(shape_match=False), {"status": "ok"})
     blocked_decision = build_deployment_decision(make_judgement(shape_match=False), {"status": "error"})

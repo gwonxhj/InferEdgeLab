@@ -83,6 +83,41 @@ def load_worker_provenance_guard_fixture() -> dict:
     )
 
 
+def write_edgeenv_regression(tmp_path) -> str:
+    path = tmp_path / "edgeenv_regression.json"
+    path.write_text(
+        json.dumps(
+            {
+                "regression_detected": True,
+                "regression_type": "latency",
+                "severity": "high",
+                "comparable": True,
+                "mode": "same-condition",
+                "recommendation": "review_required",
+                "comparability": {
+                    "comparable": True,
+                    "reasons": ["All strict regression keys match."],
+                },
+                "evidence": {
+                    "mean_delta_pct": 18.4,
+                    "p99_delta_pct": 32.1,
+                    "triggered_thresholds": [
+                        {
+                            "name": "p99_latency_high",
+                            "metric": "p99_delta_pct",
+                            "observed": 32.1,
+                            "threshold": 25.0,
+                            "severity": "high",
+                        }
+                    ],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    return str(path)
+
+
 def test_build_compare_bundle_returns_compare_artifacts_for_same_precision_pair(tmp_path):
     base_path = write_result(
         tmp_path,
@@ -143,6 +178,46 @@ def test_build_compare_bundle_returns_compare_artifacts_for_same_precision_pair(
     assert bundle["deployment_decision"]["decision"] == "unknown"
     assert "guard_analysis" not in bundle
     assert "guard_analysis" not in bundle["data"]
+    assert "edgeenv_runtime_regression" not in bundle
+    assert "edgeenv_runtime_regression" not in bundle["data"]
+
+
+def test_build_compare_bundle_accepts_edgeenv_regression_evidence(tmp_path):
+    base_path = write_result(
+        tmp_path,
+        "base.json",
+        timestamp="2026-04-13T09:00:00Z",
+        precision="fp32",
+        mean_ms=10.0,
+        p99_ms=12.0,
+    )
+    new_path = write_result(
+        tmp_path,
+        "new.json",
+        timestamp="2026-04-13T10:00:00Z",
+        precision="fp32",
+        mean_ms=8.0,
+        p99_ms=10.0,
+        accuracy={
+            "task": "classification",
+            "sample_count": 100,
+            "metrics": {"top1_accuracy": 0.92},
+        },
+    )
+    edgeenv_regression_path = write_edgeenv_regression(tmp_path)
+
+    bundle = build_compare_bundle(
+        base_path=base_path,
+        new_path=new_path,
+        edgeenv_regression_path=edgeenv_regression_path,
+    )
+
+    assert bundle["edgeenv_runtime_regression"]["mode"] == "same-condition"
+    assert bundle["data"]["edgeenv_runtime_regression"] == bundle["edgeenv_runtime_regression"]
+    assert bundle["deployment_decision"]["decision"] == "review_required"
+    assert "edgeenv_runtime_regression_review" in bundle["deployment_decision"]["triggered_rules"]
+    assert "## Runtime Regression Evidence" in bundle["markdown"]
+    assert "p99_latency_high" in bundle["html"]
 
 
 def test_build_compare_bundle_with_guard_false_preserves_existing_keys(tmp_path):

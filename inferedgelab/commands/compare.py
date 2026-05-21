@@ -86,6 +86,28 @@ def _render_deployment_decision(deployment_decision: dict | None) -> None:
             rprint(f"  - {rule}")
 
 
+def _render_edgeenv_regression(edgeenv_regression: dict | None) -> None:
+    if not edgeenv_regression:
+        return
+    rprint("[bold]Runtime Regression Evidence[/bold]")
+    rprint("- source: EdgeEnv Runtime Regression Monitor")
+    rprint(f"- comparable: {edgeenv_regression.get('comparable')}")
+    rprint(f"- mode: {edgeenv_regression.get('mode')}")
+    rprint(f"- regression_detected: {edgeenv_regression.get('regression_detected')}")
+    rprint(f"- regression_type: {edgeenv_regression.get('regression_type')}")
+    rprint(f"- severity: {edgeenv_regression.get('severity')}")
+    rprint(f"- recommendation: {edgeenv_regression.get('recommendation')}")
+    evidence = edgeenv_regression.get("evidence") or {}
+    for field in (
+        "mean_delta_pct",
+        "p95_delta_pct",
+        "p99_delta_pct",
+        "fps_delta_pct",
+        "memory_peak_delta_pct",
+    ):
+        rprint(f"- {field}: {_fmt_pct(evidence.get(field))}")
+
+
 def compare_cmd(
     base_path: str = typer.Argument(..., help="기준 result JSON 경로"),
     new_path: str = typer.Argument(..., help="비교 대상 result JSON 경로"),
@@ -113,6 +135,11 @@ def compare_cmd(
     markdown_out: str = typer.Option("", "--markdown-out", help="비교 결과 Markdown 저장 경로"),
     html_out: str = typer.Option("", "--html-out", help="비교 결과 HTML 저장 경로"),
     with_guard: bool = typer.Option(False, "--with-guard", help="Run InferEdgeAIGuard reasoning on the compare result"),
+    edgeenv_regression: str = typer.Option(
+        "",
+        "--edgeenv-regression",
+        help="Optional EdgeEnv runtime regression report JSON path",
+    ),
 ):
     """
     structured benchmark result 두 개를 비교해서 콘솔 표로 출력한다.
@@ -124,6 +151,11 @@ def compare_cmd(
     tradeoff_caution_threshold = _normalize_optional_float(tradeoff_caution_threshold)
     tradeoff_risky_threshold = _normalize_optional_float(tradeoff_risky_threshold)
     tradeoff_severe_threshold = _normalize_optional_float(tradeoff_severe_threshold)
+    edgeenv_regression_path = (
+        edgeenv_regression
+        if isinstance(edgeenv_regression, str) and edgeenv_regression
+        else None
+    )
 
     bundle = build_compare_bundle(
         base_path=base_path,
@@ -136,6 +168,7 @@ def compare_cmd(
         tradeoff_risky_threshold=tradeoff_risky_threshold,
         tradeoff_severe_threshold=tradeoff_severe_threshold,
         with_guard=with_guard,
+        edgeenv_regression_path=edgeenv_regression_path,
     )
     base = bundle["base"]
     new = bundle["new"]
@@ -359,6 +392,7 @@ def compare_cmd(
     rprint(run_table)
     if with_guard:
         _render_guard_analysis(bundle.get("guard_analysis"))
+    _render_edgeenv_regression(bundle.get("edgeenv_runtime_regression"))
     _render_deployment_decision(bundle.get("deployment_decision"))
 
     if markdown_out:
