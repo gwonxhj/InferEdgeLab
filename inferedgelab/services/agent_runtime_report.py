@@ -386,6 +386,15 @@ def compute_agent_runtime_metrics(orchestration_summary: dict[str, Any]) -> dict
         "queue_depth_sample_count": len(queue_depth_timeline),
         "latency_sample_count": len(latency_timeline),
         "queue_pressure_state": queue_state.get("queue_pressure_state") or "unknown",
+        "queue_pressure_reason": queue_state.get("queue_pressure_reason") or "unknown",
+        "max_pressure_task": queue_state.get("max_pressure_task"),
+        "device_local_task_count": _non_negative_number(
+            queue_state.get("device_local_task_count")
+        ),
+        "device_local_producer_sources": _string_list(
+            queue_state.get("device_local_producer_sources")
+        ),
+        "producer_sources_by_task": _producer_sources_by_task(queue_state),
         "queue_state_sample_count": _non_negative_number(queue_state.get("sample_count")),
         "queue_state_max_total_queue_depth": _non_negative_number(
             queue_state.get("max_total_queue_depth")
@@ -408,6 +417,9 @@ def compute_agent_runtime_metrics(orchestration_summary: dict[str, Any]) -> dict
         "runtime_event_reason_counts": dict(
             runtime_event_summary.get("reason_counts") or {}
         ),
+        "queue_pressure_reason_counts": _count_mapping(
+            runtime_event_summary.get("queue_pressure_reason_counts")
+        ),
         "policy_decision_reason_counts": dict(
             runtime_event_summary.get("policy_decision_reason_counts") or {}
         ),
@@ -417,6 +429,24 @@ def compute_agent_runtime_metrics(orchestration_summary: dict[str, Any]) -> dict
         ),
         "fallback_decision_count": _non_negative_number(
             runtime_event_summary.get("fallback_decision_count")
+        ),
+        "runtime_event_producer_sources": _string_list(
+            runtime_event_summary.get("producer_sources")
+        ),
+        "producer_event_count": _non_negative_number(
+            runtime_event_summary.get("producer_event_count")
+        ),
+        "device_local_event_count": _non_negative_number(
+            runtime_event_summary.get("device_local_event_count")
+        ),
+        "latest_runtime_event_type": runtime_event_summary.get("latest_event_type"),
+        "primary_health_reason_counts": _worker_field_counts(
+            worker_health,
+            "primary_health_reason",
+        ),
+        "operation_risk_summary_counts": _worker_field_counts(
+            worker_health,
+            "operation_risk_summary",
         ),
         "policy_decision_reasons": policy_decision_reasons,
         "top_policy_decision_reason": _top_reason(policy_decision_reasons),
@@ -527,6 +557,12 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             f"| queue_depth_sample_count | {_fmt_number(metrics['queue_depth_sample_count'])} |",
             f"| latency_sample_count | {_fmt_number(metrics['latency_sample_count'])} |",
             f"| queue_pressure_state | {metrics.get('queue_pressure_state') or '-'} |",
+            f"| queue_pressure_reason | {metrics.get('queue_pressure_reason') or '-'} |",
+            f"| max_pressure_task | {metrics.get('max_pressure_task') or '-'} |",
+            f"| device_local_task_count | {_fmt_number(metrics.get('device_local_task_count'))} |",
+            f"| device_local_event_count | {_fmt_number(metrics.get('device_local_event_count'))} |",
+            f"| producer_event_count | {_fmt_number(metrics.get('producer_event_count'))} |",
+            f"| runtime_event_producer_sources | {_fmt_list(metrics.get('runtime_event_producer_sources'))} |",
             f"| runtime_event_count | {_fmt_number(metrics.get('runtime_event_count'))} |",
             f"| scheduler_delay_event_count | {_fmt_number(metrics.get('scheduler_delay_event_count'))} |",
             f"| fallback_decision_count | {_fmt_number(metrics.get('fallback_decision_count'))} |",
@@ -541,18 +577,25 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             "| Field | Value |",
             "|---|---:|",
             f"| queue_pressure_state | {runtime['operation_context']['queue_state_summary'].get('queue_pressure_state') or '-'} |",
+            f"| queue_pressure_reason | {runtime['operation_context']['queue_state_summary'].get('queue_pressure_reason') or '-'} |",
+            f"| max_pressure_task | {runtime['operation_context']['queue_state_summary'].get('max_pressure_task') or '-'} |",
             f"| overload_backlog_threshold | {_fmt_number(runtime['operation_context']['queue_state_summary'].get('overload_backlog_threshold'))} |",
             f"| max_total_queue_depth | {_fmt_number(runtime['operation_context']['queue_state_summary'].get('max_total_queue_depth'))} |",
             f"| average_total_queue_depth | {_fmt_number(runtime['operation_context']['queue_state_summary'].get('average_total_queue_depth'))} |",
+            f"| device_local_task_count | {_fmt_number(runtime['operation_context']['queue_state_summary'].get('device_local_task_count'))} |",
+            f"| device_local_producer_sources | {_fmt_list(runtime['operation_context']['queue_state_summary'].get('device_local_producer_sources'))} |",
+            f"| producer_sources_by_task | {_fmt_producer_sources_by_task(runtime['operation_context']['queue_state_summary'].get('producer_sources_by_task'))} |",
             "",
             "### Worker Health",
             "",
-            "| Worker | Health | Reasons | Executed | Dropped | Drop Rate | Deadline Missed | Deadline Miss Rate | Fallback | Fallback Rate | Mean Latency ms |",
-            "|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+            "| Worker | Health | Primary Reason | Operation Risk | Reasons | Executed | Dropped | Drop Rate | Deadline Missed | Deadline Miss Rate | Fallback | Fallback Rate | Mean Latency ms |",
+            "|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
             *[
                 "| "
                 f"{worker.get('task') or task_name} | "
                 f"{worker.get('health_state') or '-'} | "
+                f"{worker.get('primary_health_reason') or '-'} | "
+                f"{worker.get('operation_risk_summary') or '-'} | "
                 f"{_fmt_list(worker.get('health_reasons'))} | "
                 f"{_fmt_number(worker.get('executed_count'))} | "
                 f"{_fmt_number(worker.get('dropped_count'))} | "
@@ -562,6 +605,41 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
                 f"{_fmt_number(worker.get('fallback_count'))} | "
                 f"{_fmt_number(worker.get('fallback_rate'))} | "
                 f"{_fmt_number(worker.get('mean_latency_ms'))} |"
+                for task_name, worker in runtime["operation_context"][
+                    "worker_health_snapshot"
+                ]
+                .get("workers", {})
+                .items()
+                if isinstance(worker, dict)
+            ],
+            "",
+            "Worker operation risk summary:",
+            "",
+            "| Signal | Count |",
+            "|---|---:|",
+            *[
+                f"| {signal} | {_fmt_number(count)} |"
+                for signal, count in sorted(
+                    (
+                        runtime["operation_context"].get(
+                            "operation_risk_summary_counts"
+                        )
+                        or {}
+                    ).items()
+                )
+            ],
+            "",
+            "Worker producer context:",
+            "",
+            "| Worker | Device Local | Producer Stage | Producer Sources | Producer Events |",
+            "|---|---|---|---|---:|",
+            *[
+                "| "
+                f"{worker.get('task') or task_name} | "
+                f"{worker.get('device_local_validation', '-')} | "
+                f"{worker.get('producer_stage') or '-'} | "
+                f"{_fmt_list(worker.get('producer_sources'))} | "
+                f"{_fmt_number(worker.get('producer_event_count'))} |"
                 for task_name, worker in runtime["operation_context"][
                     "worker_health_snapshot"
                 ]
@@ -641,6 +719,26 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             f"| scheduler_delay_event_count | {_fmt_number(runtime['operation_context']['runtime_event_summary'].get('scheduler_delay_event_count'))} |",
             f"| fallback_decision_count | {_fmt_number(runtime['operation_context']['runtime_event_summary'].get('fallback_decision_count'))} |",
             f"| deadline_missed_count | {_fmt_number(runtime['operation_context']['runtime_event_summary'].get('deadline_missed_count'))} |",
+            f"| device_local_event_count | {_fmt_number(runtime['operation_context']['runtime_event_summary'].get('device_local_event_count'))} |",
+            f"| producer_event_count | {_fmt_number(runtime['operation_context']['runtime_event_summary'].get('producer_event_count'))} |",
+            f"| producer_sources | {_fmt_list(runtime['operation_context']['runtime_event_summary'].get('producer_sources'))} |",
+            f"| latest_event_type | {runtime['operation_context']['runtime_event_summary'].get('latest_event_type') or '-'} |",
+            "",
+            "Queue pressure reasons:",
+            "",
+            "| Reason | Count |",
+            "|---|---:|",
+            *[
+                f"| {reason} | {_fmt_number(count)} |"
+                for reason, count in sorted(
+                    (
+                        runtime["operation_context"]["runtime_event_summary"].get(
+                            "queue_pressure_reason_counts"
+                        )
+                        or {}
+                    ).items()
+                )
+            ],
             "",
             "Runtime event timeline sample:",
             "",
@@ -1289,6 +1387,26 @@ def _operation_context(
         "queue_state_summary": queue_state,
         "worker_health_snapshot": worker_health,
         "worker_health_counts": dict(metrics.get("worker_health_counts") or {}),
+        "primary_health_reason_counts": dict(
+            metrics.get("primary_health_reason_counts") or {}
+        ),
+        "operation_risk_summary_counts": dict(
+            metrics.get("operation_risk_summary_counts") or {}
+        ),
+        "device_local_operation_context": {
+            "device_local_task_count": metrics.get("device_local_task_count"),
+            "device_local_producer_sources": list(
+                metrics.get("device_local_producer_sources") or []
+            ),
+            "runtime_event_producer_sources": list(
+                metrics.get("runtime_event_producer_sources") or []
+            ),
+            "producer_sources_by_task": dict(
+                metrics.get("producer_sources_by_task") or {}
+            ),
+            "producer_event_count": metrics.get("producer_event_count"),
+            "device_local_event_count": metrics.get("device_local_event_count"),
+        },
         "runtime_event_summary": runtime_event_summary,
         "runtime_event_timeline_count": len(runtime_events),
         "runtime_event_timeline_sample": runtime_events[:8],
@@ -1548,6 +1666,36 @@ def _worker_health_counts(worker_health_snapshot: dict[str, Any]) -> dict[str, i
     return counts
 
 
+def _worker_field_counts(
+    worker_health_snapshot: dict[str, Any],
+    field: str,
+) -> dict[str, int]:
+    workers = worker_health_snapshot.get("workers")
+    if not isinstance(workers, dict):
+        return {}
+    counts: dict[str, int] = {}
+    for worker in workers.values():
+        if not isinstance(worker, dict):
+            continue
+        value = worker.get(field)
+        if not isinstance(value, str) or not value:
+            continue
+        counts[value] = counts.get(value, 0) + 1
+    return counts
+
+
+def _producer_sources_by_task(queue_state: dict[str, Any]) -> dict[str, list[str]]:
+    value = queue_state.get("producer_sources_by_task")
+    if not isinstance(value, dict):
+        return {}
+    result: dict[str, list[str]] = {}
+    for task_name, sources in value.items():
+        if not isinstance(task_name, str) or not task_name:
+            continue
+        result[task_name] = _string_list(sources)
+    return result
+
+
 def _average_total_queue_depth(queue_depth_timeline: list[dict[str, Any]]) -> float:
     values = [
         _non_negative_number(item.get("total_queue_depth"))
@@ -1597,6 +1745,12 @@ def _non_negative_number(value: Any) -> float:
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         return max(float(value), 0.0)
     return 0.0
+
+
+def _string_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, str) and item]
 
 
 def _count_mapping(value: Any) -> dict[str, int]:
@@ -1650,3 +1804,15 @@ def _fmt_mapping(value: Any) -> str:
         f"{key}={_fmt_number(count)}"
         for key, count in sorted(value.items())
     )
+
+
+def _fmt_producer_sources_by_task(value: Any) -> str:
+    if not isinstance(value, dict) or not value:
+        return "-"
+    parts: list[str] = []
+    for task_name, sources in sorted(value.items()):
+        if not isinstance(task_name, str):
+            continue
+        formatted_sources = _fmt_list(sources)
+        parts.append(f"{task_name}: {formatted_sources}")
+    return "; ".join(parts) if parts else "-"
