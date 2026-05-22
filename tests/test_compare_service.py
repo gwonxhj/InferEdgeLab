@@ -210,15 +210,52 @@ def make_edgeenv_runtime_regression_guard_analysis() -> dict:
                 ),
                 "raw_context": {},
             },
+            {
+                "type": "runtime_telemetry_replay_context",
+                "metric_name": "runtime_telemetry_history_missing_run_count",
+                "observed_value": 1.0,
+                "baseline_value": 0,
+                "threshold": 1.0,
+                "delta": None,
+                "delta_pct": None,
+                "increase_factor": None,
+                "severity": "medium",
+                "status": "warning",
+                "explanation": (
+                    "runtime_telemetry_history_missing_run_count observed value is 1.0. "
+                    "Baseline value is 0. Threshold is 1.0. This "
+                    "runtime_telemetry_replay_context evidence should be reviewed "
+                    "before deployment."
+                ),
+                "why_it_matters": (
+                    "EdgeEnv telemetry history is the replay artifact behind runtime "
+                    "regression context."
+                ),
+                "suspected_causes": ["telemetry_history_replay_gap"],
+                "recommendation": (
+                    "Inspect the EdgeEnv telemetry history artifact before relying on "
+                    "trend diagnosis."
+                ),
+                "raw_context": {
+                    "edgeenv_regression": {"history_missing_telemetry_runs": 1.0}
+                },
+            },
         ],
-        "suspected_causes": ["runtime_latency_drift", "tail_latency_spike"],
+        "suspected_causes": [
+            "runtime_latency_drift",
+            "tail_latency_spike",
+            "telemetry_history_replay_gap",
+        ],
         "recommendations": [
             "Review EdgeEnv comparability judgement and telemetry before deployment."
         ],
         "thresholds": {"edgeenv_p99_delta_pct_review": 25.0},
         "baseline_summary": {},
         "candidate_summary": {
-            "edgeenv_regression": {"candidate_run_id": "edgeenv-smoke-candidate"}
+            "edgeenv_regression": {
+                "candidate_run_id": "edgeenv-smoke-candidate",
+                "history_missing_telemetry_runs": 1.0,
+            }
         },
         "created_at": "2026-05-22T00:00:00Z",
     }
@@ -400,9 +437,12 @@ def test_build_compare_bundle_routes_edgeenv_regression_to_aiguard_when_availabl
         in bundle["markdown"]
     )
     assert "tail_latency_spike" in bundle["markdown"]
+    assert "runtime_telemetry_replay_context" in bundle["markdown"]
+    assert "telemetry_history_replay_gap" in bundle["markdown"]
     assert "Runtime Regression Evidence" in bundle["markdown"]
     assert "Runtime Telemetry Context" in bundle["markdown"]
     assert "runtime_telemetry_context_coverage" in bundle["html"]
+    assert "runtime_telemetry_history_missing_run_count" in bundle["html"]
 
 
 def test_build_compare_bundle_with_guard_false_preserves_existing_keys(tmp_path):
