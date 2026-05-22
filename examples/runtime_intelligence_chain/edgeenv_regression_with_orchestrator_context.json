@@ -1,0 +1,154 @@
+{
+  "baseline_run_id": "edgeenv-smoke-baseline",
+  "candidate_run_id": "edgeenv-smoke-candidate",
+  "comparability": {
+    "comparable": "Yes",
+    "mode": "same-condition",
+    "reasons": [
+      "Same model hash",
+      "Same input shape",
+      "Same precision",
+      "Same benchmark protocol"
+    ]
+  },
+  "comparable": true,
+  "evidence": {
+    "baseline": {
+      "latency_mean_ms": 100.0,
+      "latency_p95_ms": 120.0,
+      "latency_p99_ms": 130.0,
+      "memory_peak_mb": 512.0,
+      "throughput_fps": 50.0
+    },
+    "candidate": {
+      "latency_mean_ms": 118.0,
+      "latency_p95_ms": 132.0,
+      "latency_p99_ms": 171.6,
+      "memory_peak_mb": 716.8,
+      "throughput_fps": 39.0
+    },
+    "fps_delta_pct": -22.0,
+    "mean_delta_pct": 18.0,
+    "memory_peak_delta_pct": 40.0,
+    "p95_delta_pct": 10.0,
+    "p99_delta_pct": 32.0,
+    "triggered_thresholds": [
+      {
+        "metric": "latency_mean_ms",
+        "name": "mean_latency_review",
+        "observed": 18.0,
+        "severity": "medium",
+        "threshold": 15.0,
+        "type": "latency"
+      },
+      {
+        "metric": "latency_p99_ms",
+        "name": "p99_latency_high",
+        "observed": 32.0,
+        "severity": "high",
+        "threshold": 25.0,
+        "type": "latency"
+      },
+      {
+        "metric": "throughput_fps",
+        "name": "fps_drop_review",
+        "observed": -22.0,
+        "severity": "medium",
+        "threshold": -20.0,
+        "type": "latency"
+      },
+      {
+        "metric": "memory_peak_mb",
+        "name": "memory_peak_warning",
+        "observed": 40.0,
+        "severity": "warning",
+        "threshold": 30.0,
+        "type": "resource"
+      }
+    ]
+  },
+  "runtime_telemetry_context": {
+    "role": "supplemental_runtime_telemetry_context",
+    "source": "result_artifacts+runtime_telemetry_history",
+    "baseline": {
+      "available_sections": [
+        "latency",
+        "resource",
+        "runtime"
+      ],
+      "execution_sequence_id": 1,
+      "history_entry_present": true,
+      "history_execution_sequence_id": 1,
+      "history_missing_recorded": false,
+      "history_telemetry_timestamp": "2026-05-21T00:00:01Z",
+      "result_telemetry_present": true,
+      "run_id": "edgeenv-smoke-baseline",
+      "schema_version": "inferedge-runtime-telemetry.v1",
+      "telemetry_source": "synthetic_local_fixture",
+      "telemetry_timestamp": "2026-05-21T00:00:01Z"
+    },
+    "candidate": {
+      "available_sections": [
+        "latency",
+        "resource",
+        "runtime"
+      ],
+      "execution_sequence_id": 2,
+      "history_entry_present": true,
+      "history_execution_sequence_id": 2,
+      "history_missing_recorded": false,
+      "history_telemetry_timestamp": "2026-05-21T00:05:01Z",
+      "result_telemetry_present": true,
+      "run_id": "edgeenv-smoke-candidate",
+      "schema_version": "inferedge-runtime-telemetry.v1",
+      "telemetry_source": "synthetic_local_fixture",
+      "telemetry_timestamp": "2026-05-21T00:05:01Z",
+      "orchestrator_context_present": true,
+      "orchestrator_operation_context": {
+        "schema_version": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
+        "role": "orchestrator_operation_context_for_edgeenv",
+        "source": "orchestration_summary",
+        "run_id": "edgeenv-smoke-candidate",
+        "not_a_regression_judgement": true,
+        "not_a_comparability_gate": true,
+        "decision_owner": "lab",
+        "regression_owner": "edgeenv",
+        "candidate_context": {
+          "run_id": "edgeenv-smoke-candidate",
+          "queue_depth": 7,
+          "operation": {
+            "queue_depth": 7,
+            "deadline_missed_count": 2,
+            "fallback_count": 1
+          },
+          "resource": {
+            "source": "tegrastats_timeline",
+            "gpu_temperature": 78.5,
+            "throttling_detected": true
+          }
+        }
+      }
+    },
+    "evidence_gaps": [],
+    "history": {
+      "schema_version": "edgeenv.runtime-telemetry-history.v1",
+      "summary": {
+        "registered_runs": 2,
+        "telemetry_runs": 2,
+        "missing_telemetry_runs": 0,
+        "orchestrator_feed_runs": 1
+      }
+    },
+    "notes": [
+      "Runtime telemetry context is supplemental evidence, not a comparability gate.",
+      "Missing telemetry is an evidence gap, not a failed benchmark run.",
+      "Regression deltas are still gated by same-condition comparability.",
+      "Orchestrator operation context is supplemental evidence, not a deployment decision."
+    ]
+  },
+  "mode": "same-condition",
+  "recommendation": "review_required",
+  "regression_detected": true,
+  "regression_type": "mixed",
+  "severity": "high"
+}

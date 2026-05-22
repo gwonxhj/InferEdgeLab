@@ -31,6 +31,9 @@ def test_runtime_intelligence_gitlab_template_keeps_local_first_artifact_contrac
     text = TEMPLATE.read_text(encoding="utf-8")
 
     assert "examples/edgeenv_regression/edgeenv_runtime_regression.json" in text
+    assert "examples/runtime_intelligence_chain/edgeenv_regression_with_orchestrator_context.json" in text
+    assert "examples/runtime_intelligence_chain/aiguard_runtime_operation_guard_analysis.json" in text
+    assert "--guard-analysis" in text
     assert "Runtime Intelligence Risk Summary" in text
     assert "reports/runtime_intelligence_ci" in text
     assert "portfolio-demo-check --format json" in text

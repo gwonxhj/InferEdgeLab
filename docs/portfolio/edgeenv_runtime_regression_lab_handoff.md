@@ -69,6 +69,24 @@ poetry run inferedgelab compare \
   --markdown-out reports/edgeenv_regression_lab_handoff.md
 ```
 
+Runtime Intelligence cross-repo evidence-chain smoke:
+
+```bash
+poetry run inferedgelab compare \
+  examples/edgeenv_regression/lab_baseline_result.json \
+  examples/edgeenv_regression/lab_candidate_result.json \
+  --edgeenv-regression examples/runtime_intelligence_chain/edgeenv_regression_with_orchestrator_context.json \
+  --guard-analysis examples/runtime_intelligence_chain/aiguard_runtime_operation_guard_analysis.json \
+  --markdown-out reports/runtime_intelligence_chain.md \
+  --html-out reports/runtime_intelligence_chain.html
+```
+
+This second smoke uses committed lightweight artifacts to represent the cross-repo handoff:
+
+- Orchestrator context is preserved inside the EdgeEnv regression artifact as `orchestrator_operation_context`.
+- AIGuard deterministic queue/thermal evidence is passed as a precomputed `guard_analysis` artifact.
+- Lab owns the combined report and deployment decision.
+
 Expected Lab behavior:
 
 - CLI prints `Runtime Regression Evidence`.
@@ -79,6 +97,7 @@ Expected Lab behavior:
 - Additional Lab test fixtures under `tests/fixtures/edgeenv_regression/` mirror EdgeEnv replay examples for candidate telemetry gaps and execution sequence inversion. These fixture smokes verify that replay warnings become Lab-owned report context without making Lab recompute EdgeEnv comparability.
 - Markdown/HTML reports include a `Runtime Intelligence Risk Summary` that summarizes EdgeEnv comparability/regression, telemetry replay gaps, AIGuard deterministic evidence, and the Lab-owned deployment decision in one reviewer-facing table.
 - When EdgeEnv includes preserved Orchestrator feed context, the `Runtime Intelligence Risk Summary` surfaces queue, thermal, throttling, memory, and fallback context as supplemental runtime evidence.
+- When `--guard-analysis` is provided, Lab ingests the precomputed AIGuard artifact as evidence without requiring AIGuard to be installed in the Lab environment.
 - Guard evidence details preserve explanatory fields such as `why_it_matters`, evidence-local `suspected_causes`, and `recommendation`.
 - Deployment decision is `review_required`.
 - Triggered rules include `edgeenv_runtime_regression_review`.

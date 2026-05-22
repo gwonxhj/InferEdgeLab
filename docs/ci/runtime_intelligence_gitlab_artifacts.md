@@ -14,7 +14,7 @@ The template follows the current Runtime Intelligence handoff:
 test
 -> benchmark smoke
 -> EdgeEnv runtime regression fixture report
--> deterministic anomaly summary smoke
+-> deterministic anomaly summary smoke with precomputed AIGuard evidence
 -> portfolio evidence report
 -> deployment risk gate
 ```
@@ -45,11 +45,11 @@ Expected artifacts are intentionally file-based and local-first:
 - benchmark result JSON under `reports/*.json`
 - `BENCHMARKS.md`
 - EdgeEnv regression Markdown / HTML report under `reports/runtime_intelligence_ci/`
-- deterministic Runtime Intelligence summary Markdown
+- deterministic Runtime Intelligence summary Markdown with precomputed AIGuard runtime operation evidence
 - portfolio demo check JSON / Markdown
 - deployment risk summary JSON
 
-The template uses committed lightweight fixtures under `examples/edgeenv_regression/` for the Runtime Intelligence smoke. It does not require real device access, long-lived workers, remote execution, or cloud telemetry storage.
+The template uses committed lightweight fixtures under `examples/edgeenv_regression/` and `examples/runtime_intelligence_chain/` for the Runtime Intelligence smoke. It does not require real device access, long-lived workers, remote execution, or cloud telemetry storage.
 
 ## Gate Policy
 
@@ -58,6 +58,7 @@ The initial gate is conservative:
 - full pytest must pass
 - benchmark smoke must complete
 - Runtime Intelligence report must contain `Runtime Intelligence Risk Summary`
+- precomputed AIGuard evidence must remain report context, not the final decision owner
 - portfolio demo check status must be `pass`
 
 Future GitLab-specific gates may include latency regression thresholds, anomaly severity thresholds, thermal instability thresholds, and deployment risk thresholds, but only after the corresponding deterministic evidence is already represented in the artifact bundle.

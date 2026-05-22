@@ -1,0 +1,61 @@
+{
+  "schema_version": "inferedge-aiguard-diagnosis-v1",
+  "source": {
+    "edgeenv_runtime_regression_report": true,
+    "edgeenv_mode": "same-condition",
+    "edgeenv_comparable": true
+  },
+  "guard_verdict": "suspicious",
+  "severity": "medium",
+  "confidence": 0.74,
+  "primary_reason": "Orchestrator operation context should be reviewed.",
+  "evidence": [
+    {
+      "type": "runtime_thermal_instability",
+      "metric_name": "candidate_max_temperature_c",
+      "observed_value": 78.5,
+      "baseline_value": null,
+      "threshold": 70.0,
+      "severity": "medium",
+      "status": "warning",
+      "why_it_matters": "Thermal pressure can explain runtime drift.",
+      "suspected_causes": [
+        "thermal_pressure",
+        "thermal_throttling"
+      ],
+      "recommendation": "Review cooling and sustained runtime context."
+    },
+    {
+      "type": "runtime_queue_overload",
+      "metric_name": "candidate_queue_depth",
+      "observed_value": 7.0,
+      "baseline_value": null,
+      "threshold": 3.0,
+      "severity": "medium",
+      "status": "warning",
+      "why_it_matters": "Queue backlog can inflate runtime latency.",
+      "suspected_causes": [
+        "queue_overload",
+        "scheduler_contention"
+      ],
+      "recommendation": "Review Orchestrator queue policy."
+    }
+  ],
+  "suspected_causes": [
+    "thermal_pressure",
+    "queue_overload"
+  ],
+  "recommendations": [
+    "Review Orchestrator context before deployment."
+  ],
+  "candidate_summary": {
+    "edgeenv_regression": {
+      "history_orchestrator_feed_runs": 1.0,
+      "candidate_orchestrator_context_present": true,
+      "candidate_queue_depth": 7.0,
+      "candidate_max_temperature_c": 78.5,
+      "candidate_throttling_detected": true
+    }
+  },
+  "created_at": "2026-05-23T00:00:00Z"
+}
