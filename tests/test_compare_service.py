@@ -14,6 +14,7 @@ from inferedgelab.services.compare_service import (
 
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
+EDGEENV_REGRESSION_FIXTURES = FIXTURES / "edgeenv_regression"
 
 
 def write_result(
@@ -80,6 +81,12 @@ def load_worker_provenance_guard_fixture() -> dict:
             FIXTURES
             / "aiguard_worker_provenance_mismatch_guard_analysis.json"
         ).read_text(encoding="utf-8")
+    )
+
+
+def load_edgeenv_regression_fixture(name: str) -> dict:
+    return json.loads(
+        (EDGEENV_REGRESSION_FIXTURES / name).read_text(encoding="utf-8")
     )
 
 
@@ -382,7 +389,13 @@ def make_edgeenv_replay_warning_guard_analysis(
     *,
     suspected_cause: str,
     observed_value: float,
+    coverage_gap_count: float | None = None,
 ) -> dict:
+    coverage_observed_value = (
+        coverage_gap_count
+        if coverage_gap_count is not None
+        else 3.0 if observed_value else 0.0
+    )
     return {
         "schema_version": "inferedge-aiguard-diagnosis-v1",
         "source": {
@@ -398,18 +411,18 @@ def make_edgeenv_replay_warning_guard_analysis(
             {
                 "type": "runtime_telemetry_context_coverage",
                 "metric_name": "runtime_telemetry_evidence_gap_count",
-                "observed_value": 3.0 if observed_value else 0.0,
+                "observed_value": coverage_observed_value,
                 "baseline_value": 0,
                 "threshold": 1,
-                "severity": "medium" if observed_value else "low",
-                "status": "warning" if observed_value else "passed",
+                "severity": "medium" if coverage_observed_value else "low",
+                "status": "warning" if coverage_observed_value else "passed",
                 "explanation": "Runtime telemetry context coverage was evaluated.",
                 "why_it_matters": (
                     "Missing baseline or candidate telemetry is an evidence gap, "
                     "not a failed benchmark by itself."
                 ),
                 "suspected_causes": (
-                    ["runtime_telemetry_gap"] if observed_value else []
+                    ["runtime_telemetry_gap"] if coverage_observed_value else []
                 ),
                 "recommendation": (
                     "Preserve runtime telemetry artifacts before relying on trend diagnosis."
@@ -753,6 +766,145 @@ def test_build_compare_bundle_preserves_edgeenv_sequence_inversion_guard_report(
     assert "| candidate `candidate` | True | True | 2 | 2 |" in bundle["markdown"]
     assert "telemetry_sequence_order_mismatch" in bundle["html"]
     assert "history_execution_sequence_id" in bundle["html"]
+
+
+def test_build_compare_bundle_consumes_edgeenv_candidate_gap_fixture(
+    tmp_path, monkeypatch
+):
+    fixture_name = "edgeenv_candidate_telemetry_gap.json"
+    fixture_path = EDGEENV_REGRESSION_FIXTURES / fixture_name
+    guard_analysis = make_edgeenv_replay_warning_guard_analysis(
+        suspected_cause="telemetry_history_replay_gap",
+        observed_value=1.0,
+        coverage_gap_count=4.0,
+    )
+
+    def fake_analyze_edgeenv_regression_report(report):
+        assert "guard_analysis" not in report
+        assert report == load_edgeenv_regression_fixture(fixture_name)
+        context = report["runtime_telemetry_context"]
+        assert context["candidate"]["result_telemetry_present"] is False
+        assert context["candidate"]["history_entry_present"] is False
+        assert context["candidate"]["history_missing_recorded"] is True
+        assert context["candidate"]["history_missing_reason"] == (
+            "runtime_telemetry_missing"
+        )
+        assert context["history"]["summary"]["missing_telemetry_runs"] == 1
+        return guard_analysis
+
+    monkeypatch.setattr(
+        compare_service,
+        "analyze_edgeenv_regression_report",
+        fake_analyze_edgeenv_regression_report,
+    )
+    base_path = write_result(
+        tmp_path,
+        "base.json",
+        timestamp="2026-04-13T09:00:00Z",
+        precision="fp32",
+        mean_ms=10.0,
+        p99_ms=12.0,
+    )
+    new_path = write_result(
+        tmp_path,
+        "new.json",
+        timestamp="2026-04-13T10:00:00Z",
+        precision="fp32",
+        mean_ms=8.0,
+        p99_ms=10.0,
+    )
+
+    bundle = build_compare_bundle(
+        base_path=base_path,
+        new_path=new_path,
+        with_guard=True,
+        edgeenv_regression_path=str(fixture_path),
+    )
+
+    assert bundle["edgeenv_runtime_regression"] == load_edgeenv_regression_fixture(
+        fixture_name
+    )
+    assert bundle["guard_analysis"] == guard_analysis
+    assert bundle["deployment_decision"]["decision"] == "review_required"
+    assert bundle["deployment_decision"]["guard_status"] == "warning"
+    assert bundle["deployment_decision"]["guard_verdict"] == "suspicious"
+    assert "guard_warning_review" in bundle["deployment_decision"]["triggered_rules"]
+    assert (
+        "edgeenv_runtime_regression_review"
+        not in bundle["deployment_decision"]["triggered_rules"]
+    )
+    assert "runtime_telemetry_context_coverage" in bundle["markdown"]
+    assert "runtime_telemetry_replay_context" in bundle["markdown"]
+    assert "telemetry_history_replay_gap" in bundle["markdown"]
+    assert "runtime_telemetry_missing_in_result" in bundle["markdown"]
+    assert "| candidate `candidate` | False | False | - | - | - |" in bundle["markdown"]
+    assert "runtime_telemetry_history_missing_run_count" in bundle["html"]
+    assert "Missing telemetry is an evidence gap" in bundle["html"]
+
+
+def test_build_compare_bundle_consumes_edgeenv_sequence_inversion_fixture(
+    tmp_path, monkeypatch
+):
+    fixture_name = "edgeenv_sequence_inversion.json"
+    fixture_path = EDGEENV_REGRESSION_FIXTURES / fixture_name
+    guard_analysis = make_edgeenv_replay_warning_guard_analysis(
+        suspected_cause="telemetry_sequence_order_mismatch",
+        observed_value=0.0,
+    )
+
+    def fake_analyze_edgeenv_regression_report(report):
+        assert "guard_analysis" not in report
+        assert report == load_edgeenv_regression_fixture(fixture_name)
+        context = report["runtime_telemetry_context"]
+        assert context["baseline"]["execution_sequence_id"] == 5
+        assert context["baseline"]["history_execution_sequence_id"] == 5
+        assert context["candidate"]["execution_sequence_id"] == 2
+        assert context["candidate"]["history_execution_sequence_id"] == 2
+        assert context["evidence_gaps"] == []
+        return guard_analysis
+
+    monkeypatch.setattr(
+        compare_service,
+        "analyze_edgeenv_regression_report",
+        fake_analyze_edgeenv_regression_report,
+    )
+    base_path = write_result(
+        tmp_path,
+        "base.json",
+        timestamp="2026-04-13T09:00:00Z",
+        precision="fp32",
+        mean_ms=10.0,
+        p99_ms=12.0,
+    )
+    new_path = write_result(
+        tmp_path,
+        "new.json",
+        timestamp="2026-04-13T10:00:00Z",
+        precision="fp32",
+        mean_ms=8.0,
+        p99_ms=10.0,
+    )
+
+    bundle = build_compare_bundle(
+        base_path=base_path,
+        new_path=new_path,
+        with_guard=True,
+        edgeenv_regression_path=str(fixture_path),
+    )
+
+    assert bundle["edgeenv_runtime_regression"] == load_edgeenv_regression_fixture(
+        fixture_name
+    )
+    assert bundle["guard_analysis"] == guard_analysis
+    assert bundle["deployment_decision"]["decision"] == "review_required"
+    assert bundle["deployment_decision"]["guard_status"] == "warning"
+    assert bundle["deployment_decision"]["guard_verdict"] == "suspicious"
+    assert "runtime_telemetry_replay_context" in bundle["markdown"]
+    assert "telemetry_sequence_order_mismatch" in bundle["markdown"]
+    assert "| baseline `baseline` | True | True | 5 | 5 |" in bundle["markdown"]
+    assert "| candidate `candidate` | True | True | 2 | 2 |" in bundle["markdown"]
+    assert "telemetry_sequence_order_mismatch" in bundle["html"]
+    assert "not a comparability gate" in bundle["html"]
 
 
 def test_build_compare_bundle_with_guard_false_preserves_existing_keys(tmp_path):
