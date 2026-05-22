@@ -200,6 +200,7 @@ def make_edgeenv_regression() -> dict:
                 "result_telemetry_present": True,
                 "history_entry_present": True,
                 "execution_sequence_id": 1,
+                "history_execution_sequence_id": 1,
                 "telemetry_source": "synthetic_local_fixture",
             },
             "candidate": {
@@ -207,6 +208,7 @@ def make_edgeenv_regression() -> dict:
                 "result_telemetry_present": True,
                 "history_entry_present": True,
                 "execution_sequence_id": 2,
+                "history_execution_sequence_id": 2,
                 "telemetry_source": "synthetic_local_fixture",
             },
             "history": {
@@ -385,6 +387,8 @@ def test_generate_compare_markdown_includes_edgeenv_regression_evidence():
     assert "p99_latency_high" in text
     assert "### Runtime Telemetry Context" in text
     assert "edgeenv.runtime-telemetry-history.v1" in text
+    assert "history_execution_sequence_id" in text
+    assert "| candidate `candidate` | True | True | 2 | 2 |" in text
     assert "candidate `candidate`" in text
     assert "Runtime telemetry evidence gaps: none" in text
     assert "not cloud monitoring, ranking, or production observability" in text
@@ -565,6 +569,7 @@ def test_generate_compare_html_includes_edgeenv_regression_evidence():
     assert "p99_latency_high" in html
     assert "Runtime Telemetry Context" in html
     assert "edgeenv.runtime-telemetry-history.v1" in html
+    assert "history_execution_sequence_id" in html
     assert "synthetic_local_fixture" in html
     assert "Runtime telemetry evidence gaps" in html
     assert "not cloud monitoring, ranking, or production observability" in html

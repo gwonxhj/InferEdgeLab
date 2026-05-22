@@ -91,6 +91,7 @@ def test_compare_cmd_outputs_edgeenv_regression_evidence(tmp_path, capsys):
                         "result_telemetry_present": True,
                         "history_entry_present": True,
                         "execution_sequence_id": 1,
+                        "history_execution_sequence_id": 1,
                         "telemetry_source": "synthetic_local_fixture",
                     },
                     "candidate": {
@@ -98,6 +99,7 @@ def test_compare_cmd_outputs_edgeenv_regression_evidence(tmp_path, capsys):
                         "result_telemetry_present": True,
                         "history_entry_present": True,
                         "execution_sequence_id": 2,
+                        "history_execution_sequence_id": 2,
                         "telemetry_source": "synthetic_local_fixture",
                     },
                     "history": {
@@ -129,5 +131,6 @@ def test_compare_cmd_outputs_edgeenv_regression_evidence(tmp_path, capsys):
     assert "regression_detected: True" in out
     assert "Runtime Telemetry Context" in out
     assert "candidate: run_id=candidate" in out
+    assert "history_sequence=2" in out
     assert "evidence_gaps: none" in out
     assert "decision: review_required" in out

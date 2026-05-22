@@ -427,6 +427,7 @@ def _runtime_telemetry_context_to_html(context: Dict[str, Any]) -> str:
               <td>{escape(str(run_context.get("result_telemetry_present")))}</td>
               <td>{escape(str(run_context.get("history_entry_present")))}</td>
               <td>{escape(_fmt_num(run_context.get("execution_sequence_id")))}</td>
+              <td>{escape(_fmt_num(run_context.get("history_execution_sequence_id")))}</td>
               <td>{escape(str(run_context.get("telemetry_source", "-")))}</td>
             </tr>
             """
@@ -460,6 +461,7 @@ def _runtime_telemetry_context_to_html(context: Dict[str, Any]) -> str:
           <th>telemetry_present</th>
           <th>history_entry</th>
           <th>execution_sequence_id</th>
+          <th>history_execution_sequence_id</th>
           <th>telemetry_source</th>
         </tr>
       </thead>

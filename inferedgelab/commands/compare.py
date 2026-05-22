@@ -134,6 +134,7 @@ def _render_runtime_telemetry_context(context: dict) -> None:
             f"present={run_context.get('result_telemetry_present')}, "
             f"history={run_context.get('history_entry_present')}, "
             f"sequence={run_context.get('execution_sequence_id', '-')}, "
+            f"history_sequence={run_context.get('history_execution_sequence_id', '-')}, "
             f"source={run_context.get('telemetry_source', '-')}"
         )
     evidence_gaps = context.get("evidence_gaps") or []

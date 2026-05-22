@@ -204,8 +204,10 @@ def _append_runtime_telemetry_context(lines: list[str], context: Dict[str, Any])
                 if key in summary:
                     lines.append(f"  - {key}: {summary.get(key)}")
     lines.append("")
-    lines.append("| Run | telemetry_present | history_entry | execution_sequence_id | telemetry_source |")
-    lines.append("|---|---|---|---:|---|")
+    lines.append(
+        "| Run | telemetry_present | history_entry | execution_sequence_id | history_execution_sequence_id | telemetry_source |"
+    )
+    lines.append("|---|---|---|---:|---:|---|")
     for label in ("baseline", "candidate"):
         run_context = context.get(label) or {}
         lines.append(
@@ -214,6 +216,7 @@ def _append_runtime_telemetry_context(lines: list[str], context: Dict[str, Any])
             f"{run_context.get('result_telemetry_present')} | "
             f"{run_context.get('history_entry_present')} | "
             f"{_fmt_num(run_context.get('execution_sequence_id'))} | "
+            f"{_fmt_num(run_context.get('history_execution_sequence_id'))} | "
             f"{run_context.get('telemetry_source', '-')} |"
         )
     lines.append("")
