@@ -150,6 +150,121 @@ def write_edgeenv_regression(tmp_path) -> str:
     return str(path)
 
 
+def write_edgeenv_candidate_telemetry_gap(tmp_path) -> str:
+    path = tmp_path / "edgeenv_candidate_telemetry_gap.json"
+    path.write_text(
+        json.dumps(
+            {
+                "regression_detected": False,
+                "regression_type": "none",
+                "severity": "none",
+                "comparable": True,
+                "mode": "same-condition",
+                "recommendation": "telemetry_replay_review",
+                "comparability": {
+                    "comparable": True,
+                    "reasons": ["All strict regression keys match."],
+                },
+                "evidence": {},
+                "runtime_telemetry_context": {
+                    "role": "supplemental_runtime_telemetry_context",
+                    "source": "result_artifacts+runtime_telemetry_history",
+                    "baseline": {
+                        "run_id": "baseline",
+                        "result_telemetry_present": True,
+                        "history_entry_present": True,
+                        "execution_sequence_id": 1,
+                        "history_execution_sequence_id": 1,
+                        "telemetry_source": "synthetic_local_fixture",
+                    },
+                    "candidate": {
+                        "run_id": "candidate",
+                        "result_telemetry_present": False,
+                        "history_entry_present": False,
+                        "history_missing_recorded": True,
+                        "history_missing_reason": "runtime_telemetry_missing",
+                        "execution_sequence_id": 2,
+                        "history_execution_sequence_id": None,
+                        "telemetry_source": "synthetic_local_fixture",
+                    },
+                    "history": {
+                        "schema_version": "edgeenv.runtime-telemetry-history.v1",
+                        "summary": {
+                            "registered_runs": 3,
+                            "telemetry_runs": 2,
+                            "missing_telemetry_runs": 1,
+                        },
+                    },
+                    "evidence_gaps": [
+                        {
+                            "run_id": "candidate",
+                            "reason": "runtime_telemetry_missing_in_result",
+                        },
+                        {
+                            "run_id": "candidate",
+                            "reason": "runtime_telemetry_missing",
+                        },
+                    ],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    return str(path)
+
+
+def write_edgeenv_sequence_inversion(tmp_path) -> str:
+    path = tmp_path / "edgeenv_sequence_inversion.json"
+    path.write_text(
+        json.dumps(
+            {
+                "regression_detected": False,
+                "regression_type": "none",
+                "severity": "none",
+                "comparable": True,
+                "mode": "same-condition",
+                "recommendation": "telemetry_replay_review",
+                "comparability": {
+                    "comparable": True,
+                    "reasons": ["All strict regression keys match."],
+                },
+                "evidence": {},
+                "runtime_telemetry_context": {
+                    "role": "supplemental_runtime_telemetry_context",
+                    "source": "result_artifacts+runtime_telemetry_history",
+                    "baseline": {
+                        "run_id": "baseline",
+                        "result_telemetry_present": True,
+                        "history_entry_present": True,
+                        "execution_sequence_id": 5,
+                        "history_execution_sequence_id": 5,
+                        "telemetry_source": "synthetic_local_fixture",
+                    },
+                    "candidate": {
+                        "run_id": "candidate",
+                        "result_telemetry_present": True,
+                        "history_entry_present": True,
+                        "execution_sequence_id": 2,
+                        "history_execution_sequence_id": 2,
+                        "telemetry_source": "synthetic_local_fixture",
+                    },
+                    "history": {
+                        "schema_version": "edgeenv.runtime-telemetry-history.v1",
+                        "summary": {
+                            "registered_runs": 2,
+                            "telemetry_runs": 2,
+                            "missing_telemetry_runs": 0,
+                        },
+                    },
+                    "evidence_gaps": [],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    return str(path)
+
+
 def make_edgeenv_runtime_regression_guard_analysis() -> dict:
     return {
         "schema_version": "inferedge-aiguard-diagnosis-v1",
@@ -259,6 +374,71 @@ def make_edgeenv_runtime_regression_guard_analysis() -> dict:
                 "history_missing_telemetry_runs": 1.0,
             }
         },
+        "created_at": "2026-05-22T00:00:00Z",
+    }
+
+
+def make_edgeenv_replay_warning_guard_analysis(
+    *,
+    suspected_cause: str,
+    observed_value: float,
+) -> dict:
+    return {
+        "schema_version": "inferedge-aiguard-diagnosis-v1",
+        "source": {
+            "edgeenv_runtime_regression_report": True,
+            "edgeenv_mode": "same-condition",
+            "edgeenv_comparable": True,
+        },
+        "guard_verdict": "suspicious",
+        "severity": "medium",
+        "confidence": 0.82,
+        "primary_reason": "Runtime telemetry replay context should be reviewed.",
+        "evidence": [
+            {
+                "type": "runtime_telemetry_context_coverage",
+                "metric_name": "runtime_telemetry_evidence_gap_count",
+                "observed_value": 3.0 if observed_value else 0.0,
+                "baseline_value": 0,
+                "threshold": 1,
+                "severity": "medium" if observed_value else "low",
+                "status": "warning" if observed_value else "passed",
+                "explanation": "Runtime telemetry context coverage was evaluated.",
+                "why_it_matters": (
+                    "Missing baseline or candidate telemetry is an evidence gap, "
+                    "not a failed benchmark by itself."
+                ),
+                "suspected_causes": (
+                    ["runtime_telemetry_gap"] if observed_value else []
+                ),
+                "recommendation": (
+                    "Preserve runtime telemetry artifacts before relying on trend diagnosis."
+                ),
+            },
+            {
+                "type": "runtime_telemetry_replay_context",
+                "metric_name": "runtime_telemetry_history_missing_run_count",
+                "observed_value": observed_value,
+                "baseline_value": 0,
+                "threshold": 1,
+                "severity": "medium",
+                "status": "warning",
+                "explanation": "Runtime telemetry replay context should be reviewed.",
+                "why_it_matters": (
+                    "EdgeEnv telemetry history is the replay artifact behind runtime "
+                    "regression context."
+                ),
+                "suspected_causes": [suspected_cause],
+                "recommendation": (
+                    "Inspect the EdgeEnv telemetry history artifact before relying on "
+                    "trend diagnosis."
+                ),
+            },
+        ],
+        "suspected_causes": [suspected_cause],
+        "recommendations": [
+            "Review EdgeEnv telemetry replay context before deployment."
+        ],
         "created_at": "2026-05-22T00:00:00Z",
     }
 
@@ -445,6 +625,134 @@ def test_build_compare_bundle_routes_edgeenv_regression_to_aiguard_when_availabl
     assert "Runtime Telemetry Context" in bundle["markdown"]
     assert "runtime_telemetry_context_coverage" in bundle["html"]
     assert "runtime_telemetry_history_missing_run_count" in bundle["html"]
+
+
+def test_build_compare_bundle_preserves_edgeenv_candidate_gap_guard_report(
+    tmp_path, monkeypatch
+):
+    guard_analysis = make_edgeenv_replay_warning_guard_analysis(
+        suspected_cause="telemetry_history_replay_gap",
+        observed_value=1.0,
+    )
+
+    def fake_analyze_edgeenv_regression_report(report):
+        context = report["runtime_telemetry_context"]
+        assert context["candidate"]["result_telemetry_present"] is False
+        assert context["candidate"]["history_entry_present"] is False
+        assert context["candidate"]["history_missing_recorded"] is True
+        assert (
+            context["candidate"]["history_missing_reason"]
+            == "runtime_telemetry_missing"
+        )
+        assert context["history"]["summary"]["missing_telemetry_runs"] == 1
+        return guard_analysis
+
+    monkeypatch.setattr(
+        compare_service,
+        "analyze_edgeenv_regression_report",
+        fake_analyze_edgeenv_regression_report,
+    )
+    base_path = write_result(
+        tmp_path,
+        "base.json",
+        timestamp="2026-04-13T09:00:00Z",
+        precision="fp32",
+        mean_ms=10.0,
+        p99_ms=12.0,
+    )
+    new_path = write_result(
+        tmp_path,
+        "new.json",
+        timestamp="2026-04-13T10:00:00Z",
+        precision="fp32",
+        mean_ms=8.0,
+        p99_ms=10.0,
+    )
+
+    bundle = build_compare_bundle(
+        base_path=base_path,
+        new_path=new_path,
+        with_guard=True,
+        edgeenv_regression_path=write_edgeenv_candidate_telemetry_gap(tmp_path),
+    )
+
+    assert bundle["guard_analysis"] == guard_analysis
+    assert bundle["data"]["guard_analysis"] == guard_analysis
+    assert bundle["deployment_decision"]["decision"] == "review_required"
+    assert bundle["deployment_decision"]["guard_status"] == "warning"
+    assert bundle["deployment_decision"]["guard_verdict"] == "suspicious"
+    assert "guard_warning_review" in bundle["deployment_decision"]["triggered_rules"]
+    assert (
+        "edgeenv_runtime_regression_review"
+        not in bundle["deployment_decision"]["triggered_rules"]
+    )
+    assert "runtime_telemetry_replay_context" in bundle["markdown"]
+    assert "runtime_telemetry_context_coverage" in bundle["markdown"]
+    assert "runtime_telemetry_gap" in bundle["markdown"]
+    assert "telemetry_history_replay_gap" in bundle["markdown"]
+    assert (
+        "| candidate `candidate` | False | False | 2 | - | synthetic_local_fixture |"
+        in bundle["markdown"]
+    )
+    assert "runtime_telemetry_missing_in_result" in bundle["html"]
+    assert "runtime_telemetry_history_missing_run_count" in bundle["html"]
+
+
+def test_build_compare_bundle_preserves_edgeenv_sequence_inversion_guard_report(
+    tmp_path, monkeypatch
+):
+    guard_analysis = make_edgeenv_replay_warning_guard_analysis(
+        suspected_cause="telemetry_sequence_order_mismatch",
+        observed_value=0.0,
+    )
+
+    def fake_analyze_edgeenv_regression_report(report):
+        context = report["runtime_telemetry_context"]
+        assert context["baseline"]["execution_sequence_id"] == 5
+        assert context["baseline"]["history_execution_sequence_id"] == 5
+        assert context["candidate"]["execution_sequence_id"] == 2
+        assert context["candidate"]["history_execution_sequence_id"] == 2
+        return guard_analysis
+
+    monkeypatch.setattr(
+        compare_service,
+        "analyze_edgeenv_regression_report",
+        fake_analyze_edgeenv_regression_report,
+    )
+    base_path = write_result(
+        tmp_path,
+        "base.json",
+        timestamp="2026-04-13T09:00:00Z",
+        precision="fp32",
+        mean_ms=10.0,
+        p99_ms=12.0,
+    )
+    new_path = write_result(
+        tmp_path,
+        "new.json",
+        timestamp="2026-04-13T10:00:00Z",
+        precision="fp32",
+        mean_ms=8.0,
+        p99_ms=10.0,
+    )
+
+    bundle = build_compare_bundle(
+        base_path=base_path,
+        new_path=new_path,
+        with_guard=True,
+        edgeenv_regression_path=write_edgeenv_sequence_inversion(tmp_path),
+    )
+
+    assert bundle["guard_analysis"] == guard_analysis
+    assert bundle["deployment_decision"]["decision"] == "review_required"
+    assert bundle["deployment_decision"]["guard_status"] == "warning"
+    assert bundle["deployment_decision"]["guard_verdict"] == "suspicious"
+    assert "runtime_telemetry_replay_context" in bundle["markdown"]
+    assert "telemetry_sequence_order_mismatch" in bundle["markdown"]
+    assert "| baseline `baseline` | True | True | 5 | 5 |" in bundle["markdown"]
+    assert "| candidate `candidate` | True | True | 2 | 2 |" in bundle["markdown"]
+    assert "telemetry_sequence_order_mismatch" in bundle["html"]
+    assert "history_execution_sequence_id" in bundle["html"]
 
 
 def test_build_compare_bundle_with_guard_false_preserves_existing_keys(tmp_path):
