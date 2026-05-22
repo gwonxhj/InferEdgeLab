@@ -53,7 +53,7 @@ Expected Lab behavior:
 - CLI prints `Runtime Telemetry Context` when the EdgeEnv regression report includes it.
 - Markdown/HTML reports include a `Runtime Regression Evidence` section.
 - Markdown/HTML reports include a `Runtime Telemetry Context` subsection with baseline/candidate telemetry coverage.
-- When `--with-guard` is enabled and the installed AIGuard exposes EdgeEnv regression reasoning, Lab routes the EdgeEnv report to AIGuard and preserves diagnosis evidence such as `runtime_latency_regression` and `runtime_telemetry_context_coverage`.
+- When `--with-guard` is enabled and the installed AIGuard exposes EdgeEnv regression reasoning, Lab routes the EdgeEnv report to AIGuard and preserves diagnosis evidence such as `runtime_latency_regression`, `runtime_telemetry_context_coverage`, and `runtime_telemetry_replay_context`.
 - Guard evidence details preserve explanatory fields such as `why_it_matters`, evidence-local `suspected_causes`, and `recommendation`.
 - Deployment decision is `review_required`.
 - Triggered rules include `edgeenv_runtime_regression_review`.
