@@ -117,6 +117,52 @@ def test_edgeenv_runtime_comparison_does_not_force_review():
     assert "edgeenv_runtime_regression_review" not in decision["triggered_rules"]
 
 
+def test_edgeenv_regression_with_guard_warning_preserves_both_review_reasons():
+    decision = build_deployment_decision(
+        make_judgement(overall="improvement"),
+        {
+            "schema_version": "inferedge-aiguard-diagnosis-v1",
+            "guard_verdict": "review_required",
+            "severity": "medium",
+            "primary_reason": "Runtime telemetry replay context should be reviewed.",
+            "evidence": [
+                {
+                    "type": "runtime_telemetry_replay_context",
+                    "metric_name": "runtime_telemetry_history_missing_run_count",
+                    "observed_value": 1,
+                    "baseline_value": 0,
+                    "threshold": 1,
+                    "severity": "medium",
+                    "status": "warning",
+                    "explanation": "Telemetry history replay has a missing run.",
+                    "suspected_causes": ["telemetry_history_replay_gap"],
+                    "recommendation": "Inspect the EdgeEnv telemetry history artifact.",
+                }
+            ],
+        },
+        edgeenv_regression={
+            "regression_detected": True,
+            "regression_type": "latency",
+            "severity": "high",
+            "comparable": True,
+            "mode": "same-condition",
+            "recommendation": "review_required",
+        },
+    )
+
+    assert decision["decision"] == "review_required"
+    assert decision["reason"] == "EdgeEnv runtime regression evidence requires deployment review."
+    assert "AIGuard warning evidence" in decision["recommended_action"]
+    assert_policy(
+        decision,
+        "guard_warning_review",
+        "edgeenv_runtime_regression_review",
+    )
+    policy_rules = {item["rule"]: item for item in decision["policy_summary"]}
+    assert policy_rules["guard_warning_review"]["effect"] == "review_required"
+    assert policy_rules["edgeenv_runtime_regression_review"]["effect"] == "review_required"
+
+
 def test_shape_mismatch_requires_review_but_guard_error_stays_blocked():
     review_decision = build_deployment_decision(make_judgement(shape_match=False), {"status": "ok"})
     blocked_decision = build_deployment_decision(make_judgement(shape_match=False), {"status": "error"})

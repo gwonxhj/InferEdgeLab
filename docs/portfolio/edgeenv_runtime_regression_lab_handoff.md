@@ -57,6 +57,7 @@ Expected Lab behavior:
 - Guard evidence details preserve explanatory fields such as `why_it_matters`, evidence-local `suspected_causes`, and `recommendation`.
 - Deployment decision is `review_required`.
 - Triggered rules include `edgeenv_runtime_regression_review`.
+- Deployment decision reports include policy-summary descriptions for the triggered Lab rules.
 
 ## Boundary
 

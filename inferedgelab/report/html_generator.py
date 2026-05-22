@@ -295,6 +295,34 @@ def _deployment_decision_to_html(deployment_decision: Dict[str, Any] | None) -> 
             + ", ".join(f"<code>{escape(str(rule))}</code>" for rule in triggered_rules)
             + "</p>"
         )
+    policy_summary_rows = []
+    for item in deployment_decision.get("policy_summary") or []:
+        if not isinstance(item, dict):
+            continue
+        policy_summary_rows.append(
+            f"""
+            <tr>
+              <td><code>{escape(str(item.get("rule", "-")))}</code></td>
+              <td><code>{escape(str(item.get("effect", "-")))}</code></td>
+              <td>{escape(str(item.get("description", "-")))}</td>
+            </tr>
+            """
+        )
+    policy_summary_html = ""
+    if policy_summary_rows:
+        policy_summary_html = f"""
+        <h3>Decision Policy Summary</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>rule</th>
+              <th>effect</th>
+              <th>description</th>
+            </tr>
+          </thead>
+          <tbody>{''.join(policy_summary_rows)}</tbody>
+        </table>
+        """
 
     return f"""
   <h2>Deployment Decision</h2>
@@ -306,6 +334,7 @@ def _deployment_decision_to_html(deployment_decision: Dict[str, Any] | None) -> 
     <p><strong>guard_status</strong>: <code>{escape(str(deployment_decision.get("guard_status")))}</code></p>
     <p><strong>recommended_action</strong>: {escape(str(deployment_decision.get("recommended_action")))}</p>
     {triggered_rules_html}
+    {policy_summary_html}
   </div>
     """
 

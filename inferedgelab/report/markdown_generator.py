@@ -129,6 +129,22 @@ def _append_deployment_decision(lines: list[str], deployment_decision: Dict[str,
         lines.append("- triggered_rules:")
         for rule in triggered_rules:
             lines.append(f"  - {rule}")
+    policy_summary = deployment_decision.get("policy_summary") or []
+    if policy_summary:
+        lines.append("")
+        lines.append("### Decision Policy Summary")
+        lines.append("")
+        lines.append("| rule | effect | description |")
+        lines.append("|---|---|---|")
+        for item in policy_summary:
+            if not isinstance(item, dict):
+                continue
+            lines.append(
+                "| "
+                f"{item.get('rule', '-')} | "
+                f"{item.get('effect', '-')} | "
+                f"{item.get('description', '-')} |"
+            )
     lines.append("")
 
 
