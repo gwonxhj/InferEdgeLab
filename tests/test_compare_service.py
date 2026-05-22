@@ -157,6 +157,40 @@ def write_edgeenv_regression(tmp_path) -> str:
     return str(path)
 
 
+def write_edgeenv_regression_with_orchestrator_context(tmp_path) -> str:
+    path = Path(write_edgeenv_regression(tmp_path))
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    context = payload["runtime_telemetry_context"]
+    context["history"]["summary"]["orchestrator_feed_runs"] = 1
+    context["candidate"]["orchestrator_context_present"] = True
+    context["candidate"]["orchestrator_operation_context"] = {
+        "schema_version": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
+        "role": "orchestrator_operation_context_for_edgeenv",
+        "source": "orchestration_summary",
+        "run_id": "candidate",
+        "not_a_regression_judgement": True,
+        "not_a_comparability_gate": True,
+        "decision_owner": "lab",
+        "regression_owner": "edgeenv",
+        "candidate_context": {
+            "run_id": "candidate",
+            "queue_depth": 7,
+            "operation": {
+                "queue_depth": 7,
+                "deadline_missed_count": 2,
+                "fallback_count": 1,
+            },
+            "resource": {
+                "source": "tegrastats_timeline",
+                "gpu_temperature": 78.5,
+                "throttling_detected": True,
+            },
+        },
+    }
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return str(path)
+
+
 def write_edgeenv_candidate_telemetry_gap(tmp_path) -> str:
     path = tmp_path / "edgeenv_candidate_telemetry_gap.json"
     path.write_text(
@@ -456,6 +490,59 @@ def make_edgeenv_replay_warning_guard_analysis(
     }
 
 
+def make_edgeenv_orchestrator_context_guard_analysis() -> dict:
+    return {
+        "schema_version": "inferedge-aiguard-diagnosis-v1",
+        "source": {
+            "edgeenv_runtime_regression_report": True,
+            "edgeenv_mode": "same-condition",
+            "edgeenv_comparable": True,
+        },
+        "guard_verdict": "suspicious",
+        "severity": "medium",
+        "confidence": 0.74,
+        "primary_reason": "Orchestrator operation context should be reviewed.",
+        "evidence": [
+            {
+                "type": "runtime_thermal_instability",
+                "metric_name": "candidate_max_temperature_c",
+                "observed_value": 78.5,
+                "baseline_value": None,
+                "threshold": 70.0,
+                "severity": "medium",
+                "status": "warning",
+                "why_it_matters": "Thermal pressure can explain runtime drift.",
+                "suspected_causes": ["thermal_pressure", "thermal_throttling"],
+                "recommendation": "Review cooling and sustained runtime context.",
+            },
+            {
+                "type": "runtime_queue_overload",
+                "metric_name": "candidate_queue_depth",
+                "observed_value": 7.0,
+                "baseline_value": None,
+                "threshold": 3.0,
+                "severity": "medium",
+                "status": "warning",
+                "why_it_matters": "Queue backlog can inflate runtime latency.",
+                "suspected_causes": ["queue_overload", "scheduler_contention"],
+                "recommendation": "Review Orchestrator queue policy.",
+            },
+        ],
+        "suspected_causes": ["thermal_pressure", "queue_overload"],
+        "recommendations": ["Review Orchestrator context before deployment."],
+        "candidate_summary": {
+            "edgeenv_regression": {
+                "history_orchestrator_feed_runs": 1.0,
+                "candidate_orchestrator_context_present": True,
+                "candidate_queue_depth": 7.0,
+                "candidate_max_temperature_c": 78.5,
+                "candidate_throttling_detected": True,
+            }
+        },
+        "created_at": "2026-05-22T00:00:00Z",
+    }
+
+
 def test_build_compare_bundle_returns_compare_artifacts_for_same_precision_pair(tmp_path):
     base_path = write_result(
         tmp_path,
@@ -638,6 +725,66 @@ def test_build_compare_bundle_routes_edgeenv_regression_to_aiguard_when_availabl
     assert "Runtime Telemetry Context" in bundle["markdown"]
     assert "runtime_telemetry_context_coverage" in bundle["html"]
     assert "runtime_telemetry_history_missing_run_count" in bundle["html"]
+
+
+def test_build_compare_bundle_summarizes_orchestrator_context_runtime_anomalies(
+    tmp_path, monkeypatch
+):
+    guard_analysis = make_edgeenv_orchestrator_context_guard_analysis()
+
+    def fake_analyze_edgeenv_regression_report(report):
+        context = report["runtime_telemetry_context"]
+        assert context["history"]["summary"]["orchestrator_feed_runs"] == 1
+        assert context["candidate"]["orchestrator_context_present"] is True
+        assert context["candidate"]["orchestrator_operation_context"][
+            "not_a_regression_judgement"
+        ] is True
+        return guard_analysis
+
+    monkeypatch.setattr(
+        compare_service,
+        "analyze_edgeenv_regression_report",
+        fake_analyze_edgeenv_regression_report,
+    )
+    base_path = write_result(
+        tmp_path,
+        "base.json",
+        timestamp="2026-04-13T09:00:00Z",
+        precision="fp32",
+        mean_ms=10.0,
+        p99_ms=12.0,
+    )
+    new_path = write_result(
+        tmp_path,
+        "new.json",
+        timestamp="2026-04-13T10:00:00Z",
+        precision="fp32",
+        mean_ms=8.0,
+        p99_ms=10.0,
+    )
+
+    bundle = build_compare_bundle(
+        base_path=base_path,
+        new_path=new_path,
+        with_guard=True,
+        edgeenv_regression_path=write_edgeenv_regression_with_orchestrator_context(
+            tmp_path
+        ),
+    )
+
+    assert bundle["guard_analysis"] == guard_analysis
+    assert bundle["deployment_decision"]["decision"] == "review_required"
+    assert bundle["deployment_decision"]["guard_status"] == "warning"
+    assert "guard_warning_review" in bundle["deployment_decision"]["triggered_rules"]
+    assert "| Orchestrator operation feed context | 1 |" in bundle["markdown"]
+    assert "| Orchestrator context attached runs | candidate |" in bundle["markdown"]
+    assert "runtime_queue_overload, runtime_thermal_instability" in bundle["markdown"]
+    assert "| AIGuard Orchestrator context handoff | feeds=1.0, candidate |" in bundle[
+        "markdown"
+    ]
+    assert "AIGuard does not own the final decision" in bundle["markdown"]
+    assert "AIGuard Orchestrator context handoff" in bundle["html"]
+    assert "supplemental operation evidence" in bundle["html"]
 
 
 def test_build_compare_bundle_preserves_edgeenv_candidate_gap_guard_report(

@@ -227,6 +227,85 @@ def make_edgeenv_regression() -> dict:
     }
 
 
+def make_edgeenv_regression_with_orchestrator_context() -> dict:
+    regression = make_edgeenv_regression()
+    context = regression["runtime_telemetry_context"]
+    context["history"]["summary"]["orchestrator_feed_runs"] = 1
+    context["candidate"]["orchestrator_context_present"] = True
+    context["candidate"]["orchestrator_operation_context"] = {
+        "schema_version": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
+        "role": "orchestrator_operation_context_for_edgeenv",
+        "source": "orchestration_summary",
+        "run_id": "candidate",
+        "not_a_regression_judgement": True,
+        "not_a_comparability_gate": True,
+        "decision_owner": "lab",
+        "regression_owner": "edgeenv",
+        "candidate_context": {
+            "run_id": "candidate",
+            "queue_depth": 7,
+            "operation": {
+                "queue_depth": 7,
+                "deadline_missed_count": 2,
+                "fallback_count": 1,
+            },
+            "resource": {
+                "source": "tegrastats_timeline",
+                "gpu_temperature": 78.5,
+                "throttling_detected": True,
+            },
+        },
+    }
+    return regression
+
+
+def make_runtime_operation_guard_analysis() -> dict:
+    return {
+        "schema_version": "inferedge-aiguard-diagnosis-v1",
+        "guard_verdict": "suspicious",
+        "severity": "medium",
+        "confidence": 0.74,
+        "primary_reason": (
+            "Runtime operation context indicates thermal and queue review risk."
+        ),
+        "evidence": [
+            {
+                "type": "runtime_thermal_instability",
+                "metric_name": "candidate_max_temperature_c",
+                "observed_value": 78.5,
+                "baseline_value": None,
+                "threshold": 70.0,
+                "status": "warning",
+                "severity": "medium",
+                "why_it_matters": "Thermal pressure can explain runtime drift.",
+                "suspected_causes": ["thermal_pressure", "thermal_throttling"],
+                "recommendation": "Review cooling and sustained runtime context.",
+            },
+            {
+                "type": "runtime_queue_overload",
+                "metric_name": "candidate_queue_depth",
+                "observed_value": 7.0,
+                "baseline_value": None,
+                "threshold": 3.0,
+                "status": "warning",
+                "severity": "medium",
+                "why_it_matters": "Queue backlog can inflate runtime latency.",
+                "suspected_causes": ["queue_overload", "scheduler_contention"],
+                "recommendation": "Review Orchestrator queue policy.",
+            },
+        ],
+        "candidate_summary": {
+            "edgeenv_regression": {
+                "history_orchestrator_feed_runs": 1.0,
+                "candidate_orchestrator_context_present": True,
+                "candidate_queue_depth": 7.0,
+                "candidate_max_temperature_c": 78.5,
+                "candidate_throttling_detected": True,
+            }
+        },
+    }
+
+
 def test_generate_compare_markdown_includes_classification_primary_metric_and_summary():
     compare_result = make_compare_result()
     judgement = make_judgement()
@@ -401,6 +480,28 @@ def test_generate_compare_markdown_includes_edgeenv_regression_evidence():
     assert "candidate `candidate`" in text
     assert "Runtime telemetry evidence gaps: none" in text
     assert "not cloud monitoring, ranking, or production observability" in text
+
+
+def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
+    compare_result = make_compare_result()
+    judgement = make_judgement()
+
+    text = generate_compare_markdown(
+        compare_result,
+        judgement,
+        guard_analysis=make_runtime_operation_guard_analysis(),
+        edgeenv_regression=make_edgeenv_regression_with_orchestrator_context(),
+    )
+
+    assert "## Runtime Intelligence Risk Summary" in text
+    assert "| Orchestrator operation feed context | 1 |" in text
+    assert "| Orchestrator context attached runs | candidate |" in text
+    assert (
+        "| AIGuard runtime operation anomalies | runtime_queue_overload, "
+        "runtime_thermal_instability |"
+    ) in text
+    assert "| AIGuard Orchestrator context handoff | feeds=1.0, candidate |" in text
+    assert "AIGuard does not own the final decision" in text
 
 
 def test_generate_compare_markdown_includes_diagnosis_guard_evidence():
@@ -591,6 +692,25 @@ def test_generate_compare_html_includes_edgeenv_regression_evidence():
     assert "synthetic_local_fixture" in html
     assert "Runtime telemetry evidence gaps" in html
     assert "not cloud monitoring, ranking, or production observability" in html
+
+
+def test_generate_compare_html_summarizes_orchestrator_context_risk():
+    compare_result = make_compare_result()
+    judgement = make_judgement()
+
+    html = generate_compare_html(
+        compare_result,
+        judgement,
+        guard_analysis=make_runtime_operation_guard_analysis(),
+        edgeenv_regression=make_edgeenv_regression_with_orchestrator_context(),
+    )
+
+    assert "Runtime Intelligence Risk Summary" in html
+    assert "Orchestrator operation feed context" in html
+    assert "Orchestrator context attached runs" in html
+    assert "runtime_queue_overload, runtime_thermal_instability" in html
+    assert "AIGuard Orchestrator context handoff" in html
+    assert "supplemental operation evidence" in html
 
 
 def test_generate_compare_html_includes_diagnosis_guard_evidence():

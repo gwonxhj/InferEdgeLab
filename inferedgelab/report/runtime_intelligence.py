@@ -5,6 +5,12 @@ from typing import Any
 from inferedgelab.services.guard_analysis import guard_status, guard_verdict
 
 
+RUNTIME_OPERATION_ANOMALY_TYPES = {
+    "runtime_queue_overload",
+    "runtime_thermal_instability",
+}
+
+
 def build_runtime_intelligence_risk_rows(
     *,
     guard_analysis: dict[str, Any] | None,
@@ -75,6 +81,7 @@ def build_runtime_intelligence_risk_rows(
                     "Review count is derived from deterministic evidence statuses.",
                 )
             )
+        _append_aiguard_runtime_operation_rows(rows, guard_analysis, warning_items)
 
     return rows
 
@@ -110,3 +117,81 @@ def _append_telemetry_context_rows(
                 "Replay coverage is reviewed separately from comparability gating.",
             )
         )
+    if "orchestrator_feed_runs" in history_summary:
+        rows.append(
+            (
+                "Orchestrator operation feed context",
+                str(history_summary.get("orchestrator_feed_runs")),
+                "EdgeEnv preserved Orchestrator context as supplemental telemetry evidence, not a comparability gate.",
+            )
+        )
+
+    context_labels = _orchestrator_context_labels(telemetry_context)
+    if context_labels:
+        rows.append(
+            (
+                "Orchestrator context attached runs",
+                ", ".join(context_labels),
+                "Attached operation context can explain runtime anomaly evidence without becoming a deployment decision.",
+            )
+        )
+
+
+def _append_aiguard_runtime_operation_rows(
+    rows: list[tuple[str, str, str]],
+    guard_analysis: dict[str, Any],
+    warning_items: list[dict[str, Any]],
+) -> None:
+    anomaly_types = sorted(
+        {
+            str(item.get("type"))
+            for item in warning_items
+            if item.get("type") in RUNTIME_OPERATION_ANOMALY_TYPES
+        }
+    )
+    if anomaly_types:
+        rows.append(
+            (
+                "AIGuard runtime operation anomalies",
+                ", ".join(anomaly_types),
+                "Thermal/queue anomaly evidence is deterministic Lab review context; AIGuard does not own the final decision.",
+            )
+        )
+
+    candidate_summary = guard_analysis.get("candidate_summary")
+    if not isinstance(candidate_summary, dict):
+        return
+    edgeenv_metrics = candidate_summary.get("edgeenv_regression")
+    if not isinstance(edgeenv_metrics, dict):
+        return
+
+    context_parts: list[str] = []
+    feed_runs = edgeenv_metrics.get("history_orchestrator_feed_runs")
+    if feed_runs is not None:
+        context_parts.append(f"feeds={feed_runs}")
+    if edgeenv_metrics.get("baseline_orchestrator_context_present") is True:
+        context_parts.append("baseline")
+    if edgeenv_metrics.get("candidate_orchestrator_context_present") is True:
+        context_parts.append("candidate")
+    if context_parts:
+        rows.append(
+            (
+                "AIGuard Orchestrator context handoff",
+                ", ".join(context_parts),
+                "AIGuard interpreted EdgeEnv-preserved Orchestrator context as supplemental operation evidence.",
+            )
+        )
+
+
+def _orchestrator_context_labels(telemetry_context: dict[str, Any]) -> list[str]:
+    labels: list[str] = []
+    for label in ("baseline", "candidate"):
+        run_context = telemetry_context.get(label)
+        if not isinstance(run_context, dict):
+            continue
+        if run_context.get("orchestrator_context_present") is True or isinstance(
+            run_context.get("orchestrator_operation_context"),
+            dict,
+        ):
+            labels.append(label)
+    return labels
