@@ -391,6 +391,7 @@ Optional Guard reasoning is available with `compare --with-guard` and `compare-l
 InferEdgeAIGuard is an optional dependency; when it is installed, Lab appends Guard Analysis based on the compare result and judgement, and when it is not installed, compare still runs normally.
 Compare and compare-latest also include a Deployment Decision that combines Lab judgement with Guard status into a deployable, review, blocked, or unknown release signal.
 When an InferEdgeEnv runtime regression report is available, `compare --edgeenv-regression path/to/regression.json` appends optional Runtime Regression Evidence to the Lab report and requires review for same-condition regression evidence.
+If that EdgeEnv report includes `runtime_telemetry_context`, Lab also renders the supplemental telemetry coverage/evidence-gap context so reviewers can see whether baseline/candidate telemetry and telemetry-history entries were present.
 This preserves the boundary: EdgeEnv records registry/comparability/regression evidence, while Lab remains the deployment decision owner.
 The committed handoff smoke is documented in [docs/portfolio/edgeenv_runtime_regression_lab_handoff.md](docs/portfolio/edgeenv_runtime_regression_lab_handoff.md).
 
