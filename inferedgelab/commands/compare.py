@@ -178,6 +178,11 @@ def compare_cmd(
         "--edgeenv-regression",
         help="Optional EdgeEnv runtime regression report JSON path",
     ),
+    guard_analysis: str = typer.Option(
+        "",
+        "--guard-analysis",
+        help="Optional precomputed InferEdgeAIGuard guard_analysis JSON path",
+    ),
 ):
     """
     structured benchmark result 두 개를 비교해서 콘솔 표로 출력한다.
@@ -194,6 +199,11 @@ def compare_cmd(
         if isinstance(edgeenv_regression, str) and edgeenv_regression
         else None
     )
+    guard_analysis_path = (
+        guard_analysis
+        if isinstance(guard_analysis, str) and guard_analysis
+        else None
+    )
 
     bundle = build_compare_bundle(
         base_path=base_path,
@@ -207,6 +217,7 @@ def compare_cmd(
         tradeoff_severe_threshold=tradeoff_severe_threshold,
         with_guard=with_guard,
         edgeenv_regression_path=edgeenv_regression_path,
+        guard_analysis_path=guard_analysis_path,
     )
     base = bundle["base"]
     new = bundle["new"]
@@ -428,7 +439,7 @@ def compare_cmd(
         )
 
     rprint(run_table)
-    if with_guard:
+    if with_guard or guard_analysis_path:
         _render_guard_analysis(bundle.get("guard_analysis"))
     _render_edgeenv_regression(bundle.get("edgeenv_runtime_regression"))
     _render_deployment_decision(bundle.get("deployment_decision"))

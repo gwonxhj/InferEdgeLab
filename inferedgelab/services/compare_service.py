@@ -148,6 +148,7 @@ def build_compare_bundle(
     pyproject_path: str = "pyproject.toml",
     with_guard: bool = False,
     edgeenv_regression_path: str | None = None,
+    guard_analysis_path: str | None = None,
 ) -> dict[str, Any]:
     """
     Build a compare bundle for API use while preserving legacy top-level fields
@@ -190,16 +191,16 @@ def build_compare_bundle(
         if edgeenv_regression_path
         else None
     )
-    guard_analysis = (
-        _run_guard_reasoning(
+    guard_analysis = None
+    if guard_analysis_path:
+        guard_analysis = _load_guard_analysis(guard_analysis_path)
+    elif with_guard:
+        guard_analysis = _run_guard_reasoning(
             result,
             judgement,
             edgeenv_regression=edgeenv_regression,
             source=guard_source,
         )
-        if with_guard
-        else None
-    )
     deployment_decision = build_deployment_decision(
         judgement,
         guard_analysis=guard_analysis,
@@ -238,7 +239,7 @@ def build_compare_bundle(
             "html": html,
         },
     }
-    if with_guard:
+    if guard_analysis is not None:
         bundle["data"]["guard_analysis"] = guard_analysis
     if edgeenv_regression is not None:
         bundle["data"]["edgeenv_runtime_regression"] = edgeenv_regression
@@ -256,7 +257,7 @@ def build_compare_bundle(
         "legacy_warning": legacy_warning,
         "deployment_decision": deployment_decision,
     }
-    if with_guard:
+    if guard_analysis is not None:
         response["guard_analysis"] = guard_analysis
     if edgeenv_regression is not None:
         response["edgeenv_runtime_regression"] = edgeenv_regression
@@ -273,6 +274,19 @@ def _load_edgeenv_regression(path: str) -> dict[str, Any]:
         raise ValueError(f"Invalid EdgeEnv regression JSON: {path}") from exc
     if not isinstance(payload, dict):
         raise ValueError(f"EdgeEnv regression report must be a JSON object: {path}")
+    return payload
+
+
+def _load_guard_analysis(path: str) -> dict[str, Any]:
+    try:
+        with open(path, "r", encoding="utf-8") as file:
+            payload = json.load(file)
+    except OSError as exc:
+        raise ValueError(f"AIGuard analysis artifact not found: {path}") from exc
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Invalid AIGuard analysis JSON: {path}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError(f"AIGuard analysis artifact must be a JSON object: {path}")
     return payload
 
 

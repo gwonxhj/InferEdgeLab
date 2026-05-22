@@ -66,13 +66,15 @@ inferedge:deterministic-anomaly-summary:
   stage: anomaly-analysis
   script:
     - mkdir -p "$INFEREDGE_REPORT_DIR"
-    - poetry run inferedgelab compare examples/edgeenv_regression/lab_baseline_result.json examples/edgeenv_regression/lab_candidate_result.json --edgeenv-regression examples/edgeenv_regression/edgeenv_runtime_regression.json --markdown-out "$INFEREDGE_REPORT_DIR/runtime_anomaly_summary.md"
+    - poetry run inferedgelab compare examples/edgeenv_regression/lab_baseline_result.json examples/edgeenv_regression/lab_candidate_result.json --edgeenv-regression examples/runtime_intelligence_chain/edgeenv_regression_with_orchestrator_context.json --guard-analysis examples/runtime_intelligence_chain/aiguard_runtime_operation_guard_analysis.json --markdown-out "$INFEREDGE_REPORT_DIR/runtime_anomaly_summary.md"
     - grep -q "Runtime Intelligence Risk Summary" "$INFEREDGE_REPORT_DIR/runtime_anomaly_summary.md"
   artifacts:
     when: always
     expire_in: 14 days
     paths:
       - "$INFEREDGE_REPORT_DIR/runtime_anomaly_summary.md"
+      - examples/runtime_intelligence_chain/edgeenv_regression_with_orchestrator_context.json
+      - examples/runtime_intelligence_chain/aiguard_runtime_operation_guard_analysis.json
 
 inferedge:portfolio-report:
   extends: .inferedge_python
