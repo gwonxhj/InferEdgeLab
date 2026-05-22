@@ -16,6 +16,27 @@ EdgeEnv runtime regression report
 EdgeEnv remains the local-first evidence registry, comparability checker, and runtime regression evidence source. Lab remains the validation/report/deployment decision owner.
 AIGuard remains optional deterministic diagnosis evidence: it may explain runtime regression evidence, but it does not recompute EdgeEnv comparability and does not own the final deployment decision.
 
+## Runtime Intelligence Evidence Chain
+
+The current Runtime Intelligence handoff keeps the same ownership model while adding operation context from Orchestrator through EdgeEnv:
+
+```text
+Orchestrator edgeenv_runtime_telemetry_feed
+-> EdgeEnv runtime telemetry history / regression context
+-> AIGuard deterministic runtime anomaly evidence
+-> Lab Runtime Intelligence Risk Summary
+-> Lab-owned deployment risk report
+```
+
+Expected ownership:
+
+- Orchestrator provides supplemental queue, deadline, fallback, thermal, and resource context. It does not make a deployment decision.
+- EdgeEnv preserves that context as `orchestrator_operation_context` inside the runtime telemetry context and keeps comparability-first regression ownership.
+- AIGuard may translate the nested operation context into deterministic evidence such as `runtime_queue_overload` or `runtime_thermal_instability`.
+- Lab displays the combined evidence in the Runtime Intelligence Risk Summary and keeps the final deployment decision policy.
+
+This makes the portfolio chain stronger without turning Lab into a production observability dashboard or making Orchestrator/AIGuard final decision owners.
+
 ## Fixture
 
 Committed lightweight fixtures:
@@ -36,6 +57,7 @@ The EdgeEnv report fixture represents a same-condition runtime regression:
 - `fps_delta_pct: -22.0`
 - `memory_peak_delta_pct: +40.0`
 - `runtime_telemetry_context`: supplemental telemetry coverage and evidence-gap context from EdgeEnv history export
+- `runtime_telemetry_context.<run>.orchestrator_operation_context`: supplemental operation context when EdgeEnv history was exported with an Orchestrator feed
 
 ## Reproduction Command
 
@@ -56,6 +78,7 @@ Expected Lab behavior:
 - When `--with-guard` is enabled and the installed AIGuard exposes EdgeEnv regression reasoning, Lab routes the EdgeEnv report to AIGuard and preserves diagnosis evidence such as `runtime_latency_regression`, `runtime_telemetry_context_coverage`, and `runtime_telemetry_replay_context`.
 - Additional Lab test fixtures under `tests/fixtures/edgeenv_regression/` mirror EdgeEnv replay examples for candidate telemetry gaps and execution sequence inversion. These fixture smokes verify that replay warnings become Lab-owned report context without making Lab recompute EdgeEnv comparability.
 - Markdown/HTML reports include a `Runtime Intelligence Risk Summary` that summarizes EdgeEnv comparability/regression, telemetry replay gaps, AIGuard deterministic evidence, and the Lab-owned deployment decision in one reviewer-facing table.
+- When EdgeEnv includes preserved Orchestrator feed context, the `Runtime Intelligence Risk Summary` surfaces queue, thermal, throttling, memory, and fallback context as supplemental runtime evidence.
 - Guard evidence details preserve explanatory fields such as `why_it_matters`, evidence-local `suspected_causes`, and `recommendation`.
 - Deployment decision is `review_required`.
 - Triggered rules include `edgeenv_runtime_regression_review`.
