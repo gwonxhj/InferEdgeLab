@@ -201,9 +201,14 @@ def build_deployment_decision(
     ):
         decision = "review_required"
         reason = "EdgeEnv runtime regression evidence requires deployment review."
-        recommended_action = (
-            "Review EdgeEnv comparability judgement, latency/resource deltas, and Lab comparison evidence before deployment."
-        )
+        if normalized_guard_status == "warning":
+            recommended_action = (
+                "Review EdgeEnv comparability judgement, latency/resource deltas, AIGuard warning evidence, and Lab comparison evidence before deployment."
+            )
+        else:
+            recommended_action = (
+                "Review EdgeEnv comparability judgement, latency/resource deltas, and Lab comparison evidence before deployment."
+            )
         triggered_rules.append("edgeenv_runtime_regression_review")
 
     return _decision_payload(

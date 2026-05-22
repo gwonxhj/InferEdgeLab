@@ -359,6 +359,13 @@ def test_generate_compare_markdown_includes_deployment_decision_section():
         "guard_status": "ok",
         "recommended_action": "Deployment can proceed with normal rollout monitoring.",
         "triggered_rules": ["guard_ok_lab_favorable_deployable"],
+        "policy_summary": [
+            {
+                "rule": "guard_ok_lab_favorable_deployable",
+                "effect": "deployable",
+                "description": "Lab comparison is favorable and AIGuard passed.",
+            }
+        ],
     }
 
     text = generate_compare_markdown(compare_result, judgement, deployment_decision=deployment_decision)
@@ -368,6 +375,8 @@ def test_generate_compare_markdown_includes_deployment_decision_section():
     assert "- decision: deployable" in text
     assert "- guard_status: ok" in text
     assert "guard_ok_lab_favorable_deployable" in text
+    assert "### Decision Policy Summary" in text
+    assert "| guard_ok_lab_favorable_deployable | deployable | Lab comparison is favorable and AIGuard passed. |" in text
 
 
 def test_generate_compare_markdown_includes_edgeenv_regression_evidence():
@@ -540,6 +549,13 @@ def test_generate_compare_html_includes_deployment_decision_section():
         "guard_status": "ok",
         "recommended_action": "Deployment can proceed with normal rollout monitoring.",
         "triggered_rules": ["guard_ok_lab_favorable_deployable"],
+        "policy_summary": [
+            {
+                "rule": "guard_ok_lab_favorable_deployable",
+                "effect": "deployable",
+                "description": "Lab comparison is favorable and AIGuard passed.",
+            }
+        ],
     }
 
     html = generate_compare_html(compare_result, judgement, deployment_decision=deployment_decision)
@@ -549,6 +565,8 @@ def test_generate_compare_html_includes_deployment_decision_section():
     assert "deployable" in html
     assert "Deployment can proceed with normal rollout monitoring." in html
     assert "guard_ok_lab_favorable_deployable" in html
+    assert "Decision Policy Summary" in html
+    assert "Lab comparison is favorable and AIGuard passed." in html
 
 
 def test_generate_compare_html_includes_edgeenv_regression_evidence():
