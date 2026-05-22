@@ -3,6 +3,7 @@ from __future__ import annotations
 from html import escape
 from typing import Any, Dict, Optional
 
+from inferedgelab.report.runtime_intelligence import build_runtime_intelligence_risk_rows
 from inferedgelab.services.guard_analysis import guard_primary_reason, guard_status, guard_verdict
 
 
@@ -503,6 +504,49 @@ def _runtime_telemetry_context_to_html(context: Dict[str, Any]) -> str:
     """
 
 
+def _runtime_intelligence_risk_summary_to_html(
+    *,
+    guard_analysis: Dict[str, Any] | None,
+    deployment_decision: Dict[str, Any] | None,
+    edgeenv_regression: Dict[str, Any] | None,
+) -> str:
+    rows = build_runtime_intelligence_risk_rows(
+        guard_analysis=guard_analysis,
+        deployment_decision=deployment_decision,
+        edgeenv_regression=edgeenv_regression,
+    )
+    if not rows:
+        return ""
+
+    row_html = []
+    for signal, value, interpretation in rows:
+        row_html.append(
+            f"""
+            <tr>
+              <td>{escape(signal)}</td>
+              <td>{escape(value)}</td>
+              <td>{escape(interpretation)}</td>
+            </tr>
+            """
+        )
+
+    return f"""
+  <h2>Runtime Intelligence Risk Summary</h2>
+  <div class="meta">
+    <table>
+      <thead>
+        <tr>
+          <th>Signal</th>
+          <th>Value</th>
+          <th>Lab interpretation</th>
+        </tr>
+      </thead>
+      <tbody>{''.join(row_html)}</tbody>
+    </table>
+  </div>
+    """
+
+
 def generate_compare_html(
     compare_result: Dict[str, Any],
     judgement: Dict[str, Any],
@@ -612,6 +656,11 @@ def generate_compare_html(
     threshold_rows = _threshold_rows(thresholds)
     guard_analysis_html = _guard_analysis_to_html(guard_analysis)
     edgeenv_regression_html = _edgeenv_regression_to_html(edgeenv_regression)
+    runtime_intelligence_risk_summary_html = _runtime_intelligence_risk_summary_to_html(
+        guard_analysis=guard_analysis,
+        deployment_decision=deployment_decision,
+        edgeenv_regression=edgeenv_regression,
+    )
     deployment_decision_html = _deployment_decision_to_html(deployment_decision)
 
     warning_html = ""
@@ -919,6 +968,7 @@ def generate_compare_html(
   </table>
   {guard_analysis_html}
   {edgeenv_regression_html}
+  {runtime_intelligence_risk_summary_html}
   {deployment_decision_html}
 </body>
 </html>
