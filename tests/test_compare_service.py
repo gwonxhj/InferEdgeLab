@@ -119,6 +119,7 @@ def write_edgeenv_regression(tmp_path) -> str:
                         "result_telemetry_present": True,
                         "history_entry_present": True,
                         "execution_sequence_id": 1,
+                        "history_execution_sequence_id": 1,
                         "telemetry_source": "synthetic_local_fixture",
                     },
                     "candidate": {
@@ -126,6 +127,7 @@ def write_edgeenv_regression(tmp_path) -> str:
                         "result_telemetry_present": True,
                         "history_entry_present": True,
                         "execution_sequence_id": 2,
+                        "history_execution_sequence_id": 2,
                         "telemetry_source": "synthetic_local_fixture",
                     },
                     "history": {
