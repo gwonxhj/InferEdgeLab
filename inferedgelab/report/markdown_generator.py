@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
+from inferedgelab.report.runtime_intelligence import build_runtime_intelligence_risk_rows
 from inferedgelab.services.guard_analysis import guard_primary_reason, guard_status, guard_verdict
 
 
@@ -252,6 +253,30 @@ def _append_runtime_telemetry_context(lines: list[str], context: Dict[str, Any])
             lines.append(f"- {note}")
 
 
+def _append_runtime_intelligence_risk_summary(
+    lines: list[str],
+    *,
+    guard_analysis: Dict[str, Any] | None,
+    deployment_decision: Dict[str, Any] | None,
+    edgeenv_regression: Dict[str, Any] | None,
+) -> None:
+    rows = build_runtime_intelligence_risk_rows(
+        guard_analysis=guard_analysis,
+        deployment_decision=deployment_decision,
+        edgeenv_regression=edgeenv_regression,
+    )
+    if not rows:
+        return
+
+    lines.append("## Runtime Intelligence Risk Summary")
+    lines.append("")
+    lines.append("| Signal | Value | Lab interpretation |")
+    lines.append("|---|---|---|")
+    for signal, value, interpretation in rows:
+        lines.append(f"| {signal} | {value} | {interpretation} |")
+    lines.append("")
+
+
 def generate_compare_markdown(
     compare_result: Dict[str, Any],
     judgement: Dict[str, Any],
@@ -450,6 +475,13 @@ def generate_compare_markdown(
 
     if edgeenv_regression is not None:
         _append_edgeenv_regression(lines, edgeenv_regression)
+
+    _append_runtime_intelligence_risk_summary(
+        lines,
+        guard_analysis=guard_analysis,
+        deployment_decision=deployment_decision,
+        edgeenv_regression=edgeenv_regression,
+    )
 
     if deployment_decision is not None:
         _append_deployment_decision(lines, deployment_decision)

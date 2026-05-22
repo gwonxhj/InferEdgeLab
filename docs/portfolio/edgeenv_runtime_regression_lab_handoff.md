@@ -55,6 +55,7 @@ Expected Lab behavior:
 - Markdown/HTML reports include a `Runtime Telemetry Context` subsection with baseline/candidate telemetry coverage and history execution sequence context.
 - When `--with-guard` is enabled and the installed AIGuard exposes EdgeEnv regression reasoning, Lab routes the EdgeEnv report to AIGuard and preserves diagnosis evidence such as `runtime_latency_regression`, `runtime_telemetry_context_coverage`, and `runtime_telemetry_replay_context`.
 - Additional Lab test fixtures under `tests/fixtures/edgeenv_regression/` mirror EdgeEnv replay examples for candidate telemetry gaps and execution sequence inversion. These fixture smokes verify that replay warnings become Lab-owned report context without making Lab recompute EdgeEnv comparability.
+- Markdown/HTML reports include a `Runtime Intelligence Risk Summary` that summarizes EdgeEnv comparability/regression, telemetry replay gaps, AIGuard deterministic evidence, and the Lab-owned deployment decision in one reviewer-facing table.
 - Guard evidence details preserve explanatory fields such as `why_it_matters`, evidence-local `suspected_causes`, and `recommendation`.
 - Deployment decision is `review_required`.
 - Triggered rules include `edgeenv_runtime_regression_review`.
