@@ -106,6 +106,43 @@ def _render_edgeenv_regression(edgeenv_regression: dict | None) -> None:
         "memory_peak_delta_pct",
     ):
         rprint(f"- {field}: {_fmt_pct(evidence.get(field))}")
+    runtime_telemetry_context = edgeenv_regression.get("runtime_telemetry_context")
+    if isinstance(runtime_telemetry_context, dict):
+        _render_runtime_telemetry_context(runtime_telemetry_context)
+
+
+def _render_runtime_telemetry_context(context: dict) -> None:
+    rprint("[bold]Runtime Telemetry Context[/bold]")
+    rprint(f"- role: {context.get('role')}")
+    rprint(f"- source: {context.get('source')}")
+    history = context.get("history") or {}
+    if history:
+        rprint(f"- history_schema_version: {history.get('schema_version')}")
+        summary = history.get("summary") or {}
+        if summary:
+            rprint(
+                "- history_summary: "
+                f"registered={summary.get('registered_runs', '-')}, "
+                f"telemetry={summary.get('telemetry_runs', '-')}, "
+                f"missing={summary.get('missing_telemetry_runs', '-')}"
+            )
+    for label in ("baseline", "candidate"):
+        run_context = context.get(label) or {}
+        rprint(
+            f"- {label}: "
+            f"run_id={run_context.get('run_id', '-')}, "
+            f"present={run_context.get('result_telemetry_present')}, "
+            f"history={run_context.get('history_entry_present')}, "
+            f"sequence={run_context.get('execution_sequence_id', '-')}, "
+            f"source={run_context.get('telemetry_source', '-')}"
+        )
+    evidence_gaps = context.get("evidence_gaps") or []
+    if evidence_gaps:
+        rprint("- evidence_gaps:")
+        for gap in evidence_gaps:
+            rprint(f"  - {gap}")
+    else:
+        rprint("- evidence_gaps: none")
 
 
 def compare_cmd(

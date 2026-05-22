@@ -111,6 +111,36 @@ def write_edgeenv_regression(tmp_path) -> str:
                         }
                     ],
                 },
+                "runtime_telemetry_context": {
+                    "role": "supplemental_runtime_telemetry_context",
+                    "source": "result_artifacts+runtime_telemetry_history",
+                    "baseline": {
+                        "run_id": "baseline",
+                        "result_telemetry_present": True,
+                        "history_entry_present": True,
+                        "execution_sequence_id": 1,
+                        "telemetry_source": "synthetic_local_fixture",
+                    },
+                    "candidate": {
+                        "run_id": "candidate",
+                        "result_telemetry_present": True,
+                        "history_entry_present": True,
+                        "execution_sequence_id": 2,
+                        "telemetry_source": "synthetic_local_fixture",
+                    },
+                    "history": {
+                        "schema_version": "edgeenv.runtime-telemetry-history.v1",
+                        "summary": {
+                            "registered_runs": 2,
+                            "telemetry_runs": 2,
+                            "missing_telemetry_runs": 0,
+                        },
+                    },
+                    "evidence_gaps": [],
+                    "notes": [
+                        "Runtime telemetry context is supplemental evidence, not a comparability gate.",
+                    ],
+                },
             }
         ),
         encoding="utf-8",
@@ -213,11 +243,19 @@ def test_build_compare_bundle_accepts_edgeenv_regression_evidence(tmp_path):
     )
 
     assert bundle["edgeenv_runtime_regression"]["mode"] == "same-condition"
+    assert (
+        bundle["edgeenv_runtime_regression"]["runtime_telemetry_context"]["candidate"][
+            "execution_sequence_id"
+        ]
+        == 2
+    )
     assert bundle["data"]["edgeenv_runtime_regression"] == bundle["edgeenv_runtime_regression"]
     assert bundle["deployment_decision"]["decision"] == "review_required"
     assert "edgeenv_runtime_regression_review" in bundle["deployment_decision"]["triggered_rules"]
     assert "## Runtime Regression Evidence" in bundle["markdown"]
+    assert "### Runtime Telemetry Context" in bundle["markdown"]
     assert "p99_latency_high" in bundle["html"]
+    assert "Runtime Telemetry Context" in bundle["html"]
 
 
 def test_build_compare_bundle_with_guard_false_preserves_existing_keys(tmp_path):

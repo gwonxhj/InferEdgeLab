@@ -128,6 +128,7 @@ def _append_deployment_decision(lines: list[str], deployment_decision: Dict[str,
 def _append_edgeenv_regression(lines: list[str], edgeenv_regression: Dict[str, Any]) -> None:
     evidence = edgeenv_regression.get("evidence") or {}
     comparability = edgeenv_regression.get("comparability") or {}
+    runtime_telemetry_context = edgeenv_regression.get("runtime_telemetry_context")
     triggered = evidence.get("triggered_thresholds") or []
     lines.append("## Runtime Regression Evidence")
     lines.append("")
@@ -172,9 +173,57 @@ def _append_edgeenv_regression(lines: list[str], edgeenv_regression: Dict[str, A
                 f"{_fmt_num(item.get('threshold'))} | "
                 f"{item.get('severity', '-')} |"
             )
+    if isinstance(runtime_telemetry_context, dict):
+        _append_runtime_telemetry_context(lines, runtime_telemetry_context)
     lines.append("")
     lines.append("> EdgeEnv regression evidence is local-first report context, not cloud monitoring, ranking, or production observability.")
     lines.append("")
+
+
+def _append_runtime_telemetry_context(lines: list[str], context: Dict[str, Any]) -> None:
+    history = context.get("history") or {}
+    evidence_gaps = context.get("evidence_gaps") or []
+    lines.append("")
+    lines.append("### Runtime Telemetry Context")
+    lines.append("")
+    lines.append(f"- role: {context.get('role')}")
+    lines.append(f"- source: {context.get('source')}")
+    if history:
+        lines.append(f"- history_schema_version: {history.get('schema_version')}")
+        summary = history.get("summary") or {}
+        if summary:
+            lines.append("- history_summary:")
+            for key in ("registered_runs", "telemetry_runs", "missing_telemetry_runs"):
+                if key in summary:
+                    lines.append(f"  - {key}: {summary.get(key)}")
+    lines.append("")
+    lines.append("| Run | telemetry_present | history_entry | execution_sequence_id | telemetry_source |")
+    lines.append("|---|---|---|---:|---|")
+    for label in ("baseline", "candidate"):
+        run_context = context.get(label) or {}
+        lines.append(
+            "| "
+            f"{label} `{run_context.get('run_id', '-')}` | "
+            f"{run_context.get('result_telemetry_present')} | "
+            f"{run_context.get('history_entry_present')} | "
+            f"{_fmt_num(run_context.get('execution_sequence_id'))} | "
+            f"{run_context.get('telemetry_source', '-')} |"
+        )
+    lines.append("")
+    if evidence_gaps:
+        lines.append("Runtime telemetry evidence gaps:")
+        for gap in evidence_gaps:
+            if not isinstance(gap, dict):
+                continue
+            lines.append(f"- {gap.get('run_id', '-')}: {gap.get('reason', '-')}")
+    else:
+        lines.append("Runtime telemetry evidence gaps: none")
+    notes = context.get("notes") or []
+    if notes:
+        lines.append("")
+        lines.append("Telemetry context notes:")
+        for note in notes:
+            lines.append(f"- {note}")
 
 
 def generate_compare_markdown(

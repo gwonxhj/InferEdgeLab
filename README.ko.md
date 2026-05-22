@@ -120,7 +120,7 @@ bash scripts/demo_pipeline_full.sh --run-jetson-command-print
 - **InferEdgeAIGuard:** provenance mismatch나 suspicious result를 rule/evidence 기반으로 진단하는 optional evidence layer입니다.
 - **InferEdgeEnv:** `v0.1.5` v1-complete experiment hygiene / comparability layer로, Edge AI inference benchmark result를 local artifact와 SQLite registry로 고정하고 비교 가능성을 판정합니다.
 
-포트폴리오 경계: InferEdgeLab은 validation / decision layer이고, InferEdgeEnv는 `v0.1.5` v1-complete experiment hygiene / comparability layer입니다. InferEdge는 모델이 배포 가능한지 검증하고, InferEdgeEnv는 benchmark evidence가 신뢰 가능하고 비교 가능한 형태로 기록됐는지 관리합니다.
+포트폴리오 경계: InferEdgeLab은 validation / decision layer이고, InferEdgeEnv는 `v0.1.5` v1-complete experiment hygiene / comparability layer입니다. InferEdge는 모델이 배포 가능한지 검증하고, InferEdgeEnv는 benchmark evidence가 신뢰 가능하고 비교 가능한 형태로 기록됐는지 관리합니다. EdgeEnv runtime regression report에 `runtime_telemetry_context`가 포함되면 Lab은 이를 supplemental telemetry coverage / evidence-gap context로 표시하되, final deployment decision ownership은 Lab에 남깁니다.
 
 ## 현재 범위와 future work
 

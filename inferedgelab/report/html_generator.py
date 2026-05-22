@@ -302,6 +302,7 @@ def _edgeenv_regression_to_html(edgeenv_regression: Dict[str, Any] | None) -> st
         return ""
     evidence = edgeenv_regression.get("evidence") or {}
     comparability = edgeenv_regression.get("comparability") or {}
+    runtime_telemetry_context = edgeenv_regression.get("runtime_telemetry_context")
     triggered = evidence.get("triggered_thresholds") or []
     evidence_rows = []
     for field in (
@@ -353,6 +354,11 @@ def _edgeenv_regression_to_html(edgeenv_regression: Dict[str, Any] | None) -> st
         """
     reasons = comparability.get("reasons") or []
     reasons_html = _guard_values_to_html(reasons)
+    runtime_telemetry_html = (
+        _runtime_telemetry_context_to_html(runtime_telemetry_context)
+        if isinstance(runtime_telemetry_context, dict)
+        else ""
+    )
     return f"""
   <h2>Runtime Regression Evidence</h2>
   <div class="meta">
@@ -376,8 +382,80 @@ def _edgeenv_regression_to_html(edgeenv_regression: Dict[str, Any] | None) -> st
       <tbody>{''.join(evidence_rows)}</tbody>
     </table>
     {threshold_html}
+    {runtime_telemetry_html}
     <p><em>EdgeEnv regression evidence is local-first report context, not cloud monitoring, ranking, or production observability.</em></p>
   </div>
+    """
+
+
+def _runtime_telemetry_context_to_html(context: Dict[str, Any]) -> str:
+    history = context.get("history") or {}
+    history_summary = history.get("summary") or {}
+    history_items = []
+    for key in ("registered_runs", "telemetry_runs", "missing_telemetry_runs"):
+        if key in history_summary:
+            history_items.append(
+                f"<li><strong>{escape(key)}</strong>: <code>{escape(str(history_summary.get(key)))}</code></li>"
+            )
+    history_html = ""
+    if history:
+        history_html = f"""
+        <p><strong>history_schema_version</strong>: <code>{escape(str(history.get("schema_version")))}</code></p>
+        <ul>{''.join(history_items)}</ul>
+        """
+
+    rows = []
+    for label in ("baseline", "candidate"):
+        run_context = context.get(label) or {}
+        rows.append(
+            f"""
+            <tr>
+              <td>{escape(label)} <code>{escape(str(run_context.get("run_id", "-")))}</code></td>
+              <td>{escape(str(run_context.get("result_telemetry_present")))}</td>
+              <td>{escape(str(run_context.get("history_entry_present")))}</td>
+              <td>{escape(_fmt_num(run_context.get("execution_sequence_id")))}</td>
+              <td>{escape(str(run_context.get("telemetry_source", "-")))}</td>
+            </tr>
+            """
+        )
+
+    evidence_gaps = context.get("evidence_gaps") or []
+    if evidence_gaps:
+        gap_items = []
+        for gap in evidence_gaps:
+            if not isinstance(gap, dict):
+                continue
+            gap_items.append(
+                f"<li><code>{escape(str(gap.get('run_id', '-')))}</code>: {escape(str(gap.get('reason', '-')))}</li>"
+            )
+        gaps_html = f"<ul>{''.join(gap_items)}</ul>"
+    else:
+        gaps_html = "<p>none</p>"
+
+    notes = context.get("notes") or []
+    notes_html = _guard_values_to_html(notes)
+
+    return f"""
+    <h3>Runtime Telemetry Context</h3>
+    <p><strong>role</strong>: <code>{escape(str(context.get("role")))}</code></p>
+    <p><strong>source</strong>: <code>{escape(str(context.get("source")))}</code></p>
+    {history_html}
+    <table>
+      <thead>
+        <tr>
+          <th>Run</th>
+          <th>telemetry_present</th>
+          <th>history_entry</th>
+          <th>execution_sequence_id</th>
+          <th>telemetry_source</th>
+        </tr>
+      </thead>
+      <tbody>{''.join(rows)}</tbody>
+    </table>
+    <p><strong>Runtime telemetry evidence gaps</strong></p>
+    {gaps_html}
+    <p><strong>Telemetry context notes</strong></p>
+    <ul>{notes_html}</ul>
     """
 
 

@@ -67,6 +67,58 @@
       }
     ]
   },
+  "runtime_telemetry_context": {
+    "role": "supplemental_runtime_telemetry_context",
+    "source": "result_artifacts+runtime_telemetry_history",
+    "baseline": {
+      "available_sections": [
+        "latency",
+        "resource",
+        "runtime"
+      ],
+      "execution_sequence_id": 1,
+      "history_entry_present": true,
+      "history_execution_sequence_id": 1,
+      "history_missing_recorded": false,
+      "history_telemetry_timestamp": "2026-05-21T00:00:01Z",
+      "result_telemetry_present": true,
+      "run_id": "edgeenv-smoke-baseline",
+      "schema_version": "inferedge-runtime-telemetry.v1",
+      "telemetry_source": "synthetic_local_fixture",
+      "telemetry_timestamp": "2026-05-21T00:00:01Z"
+    },
+    "candidate": {
+      "available_sections": [
+        "latency",
+        "resource",
+        "runtime"
+      ],
+      "execution_sequence_id": 2,
+      "history_entry_present": true,
+      "history_execution_sequence_id": 2,
+      "history_missing_recorded": false,
+      "history_telemetry_timestamp": "2026-05-21T00:05:01Z",
+      "result_telemetry_present": true,
+      "run_id": "edgeenv-smoke-candidate",
+      "schema_version": "inferedge-runtime-telemetry.v1",
+      "telemetry_source": "synthetic_local_fixture",
+      "telemetry_timestamp": "2026-05-21T00:05:01Z"
+    },
+    "evidence_gaps": [],
+    "history": {
+      "schema_version": "edgeenv.runtime-telemetry-history.v1",
+      "summary": {
+        "missing_telemetry_runs": 0,
+        "registered_runs": 2,
+        "telemetry_runs": 2
+      }
+    },
+    "notes": [
+      "Runtime telemetry context is supplemental evidence, not a comparability gate.",
+      "Missing telemetry is an evidence gap, not a failed benchmark run.",
+      "Regression deltas are still gated by same-condition comparability."
+    ]
+  },
   "mode": "same-condition",
   "recommendation": "review_required",
   "regression_detected": true,

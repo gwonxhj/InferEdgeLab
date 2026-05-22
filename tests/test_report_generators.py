@@ -192,6 +192,36 @@ def make_edgeenv_regression() -> dict:
                 }
             ],
         },
+        "runtime_telemetry_context": {
+            "role": "supplemental_runtime_telemetry_context",
+            "source": "result_artifacts+runtime_telemetry_history",
+            "baseline": {
+                "run_id": "baseline",
+                "result_telemetry_present": True,
+                "history_entry_present": True,
+                "execution_sequence_id": 1,
+                "telemetry_source": "synthetic_local_fixture",
+            },
+            "candidate": {
+                "run_id": "candidate",
+                "result_telemetry_present": True,
+                "history_entry_present": True,
+                "execution_sequence_id": 2,
+                "telemetry_source": "synthetic_local_fixture",
+            },
+            "history": {
+                "schema_version": "edgeenv.runtime-telemetry-history.v1",
+                "summary": {
+                    "registered_runs": 2,
+                    "telemetry_runs": 2,
+                    "missing_telemetry_runs": 0,
+                },
+            },
+            "evidence_gaps": [],
+            "notes": [
+                "Runtime telemetry context is supplemental evidence, not a comparability gate.",
+            ],
+        },
     }
 
 
@@ -353,6 +383,10 @@ def test_generate_compare_markdown_includes_edgeenv_regression_evidence():
     assert "- mode: same-condition" in text
     assert "| mean_delta_pct | +18.40% |" in text
     assert "p99_latency_high" in text
+    assert "### Runtime Telemetry Context" in text
+    assert "edgeenv.runtime-telemetry-history.v1" in text
+    assert "candidate `candidate`" in text
+    assert "Runtime telemetry evidence gaps: none" in text
     assert "not cloud monitoring, ranking, or production observability" in text
 
 
@@ -519,6 +553,10 @@ def test_generate_compare_html_includes_edgeenv_regression_evidence():
     assert "mean_delta_pct" in html
     assert "+18.40%" in html
     assert "p99_latency_high" in html
+    assert "Runtime Telemetry Context" in html
+    assert "edgeenv.runtime-telemetry-history.v1" in html
+    assert "synthetic_local_fixture" in html
+    assert "Runtime telemetry evidence gaps" in html
     assert "not cloud monitoring, ranking, or production observability" in html
 
 

@@ -83,6 +83,33 @@ def test_compare_cmd_outputs_edgeenv_regression_evidence(tmp_path, capsys):
                 "mode": "same-condition",
                 "recommendation": "review_required",
                 "evidence": {"mean_delta_pct": 18.4, "p99_delta_pct": 32.1},
+                "runtime_telemetry_context": {
+                    "role": "supplemental_runtime_telemetry_context",
+                    "source": "result_artifacts+runtime_telemetry_history",
+                    "baseline": {
+                        "run_id": "baseline",
+                        "result_telemetry_present": True,
+                        "history_entry_present": True,
+                        "execution_sequence_id": 1,
+                        "telemetry_source": "synthetic_local_fixture",
+                    },
+                    "candidate": {
+                        "run_id": "candidate",
+                        "result_telemetry_present": True,
+                        "history_entry_present": True,
+                        "execution_sequence_id": 2,
+                        "telemetry_source": "synthetic_local_fixture",
+                    },
+                    "history": {
+                        "schema_version": "edgeenv.runtime-telemetry-history.v1",
+                        "summary": {
+                            "registered_runs": 2,
+                            "telemetry_runs": 2,
+                            "missing_telemetry_runs": 0,
+                        },
+                    },
+                    "evidence_gaps": [],
+                },
             }
         ),
         encoding="utf-8",
@@ -100,4 +127,7 @@ def test_compare_cmd_outputs_edgeenv_regression_evidence(tmp_path, capsys):
 
     assert "Runtime Regression Evidence" in out
     assert "regression_detected: True" in out
+    assert "Runtime Telemetry Context" in out
+    assert "candidate: run_id=candidate" in out
+    assert "evidence_gaps: none" in out
     assert "decision: review_required" in out
