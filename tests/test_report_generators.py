@@ -413,6 +413,11 @@ def test_generate_compare_markdown_includes_diagnosis_guard_evidence():
                 "severity": "medium",
                 "status": "warning",
                 "explanation": "Detection count variance exceeds review threshold.",
+                "why_it_matters": (
+                    "Temporal evidence explains whether the runtime output is stable "
+                    "enough to review."
+                ),
+                "suspected_causes": ["frame_jitter", "scheduler_contention"],
                 "recommendation": "Review frame sequence output before deployment.",
             }
         ],
@@ -429,6 +434,11 @@ def test_generate_compare_markdown_includes_diagnosis_guard_evidence():
     assert "### Guard Evidence" in text
     assert "frame_to_frame_detection_count_cv" in text
     assert "Detection count variance exceeds review threshold." in text
+    assert (
+        "why_it_matters: Temporal evidence explains whether the runtime output is "
+        "stable enough to review."
+    ) in text
+    assert "suspected_causes: frame_jitter, scheduler_contention" in text
 
 
 def test_generate_compare_html_includes_primary_metric_summary_and_thresholds():
@@ -583,6 +593,10 @@ def test_generate_compare_html_includes_diagnosis_guard_evidence():
                 "severity": "high",
                 "status": "failed",
                 "explanation": "Zero-detection frame ratio exceeds blocked threshold.",
+                "why_it_matters": (
+                    "Detection disappearance can make an otherwise fast deployment unsafe."
+                ),
+                "suspected_causes": ["preprocess_mismatch", "runtime_output_instability"],
                 "recommendation": "Do not deploy until disappearance is explained.",
             }
         ],
@@ -598,3 +612,6 @@ def test_generate_compare_html_includes_diagnosis_guard_evidence():
     assert "Guard Evidence" in html
     assert "zero_detection_frame_ratio" in html
     assert "Zero-detection frame ratio exceeds blocked threshold." in html
+    assert "why_it_matters" in html
+    assert "Detection disappearance can make an otherwise fast deployment unsafe." in html
+    assert "preprocess_mismatch, runtime_output_instability" in html

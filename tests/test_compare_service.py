@@ -148,6 +148,82 @@ def write_edgeenv_regression(tmp_path) -> str:
     return str(path)
 
 
+def make_edgeenv_runtime_regression_guard_analysis() -> dict:
+    return {
+        "schema_version": "inferedge-aiguard-diagnosis-v1",
+        "source": {
+            "edgeenv_runtime_regression_report": True,
+            "edgeenv_mode": "same-condition",
+            "edgeenv_comparable": True,
+        },
+        "guard_verdict": "blocked",
+        "severity": "high",
+        "confidence": 0.88,
+        "primary_reason": (
+            "EdgeEnv same-condition runtime regression evidence requires "
+            "deterministic AIGuard review."
+        ),
+        "evidence": [
+            {
+                "type": "runtime_latency_regression",
+                "metric_name": "p99_delta_pct",
+                "observed_value": 32.0,
+                "baseline_value": 0,
+                "threshold": 25.0,
+                "delta": None,
+                "delta_pct": 32.0,
+                "increase_factor": None,
+                "severity": "high",
+                "status": "failed",
+                "explanation": (
+                    "p99_delta_pct observed value is 32.0. Baseline value is 0. "
+                    "Threshold is 25.0. This runtime_latency_regression evidence "
+                    "should be reviewed before deployment."
+                ),
+                "why_it_matters": (
+                    "Same-condition tail latency regression is deployment risk evidence."
+                ),
+                "suspected_causes": ["runtime_latency_drift", "tail_latency_spike"],
+                "recommendation": (
+                    "Review EdgeEnv comparability judgement and telemetry before deployment."
+                ),
+                "raw_context": {"edgeenv_regression": {"mode": "same-condition"}},
+            },
+            {
+                "type": "runtime_telemetry_context_coverage",
+                "metric_name": "runtime_telemetry_evidence_gap_count",
+                "observed_value": 0,
+                "baseline_value": 0,
+                "threshold": 1,
+                "delta": None,
+                "delta_pct": None,
+                "increase_factor": None,
+                "severity": "low",
+                "status": "passed",
+                "explanation": "Runtime telemetry context is present for both compared runs.",
+                "why_it_matters": (
+                    "Runtime telemetry context makes regression evidence more explainable."
+                ),
+                "suspected_causes": [],
+                "recommendation": (
+                    "Telemetry coverage is present for the EdgeEnv regression report."
+                ),
+                "raw_context": {},
+            },
+        ],
+        "suspected_causes": ["runtime_latency_drift", "tail_latency_spike"],
+        "recommendations": [
+            "Review EdgeEnv comparability judgement and telemetry before deployment."
+        ],
+        "thresholds": {"edgeenv_p99_delta_pct_review": 25.0},
+        "baseline_summary": {},
+        "candidate_summary": {
+            "edgeenv_regression": {"candidate_run_id": "edgeenv-smoke-candidate"}
+        },
+        "created_at": "2026-05-22T00:00:00Z",
+    }
+
+
 def test_build_compare_bundle_returns_compare_artifacts_for_same_precision_pair(tmp_path):
     base_path = write_result(
         tmp_path,
@@ -256,6 +332,77 @@ def test_build_compare_bundle_accepts_edgeenv_regression_evidence(tmp_path):
     assert "### Runtime Telemetry Context" in bundle["markdown"]
     assert "p99_latency_high" in bundle["html"]
     assert "Runtime Telemetry Context" in bundle["html"]
+
+
+def test_build_compare_bundle_routes_edgeenv_regression_to_aiguard_when_available(
+    tmp_path, monkeypatch
+):
+    guard_analysis = make_edgeenv_runtime_regression_guard_analysis()
+
+    def fake_analyze_edgeenv_regression_report(report):
+        assert report["mode"] == "same-condition"
+        assert (
+            report["runtime_telemetry_context"]["candidate"]["execution_sequence_id"]
+            == 2
+        )
+        return guard_analysis
+
+    def fail_compare_reasoning(_guard_input):
+        raise AssertionError(
+            "EdgeEnv regression diagnosis should use the EdgeEnv AIGuard analyzer"
+        )
+
+    monkeypatch.setattr(
+        compare_service,
+        "analyze_edgeenv_regression_report",
+        fake_analyze_edgeenv_regression_report,
+    )
+    monkeypatch.setattr(compare_service, "analyze_compare_result", fail_compare_reasoning)
+    base_path = write_result(
+        tmp_path,
+        "base.json",
+        timestamp="2026-04-13T09:00:00Z",
+        precision="fp32",
+        mean_ms=10.0,
+        p99_ms=12.0,
+    )
+    new_path = write_result(
+        tmp_path,
+        "new.json",
+        timestamp="2026-04-13T10:00:00Z",
+        precision="fp32",
+        mean_ms=8.0,
+        p99_ms=10.0,
+        accuracy={
+            "task": "classification",
+            "sample_count": 100,
+            "metrics": {"top1_accuracy": 0.92},
+        },
+    )
+
+    bundle = build_compare_bundle(
+        base_path=base_path,
+        new_path=new_path,
+        with_guard=True,
+        edgeenv_regression_path=write_edgeenv_regression(tmp_path),
+    )
+
+    assert bundle["guard_analysis"] == guard_analysis
+    assert bundle["data"]["guard_analysis"] == guard_analysis
+    assert bundle["edgeenv_runtime_regression"]["mode"] == "same-condition"
+    assert bundle["deployment_decision"]["decision"] == "blocked"
+    assert bundle["deployment_decision"]["guard_status"] == "error"
+    assert bundle["deployment_decision"]["guard_verdict"] == "blocked"
+    assert bundle["data"]["deployment_decision"] == bundle["deployment_decision"]
+    assert "runtime_latency_regression" in bundle["markdown"]
+    assert (
+        "Same-condition tail latency regression is deployment risk evidence."
+        in bundle["markdown"]
+    )
+    assert "tail_latency_spike" in bundle["markdown"]
+    assert "Runtime Regression Evidence" in bundle["markdown"]
+    assert "Runtime Telemetry Context" in bundle["markdown"]
+    assert "runtime_telemetry_context_coverage" in bundle["html"]
 
 
 def test_build_compare_bundle_with_guard_false_preserves_existing_keys(tmp_path):
