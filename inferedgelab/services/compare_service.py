@@ -23,6 +23,11 @@ try:
 except ImportError:
     analyze_compare_result = None
 
+try:
+    from inferedge_aiguard.reasoning import analyze_edgeenv_regression_report
+except ImportError:
+    analyze_edgeenv_regression_report = None
+
 
 def _build_guard_compare_input(
     result: dict[str, Any],
@@ -76,6 +81,18 @@ def _run_guard_compare_reasoning(
 
     guard_input = _build_guard_compare_input(result, judgement, source=source)
     return analyze_compare_result(guard_input)
+
+
+def _run_guard_reasoning(
+    result: dict[str, Any],
+    judgement: dict[str, Any],
+    *,
+    edgeenv_regression: dict[str, Any] | None = None,
+    source: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    if edgeenv_regression is not None and analyze_edgeenv_regression_report is not None:
+        return analyze_edgeenv_regression_report(edgeenv_regression)
+    return _run_guard_compare_reasoning(result, judgement, source=source)
 
 
 def _build_guard_source(
@@ -168,14 +185,19 @@ def build_compare_bundle(
         base=base,
         new=new,
     )
-    guard_analysis = (
-        _run_guard_compare_reasoning(result, judgement, source=guard_source)
-        if with_guard
-        else None
-    )
     edgeenv_regression = (
         _load_edgeenv_regression(edgeenv_regression_path)
         if edgeenv_regression_path
+        else None
+    )
+    guard_analysis = (
+        _run_guard_reasoning(
+            result,
+            judgement,
+            edgeenv_regression=edgeenv_regression,
+            source=guard_source,
+        )
+        if with_guard
         else None
     )
     deployment_decision = build_deployment_decision(

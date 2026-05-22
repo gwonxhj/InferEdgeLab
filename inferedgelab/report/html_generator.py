@@ -183,12 +183,25 @@ def _guard_evidence_to_html(evidence: Any) -> str:
             """
         )
         explanation = item.get("explanation")
+        why_it_matters = item.get("why_it_matters")
+        suspected_causes = item.get("suspected_causes") or []
         recommendation = item.get("recommendation")
         if explanation:
+            supplemental = ""
+            if why_it_matters:
+                supplemental += (
+                    f"<br><em>why_it_matters</em>: {escape(str(why_it_matters))}"
+                )
+            if suspected_causes:
+                supplemental += (
+                    "<br><em>suspected_causes</em>: "
+                    + escape(", ".join(str(cause) for cause in suspected_causes))
+                )
             details.append(
                 "<li>"
                 f"<strong>{escape(str(item.get('metric_name', 'evidence')))}</strong>: "
                 f"{escape(str(explanation))}"
+                + supplemental
                 + (
                     f"<br><em>recommendation</em>: {escape(str(recommendation))}"
                     if recommendation

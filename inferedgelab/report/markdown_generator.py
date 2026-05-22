@@ -100,9 +100,16 @@ def _append_guard_analysis(lines: list[str], guard_analysis: Dict[str, Any]) -> 
             if not isinstance(item, dict):
                 continue
             explanation = item.get("explanation")
+            why_it_matters = item.get("why_it_matters")
+            suspected_causes = item.get("suspected_causes") or []
             recommendation = item.get("recommendation")
             if explanation:
                 lines.append(f"- {item.get('metric_name', 'evidence')}: {explanation}")
+            if why_it_matters:
+                lines.append(f"  - why_it_matters: {why_it_matters}")
+            if suspected_causes:
+                formatted_causes = ", ".join(str(cause) for cause in suspected_causes)
+                lines.append(f"  - suspected_causes: {formatted_causes}")
             if recommendation:
                 lines.append(f"  - recommendation: {recommendation}")
     lines.append("")

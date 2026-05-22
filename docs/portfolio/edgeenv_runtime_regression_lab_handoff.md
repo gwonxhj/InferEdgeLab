@@ -9,10 +9,12 @@ EdgeEnv runtime regression report
 -> Lab compare --edgeenv-regression
 -> Runtime Regression Evidence section
 -> Runtime Telemetry Context subsection when EdgeEnv provides telemetry history context
+-> optional AIGuard deterministic runtime regression diagnosis when --with-guard is enabled
 -> Lab-owned deployment decision
 ```
 
 EdgeEnv remains the local-first evidence registry, comparability checker, and runtime regression evidence source. Lab remains the validation/report/deployment decision owner.
+AIGuard remains optional deterministic diagnosis evidence: it may explain runtime regression evidence, but it does not recompute EdgeEnv comparability and does not own the final deployment decision.
 
 ## Fixture
 
@@ -51,6 +53,8 @@ Expected Lab behavior:
 - CLI prints `Runtime Telemetry Context` when the EdgeEnv regression report includes it.
 - Markdown/HTML reports include a `Runtime Regression Evidence` section.
 - Markdown/HTML reports include a `Runtime Telemetry Context` subsection with baseline/candidate telemetry coverage.
+- When `--with-guard` is enabled and the installed AIGuard exposes EdgeEnv regression reasoning, Lab routes the EdgeEnv report to AIGuard and preserves diagnosis evidence such as `runtime_latency_regression` and `runtime_telemetry_context_coverage`.
+- Guard evidence details preserve explanatory fields such as `why_it_matters`, evidence-local `suspected_causes`, and `recommendation`.
 - Deployment decision is `review_required`.
 - Triggered rules include `edgeenv_runtime_regression_review`.
 
@@ -58,4 +62,4 @@ Expected Lab behavior:
 
 This is not cloud monitoring, distributed tracing, production observability, a public leaderboard, or Kubernetes-style orchestration.
 
-The purpose is narrower: Lab can consume EdgeEnv's comparability-first runtime regression evidence and supplemental runtime telemetry context as optional deployment review context without changing Runtime result or compare contracts.
+The purpose is narrower: Lab can consume EdgeEnv's comparability-first runtime regression evidence, supplemental runtime telemetry context, and optional AIGuard deterministic diagnosis evidence as deployment review context without changing Runtime result or compare contracts.
