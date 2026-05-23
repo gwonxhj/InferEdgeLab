@@ -114,6 +114,16 @@ def test_compare_cmd_outputs_edgeenv_regression_evidence(tmp_path, capsys):
                             "telemetry_runs": 2,
                             "missing_telemetry_runs": 0,
                         },
+                        "telemetry_coverage": {
+                            "runs_with_coverage": 2,
+                            "missing_field_run_count": 1,
+                            "missing_field_runs": [
+                                {
+                                    "run_id": "candidate",
+                                    "missing_fields": ["queue_depth"],
+                                }
+                            ],
+                        },
                     },
                     "evidence_gaps": [],
                 },
@@ -139,6 +149,8 @@ def test_compare_cmd_outputs_edgeenv_regression_evidence(tmp_path, capsys):
     assert "candidate_coverage:" in out
     assert "ratio=0.6667" in out
     assert "missing=queue_depth" in out
+    assert "history_telemetry_coverage:" in out
+    assert "candidate=queue_depth" in out
     assert "missing_is_failure=False" in out
     assert "history_sequence=2" in out
     assert "evidence_gaps: none" in out

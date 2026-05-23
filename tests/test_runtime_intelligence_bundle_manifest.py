@@ -189,6 +189,33 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_missing_edgeenv_cov
     assert "candidate must include telemetry_coverage" in summary
 
 
+def test_runtime_intelligence_bundle_manifest_gate_fails_for_missing_history_coverage(
+    tmp_path,
+):
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    edgeenv_path = (
+        REPO_ROOT
+        / "examples"
+        / "runtime_intelligence_chain"
+        / manifest["files"]["edgeenv_regression_report"]
+    )
+    edgeenv = json.loads(edgeenv_path.read_text(encoding="utf-8"))
+    edgeenv["runtime_telemetry_context"]["history"].pop("telemetry_coverage")
+
+    edgeenv_copy = tmp_path / "edgeenv_regression.json"
+    edgeenv_copy.write_text(json.dumps(edgeenv), encoding="utf-8")
+    manifest["files"]["edgeenv_regression_report"] = str(edgeenv_copy)
+    manifest_path = tmp_path / "bundle_manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(manifest=str(manifest_path), summary_out=str(summary_path))
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "history must include telemetry_coverage" in summary
+
+
 def test_runtime_intelligence_bundle_manifest_gate_fails_for_missing_guard_coverage(
     tmp_path,
 ):
