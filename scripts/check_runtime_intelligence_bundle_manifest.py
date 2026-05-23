@@ -15,6 +15,29 @@ REQUIRED_FILES = {
     "edgeenv_regression_report",
     "aiguard_guard_analysis",
 }
+REQUIRED_SOURCE_REPOSITORIES = {
+    "runtime_result": "InferEdge-Runtime",
+    "edgeenv_regression_report": "InferEdgeEnv",
+    "orchestrator_operation_context": "InferEdgeOrchestrator",
+    "aiguard_guard_analysis": "InferEdgeAIGuard",
+    "lab_report_owner": "InferEdgeLab",
+}
+REQUIRED_ARTIFACT_ROLES = {
+    "baseline_result": "runtime-lab-compatible-baseline-result",
+    "candidate_result": "runtime-lab-compatible-candidate-result",
+    "edgeenv_regression_report": "edgeenv-comparability-first-runtime-regression-report",
+    "orchestrator_operation_context": "orchestrator-supplemental-operation-context",
+    "aiguard_guard_analysis": "aiguard-deterministic-runtime-anomaly-evidence",
+    "lab_report": "lab-owned-deployment-risk-report",
+}
+REQUIRED_PRODUCER_CONTRACTS = {
+    "runtime_result_contract": "lab-compatible-runtime-result-json",
+    "edgeenv_history_schema": "edgeenv.runtime-telemetry-history.v1",
+    "orchestrator_feed_schema": (
+        "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1"
+    ),
+    "aiguard_schema": "inferedge-aiguard-diagnosis-v1",
+}
 REQUIRED_OWNERSHIP = {
     "runtime_result_owner": "runtime",
     "regression_owner": "edgeenv",
@@ -72,6 +95,44 @@ def _validate_manifest_shape(manifest: dict[str, Any], errors: list[str]) -> Non
         missing = sorted(REQUIRED_FILES - set(files))
         _record(not missing, errors, f"files is missing required keys: {missing}")
 
+    source_repositories = manifest.get("source_repositories")
+    _record(
+        isinstance(source_repositories, dict),
+        errors,
+        "source_repositories must be an object",
+    )
+    if isinstance(source_repositories, dict):
+        for key, expected in REQUIRED_SOURCE_REPOSITORIES.items():
+            _record(
+                source_repositories.get(key) == expected,
+                errors,
+                f"source_repositories.{key} must be {expected}",
+            )
+
+    artifact_roles = manifest.get("artifact_roles")
+    _record(isinstance(artifact_roles, dict), errors, "artifact_roles must be an object")
+    if isinstance(artifact_roles, dict):
+        for key, expected in REQUIRED_ARTIFACT_ROLES.items():
+            _record(
+                artifact_roles.get(key) == expected,
+                errors,
+                f"artifact_roles.{key} must be {expected}",
+            )
+
+    producer_contracts = manifest.get("producer_contracts")
+    _record(
+        isinstance(producer_contracts, dict),
+        errors,
+        "producer_contracts must be an object",
+    )
+    if isinstance(producer_contracts, dict):
+        for key, expected in REQUIRED_PRODUCER_CONTRACTS.items():
+            _record(
+                producer_contracts.get(key) == expected,
+                errors,
+                f"producer_contracts.{key} must be {expected}",
+            )
+
     ownership = manifest.get("ownership")
     _record(isinstance(ownership, dict), errors, "ownership must be an object")
     if isinstance(ownership, dict):
@@ -114,6 +175,13 @@ def _validate_edgeenv_report(edgeenv_report: dict[str, Any], errors: list[str]) 
         return
 
     history = context.get("history") or {}
+    _record(
+        history.get("schema_version")
+        == REQUIRED_PRODUCER_CONTRACTS["edgeenv_history_schema"],
+        errors,
+        "runtime_telemetry_context.history.schema_version must be "
+        f"{REQUIRED_PRODUCER_CONTRACTS['edgeenv_history_schema']}",
+    )
     summary = history.get("summary") or {}
     _record(
         summary.get("orchestrator_feed_runs") == 1,
@@ -136,6 +204,13 @@ def _validate_edgeenv_report(edgeenv_report: dict[str, Any], errors: list[str]) 
     if not isinstance(operation_context, dict):
         return
 
+    _record(
+        operation_context.get("schema_version")
+        == REQUIRED_PRODUCER_CONTRACTS["orchestrator_feed_schema"],
+        errors,
+        "orchestrator_operation_context.schema_version must be "
+        f"{REQUIRED_PRODUCER_CONTRACTS['orchestrator_feed_schema']}",
+    )
     _record(
         operation_context.get("not_a_regression_judgement") is True,
         errors,
@@ -160,9 +235,27 @@ def _validate_edgeenv_report(edgeenv_report: dict[str, Any], errors: list[str]) 
 
 def _validate_guard_analysis(guard_analysis: dict[str, Any], errors: list[str]) -> None:
     _record(
-        guard_analysis.get("schema_version") == "inferedge-aiguard-diagnosis-v1",
+        guard_analysis.get("schema_version")
+        == REQUIRED_PRODUCER_CONTRACTS["aiguard_schema"],
         errors,
-        "AIGuard artifact schema_version must be inferedge-aiguard-diagnosis-v1",
+        "AIGuard artifact schema_version must be "
+        f"{REQUIRED_PRODUCER_CONTRACTS['aiguard_schema']}",
+    )
+    source = guard_analysis.get("source") or {}
+    _record(
+        source.get("edgeenv_runtime_regression_report") is True,
+        errors,
+        "AIGuard source.edgeenv_runtime_regression_report must be true",
+    )
+    _record(
+        source.get("edgeenv_mode") == "same-condition",
+        errors,
+        "AIGuard source.edgeenv_mode must be same-condition",
+    )
+    _record(
+        source.get("edgeenv_comparable") is True,
+        errors,
+        "AIGuard source.edgeenv_comparable must be true",
     )
     _record(
         guard_analysis.get("guard_verdict") == "suspicious",

@@ -9,6 +9,27 @@
     "edgeenv_regression_report": "edgeenv_regression_with_orchestrator_context.json",
     "aiguard_guard_analysis": "aiguard_runtime_operation_guard_analysis.json"
   },
+  "source_repositories": {
+    "runtime_result": "InferEdge-Runtime",
+    "edgeenv_regression_report": "InferEdgeEnv",
+    "orchestrator_operation_context": "InferEdgeOrchestrator",
+    "aiguard_guard_analysis": "InferEdgeAIGuard",
+    "lab_report_owner": "InferEdgeLab"
+  },
+  "artifact_roles": {
+    "baseline_result": "runtime-lab-compatible-baseline-result",
+    "candidate_result": "runtime-lab-compatible-candidate-result",
+    "edgeenv_regression_report": "edgeenv-comparability-first-runtime-regression-report",
+    "orchestrator_operation_context": "orchestrator-supplemental-operation-context",
+    "aiguard_guard_analysis": "aiguard-deterministic-runtime-anomaly-evidence",
+    "lab_report": "lab-owned-deployment-risk-report"
+  },
+  "producer_contracts": {
+    "runtime_result_contract": "lab-compatible-runtime-result-json",
+    "edgeenv_history_schema": "edgeenv.runtime-telemetry-history.v1",
+    "orchestrator_feed_schema": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
+    "aiguard_schema": "inferedge-aiguard-diagnosis-v1"
+  },
   "ownership": {
     "runtime_result_owner": "runtime",
     "regression_owner": "edgeenv",
