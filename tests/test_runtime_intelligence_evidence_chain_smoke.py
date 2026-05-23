@@ -47,6 +47,19 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert coverage_evidence["raw_context"]["edgeenv_regression"][
         "candidate_telemetry_coverage_missing_fields"
     ] == ["queue_depth"]
+    assert coverage_evidence["raw_context"]["edgeenv_regression"][
+        "telemetry_coverage_source"
+    ] == "history_telemetry_coverage"
+    assert coverage_evidence["raw_context"]["edgeenv_regression"][
+        "history_telemetry_coverage_missing_field_runs"
+    ] == [
+        {
+            "run_id": "edgeenv-smoke-candidate",
+            "missing_fields": ["queue_depth"],
+            "missing_field_count": 1,
+            "missing_telemetry_is_failure": False,
+        }
+    ]
     assert bundle["deployment_decision"]["decision"] == "review_required"
     assert bundle["deployment_decision"]["guard_status"] == "warning"
     assert "guard_warning_review" in bundle["deployment_decision"]["triggered_rules"]

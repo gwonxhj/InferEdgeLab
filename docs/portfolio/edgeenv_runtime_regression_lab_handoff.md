@@ -99,11 +99,12 @@ Expected Lab behavior:
 - Markdown/HTML reports include a `Runtime Telemetry Context` subsection with baseline/candidate telemetry coverage and history execution sequence context.
 - When EdgeEnv preserves `runtime_telemetry.coverage`, Lab surfaces coverage ratio, missing fields, and `missing_telemetry_is_failure` as evidence quality metadata. These fields do not override EdgeEnv comparability or Lab deployment policy.
 - When `--with-guard` is enabled and the installed AIGuard exposes EdgeEnv regression reasoning, Lab routes the EdgeEnv report to AIGuard and preserves diagnosis evidence such as `runtime_latency_regression`, `runtime_telemetry_context_coverage`, and `runtime_telemetry_replay_context`.
+- The Runtime Intelligence bundle gate requires AIGuard coverage evidence to declare `telemetry_coverage_source=history_telemetry_coverage`, proving that the precomputed guard artifact consumed EdgeEnv's producer-side replay summary.
 - Additional Lab test fixtures under `tests/fixtures/edgeenv_regression/` mirror EdgeEnv replay examples for candidate telemetry gaps and execution sequence inversion. These fixture smokes verify that replay warnings become Lab-owned report context without making Lab recompute EdgeEnv comparability.
 - Markdown/HTML reports include a `Runtime Intelligence Risk Summary` that summarizes EdgeEnv comparability/regression, telemetry replay gaps, AIGuard deterministic evidence, and the Lab-owned deployment decision in one reviewer-facing table.
 - When EdgeEnv includes preserved Orchestrator feed context, the `Runtime Intelligence Risk Summary` surfaces queue, thermal, throttling, memory, and fallback context as supplemental runtime evidence.
 - When `--guard-analysis` is provided, Lab ingests the precomputed AIGuard artifact as evidence without requiring AIGuard to be installed in the Lab environment.
-- The committed Runtime Intelligence guard fixture preserves AIGuard's coverage-gap diagnosis, including `runtime_telemetry_field_gap`, as deterministic review context rather than a Lab policy override.
+- The committed Runtime Intelligence guard fixture preserves AIGuard's coverage-gap diagnosis, including `runtime_telemetry_field_gap` and EdgeEnv history missing-field runs, as deterministic review context rather than a Lab policy override.
 - Guard evidence details preserve explanatory fields such as `why_it_matters`, evidence-local `suspected_causes`, and `recommendation`.
 - Deployment decision is `review_required`.
 - Triggered rules include `edgeenv_runtime_regression_review`.

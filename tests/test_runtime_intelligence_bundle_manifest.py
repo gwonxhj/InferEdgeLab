@@ -248,3 +248,38 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_missing_guard_cover
         "AIGuard evidence is missing types: "
         "['runtime_telemetry_context_coverage']"
     ) in summary
+
+
+def test_runtime_intelligence_bundle_manifest_gate_fails_for_old_guard_coverage_source(
+    tmp_path,
+):
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    guard_path = (
+        REPO_ROOT
+        / "examples"
+        / "runtime_intelligence_chain"
+        / manifest["files"]["aiguard_guard_analysis"]
+    )
+    guard_analysis = json.loads(guard_path.read_text(encoding="utf-8"))
+    coverage_evidence = next(
+        item
+        for item in guard_analysis["evidence"]
+        if item.get("type") == "runtime_telemetry_context_coverage"
+    )
+    edgeenv_context = coverage_evidence["raw_context"]["edgeenv_regression"]
+    edgeenv_context["telemetry_coverage_source"] = "runtime_telemetry_context"
+    edgeenv_context.pop("history_telemetry_coverage_missing_field_runs")
+
+    guard_copy = tmp_path / "aiguard_guard_analysis.json"
+    guard_copy.write_text(json.dumps(guard_analysis), encoding="utf-8")
+    manifest["files"]["aiguard_guard_analysis"] = str(guard_copy)
+    manifest_path = tmp_path / "bundle_manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(manifest=str(manifest_path), summary_out=str(summary_path))
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "telemetry_coverage_source must be history_telemetry_coverage" in summary
+    assert "history missing field runs must be a list" in summary

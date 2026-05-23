@@ -457,6 +457,47 @@ def _validate_coverage_gap_evidence(
         errors,
         "AIGuard coverage evidence candidate_missing_telemetry_is_failure must be false",
     )
+    _record(
+        edgeenv.get("telemetry_coverage_source") == "history_telemetry_coverage",
+        errors,
+        "AIGuard coverage evidence telemetry_coverage_source must be "
+        "history_telemetry_coverage",
+    )
+    _record(
+        edgeenv.get("history_telemetry_coverage_missing_field_run_count") == 1.0,
+        errors,
+        "AIGuard coverage evidence history coverage missing field run count "
+        "must be 1.0",
+    )
+    missing_field_runs = edgeenv.get("history_telemetry_coverage_missing_field_runs")
+    _record(
+        isinstance(missing_field_runs, list),
+        errors,
+        "AIGuard coverage evidence history missing field runs must be a list",
+    )
+    if isinstance(missing_field_runs, list):
+        candidate_gap = next(
+            (
+                item
+                for item in missing_field_runs
+                if isinstance(item, dict)
+                and item.get("run_id") == "edgeenv-smoke-candidate"
+            ),
+            None,
+        )
+        _record(
+            isinstance(candidate_gap, dict),
+            errors,
+            "AIGuard coverage evidence history missing field runs must include "
+            "edgeenv-smoke-candidate",
+        )
+        if isinstance(candidate_gap, dict):
+            _record(
+                candidate_gap.get("missing_fields") == ["queue_depth"],
+                errors,
+                "AIGuard coverage evidence history candidate missing_fields "
+                "must be ['queue_depth']",
+            )
 
 
 def _write_summary(path: str, *, manifest_path: Path, errors: list[str]) -> None:
