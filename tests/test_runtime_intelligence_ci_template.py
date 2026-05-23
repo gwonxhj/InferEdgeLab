@@ -85,6 +85,9 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
                 "Lab remains the final deployment decision owner.",
                 "AIGuard runtime operation anomalies",
                 "runtime_queue_overload, runtime_thermal_instability",
+                "Runtime telemetry coverage gaps",
+                "runtime_telemetry_field_gap",
+                "Inspect telemetry coverage missing fields",
                 "guard_warning_review",
                 "edgeenv_runtime_regression_review",
             ]
@@ -151,3 +154,50 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_risk_summary(
     assert result == 2
     summary = summary_path.read_text(encoding="utf-8")
     assert "runtime report missing marker: ## Runtime Intelligence Risk Summary" in summary
+
+
+def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_coverage_gap_marker(
+    tmp_path,
+):
+    report_dir = tmp_path / "runtime_intelligence_ci"
+    report_dir.mkdir()
+    for name in (
+        "edgeenv_runtime_regression.md",
+        "edgeenv_runtime_regression.html",
+        "runtime_anomaly_summary.html",
+        "portfolio_demo_check.md",
+    ):
+        (report_dir / name).write_text("placeholder\n", encoding="utf-8")
+    (report_dir / "runtime_anomaly_summary.md").write_text(
+        "\n".join(
+            [
+                "## Runtime Intelligence Risk Summary",
+                "Lab remains the final deployment decision owner.",
+                "AIGuard runtime operation anomalies",
+                "runtime_queue_overload, runtime_thermal_instability",
+                "Runtime telemetry coverage gaps",
+                "guard_warning_review",
+                "edgeenv_runtime_regression_review",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    for name in (
+        "runtime_intelligence_bundle_manifest_gate_summary.md",
+        "runtime_anomaly_gate_summary.md",
+    ):
+        (report_dir / name).write_text("- Status: passed\n", encoding="utf-8")
+    (report_dir / "portfolio_demo_check.json").write_text(
+        '{"status": "pass"}',
+        encoding="utf-8",
+    )
+    summary_path = tmp_path / "ci_artifact_gate_summary.md"
+
+    result = ci_artifact_gate(
+        report_dir=str(report_dir),
+        summary_out=str(summary_path),
+    )
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "runtime report missing marker: runtime_telemetry_field_gap" in summary

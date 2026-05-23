@@ -72,6 +72,9 @@ def _validate_runtime_report(path: Path, errors: list[str]) -> None:
         "Lab remains the final deployment decision owner.",
         "AIGuard runtime operation anomalies",
         "runtime_queue_overload, runtime_thermal_instability",
+        "Runtime telemetry coverage gaps",
+        "runtime_telemetry_field_gap",
+        "Inspect telemetry coverage missing fields",
         "guard_warning_review",
         "edgeenv_runtime_regression_review",
     ):
