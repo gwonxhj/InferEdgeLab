@@ -86,6 +86,7 @@ This second smoke uses committed lightweight artifacts to represent the cross-re
 - Orchestrator context is preserved inside the EdgeEnv regression artifact as `orchestrator_operation_context`.
 - AIGuard deterministic queue/thermal evidence is passed as a precomputed `guard_analysis` artifact.
 - Lab owns the combined report and deployment decision.
+- `scripts/check_runtime_intelligence_artifact_bundle.py` gates the generated report so required Runtime Intelligence rows and ownership text cannot disappear silently.
 
 Expected Lab behavior:
 

@@ -45,7 +45,8 @@ Expected artifacts are intentionally file-based and local-first:
 - benchmark result JSON under `reports/*.json`
 - `BENCHMARKS.md`
 - EdgeEnv regression Markdown / HTML report under `reports/runtime_intelligence_ci/`
-- deterministic Runtime Intelligence summary Markdown with precomputed AIGuard runtime operation evidence
+- deterministic Runtime Intelligence summary Markdown / HTML with precomputed AIGuard runtime operation evidence
+- Runtime Intelligence artifact gate summary
 - portfolio demo check JSON / Markdown
 - deployment risk summary JSON
 
@@ -57,9 +58,12 @@ The initial gate is conservative:
 
 - full pytest must pass
 - benchmark smoke must complete
-- Runtime Intelligence report must contain `Runtime Intelligence Risk Summary`
+- Runtime Intelligence report must contain the required risk summary rows
 - precomputed AIGuard evidence must remain report context, not the final decision owner
+- Orchestrator context must remain supplemental evidence, not a comparability gate
 - portfolio demo check status must be `pass`
+
+The artifact gate is implemented by `scripts/check_runtime_intelligence_artifact_bundle.py`. It checks the generated Markdown / HTML report for the required Runtime Intelligence rows, including Lab ownership, EdgeEnv comparability, Orchestrator operation feed context, AIGuard runtime operation anomalies, and triggered deployment review rules.
 
 Future GitLab-specific gates may include latency regression thresholds, anomaly severity thresholds, thermal instability thresholds, and deployment risk thresholds, but only after the corresponding deterministic evidence is already represented in the artifact bundle.
 
