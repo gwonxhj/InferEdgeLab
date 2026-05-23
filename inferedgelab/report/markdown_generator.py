@@ -222,11 +222,12 @@ def _append_runtime_telemetry_context(lines: list[str], context: Dict[str, Any])
                     lines.append(f"  - {key}: {summary.get(key)}")
     lines.append("")
     lines.append(
-        "| Run | telemetry_present | history_entry | execution_sequence_id | history_execution_sequence_id | telemetry_source |"
+        "| Run | telemetry_present | history_entry | execution_sequence_id | history_execution_sequence_id | telemetry_source | coverage_ratio | coverage_missing_fields | missing_is_failure |"
     )
-    lines.append("|---|---|---|---:|---:|---|")
+    lines.append("|---|---|---|---:|---:|---|---:|---|---|")
     for label in ("baseline", "candidate"):
         run_context = context.get(label) or {}
+        coverage = _runtime_telemetry_coverage(run_context)
         lines.append(
             "| "
             f"{label} `{run_context.get('run_id', '-')}` | "
@@ -234,7 +235,10 @@ def _append_runtime_telemetry_context(lines: list[str], context: Dict[str, Any])
             f"{run_context.get('history_entry_present')} | "
             f"{_fmt_num(run_context.get('execution_sequence_id'))} | "
             f"{_fmt_num(run_context.get('history_execution_sequence_id'))} | "
-            f"{run_context.get('telemetry_source', '-')} |"
+            f"{run_context.get('telemetry_source', '-')} | "
+            f"{_fmt_coverage_ratio(coverage)} | "
+            f"{_fmt_coverage_missing_fields(coverage)} | "
+            f"{_fmt_missing_is_failure(coverage)} |"
         )
     lines.append("")
     if evidence_gaps:
@@ -251,6 +255,41 @@ def _append_runtime_telemetry_context(lines: list[str], context: Dict[str, Any])
         lines.append("Telemetry context notes:")
         for note in notes:
             lines.append(f"- {note}")
+
+
+def _runtime_telemetry_coverage(run_context: Dict[str, Any]) -> Dict[str, Any] | None:
+    coverage = run_context.get("telemetry_coverage")
+    if isinstance(coverage, dict):
+        return coverage
+    coverage = run_context.get("history_telemetry_coverage")
+    if isinstance(coverage, dict):
+        return coverage
+    return None
+
+
+def _fmt_coverage_ratio(coverage: Dict[str, Any] | None) -> str:
+    if coverage is None:
+        return "-"
+    ratio = coverage.get("coverage_ratio")
+    return _fmt_num(ratio)
+
+
+def _fmt_coverage_missing_fields(coverage: Dict[str, Any] | None) -> str:
+    if coverage is None:
+        return "-"
+    missing_fields = coverage.get("missing_fields")
+    if not isinstance(missing_fields, list) or not missing_fields:
+        return "none"
+    return ", ".join(str(item) for item in missing_fields)
+
+
+def _fmt_missing_is_failure(coverage: Dict[str, Any] | None) -> str:
+    if coverage is None:
+        return "-"
+    value = coverage.get("missing_telemetry_is_failure")
+    if value is None:
+        return "-"
+    return str(value)
 
 
 def _append_runtime_intelligence_risk_summary(

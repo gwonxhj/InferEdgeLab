@@ -126,6 +126,16 @@ def _append_telemetry_context_rows(
             )
         )
 
+    coverage_labels = _runtime_telemetry_coverage_labels(telemetry_context)
+    if coverage_labels:
+        rows.append(
+            (
+                "Runtime telemetry coverage gaps",
+                "; ".join(coverage_labels),
+                "Coverage gaps describe evidence quality and do not override EdgeEnv comparability gating.",
+            )
+        )
+
     context_labels = _orchestrator_context_labels(telemetry_context)
     if context_labels:
         rows.append(
@@ -135,6 +145,35 @@ def _append_telemetry_context_rows(
                 "Attached operation context can explain runtime anomaly evidence without becoming a deployment decision.",
             )
         )
+
+
+def _runtime_telemetry_coverage_labels(context: dict[str, Any]) -> list[str]:
+    labels: list[str] = []
+    for run_label in ("baseline", "candidate"):
+        run_context = context.get(run_label)
+        if not isinstance(run_context, dict):
+            continue
+        coverage = _coverage_payload(run_context)
+        if coverage is None:
+            continue
+        missing_fields = coverage.get("missing_fields")
+        if not isinstance(missing_fields, list):
+            missing_fields = []
+        missing_label = (
+            ",".join(str(item) for item in missing_fields) if missing_fields else "none"
+        )
+        labels.append(f"{run_label}={missing_label}")
+    return labels
+
+
+def _coverage_payload(run_context: dict[str, Any]) -> dict[str, Any] | None:
+    coverage = run_context.get("telemetry_coverage")
+    if isinstance(coverage, dict):
+        return coverage
+    coverage = run_context.get("history_telemetry_coverage")
+    if isinstance(coverage, dict):
+        return coverage
+    return None
 
 
 def _append_aiguard_runtime_operation_rows(

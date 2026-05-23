@@ -11,6 +11,9 @@ REQUIRED_MARKDOWN_MARKERS = {
     "lab_decision_owner": "Lab remains the final deployment decision owner.",
     "edgeenv_comparability": "| EdgeEnv comparability | Yes / same-condition |",
     "runtime_regression": "| Runtime regression | True / mixed / high |",
+    "runtime_telemetry_coverage": (
+        "| Runtime telemetry coverage gaps | baseline=none; candidate=queue_depth |"
+    ),
     "orchestrator_feed": "| Orchestrator operation feed context | 1 |",
     "orchestrator_attached_run": "| Orchestrator context attached runs | candidate |",
     "aiguard_evidence": "| AIGuard deterministic evidence | warning / suspicious |",
