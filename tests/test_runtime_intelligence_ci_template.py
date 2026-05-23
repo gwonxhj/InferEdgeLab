@@ -34,7 +34,8 @@ def test_runtime_intelligence_gitlab_template_keeps_local_first_artifact_contrac
     assert "examples/runtime_intelligence_chain/edgeenv_regression_with_orchestrator_context.json" in text
     assert "examples/runtime_intelligence_chain/aiguard_runtime_operation_guard_analysis.json" in text
     assert "--guard-analysis" in text
-    assert "Runtime Intelligence Risk Summary" in text
+    assert "check_runtime_intelligence_artifact_bundle.py" in text
+    assert "runtime_anomaly_gate_summary.md" in text
     assert "reports/runtime_intelligence_ci" in text
     assert "portfolio-demo-check --format json" in text
     assert "artifacts:" in text

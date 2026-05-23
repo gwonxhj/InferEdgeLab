@@ -1,0 +1,126 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import typer
+from rich import print as rprint
+
+
+REQUIRED_MARKDOWN_MARKERS = {
+    "risk_summary_section": "## Runtime Intelligence Risk Summary",
+    "lab_decision_owner": "Lab remains the final deployment decision owner.",
+    "edgeenv_comparability": "| EdgeEnv comparability | Yes / same-condition |",
+    "runtime_regression": "| Runtime regression | True / mixed / high |",
+    "orchestrator_feed": "| Orchestrator operation feed context | 1 |",
+    "orchestrator_attached_run": "| Orchestrator context attached runs | candidate |",
+    "aiguard_evidence": "| AIGuard deterministic evidence | warning / suspicious |",
+    "aiguard_operation_anomalies": (
+        "| AIGuard runtime operation anomalies | "
+        "runtime_queue_overload, runtime_thermal_instability |"
+    ),
+    "aiguard_orchestrator_handoff": (
+        "| AIGuard Orchestrator context handoff | feeds=1.0, candidate |"
+    ),
+    "guard_warning_rule": "guard_warning_review",
+    "edgeenv_regression_rule": "edgeenv_runtime_regression_review",
+}
+
+REQUIRED_HTML_MARKERS = {
+    "risk_summary_section": "Runtime Intelligence Risk Summary",
+    "lab_decision_owner": "Lab remains the final deployment decision owner.",
+    "aiguard_operation_anomalies": "runtime_queue_overload, runtime_thermal_instability",
+    "aiguard_orchestrator_handoff": "AIGuard Orchestrator context handoff",
+}
+
+
+def _read_text(path: str, label: str) -> str:
+    try:
+        return Path(path).read_text(encoding="utf-8")
+    except OSError as exc:
+        raise typer.BadParameter(f"{label} not found: {path}") from exc
+
+
+def _missing_markers(text: str, markers: dict[str, str]) -> list[str]:
+    return [name for name, marker in markers.items() if marker not in text]
+
+
+def _write_summary(
+    path: str,
+    *,
+    missing_markdown: list[str],
+    missing_html: list[str],
+) -> None:
+    if not path:
+        return
+    lines = [
+        "# Runtime Intelligence Artifact Bundle Gate",
+        "",
+        f"- Status: {'failed' if missing_markdown or missing_html else 'passed'}",
+        f"- Missing Markdown markers: {len(missing_markdown)}",
+        f"- Missing HTML markers: {len(missing_html)}",
+        "",
+    ]
+    if missing_markdown:
+        lines.append("## Missing Markdown Markers")
+        lines.append("")
+        lines.extend(f"- `{name}`" for name in missing_markdown)
+        lines.append("")
+    if missing_html:
+        lines.append("## Missing HTML Markers")
+        lines.append("")
+        lines.extend(f"- `{name}`" for name in missing_html)
+        lines.append("")
+
+    out_path = Path(path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def main(markdown: str, html: str = "", summary_out: str = "") -> int:
+    markdown_text = _read_text(markdown, "Markdown report")
+    html_text = _read_text(html, "HTML report") if html else ""
+
+    missing_markdown = _missing_markers(markdown_text, REQUIRED_MARKDOWN_MARKERS)
+    missing_html = _missing_markers(html_text, REQUIRED_HTML_MARKERS) if html else []
+    _write_summary(
+        summary_out,
+        missing_markdown=missing_markdown,
+        missing_html=missing_html,
+    )
+
+    if missing_markdown or missing_html:
+        rprint("[red]Runtime Intelligence artifact bundle gate failed.[/red]")
+        for name in missing_markdown:
+            rprint(f"[red]Missing Markdown marker[/red]: {name}")
+        for name in missing_html:
+            rprint(f"[red]Missing HTML marker[/red]: {name}")
+        return 2
+
+    rprint("[green]Runtime Intelligence artifact bundle gate passed.[/green]")
+    if summary_out:
+        rprint(f"[cyan]Summary written[/cyan]: {summary_out}")
+    return 0
+
+
+def cli(
+    markdown: str = typer.Option(
+        ...,
+        "--markdown",
+        help="Runtime Intelligence Markdown report path",
+    ),
+    html: str = typer.Option(
+        "",
+        "--html",
+        help="Optional Runtime Intelligence HTML report path",
+    ),
+    summary_out: str = typer.Option(
+        "",
+        "--summary-out",
+        help="Optional Markdown gate summary output path",
+    ),
+) -> None:
+    raise typer.Exit(main(markdown=markdown, html=html, summary_out=summary_out))
+
+
+if __name__ == "__main__":
+    typer.run(cli)
