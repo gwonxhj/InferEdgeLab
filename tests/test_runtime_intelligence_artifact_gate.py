@@ -101,3 +101,30 @@ def test_runtime_intelligence_artifact_gate_fails_when_owner_row_is_missing(
     summary = summary_path.read_text(encoding="utf-8")
     assert "- Status: failed" in summary
     assert "`lab_decision_owner`" in summary
+
+
+def test_runtime_intelligence_artifact_gate_fails_when_coverage_gap_marker_is_missing(
+    tmp_path,
+):
+    markdown_path, html_path = _write_runtime_intelligence_reports(tmp_path)
+    markdown = markdown_path.read_text(encoding="utf-8").replace(
+        "runtime_telemetry_field_gap",
+        "coverage marker removed",
+    )
+    html = html_path.read_text(encoding="utf-8").replace(
+        "runtime_telemetry_field_gap",
+        "coverage marker removed",
+    )
+    markdown_path.write_text(markdown, encoding="utf-8")
+    html_path.write_text(html, encoding="utf-8")
+    summary_path = tmp_path / "gate_summary.md"
+
+    result = gate_main(
+        markdown=str(markdown_path),
+        html=str(html_path),
+        summary_out=str(summary_path),
+    )
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "`aiguard_coverage_field_gap`" in summary

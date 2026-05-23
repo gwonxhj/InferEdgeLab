@@ -53,6 +53,7 @@ REQUIRED_BOUNDARIES = {
     "production_observability_platform": False,
 }
 REQUIRED_GUARD_TYPES = {
+    "runtime_telemetry_context_coverage",
     "runtime_queue_overload",
     "runtime_thermal_instability",
 }
@@ -214,6 +215,24 @@ def _validate_edgeenv_report(edgeenv_report: dict[str, Any], errors: list[str]) 
         errors,
         "candidate orchestrator_context_present must be true",
     )
+    coverage = candidate.get("telemetry_coverage")
+    _record(
+        isinstance(coverage, dict),
+        errors,
+        "candidate must include telemetry_coverage",
+    )
+    if isinstance(coverage, dict):
+        _record(
+            coverage.get("missing_telemetry_is_failure") is False,
+            errors,
+            "candidate.telemetry_coverage.missing_telemetry_is_failure must be false",
+        )
+        missing_fields = coverage.get("missing_fields")
+        _record(
+            isinstance(missing_fields, list) and "queue_depth" in missing_fields,
+            errors,
+            "candidate.telemetry_coverage.missing_fields must include queue_depth",
+        )
     operation_context = candidate.get("orchestrator_operation_context")
     _record(
         isinstance(operation_context, dict),
@@ -336,6 +355,51 @@ def _validate_guard_analysis(guard_analysis: dict[str, Any], errors: list[str]) 
             errors,
             f"AIGuard evidence[{index}].raw_context must be an object",
         )
+        if item.get("type") == "runtime_telemetry_context_coverage":
+            _validate_coverage_gap_evidence(item, index, errors)
+
+
+def _validate_coverage_gap_evidence(
+    item: dict[str, Any],
+    index: int,
+    errors: list[str],
+) -> None:
+    _record(
+        item.get("status") == "warning",
+        errors,
+        f"AIGuard evidence[{index}] coverage status must be warning",
+    )
+    _record(
+        item.get("observed_value") == 1.0,
+        errors,
+        f"AIGuard evidence[{index}] coverage observed_value must be 1.0",
+    )
+    suspected_causes = item.get("suspected_causes")
+    _record(
+        isinstance(suspected_causes, list)
+        and "runtime_telemetry_field_gap" in suspected_causes,
+        errors,
+        f"AIGuard evidence[{index}] must include runtime_telemetry_field_gap",
+    )
+    edgeenv = (item.get("raw_context") or {}).get("edgeenv_regression")
+    _record(
+        isinstance(edgeenv, dict),
+        errors,
+        f"AIGuard evidence[{index}] raw_context.edgeenv_regression must be an object",
+    )
+    if not isinstance(edgeenv, dict):
+        return
+    _record(
+        edgeenv.get("candidate_telemetry_coverage_missing_fields") == ["queue_depth"],
+        errors,
+        "AIGuard coverage evidence candidate_telemetry_coverage_missing_fields "
+        "must be ['queue_depth']",
+    )
+    _record(
+        edgeenv.get("candidate_missing_telemetry_is_failure") is False,
+        errors,
+        "AIGuard coverage evidence candidate_missing_telemetry_is_failure must be false",
+    )
 
 
 def _write_summary(path: str, *, manifest_path: Path, errors: list[str]) -> None:

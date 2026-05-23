@@ -14,6 +14,13 @@ REQUIRED_MARKDOWN_MARKERS = {
     "runtime_telemetry_coverage": (
         "| Runtime telemetry coverage gaps | baseline=none; candidate=queue_depth |"
     ),
+    "aiguard_coverage_gap_reason": (
+        "Runtime telemetry context has evidence gaps that require review."
+    ),
+    "aiguard_coverage_field_gap": "runtime_telemetry_field_gap",
+    "aiguard_coverage_gap_recommendation": (
+        "Inspect telemetry coverage missing fields"
+    ),
     "orchestrator_feed": "| Orchestrator operation feed context | 1 |",
     "orchestrator_attached_run": "| Orchestrator context attached runs | candidate |",
     "aiguard_evidence": "| AIGuard deterministic evidence | warning / suspicious |",
@@ -31,6 +38,11 @@ REQUIRED_MARKDOWN_MARKERS = {
 REQUIRED_HTML_MARKERS = {
     "risk_summary_section": "Runtime Intelligence Risk Summary",
     "lab_decision_owner": "Lab remains the final deployment decision owner.",
+    "runtime_telemetry_coverage": "Runtime telemetry coverage gaps",
+    "aiguard_coverage_field_gap": "runtime_telemetry_field_gap",
+    "aiguard_coverage_gap_recommendation": (
+        "Inspect telemetry coverage missing fields"
+    ),
     "aiguard_operation_anomalies": "runtime_queue_overload, runtime_thermal_instability",
     "aiguard_orchestrator_handoff": "AIGuard Orchestrator context handoff",
 }
