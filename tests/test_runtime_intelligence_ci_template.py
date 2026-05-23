@@ -33,6 +33,9 @@ def test_runtime_intelligence_gitlab_template_keeps_local_first_artifact_contrac
     assert "examples/edgeenv_regression/edgeenv_runtime_regression.json" in text
     assert "examples/runtime_intelligence_chain/edgeenv_regression_with_orchestrator_context.json" in text
     assert "examples/runtime_intelligence_chain/aiguard_runtime_operation_guard_analysis.json" in text
+    assert "examples/runtime_intelligence_chain/bundle_manifest.json" in text
+    assert "check_runtime_intelligence_bundle_manifest.py" in text
+    assert "runtime_intelligence_bundle_manifest_gate_summary.md" in text
     assert "--guard-analysis" in text
     assert "check_runtime_intelligence_artifact_bundle.py" in text
     assert "runtime_anomaly_gate_summary.md" in text
