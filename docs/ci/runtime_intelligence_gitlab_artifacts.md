@@ -73,6 +73,9 @@ The initial gate is conservative:
   `coverage_summary_owner=edgeenv`,
   `coverage_summary_path=runtime_telemetry_context.history.telemetry_coverage`,
   and `operation_context_role=supplemental`
+- AIGuard coverage evidence raw context must preserve the same mapping hint, so
+  CI catches loss of EdgeEnv/Orchestrator ownership markers before Lab report
+  generation
 - Orchestrator candidate context must include `run_id`, `telemetry_source`,
   `operation`, and `resource`, so CI can catch incomplete handoffs without
   making Orchestrator a regression owner
