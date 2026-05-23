@@ -34,8 +34,19 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     ]["orchestrator_context_present"] is True
     assert bundle["guard_analysis"]["guard_verdict"] == "suspicious"
     assert bundle["guard_analysis"]["primary_reason"] == (
-        "Runtime scheduling evidence requires review."
+        "Runtime telemetry context has evidence gaps that require review."
     )
+    coverage_evidence = next(
+        item
+        for item in bundle["guard_analysis"]["evidence"]
+        if item["type"] == "runtime_telemetry_context_coverage"
+    )
+    assert coverage_evidence["status"] == "warning"
+    assert coverage_evidence["observed_value"] == 1.0
+    assert "runtime_telemetry_field_gap" in coverage_evidence["suspected_causes"]
+    assert coverage_evidence["raw_context"]["edgeenv_regression"][
+        "candidate_telemetry_coverage_missing_fields"
+    ] == ["queue_depth"]
     assert bundle["deployment_decision"]["decision"] == "review_required"
     assert bundle["deployment_decision"]["guard_status"] == "warning"
     assert "guard_warning_review" in bundle["deployment_decision"]["triggered_rules"]
@@ -85,6 +96,7 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "runtime_queue_overload" in out
     assert "Runtime Intelligence Risk Summary" in markdown
     assert "Runtime telemetry coverage gaps" in markdown
+    assert "runtime_telemetry_field_gap" in markdown
     assert "coverage_missing_fields" in markdown
     assert "queue_depth" in markdown
     assert "AIGuard runtime operation anomalies" in markdown
