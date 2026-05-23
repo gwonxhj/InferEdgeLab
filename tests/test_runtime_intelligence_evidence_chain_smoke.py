@@ -32,6 +32,25 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert bundle["edgeenv_runtime_regression"]["runtime_telemetry_context"][
         "candidate"
     ]["orchestrator_context_present"] is True
+    operation_context = bundle["edgeenv_runtime_regression"][
+        "runtime_telemetry_context"
+    ]["candidate"]["orchestrator_operation_context"]
+    mapping_hint = operation_context["edgeenv_mapping_hint"]
+    assert mapping_hint["coverage_summary_owner"] == "edgeenv"
+    assert (
+        mapping_hint["coverage_summary_path"]
+        == "runtime_telemetry_context.history.telemetry_coverage"
+    )
+    assert mapping_hint["operation_context_role"] == "supplemental"
+    assert set(mapping_hint["candidate_context_required_fields"]) >= {
+        "run_id",
+        "telemetry_source",
+        "operation",
+        "resource",
+    }
+    assert operation_context["candidate_context"]["telemetry_source"] == (
+        "inferedge_orchestrator_operation_summary"
+    )
     assert bundle["guard_analysis"]["guard_verdict"] == "suspicious"
     assert bundle["guard_analysis"]["primary_reason"] == (
         "Runtime telemetry context has evidence gaps that require review."

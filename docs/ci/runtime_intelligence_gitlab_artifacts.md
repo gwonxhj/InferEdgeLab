@@ -69,6 +69,13 @@ The initial gate is conservative:
   `telemetry_coverage_source=history_telemetry_coverage` and EdgeEnv history
   missing-field runs, so the artifact chain proves producer-side coverage
   summary reuse instead of downstream recomputation
+- the preserved Orchestrator `edgeenv_mapping_hint` must keep
+  `coverage_summary_owner=edgeenv`,
+  `coverage_summary_path=runtime_telemetry_context.history.telemetry_coverage`,
+  and `operation_context_role=supplemental`
+- Orchestrator candidate context must include `run_id`, `telemetry_source`,
+  `operation`, and `resource`, so CI can catch incomplete handoffs without
+  making Orchestrator a regression owner
 - precomputed AIGuard evidence must remain report context, not the final decision owner
 - Orchestrator context must remain supplemental evidence, not a comparability gate
 - bundle source repository mapping must keep Runtime, EdgeEnv, Orchestrator,

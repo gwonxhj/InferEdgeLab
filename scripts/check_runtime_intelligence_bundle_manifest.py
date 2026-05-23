@@ -52,6 +52,18 @@ REQUIRED_BOUNDARIES = {
     "lab_is_final_decision_owner": True,
     "production_observability_platform": False,
 }
+REQUIRED_ORCHESTRATOR_MAPPING_HINT = {
+    "copy_candidate_context_to": "runtime_telemetry_context.candidate",
+    "operation_context_role": "supplemental",
+    "coverage_summary_owner": "edgeenv",
+    "coverage_summary_path": "runtime_telemetry_context.history.telemetry_coverage",
+}
+REQUIRED_ORCHESTRATOR_CANDIDATE_CONTEXT_FIELDS = {
+    "run_id",
+    "telemetry_source",
+    "operation",
+    "resource",
+}
 REQUIRED_GUARD_TYPES = {
     "runtime_telemetry_context_coverage",
     "runtime_queue_overload",
@@ -277,6 +289,64 @@ def _validate_edgeenv_report(edgeenv_report: dict[str, Any], errors: list[str]) 
         errors,
         "orchestrator_operation_context.regression_owner must be edgeenv",
     )
+    _validate_orchestrator_mapping_hint(operation_context, errors)
+
+
+def _validate_orchestrator_mapping_hint(
+    operation_context: dict[str, Any],
+    errors: list[str],
+) -> None:
+    mapping_hint = operation_context.get("edgeenv_mapping_hint")
+    _record(
+        isinstance(mapping_hint, dict),
+        errors,
+        "orchestrator_operation_context.edgeenv_mapping_hint must be an object",
+    )
+    if not isinstance(mapping_hint, dict):
+        return
+
+    for key, expected in REQUIRED_ORCHESTRATOR_MAPPING_HINT.items():
+        _record(
+            mapping_hint.get(key) == expected,
+            errors,
+            f"orchestrator_operation_context.edgeenv_mapping_hint.{key} "
+            f"must be {expected}",
+        )
+
+    required_fields = mapping_hint.get("candidate_context_required_fields")
+    _record(
+        isinstance(required_fields, list),
+        errors,
+        "orchestrator_operation_context.edgeenv_mapping_hint."
+        "candidate_context_required_fields must be a list",
+    )
+    if isinstance(required_fields, list):
+        missing_fields = sorted(
+            REQUIRED_ORCHESTRATOR_CANDIDATE_CONTEXT_FIELDS - set(required_fields)
+        )
+        _record(
+            not missing_fields,
+            errors,
+            "orchestrator_operation_context.edgeenv_mapping_hint."
+            f"candidate_context_required_fields is missing {missing_fields}",
+        )
+
+    candidate_context = operation_context.get("candidate_context")
+    _record(
+        isinstance(candidate_context, dict),
+        errors,
+        "orchestrator_operation_context.candidate_context must be an object",
+    )
+    if isinstance(candidate_context, dict):
+        missing_context_fields = sorted(
+            REQUIRED_ORCHESTRATOR_CANDIDATE_CONTEXT_FIELDS - set(candidate_context)
+        )
+        _record(
+            not missing_context_fields,
+            errors,
+            "orchestrator_operation_context.candidate_context is missing "
+            f"{missing_context_fields}",
+        )
 
 
 def _validate_edgeenv_history_coverage_summary(
