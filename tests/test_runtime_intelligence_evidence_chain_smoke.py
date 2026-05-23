@@ -79,6 +79,19 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
             "missing_telemetry_is_failure": False,
         }
     ]
+    guard_edgeenv_context = coverage_evidence["raw_context"]["edgeenv_regression"]
+    assert guard_edgeenv_context["orchestrator_edgeenv_mapping_hint"][
+        "coverage_summary_owner"
+    ] == "edgeenv"
+    assert guard_edgeenv_context["orchestrator_edgeenv_mapping_hint"][
+        "coverage_summary_path"
+    ] == "runtime_telemetry_context.history.telemetry_coverage"
+    assert guard_edgeenv_context[
+        "orchestrator_mapping_hint_operation_context_role"
+    ] == "supplemental"
+    assert guard_edgeenv_context["orchestrator_candidate_context_telemetry_source"] == (
+        "inferedge_orchestrator_operation_summary"
+    )
     assert bundle["deployment_decision"]["decision"] == "review_required"
     assert bundle["deployment_decision"]["guard_status"] == "warning"
     assert "guard_warning_review" in bundle["deployment_decision"]["triggered_rules"]
