@@ -64,9 +64,14 @@ The initial gate is conservative:
 - Runtime Intelligence report must contain the required risk summary rows
 - precomputed AIGuard evidence must remain report context, not the final decision owner
 - Orchestrator context must remain supplemental evidence, not a comparability gate
+- bundle source repository mapping must keep Runtime, EdgeEnv, Orchestrator,
+  AIGuard, and Lab roles separated
+- producer schema markers for EdgeEnv history, Orchestrator feed, and AIGuard
+  diagnosis evidence must stay aligned with the committed smoke artifacts
 - portfolio demo check status must be `pass`
 
 The bundle manifest gate is implemented by `scripts/check_runtime_intelligence_bundle_manifest.py`. It verifies that the bundle contains baseline/candidate Runtime results, EdgeEnv regression evidence, AIGuard guard evidence, and explicit owner/boundary metadata before Lab generates the report.
+The same gate now also checks `source_repositories`, `artifact_roles`, and `producer_contracts` so the smoke remains a cross-repo handoff fixture rather than a Lab-only report sample.
 
 The artifact gate is implemented by `scripts/check_runtime_intelligence_artifact_bundle.py`. It checks the generated Markdown / HTML report for the required Runtime Intelligence rows, including Lab ownership, EdgeEnv comparability, Orchestrator operation feed context, AIGuard runtime operation anomalies, and triggered deployment review rules.
 

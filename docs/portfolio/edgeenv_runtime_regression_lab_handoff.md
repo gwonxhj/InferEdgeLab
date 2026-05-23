@@ -83,11 +83,11 @@ poetry run inferedgelab compare \
 
 This second smoke uses committed lightweight artifacts to represent the cross-repo handoff:
 
-- `examples/runtime_intelligence_chain/bundle_manifest.json` declares the local-first artifact bundle, file paths, owners, and boundary flags.
+- `examples/runtime_intelligence_chain/bundle_manifest.json` declares the local-first artifact bundle, file paths, source repositories, artifact roles, producer contracts, owners, and boundary flags.
 - Orchestrator context is preserved inside the EdgeEnv regression artifact as `orchestrator_operation_context`.
 - AIGuard deterministic queue/thermal evidence is passed as a precomputed `guard_analysis` artifact.
 - Lab owns the combined report and deployment decision.
-- `scripts/check_runtime_intelligence_bundle_manifest.py` gates the bundle manifest before report generation.
+- `scripts/check_runtime_intelligence_bundle_manifest.py` gates the bundle manifest before report generation, including source repository mapping and schema markers for the EdgeEnv history, Orchestrator feed, and AIGuard diagnosis artifacts.
 - `scripts/check_runtime_intelligence_artifact_bundle.py` gates the generated report so required Runtime Intelligence rows and ownership text cannot disappear silently.
 
 Expected Lab behavior:
