@@ -102,6 +102,7 @@ Expected Lab behavior:
 - Markdown/HTML reports include a `Runtime Intelligence Risk Summary` that summarizes EdgeEnv comparability/regression, telemetry replay gaps, AIGuard deterministic evidence, and the Lab-owned deployment decision in one reviewer-facing table.
 - When EdgeEnv includes preserved Orchestrator feed context, the `Runtime Intelligence Risk Summary` surfaces queue, thermal, throttling, memory, and fallback context as supplemental runtime evidence.
 - When `--guard-analysis` is provided, Lab ingests the precomputed AIGuard artifact as evidence without requiring AIGuard to be installed in the Lab environment.
+- The committed Runtime Intelligence guard fixture preserves AIGuard's coverage-gap diagnosis, including `runtime_telemetry_field_gap`, as deterministic review context rather than a Lab policy override.
 - Guard evidence details preserve explanatory fields such as `why_it_matters`, evidence-local `suspected_causes`, and `recommendation`.
 - Deployment decision is `review_required`.
 - Triggered rules include `edgeenv_runtime_regression_review`.
