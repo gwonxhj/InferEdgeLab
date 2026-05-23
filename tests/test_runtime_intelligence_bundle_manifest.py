@@ -135,6 +135,44 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_orchestrator_sc
     ) in summary
 
 
+def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_mapping_hint(
+    tmp_path,
+):
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    edgeenv_path = (
+        REPO_ROOT
+        / "examples"
+        / "runtime_intelligence_chain"
+        / manifest["files"]["edgeenv_regression_report"]
+    )
+    edgeenv = json.loads(edgeenv_path.read_text(encoding="utf-8"))
+    operation_context = edgeenv["runtime_telemetry_context"]["candidate"][
+        "orchestrator_operation_context"
+    ]
+    mapping_hint = operation_context["edgeenv_mapping_hint"]
+    mapping_hint["coverage_summary_owner"] = "orchestrator"
+    mapping_hint.pop("candidate_context_required_fields")
+    operation_context["candidate_context"].pop("telemetry_source")
+
+    edgeenv_copy = tmp_path / "edgeenv_regression.json"
+    edgeenv_copy.write_text(json.dumps(edgeenv), encoding="utf-8")
+    manifest["files"]["edgeenv_regression_report"] = str(edgeenv_copy)
+    manifest_path = tmp_path / "bundle_manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(manifest=str(manifest_path), summary_out=str(summary_path))
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert (
+        "edgeenv_mapping_hint.coverage_summary_owner must be edgeenv"
+        in summary
+    )
+    assert "candidate_context_required_fields must be a list" in summary
+    assert "candidate_context is missing ['telemetry_source']" in summary
+
+
 def test_runtime_intelligence_bundle_manifest_gate_fails_for_incomplete_guard_evidence(
     tmp_path,
 ):
