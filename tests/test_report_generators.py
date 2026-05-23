@@ -202,6 +202,26 @@ def make_edgeenv_regression() -> dict:
                 "execution_sequence_id": 1,
                 "history_execution_sequence_id": 1,
                 "telemetry_source": "synthetic_local_fixture",
+                "telemetry_coverage": {
+                    "schema_version": "inferedge-runtime-telemetry-coverage-v1",
+                    "expected_fields": [
+                        "gpu_temperature",
+                        "queue_depth",
+                        "telemetry_timestamp",
+                    ],
+                    "observed_fields": [
+                        "gpu_temperature",
+                        "queue_depth",
+                        "telemetry_timestamp",
+                    ],
+                    "missing_fields": [],
+                    "expected_field_count": 3,
+                    "observed_field_count": 3,
+                    "missing_field_count": 0,
+                    "coverage_ratio": 1.0,
+                    "comparability_owner": "edgeenv",
+                    "missing_telemetry_is_failure": False,
+                },
             },
             "candidate": {
                 "run_id": "candidate",
@@ -210,6 +230,25 @@ def make_edgeenv_regression() -> dict:
                 "execution_sequence_id": 2,
                 "history_execution_sequence_id": 2,
                 "telemetry_source": "synthetic_local_fixture",
+                "telemetry_coverage": {
+                    "schema_version": "inferedge-runtime-telemetry-coverage-v1",
+                    "expected_fields": [
+                        "gpu_temperature",
+                        "queue_depth",
+                        "telemetry_timestamp",
+                    ],
+                    "observed_fields": [
+                        "gpu_temperature",
+                        "telemetry_timestamp",
+                    ],
+                    "missing_fields": ["queue_depth"],
+                    "expected_field_count": 3,
+                    "observed_field_count": 2,
+                    "missing_field_count": 1,
+                    "coverage_ratio": 0.666667,
+                    "comparability_owner": "edgeenv",
+                    "missing_telemetry_is_failure": False,
+                },
             },
             "history": {
                 "schema_version": "edgeenv.runtime-telemetry-history.v1",
@@ -476,7 +515,9 @@ def test_generate_compare_markdown_includes_edgeenv_regression_evidence():
     assert "### Runtime Telemetry Context" in text
     assert "edgeenv.runtime-telemetry-history.v1" in text
     assert "history_execution_sequence_id" in text
-    assert "| candidate `candidate` | True | True | 2 | 2 |" in text
+    assert "coverage_missing_fields" in text
+    assert "| candidate `candidate` | True | True | 2 | 2 | synthetic_local_fixture | 0.6667 | queue_depth | False |" in text
+    assert "| Runtime telemetry coverage gaps | baseline=none; candidate=queue_depth |" in text
     assert "candidate `candidate`" in text
     assert "Runtime telemetry evidence gaps: none" in text
     assert "not cloud monitoring, ranking, or production observability" in text
@@ -690,6 +731,10 @@ def test_generate_compare_html_includes_edgeenv_regression_evidence():
     assert "edgeenv.runtime-telemetry-history.v1" in html
     assert "history_execution_sequence_id" in html
     assert "synthetic_local_fixture" in html
+    assert "coverage_missing_fields" in html
+    assert "0.6667" in html
+    assert "queue_depth" in html
+    assert "Runtime telemetry coverage gaps" in html
     assert "Runtime telemetry evidence gaps" in html
     assert "not cloud monitoring, ranking, or production observability" in html
 

@@ -101,6 +101,11 @@ def test_compare_cmd_outputs_edgeenv_regression_evidence(tmp_path, capsys):
                         "execution_sequence_id": 2,
                         "history_execution_sequence_id": 2,
                         "telemetry_source": "synthetic_local_fixture",
+                        "telemetry_coverage": {
+                            "coverage_ratio": 0.666667,
+                            "missing_fields": ["queue_depth"],
+                            "missing_telemetry_is_failure": False,
+                        },
                     },
                     "history": {
                         "schema_version": "edgeenv.runtime-telemetry-history.v1",
@@ -131,6 +136,10 @@ def test_compare_cmd_outputs_edgeenv_regression_evidence(tmp_path, capsys):
     assert "regression_detected: True" in out
     assert "Runtime Telemetry Context" in out
     assert "candidate: run_id=candidate" in out
+    assert "candidate_coverage:" in out
+    assert "ratio=0.6667" in out
+    assert "missing=queue_depth" in out
+    assert "missing_is_failure=False" in out
     assert "history_sequence=2" in out
     assert "evidence_gaps: none" in out
     assert "decision: review_required" in out

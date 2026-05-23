@@ -137,6 +137,14 @@ def _render_runtime_telemetry_context(context: dict) -> None:
             f"history_sequence={run_context.get('history_execution_sequence_id', '-')}, "
             f"source={run_context.get('telemetry_source', '-')}"
         )
+        coverage = _runtime_telemetry_coverage(run_context)
+        if coverage is not None:
+            rprint(
+                f"- {label}_coverage: "
+                f"ratio={_fmt_num(coverage.get('coverage_ratio'))}, "
+                f"missing={_fmt_coverage_missing_fields(coverage)}, "
+                f"missing_is_failure={coverage.get('missing_telemetry_is_failure', '-')}"
+            )
     evidence_gaps = context.get("evidence_gaps") or []
     if evidence_gaps:
         rprint("- evidence_gaps:")
@@ -144,6 +152,23 @@ def _render_runtime_telemetry_context(context: dict) -> None:
             rprint(f"  - {gap}")
     else:
         rprint("- evidence_gaps: none")
+
+
+def _runtime_telemetry_coverage(context: dict) -> dict | None:
+    coverage = context.get("telemetry_coverage")
+    if isinstance(coverage, dict):
+        return coverage
+    coverage = context.get("history_telemetry_coverage")
+    if isinstance(coverage, dict):
+        return coverage
+    return None
+
+
+def _fmt_coverage_missing_fields(coverage: dict) -> str:
+    missing_fields = coverage.get("missing_fields")
+    if not isinstance(missing_fields, list) or not missing_fields:
+        return "none"
+    return ", ".join(str(item) for item in missing_fields)
 
 
 def compare_cmd(

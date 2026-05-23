@@ -450,6 +450,7 @@ def _runtime_telemetry_context_to_html(context: Dict[str, Any]) -> str:
     rows = []
     for label in ("baseline", "candidate"):
         run_context = context.get(label) or {}
+        coverage = _runtime_telemetry_coverage(run_context)
         rows.append(
             f"""
             <tr>
@@ -459,6 +460,9 @@ def _runtime_telemetry_context_to_html(context: Dict[str, Any]) -> str:
               <td>{escape(_fmt_num(run_context.get("execution_sequence_id")))}</td>
               <td>{escape(_fmt_num(run_context.get("history_execution_sequence_id")))}</td>
               <td>{escape(str(run_context.get("telemetry_source", "-")))}</td>
+              <td>{escape(_fmt_coverage_ratio(coverage))}</td>
+              <td>{escape(_fmt_coverage_missing_fields(coverage))}</td>
+              <td>{escape(_fmt_missing_is_failure(coverage))}</td>
             </tr>
             """
         )
@@ -493,6 +497,9 @@ def _runtime_telemetry_context_to_html(context: Dict[str, Any]) -> str:
           <th>execution_sequence_id</th>
           <th>history_execution_sequence_id</th>
           <th>telemetry_source</th>
+          <th>coverage_ratio</th>
+          <th>coverage_missing_fields</th>
+          <th>missing_is_failure</th>
         </tr>
       </thead>
       <tbody>{''.join(rows)}</tbody>
@@ -502,6 +509,40 @@ def _runtime_telemetry_context_to_html(context: Dict[str, Any]) -> str:
     <p><strong>Telemetry context notes</strong></p>
     <ul>{notes_html}</ul>
     """
+
+
+def _runtime_telemetry_coverage(context: Dict[str, Any]) -> Dict[str, Any] | None:
+    coverage = context.get("telemetry_coverage")
+    if isinstance(coverage, dict):
+        return coverage
+    coverage = context.get("history_telemetry_coverage")
+    if isinstance(coverage, dict):
+        return coverage
+    return None
+
+
+def _fmt_coverage_ratio(coverage: Dict[str, Any] | None) -> str:
+    if coverage is None:
+        return "-"
+    return _fmt_num(coverage.get("coverage_ratio"))
+
+
+def _fmt_coverage_missing_fields(coverage: Dict[str, Any] | None) -> str:
+    if coverage is None:
+        return "-"
+    missing_fields = coverage.get("missing_fields")
+    if not isinstance(missing_fields, list) or not missing_fields:
+        return "none"
+    return ", ".join(str(item) for item in missing_fields)
+
+
+def _fmt_missing_is_failure(coverage: Dict[str, Any] | None) -> str:
+    if coverage is None:
+        return "-"
+    value = coverage.get("missing_telemetry_is_failure")
+    if value is None:
+        return "-"
+    return str(value)
 
 
 def _runtime_intelligence_risk_summary_to_html(

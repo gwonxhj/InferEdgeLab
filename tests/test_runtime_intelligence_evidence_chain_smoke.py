@@ -42,6 +42,10 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert "edgeenv_runtime_regression_review" in bundle["deployment_decision"][
         "triggered_rules"
     ]
+    assert (
+        "| Runtime telemetry coverage gaps | baseline=none; candidate=queue_depth |"
+        in bundle["markdown"]
+    )
     assert "| Orchestrator operation feed context | 1 |" in bundle["markdown"]
     assert "| Orchestrator context attached runs | candidate |" in bundle["markdown"]
     assert "runtime_queue_overload, runtime_thermal_instability" in bundle["markdown"]
@@ -80,6 +84,9 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "Guard Analysis" in out
     assert "runtime_queue_overload" in out
     assert "Runtime Intelligence Risk Summary" in markdown
+    assert "Runtime telemetry coverage gaps" in markdown
+    assert "coverage_missing_fields" in markdown
+    assert "queue_depth" in markdown
     assert "AIGuard runtime operation anomalies" in markdown
     assert "Orchestrator context attached runs" in markdown
     assert "Runtime Intelligence Risk Summary" in html
