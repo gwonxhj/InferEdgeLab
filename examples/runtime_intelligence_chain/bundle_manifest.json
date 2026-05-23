@@ -1,0 +1,32 @@
+{
+  "schema_version": "inferedge.runtime-intelligence-artifact-bundle.v1",
+  "bundle_id": "runtime-intelligence-chain-smoke",
+  "role": "local-first-runtime-intelligence-artifact-bundle",
+  "description": "Lightweight fixture bundle for the Orchestrator -> EdgeEnv -> AIGuard -> Lab Runtime Intelligence evidence chain.",
+  "files": {
+    "baseline_result": "../edgeenv_regression/lab_baseline_result.json",
+    "candidate_result": "../edgeenv_regression/lab_candidate_result.json",
+    "edgeenv_regression_report": "edgeenv_regression_with_orchestrator_context.json",
+    "aiguard_guard_analysis": "aiguard_runtime_operation_guard_analysis.json"
+  },
+  "ownership": {
+    "runtime_result_owner": "runtime",
+    "regression_owner": "edgeenv",
+    "operation_context_owner": "orchestrator",
+    "diagnosis_owner": "aiguard",
+    "deployment_decision_owner": "lab"
+  },
+  "boundaries": {
+    "orchestrator_context_is_verdict": false,
+    "orchestrator_context_is_comparability_gate": false,
+    "aiguard_is_final_decision_owner": false,
+    "lab_is_final_decision_owner": true,
+    "production_observability_platform": false
+  },
+  "expected_report_markers": [
+    "Runtime Intelligence Risk Summary",
+    "Orchestrator operation feed context",
+    "AIGuard runtime operation anomalies",
+    "Lab remains the final deployment decision owner."
+  ]
+}

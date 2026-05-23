@@ -44,6 +44,8 @@ Expected artifacts are intentionally file-based and local-first:
 
 - benchmark result JSON under `reports/*.json`
 - `BENCHMARKS.md`
+- Runtime Intelligence bundle manifest under `examples/runtime_intelligence_chain/bundle_manifest.json`
+- Runtime Intelligence bundle manifest gate summary
 - EdgeEnv regression Markdown / HTML report under `reports/runtime_intelligence_ci/`
 - deterministic Runtime Intelligence summary Markdown / HTML with precomputed AIGuard runtime operation evidence
 - Runtime Intelligence artifact gate summary
@@ -58,10 +60,13 @@ The initial gate is conservative:
 
 - full pytest must pass
 - benchmark smoke must complete
+- Runtime Intelligence bundle manifest must preserve file paths and ownership boundaries
 - Runtime Intelligence report must contain the required risk summary rows
 - precomputed AIGuard evidence must remain report context, not the final decision owner
 - Orchestrator context must remain supplemental evidence, not a comparability gate
 - portfolio demo check status must be `pass`
+
+The bundle manifest gate is implemented by `scripts/check_runtime_intelligence_bundle_manifest.py`. It verifies that the bundle contains baseline/candidate Runtime results, EdgeEnv regression evidence, AIGuard guard evidence, and explicit owner/boundary metadata before Lab generates the report.
 
 The artifact gate is implemented by `scripts/check_runtime_intelligence_artifact_bundle.py`. It checks the generated Markdown / HTML report for the required Runtime Intelligence rows, including Lab ownership, EdgeEnv comparability, Orchestrator operation feed context, AIGuard runtime operation anomalies, and triggered deployment review rules.
 
