@@ -98,12 +98,19 @@ inferedge:portfolio-report:
 inferedge:deployment-risk-gate:
   extends: .inferedge_python
   stage: deployment-risk
+  needs:
+    - job: inferedge:deterministic-anomaly-summary
+      artifacts: true
+    - job: inferedge:portfolio-report
+      artifacts: true
   script:
     - mkdir -p "$INFEREDGE_REPORT_DIR"
     - poetry run inferedgelab portfolio-demo-check --format json > "$INFEREDGE_REPORT_DIR/deployment_risk_summary.json"
+    - poetry run python scripts/check_runtime_intelligence_ci_artifacts.py --report-dir "$INFEREDGE_REPORT_DIR" --summary-out "$INFEREDGE_REPORT_DIR/runtime_intelligence_ci_artifact_gate_summary.md"
     - python -c "import json, pathlib, sys; data=json.loads(pathlib.Path('$INFEREDGE_REPORT_DIR/deployment_risk_summary.json').read_text()); sys.exit(0 if data.get('status') == 'pass' else 2)"
   artifacts:
     when: always
     expire_in: 14 days
     paths:
       - "$INFEREDGE_REPORT_DIR/deployment_risk_summary.json"
+      - "$INFEREDGE_REPORT_DIR/runtime_intelligence_ci_artifact_gate_summary.md"
