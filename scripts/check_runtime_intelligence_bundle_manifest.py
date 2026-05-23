@@ -56,6 +56,25 @@ REQUIRED_GUARD_TYPES = {
     "runtime_queue_overload",
     "runtime_thermal_instability",
 }
+REQUIRED_GUARD_EVIDENCE_FIELDS = {
+    "type",
+    "metric_name",
+    "observed_value",
+    "baseline_value",
+    "threshold",
+    "delta",
+    "delta_pct",
+    "increase_factor",
+    "severity",
+    "status",
+    "explanation",
+    "why_it_matters",
+    "suspected_causes",
+    "recommendation",
+    "raw_context",
+}
+VALID_GUARD_EVIDENCE_STATUSES = {"passed", "warning", "failed", "skipped"}
+VALID_GUARD_EVIDENCE_SEVERITIES = {"low", "medium", "high", "critical"}
 
 
 def _load_json(path: Path, label: str) -> dict[str, Any]:
@@ -273,6 +292,50 @@ def _validate_guard_analysis(guard_analysis: dict[str, Any], errors: list[str]) 
     }
     missing = sorted(REQUIRED_GUARD_TYPES - evidence_types)
     _record(not missing, errors, f"AIGuard evidence is missing types: {missing}")
+    for index, item in enumerate(evidence):
+        if not isinstance(item, dict):
+            errors.append(f"AIGuard evidence[{index}] must be an object")
+            continue
+        missing_fields = sorted(REQUIRED_GUARD_EVIDENCE_FIELDS - set(item))
+        _record(
+            not missing_fields,
+            errors,
+            f"AIGuard evidence[{index}] is missing fields: {missing_fields}",
+        )
+        if missing_fields:
+            continue
+        _record(
+            item.get("status") in VALID_GUARD_EVIDENCE_STATUSES,
+            errors,
+            f"AIGuard evidence[{index}].status is invalid",
+        )
+        _record(
+            item.get("severity") in VALID_GUARD_EVIDENCE_SEVERITIES,
+            errors,
+            f"AIGuard evidence[{index}].severity is invalid",
+        )
+        _record(
+            isinstance(item.get("why_it_matters"), str)
+            and bool(item.get("why_it_matters")),
+            errors,
+            f"AIGuard evidence[{index}].why_it_matters must be a non-empty string",
+        )
+        _record(
+            isinstance(item.get("recommendation"), str)
+            and bool(item.get("recommendation")),
+            errors,
+            f"AIGuard evidence[{index}].recommendation must be a non-empty string",
+        )
+        _record(
+            isinstance(item.get("suspected_causes"), list),
+            errors,
+            f"AIGuard evidence[{index}].suspected_causes must be a list",
+        )
+        _record(
+            isinstance(item.get("raw_context"), dict),
+            errors,
+            f"AIGuard evidence[{index}].raw_context must be an object",
+        )
 
 
 def _write_summary(path: str, *, manifest_path: Path, errors: list[str]) -> None:

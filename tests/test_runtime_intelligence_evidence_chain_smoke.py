@@ -33,6 +33,9 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
         "candidate"
     ]["orchestrator_context_present"] is True
     assert bundle["guard_analysis"]["guard_verdict"] == "suspicious"
+    assert bundle["guard_analysis"]["primary_reason"] == (
+        "Runtime scheduling evidence requires review."
+    )
     assert bundle["deployment_decision"]["decision"] == "review_required"
     assert bundle["deployment_decision"]["guard_status"] == "warning"
     assert "guard_warning_review" in bundle["deployment_decision"]["triggered_rules"]
@@ -46,6 +49,12 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
         "markdown"
     ]
     assert "Lab remains the final deployment decision owner" in bundle["markdown"]
+    assert all(
+        "raw_context" in item
+        for item in bundle["guard_analysis"]["evidence"]
+        if item["type"]
+        in {"runtime_queue_overload", "runtime_thermal_instability"}
+    )
 
 
 def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
