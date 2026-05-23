@@ -208,6 +208,14 @@ def _validate_edgeenv_report(edgeenv_report: dict[str, Any], errors: list[str]) 
         errors,
         "runtime_telemetry_context.history.summary.orchestrator_feed_runs must be 1",
     )
+    history_coverage = history.get("telemetry_coverage")
+    _record(
+        isinstance(history_coverage, dict),
+        errors,
+        "runtime_telemetry_context.history must include telemetry_coverage",
+    )
+    if isinstance(history_coverage, dict):
+        _validate_edgeenv_history_coverage_summary(history_coverage, errors)
 
     candidate = context.get("candidate") or {}
     _record(
@@ -268,6 +276,55 @@ def _validate_edgeenv_report(edgeenv_report: dict[str, Any], errors: list[str]) 
         operation_context.get("regression_owner") == "edgeenv",
         errors,
         "orchestrator_operation_context.regression_owner must be edgeenv",
+    )
+
+
+def _validate_edgeenv_history_coverage_summary(
+    coverage: dict[str, Any],
+    errors: list[str],
+) -> None:
+    _record(
+        coverage.get("missing_field_run_count") == 1,
+        errors,
+        "runtime_telemetry_context.history.telemetry_coverage."
+        "missing_field_run_count must be 1",
+    )
+    missing_field_runs = coverage.get("missing_field_runs")
+    _record(
+        isinstance(missing_field_runs, list),
+        errors,
+        "runtime_telemetry_context.history.telemetry_coverage."
+        "missing_field_runs must be a list",
+    )
+    if isinstance(missing_field_runs, list):
+        candidate_gap = next(
+            (
+                item
+                for item in missing_field_runs
+                if isinstance(item, dict)
+                and item.get("run_id") == "edgeenv-smoke-candidate"
+            ),
+            None,
+        )
+        _record(
+            isinstance(candidate_gap, dict),
+            errors,
+            "runtime_telemetry_context.history.telemetry_coverage."
+            "missing_field_runs must include edgeenv-smoke-candidate",
+        )
+        if isinstance(candidate_gap, dict):
+            _record(
+                candidate_gap.get("missing_fields") == ["queue_depth"],
+                errors,
+                "runtime_telemetry_context.history.telemetry_coverage "
+                "candidate missing_fields must be ['queue_depth']",
+            )
+    run_summaries = coverage.get("run_summaries")
+    _record(
+        isinstance(run_summaries, list) and len(run_summaries) >= 2,
+        errors,
+        "runtime_telemetry_context.history.telemetry_coverage."
+        "run_summaries must include baseline and candidate runs",
     )
 
 

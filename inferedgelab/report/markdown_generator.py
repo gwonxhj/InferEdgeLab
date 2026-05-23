@@ -220,6 +220,16 @@ def _append_runtime_telemetry_context(lines: list[str], context: Dict[str, Any])
             for key in ("registered_runs", "telemetry_runs", "missing_telemetry_runs"):
                 if key in summary:
                     lines.append(f"  - {key}: {summary.get(key)}")
+        coverage = history.get("telemetry_coverage")
+        if isinstance(coverage, dict):
+            lines.append("- history_telemetry_coverage:")
+            for key in ("runs_with_coverage", "missing_field_run_count"):
+                if key in coverage:
+                    lines.append(f"  - {key}: {coverage.get(key)}")
+            lines.append(
+                "  - missing_field_runs: "
+                f"{_fmt_history_missing_field_runs(coverage)}"
+            )
     lines.append("")
     lines.append(
         "| Run | telemetry_present | history_entry | execution_sequence_id | history_execution_sequence_id | telemetry_source | coverage_ratio | coverage_missing_fields | missing_is_failure |"
@@ -265,6 +275,22 @@ def _runtime_telemetry_coverage(run_context: Dict[str, Any]) -> Dict[str, Any] |
     if isinstance(coverage, dict):
         return coverage
     return None
+
+
+def _fmt_history_missing_field_runs(coverage: Dict[str, Any]) -> str:
+    missing_field_runs = coverage.get("missing_field_runs")
+    if not isinstance(missing_field_runs, list) or not missing_field_runs:
+        return "none"
+    labels: list[str] = []
+    for item in missing_field_runs:
+        if not isinstance(item, dict):
+            continue
+        missing_fields = item.get("missing_fields")
+        if not isinstance(missing_fields, list):
+            missing_fields = []
+        fields = ",".join(str(field) for field in missing_fields) or "none"
+        labels.append(f"{item.get('run_id', '-')}={fields}")
+    return "; ".join(labels) if labels else "none"
 
 
 def _fmt_coverage_ratio(coverage: Dict[str, Any] | None) -> str:

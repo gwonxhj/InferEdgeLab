@@ -257,6 +257,75 @@ def make_edgeenv_regression() -> dict:
                     "telemetry_runs": 2,
                     "missing_telemetry_runs": 0,
                 },
+                "telemetry_coverage": {
+                    "runs_with_coverage": 2,
+                    "runs_without_coverage": 0,
+                    "expected_fields": [
+                        "gpu_temperature",
+                        "queue_depth",
+                        "telemetry_timestamp",
+                    ],
+                    "observed_fields": [
+                        "gpu_temperature",
+                        "queue_depth",
+                        "telemetry_timestamp",
+                    ],
+                    "missing_fields": ["queue_depth"],
+                    "coverage_ratio_min": 0.666667,
+                    "coverage_ratio_max": 1.0,
+                    "missing_telemetry_is_failure_values": [False],
+                    "any_missing_telemetry_is_failure": False,
+                    "missing_field_run_count": 1,
+                    "missing_field_runs": [
+                        {
+                            "run_id": "candidate",
+                            "missing_fields": ["queue_depth"],
+                            "missing_field_count": 1,
+                            "missing_telemetry_is_failure": False,
+                        }
+                    ],
+                    "run_summaries": [
+                        {
+                            "run_id": "baseline",
+                            "coverage_present": True,
+                            "expected_fields": [
+                                "gpu_temperature",
+                                "queue_depth",
+                                "telemetry_timestamp",
+                            ],
+                            "observed_fields": [
+                                "gpu_temperature",
+                                "queue_depth",
+                                "telemetry_timestamp",
+                            ],
+                            "missing_fields": [],
+                            "expected_field_count": 3,
+                            "observed_field_count": 3,
+                            "missing_field_count": 0,
+                            "coverage_ratio": 1.0,
+                            "missing_telemetry_is_failure": False,
+                        },
+                        {
+                            "run_id": "candidate",
+                            "coverage_present": True,
+                            "expected_fields": [
+                                "gpu_temperature",
+                                "queue_depth",
+                                "telemetry_timestamp",
+                            ],
+                            "observed_fields": [
+                                "gpu_temperature",
+                                "telemetry_timestamp",
+                            ],
+                            "missing_fields": ["queue_depth"],
+                            "expected_field_count": 3,
+                            "observed_field_count": 2,
+                            "missing_field_count": 1,
+                            "coverage_ratio": 0.666667,
+                            "missing_telemetry_is_failure": False,
+                        },
+                    ],
+                },
             },
             "evidence_gaps": [],
             "notes": [
@@ -514,6 +583,8 @@ def test_generate_compare_markdown_includes_edgeenv_regression_evidence():
     assert "p99_latency_high" in text
     assert "### Runtime Telemetry Context" in text
     assert "edgeenv.runtime-telemetry-history.v1" in text
+    assert "history_telemetry_coverage" in text
+    assert "missing_field_runs: candidate=queue_depth" in text
     assert "history_execution_sequence_id" in text
     assert "coverage_missing_fields" in text
     assert "| candidate `candidate` | True | True | 2 | 2 | synthetic_local_fixture | 0.6667 | queue_depth | False |" in text
@@ -729,6 +800,8 @@ def test_generate_compare_html_includes_edgeenv_regression_evidence():
     assert "p99_latency_high" in html
     assert "Runtime Telemetry Context" in html
     assert "edgeenv.runtime-telemetry-history.v1" in html
+    assert "history_telemetry_coverage" in html
+    assert "candidate=queue_depth" in html
     assert "history_execution_sequence_id" in html
     assert "synthetic_local_fixture" in html
     assert "coverage_missing_fields" in html

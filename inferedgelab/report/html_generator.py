@@ -440,11 +440,30 @@ def _runtime_telemetry_context_to_html(context: Dict[str, Any]) -> str:
             history_items.append(
                 f"<li><strong>{escape(key)}</strong>: <code>{escape(str(history_summary.get(key)))}</code></li>"
             )
+    history_coverage = history.get("telemetry_coverage") or {}
+    history_coverage_items = []
+    if isinstance(history_coverage, dict):
+        for key in ("runs_with_coverage", "missing_field_run_count"):
+            if key in history_coverage:
+                history_coverage_items.append(
+                    f"<li><strong>{escape(key)}</strong>: <code>{escape(str(history_coverage.get(key)))}</code></li>"
+                )
+        history_coverage_items.append(
+            "<li><strong>missing_field_runs</strong>: "
+            f"<code>{escape(_fmt_history_missing_field_runs(history_coverage))}</code></li>"
+        )
+    history_coverage_html = ""
+    if history_coverage_items:
+        history_coverage_html = (
+            "<p><strong>history_telemetry_coverage</strong></p>"
+            f"<ul>{''.join(history_coverage_items)}</ul>"
+        )
     history_html = ""
     if history:
         history_html = f"""
         <p><strong>history_schema_version</strong>: <code>{escape(str(history.get("schema_version")))}</code></p>
         <ul>{''.join(history_items)}</ul>
+        {history_coverage_html}
         """
 
     rows = []
@@ -519,6 +538,22 @@ def _runtime_telemetry_coverage(context: Dict[str, Any]) -> Dict[str, Any] | Non
     if isinstance(coverage, dict):
         return coverage
     return None
+
+
+def _fmt_history_missing_field_runs(coverage: Dict[str, Any]) -> str:
+    missing_field_runs = coverage.get("missing_field_runs")
+    if not isinstance(missing_field_runs, list) or not missing_field_runs:
+        return "none"
+    labels: list[str] = []
+    for item in missing_field_runs:
+        if not isinstance(item, dict):
+            continue
+        missing_fields = item.get("missing_fields")
+        if not isinstance(missing_fields, list):
+            missing_fields = []
+        fields = ",".join(str(field) for field in missing_fields) or "none"
+        labels.append(f"{item.get('run_id', '-')}={fields}")
+    return "; ".join(labels) if labels else "none"
 
 
 def _fmt_coverage_ratio(coverage: Dict[str, Any] | None) -> str:

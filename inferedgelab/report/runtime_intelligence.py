@@ -148,6 +148,10 @@ def _append_telemetry_context_rows(
 
 
 def _runtime_telemetry_coverage_labels(context: dict[str, Any]) -> list[str]:
+    history_labels = _history_telemetry_coverage_labels(context)
+    if history_labels:
+        return history_labels
+
     labels: list[str] = []
     for run_label in ("baseline", "candidate"):
         run_context = context.get(run_label)
@@ -164,6 +168,74 @@ def _runtime_telemetry_coverage_labels(context: dict[str, Any]) -> list[str]:
         )
         labels.append(f"{run_label}={missing_label}")
     return labels
+
+
+def _history_telemetry_coverage_labels(context: dict[str, Any]) -> list[str]:
+    history = context.get("history")
+    if not isinstance(history, dict):
+        return []
+    coverage = history.get("telemetry_coverage")
+    if not isinstance(coverage, dict):
+        return []
+    run_summaries = coverage.get("run_summaries")
+    if isinstance(run_summaries, list):
+        labels = _coverage_labels_from_run_summaries(context, run_summaries)
+        if labels:
+            return labels
+    missing_field_runs = coverage.get("missing_field_runs")
+    if isinstance(missing_field_runs, list):
+        return _coverage_labels_from_missing_field_runs(context, missing_field_runs)
+    return []
+
+
+def _coverage_labels_from_run_summaries(
+    context: dict[str, Any],
+    run_summaries: list[Any],
+) -> list[str]:
+    summary_by_run_id = {
+        item.get("run_id"): item
+        for item in run_summaries
+        if isinstance(item, dict) and isinstance(item.get("run_id"), str)
+    }
+    labels: list[str] = []
+    for run_label in ("baseline", "candidate"):
+        run_context = context.get(run_label)
+        if not isinstance(run_context, dict):
+            continue
+        summary = summary_by_run_id.get(run_context.get("run_id"))
+        if not isinstance(summary, dict):
+            continue
+        labels.append(f"{run_label}={_missing_fields_label(summary)}")
+    return labels
+
+
+def _coverage_labels_from_missing_field_runs(
+    context: dict[str, Any],
+    missing_field_runs: list[Any],
+) -> list[str]:
+    label_by_run_id: dict[str, str] = {}
+    for item in missing_field_runs:
+        if not isinstance(item, dict):
+            continue
+        run_id = item.get("run_id")
+        if isinstance(run_id, str):
+            label_by_run_id[run_id] = _missing_fields_label(item)
+    labels: list[str] = []
+    for run_label in ("baseline", "candidate"):
+        run_context = context.get(run_label)
+        if not isinstance(run_context, dict):
+            continue
+        run_id = run_context.get("run_id")
+        if isinstance(run_id, str) and run_id in label_by_run_id:
+            labels.append(f"{run_label}={label_by_run_id[run_id]}")
+    return labels
+
+
+def _missing_fields_label(payload: dict[str, Any]) -> str:
+    missing_fields = payload.get("missing_fields")
+    if not isinstance(missing_fields, list):
+        missing_fields = []
+    return ",".join(str(item) for item in missing_fields) if missing_fields else "none"
 
 
 def _coverage_payload(run_context: dict[str, Any]) -> dict[str, Any] | None:

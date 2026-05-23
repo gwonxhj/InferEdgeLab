@@ -126,6 +126,14 @@ def _render_runtime_telemetry_context(context: dict) -> None:
                 f"telemetry={summary.get('telemetry_runs', '-')}, "
                 f"missing={summary.get('missing_telemetry_runs', '-')}"
             )
+        coverage = history.get("telemetry_coverage")
+        if isinstance(coverage, dict):
+            rprint(
+                "- history_telemetry_coverage: "
+                f"runs={coverage.get('runs_with_coverage', '-')}, "
+                f"missing_field_runs={coverage.get('missing_field_run_count', '-')}, "
+                f"missing={_fmt_history_missing_field_runs(coverage)}"
+            )
     for label in ("baseline", "candidate"):
         run_context = context.get(label) or {}
         rprint(
@@ -169,6 +177,22 @@ def _fmt_coverage_missing_fields(coverage: dict) -> str:
     if not isinstance(missing_fields, list) or not missing_fields:
         return "none"
     return ", ".join(str(item) for item in missing_fields)
+
+
+def _fmt_history_missing_field_runs(coverage: dict) -> str:
+    missing_field_runs = coverage.get("missing_field_runs")
+    if not isinstance(missing_field_runs, list) or not missing_field_runs:
+        return "none"
+    labels: list[str] = []
+    for item in missing_field_runs:
+        if not isinstance(item, dict):
+            continue
+        missing_fields = item.get("missing_fields")
+        if not isinstance(missing_fields, list):
+            missing_fields = []
+        fields = ",".join(str(field) for field in missing_fields) or "none"
+        labels.append(f"{item.get('run_id', '-')}={fields}")
+    return "; ".join(labels) if labels else "none"
 
 
 def compare_cmd(

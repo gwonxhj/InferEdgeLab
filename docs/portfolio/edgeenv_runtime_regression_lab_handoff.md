@@ -57,6 +57,7 @@ The EdgeEnv report fixture represents a same-condition runtime regression:
 - `fps_delta_pct: -22.0`
 - `memory_peak_delta_pct: +40.0`
 - `runtime_telemetry_context`: supplemental telemetry coverage and evidence-gap context from EdgeEnv history export
+- `runtime_telemetry_context.history.telemetry_coverage`: EdgeEnv-owned replay summary for history-level coverage gaps and missing-field runs
 - `runtime_telemetry_context.<run>.orchestrator_operation_context`: supplemental operation context when EdgeEnv history was exported with an Orchestrator feed
 
 ## Reproduction Command
