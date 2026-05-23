@@ -65,6 +65,10 @@ The initial gate is conservative:
 - Runtime Intelligence report must contain the required risk summary rows
 - Runtime Intelligence report must preserve telemetry coverage gap markers such as
   `runtime_telemetry_field_gap` from the AIGuard evidence artifact
+- AIGuard coverage evidence must preserve
+  `telemetry_coverage_source=history_telemetry_coverage` and EdgeEnv history
+  missing-field runs, so the artifact chain proves producer-side coverage
+  summary reuse instead of downstream recomputation
 - precomputed AIGuard evidence must remain report context, not the final decision owner
 - Orchestrator context must remain supplemental evidence, not a comparability gate
 - bundle source repository mapping must keep Runtime, EdgeEnv, Orchestrator,
