@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from scripts.check_runtime_intelligence_ci_artifacts import main as ci_artifact_gate
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE = REPO_ROOT / "ci" / "gitlab" / "runtime-intelligence-artifacts.yml"
@@ -39,6 +41,11 @@ def test_runtime_intelligence_gitlab_template_keeps_local_first_artifact_contrac
     assert "--guard-analysis" in text
     assert "check_runtime_intelligence_artifact_bundle.py" in text
     assert "runtime_anomaly_gate_summary.md" in text
+    assert "check_runtime_intelligence_ci_artifacts.py" in text
+    assert "runtime_intelligence_ci_artifact_gate_summary.md" in text
+    assert "needs:" in text
+    assert "inferedge:deterministic-anomaly-summary" in text
+    assert "inferedge:portfolio-report" in text
     assert "reports/runtime_intelligence_ci" in text
     assert "portfolio-demo-check --format json" in text
     assert "artifacts:" in text
@@ -54,3 +61,93 @@ def test_runtime_intelligence_gitlab_doc_states_ownership_boundaries():
     assert "does not become a production runtime control plane" in text
     assert "new InferEdge Intelligence repo" in text
     assert "ML or forecasting pipeline" in text
+
+
+def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_path):
+    report_dir = tmp_path / "runtime_intelligence_ci"
+    report_dir.mkdir()
+    (report_dir / "edgeenv_runtime_regression.md").write_text(
+        "# EdgeEnv Regression\n",
+        encoding="utf-8",
+    )
+    (report_dir / "edgeenv_runtime_regression.html").write_text(
+        "<h1>EdgeEnv Regression</h1>",
+        encoding="utf-8",
+    )
+    (report_dir / "runtime_anomaly_summary.html").write_text(
+        "<h2>Runtime Intelligence Risk Summary</h2>",
+        encoding="utf-8",
+    )
+    (report_dir / "runtime_anomaly_summary.md").write_text(
+        "\n".join(
+            [
+                "## Runtime Intelligence Risk Summary",
+                "Lab remains the final deployment decision owner.",
+                "AIGuard runtime operation anomalies",
+                "runtime_queue_overload, runtime_thermal_instability",
+                "guard_warning_review",
+                "edgeenv_runtime_regression_review",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    for name in (
+        "runtime_intelligence_bundle_manifest_gate_summary.md",
+        "runtime_anomaly_gate_summary.md",
+    ):
+        (report_dir / name).write_text("- Status: passed\n", encoding="utf-8")
+    (report_dir / "portfolio_demo_check.md").write_text(
+        "status: pass\n",
+        encoding="utf-8",
+    )
+    (report_dir / "portfolio_demo_check.json").write_text(
+        '{"status": "pass"}',
+        encoding="utf-8",
+    )
+    summary_path = tmp_path / "ci_artifact_gate_summary.md"
+
+    result = ci_artifact_gate(
+        report_dir=str(report_dir),
+        summary_out=str(summary_path),
+    )
+
+    assert result == 0
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "- Status: passed" in summary
+
+
+def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_risk_summary(
+    tmp_path,
+):
+    report_dir = tmp_path / "runtime_intelligence_ci"
+    report_dir.mkdir()
+    for name in (
+        "edgeenv_runtime_regression.md",
+        "edgeenv_runtime_regression.html",
+        "runtime_anomaly_summary.html",
+        "portfolio_demo_check.md",
+    ):
+        (report_dir / name).write_text("placeholder\n", encoding="utf-8")
+    (report_dir / "runtime_anomaly_summary.md").write_text(
+        "Lab remains the final deployment decision owner.\n",
+        encoding="utf-8",
+    )
+    for name in (
+        "runtime_intelligence_bundle_manifest_gate_summary.md",
+        "runtime_anomaly_gate_summary.md",
+    ):
+        (report_dir / name).write_text("- Status: passed\n", encoding="utf-8")
+    (report_dir / "portfolio_demo_check.json").write_text(
+        '{"status": "pass"}',
+        encoding="utf-8",
+    )
+    summary_path = tmp_path / "ci_artifact_gate_summary.md"
+
+    result = ci_artifact_gate(
+        report_dir=str(report_dir),
+        summary_out=str(summary_path),
+    )
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "runtime report missing marker: ## Runtime Intelligence Risk Summary" in summary
