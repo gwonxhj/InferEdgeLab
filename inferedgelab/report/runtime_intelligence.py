@@ -125,6 +125,14 @@ def _append_telemetry_context_rows(
                 "EdgeEnv preserved Orchestrator context as supplemental telemetry evidence, not a comparability gate.",
             )
         )
+    if "history_seed_runs" in history_summary:
+        rows.append(
+            (
+                "Runtime telemetry history seed",
+                str(history_summary.get("history_seed_runs")),
+                "EdgeEnv preserves Runtime history seeds as replay traceability; Lab owns the final decision.",
+            )
+        )
 
     coverage_labels = _runtime_telemetry_coverage_labels(telemetry_context)
     if coverage_labels:
@@ -290,6 +298,32 @@ def _append_aiguard_runtime_operation_rows(
                 "AIGuard Orchestrator context handoff",
                 ", ".join(context_parts),
                 "AIGuard interpreted EdgeEnv-preserved Orchestrator context as supplemental operation evidence.",
+            )
+        )
+
+    seed_runs = edgeenv_metrics.get("history_telemetry_seed_runs")
+    if seed_runs is not None:
+        seed_schema = edgeenv_metrics.get(
+            "candidate_runtime_telemetry_history_seed_schema_version"
+        )
+        registry_owner = edgeenv_metrics.get(
+            "candidate_runtime_telemetry_history_seed_registry_owner"
+        )
+        decision_owner = edgeenv_metrics.get(
+            "candidate_runtime_telemetry_history_seed_decision_owner"
+        )
+        point_count = edgeenv_metrics.get(
+            "candidate_runtime_telemetry_history_seed_point_count"
+        )
+        rows.append(
+            (
+                "AIGuard history seed handoff",
+                (
+                    f"seeds={seed_runs}, schema={seed_schema}, "
+                    f"registry={registry_owner}, decision={decision_owner}, "
+                    f"candidate_points={point_count}"
+                ),
+                "AIGuard preserves EdgeEnv/Runtime seed markers as raw context, not as deployment policy.",
             )
         )
 

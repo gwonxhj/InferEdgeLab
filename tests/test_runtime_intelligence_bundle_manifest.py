@@ -254,6 +254,39 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_missing_history_cov
     assert "history must include telemetry_coverage" in summary
 
 
+def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_history_seed(
+    tmp_path,
+):
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    edgeenv_path = (
+        REPO_ROOT
+        / "examples"
+        / "runtime_intelligence_chain"
+        / manifest["files"]["edgeenv_regression_report"]
+    )
+    edgeenv = json.loads(edgeenv_path.read_text(encoding="utf-8"))
+    history = edgeenv["runtime_telemetry_context"]["history"]
+    history["summary"]["history_seed_runs"] = 1
+    candidate_seed = history["runs"][1]["runtime_telemetry_history_seed"]
+    candidate_seed["registry_owner"] = "runtime"
+    candidate_seed["decision_owner"] = "aiguard"
+
+    edgeenv_copy = tmp_path / "edgeenv_regression.json"
+    edgeenv_copy.write_text(json.dumps(edgeenv), encoding="utf-8")
+    manifest["files"]["edgeenv_regression_report"] = str(edgeenv_copy)
+    manifest_path = tmp_path / "bundle_manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(manifest=str(manifest_path), summary_out=str(summary_path))
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "history.summary.history_seed_runs must be 2" in summary
+    assert "runtime_telemetry_history_seed.registry_owner must be edgeenv" in summary
+    assert "runtime_telemetry_history_seed.decision_owner must be lab" in summary
+
+
 def test_runtime_intelligence_bundle_manifest_gate_fails_for_missing_guard_coverage(
     tmp_path,
 ):
@@ -369,3 +402,50 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_guard_mapping_h
         "orchestrator_candidate_context_telemetry_source must be "
         "inferedge_orchestrator_operation_summary"
     ) in summary
+
+
+def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_guard_history_seed(
+    tmp_path,
+):
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    guard_path = (
+        REPO_ROOT
+        / "examples"
+        / "runtime_intelligence_chain"
+        / manifest["files"]["aiguard_guard_analysis"]
+    )
+    guard_analysis = json.loads(guard_path.read_text(encoding="utf-8"))
+    coverage_evidence = next(
+        item
+        for item in guard_analysis["evidence"]
+        if item.get("type") == "runtime_telemetry_context_coverage"
+    )
+    edgeenv_context = coverage_evidence["raw_context"]["edgeenv_regression"]
+    edgeenv_context["history_telemetry_seed_runs"] = 1.0
+    edgeenv_context[
+        "candidate_runtime_telemetry_history_seed_registry_owner"
+    ] = "runtime"
+    edgeenv_context[
+        "candidate_runtime_telemetry_history_seed_decision_owner"
+    ] = "aiguard"
+
+    guard_copy = tmp_path / "aiguard_guard_analysis.json"
+    guard_copy.write_text(json.dumps(guard_analysis), encoding="utf-8")
+    manifest["files"]["aiguard_guard_analysis"] = str(guard_copy)
+    manifest_path = tmp_path / "bundle_manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(manifest=str(manifest_path), summary_out=str(summary_path))
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "history_telemetry_seed_runs must be 2.0" in summary
+    assert (
+        "candidate_runtime_telemetry_history_seed_registry_owner must be edgeenv"
+        in summary
+    )
+    assert (
+        "candidate_runtime_telemetry_history_seed_decision_owner must be lab"
+        in summary
+    )
