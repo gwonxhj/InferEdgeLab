@@ -103,6 +103,10 @@
               "telemetry_source",
               "operation",
               "resource"
+            ],
+            "aiguard_evidence_candidates": [
+              "runtime_queue_overload",
+              "runtime_thermal_instability"
             ]
           },
           "orchestrator_mapping_hint_copy_candidate_context_to": "runtime_telemetry_context.candidate",
@@ -114,6 +118,10 @@
             "telemetry_source",
             "operation",
             "resource"
+          ],
+          "orchestrator_mapping_hint_aiguard_evidence_candidates": [
+            "runtime_queue_overload",
+            "runtime_thermal_instability"
           ],
           "baseline_max_temperature_c": null,
           "candidate_max_temperature_c": 78.5,
@@ -220,6 +228,10 @@
               "telemetry_source",
               "operation",
               "resource"
+            ],
+            "aiguard_evidence_candidates": [
+              "runtime_queue_overload",
+              "runtime_thermal_instability"
             ]
           },
           "orchestrator_mapping_hint_copy_candidate_context_to": "runtime_telemetry_context.candidate",
@@ -231,6 +243,10 @@
             "telemetry_source",
             "operation",
             "resource"
+          ],
+          "orchestrator_mapping_hint_aiguard_evidence_candidates": [
+            "runtime_queue_overload",
+            "runtime_thermal_instability"
           ],
           "baseline_max_temperature_c": null,
           "candidate_max_temperature_c": 78.5,
@@ -337,6 +353,10 @@
               "telemetry_source",
               "operation",
               "resource"
+            ],
+            "aiguard_evidence_candidates": [
+              "runtime_queue_overload",
+              "runtime_thermal_instability"
             ]
           },
           "orchestrator_mapping_hint_copy_candidate_context_to": "runtime_telemetry_context.candidate",
@@ -348,6 +368,10 @@
             "telemetry_source",
             "operation",
             "resource"
+          ],
+          "orchestrator_mapping_hint_aiguard_evidence_candidates": [
+            "runtime_queue_overload",
+            "runtime_thermal_instability"
           ],
           "baseline_max_temperature_c": null,
           "candidate_max_temperature_c": 78.5,
@@ -486,23 +510,31 @@
         "operation_context_role": "supplemental",
         "coverage_summary_owner": "edgeenv",
         "coverage_summary_path": "runtime_telemetry_context.history.telemetry_coverage",
-        "candidate_context_required_fields": [
-          "run_id",
-          "telemetry_source",
-          "operation",
-          "resource"
-        ]
-      },
-      "orchestrator_mapping_hint_copy_candidate_context_to": "runtime_telemetry_context.candidate",
-      "orchestrator_mapping_hint_operation_context_role": "supplemental",
-      "orchestrator_mapping_hint_coverage_summary_owner": "edgeenv",
-      "orchestrator_mapping_hint_coverage_summary_path": "runtime_telemetry_context.history.telemetry_coverage",
-      "orchestrator_mapping_hint_candidate_context_required_fields": [
+      "candidate_context_required_fields": [
         "run_id",
         "telemetry_source",
         "operation",
         "resource"
       ],
+      "aiguard_evidence_candidates": [
+        "runtime_queue_overload",
+        "runtime_thermal_instability"
+      ]
+    },
+      "orchestrator_mapping_hint_copy_candidate_context_to": "runtime_telemetry_context.candidate",
+      "orchestrator_mapping_hint_operation_context_role": "supplemental",
+      "orchestrator_mapping_hint_coverage_summary_owner": "edgeenv",
+      "orchestrator_mapping_hint_coverage_summary_path": "runtime_telemetry_context.history.telemetry_coverage",
+    "orchestrator_mapping_hint_candidate_context_required_fields": [
+      "run_id",
+      "telemetry_source",
+      "operation",
+      "resource"
+    ],
+    "orchestrator_mapping_hint_aiguard_evidence_candidates": [
+      "runtime_queue_overload",
+      "runtime_thermal_instability"
+    ],
       "baseline_max_temperature_c": null,
       "candidate_max_temperature_c": 78.5,
       "baseline_throttling_detected": null,
@@ -615,6 +647,10 @@
               "telemetry_source",
               "operation",
               "resource"
+            ],
+            "aiguard_evidence_candidates": [
+              "runtime_queue_overload",
+              "runtime_thermal_instability"
             ]
           }
         }
