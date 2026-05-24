@@ -58,6 +58,7 @@ The EdgeEnv report fixture represents a same-condition runtime regression:
 - `memory_peak_delta_pct: +40.0`
 - `runtime_telemetry_context`: supplemental telemetry coverage and evidence-gap context from EdgeEnv history export
 - `runtime_telemetry_context.history.telemetry_coverage`: EdgeEnv-owned replay summary for history-level coverage gaps and missing-field runs
+- `runtime_telemetry_context.history.runs[].runtime_telemetry_history_seed`: Runtime seed preserved by EdgeEnv for local replay traceability
 - `runtime_telemetry_context.<run>.orchestrator_operation_context`: supplemental operation context when EdgeEnv history was exported with an Orchestrator feed
 - `runtime_telemetry_context.<run>.orchestrator_operation_context.edgeenv_mapping_hint`: producer hint that keeps Orchestrator candidate context supplemental while naming EdgeEnv as the telemetry coverage summary owner
 
@@ -101,11 +102,12 @@ Expected Lab behavior:
 - When EdgeEnv preserves `runtime_telemetry.coverage`, Lab surfaces coverage ratio, missing fields, and `missing_telemetry_is_failure` as evidence quality metadata. These fields do not override EdgeEnv comparability or Lab deployment policy.
 - When `--with-guard` is enabled and the installed AIGuard exposes EdgeEnv regression reasoning, Lab routes the EdgeEnv report to AIGuard and preserves diagnosis evidence such as `runtime_latency_regression`, `runtime_telemetry_context_coverage`, and `runtime_telemetry_replay_context`.
 - The Runtime Intelligence bundle gate requires AIGuard coverage evidence to declare `telemetry_coverage_source=history_telemetry_coverage`, proving that the precomputed guard artifact consumed EdgeEnv's producer-side replay summary.
+- The Runtime Intelligence bundle gate requires Runtime `runtime_telemetry_history_seed` markers to remain visible through EdgeEnv history and AIGuard raw context, including `registry_owner=edgeenv` and `decision_owner=lab`.
 - The Runtime Intelligence bundle gate requires the preserved Orchestrator `edgeenv_mapping_hint` to keep `coverage_summary_owner=edgeenv`, `coverage_summary_path=runtime_telemetry_context.history.telemetry_coverage`, and `operation_context_role=supplemental`.
 - The same gate requires Orchestrator candidate context to carry `run_id`, `telemetry_source`, `operation`, and `resource`, so Lab can verify handoff completeness without treating Orchestrator context as a regression judgement.
 - The bundle gate also requires AIGuard coverage evidence raw context to preserve the same Orchestrator mapping hint, proving that AIGuard kept EdgeEnv/Orchestrator ownership markers as diagnosis context rather than recomputing coverage or owning deployment policy.
 - Additional Lab test fixtures under `tests/fixtures/edgeenv_regression/` mirror EdgeEnv replay examples for candidate telemetry gaps and execution sequence inversion. These fixture smokes verify that replay warnings become Lab-owned report context without making Lab recompute EdgeEnv comparability.
-- Markdown/HTML reports include a `Runtime Intelligence Risk Summary` that summarizes EdgeEnv comparability/regression, telemetry replay gaps, AIGuard deterministic evidence, and the Lab-owned deployment decision in one reviewer-facing table.
+- Markdown/HTML reports include a `Runtime Intelligence Risk Summary` that summarizes EdgeEnv comparability/regression, telemetry replay gaps, Runtime history seed traceability, AIGuard deterministic evidence, and the Lab-owned deployment decision in one reviewer-facing table.
 - When EdgeEnv includes preserved Orchestrator feed context, the `Runtime Intelligence Risk Summary` surfaces queue, thermal, throttling, memory, and fallback context as supplemental runtime evidence.
 - When `--guard-analysis` is provided, Lab ingests the precomputed AIGuard artifact as evidence without requiring AIGuard to be installed in the Lab environment.
 - The committed Runtime Intelligence guard fixture preserves AIGuard's coverage-gap diagnosis, including `runtime_telemetry_field_gap` and EdgeEnv history missing-field runs, as deterministic review context rather than a Lab policy override.

@@ -32,6 +32,22 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert bundle["edgeenv_runtime_regression"]["runtime_telemetry_context"][
         "candidate"
     ]["orchestrator_context_present"] is True
+    history = bundle["edgeenv_runtime_regression"]["runtime_telemetry_context"][
+        "history"
+    ]
+    assert history["summary"]["history_seed_runs"] == 2
+    candidate_history_seed = next(
+        item["runtime_telemetry_history_seed"]
+        for item in history["runs"]
+        if item["run_id"] == "edgeenv-smoke-candidate"
+    )
+    assert (
+        candidate_history_seed["schema_version"]
+        == "inferedge-runtime-telemetry-history-seed-v1"
+    )
+    assert candidate_history_seed["registry_owner"] == "edgeenv"
+    assert candidate_history_seed["decision_owner"] == "lab"
+    assert candidate_history_seed["production_monitoring"] is False
     operation_context = bundle["edgeenv_runtime_regression"][
         "runtime_telemetry_context"
     ]["candidate"]["orchestrator_operation_context"]
@@ -92,6 +108,33 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert guard_edgeenv_context["orchestrator_candidate_context_telemetry_source"] == (
         "inferedge_orchestrator_operation_summary"
     )
+    assert guard_edgeenv_context["history_telemetry_seed_runs"] == 2.0
+    assert (
+        guard_edgeenv_context[
+            "candidate_runtime_telemetry_history_seed_schema_version"
+        ]
+        == "inferedge-runtime-telemetry-history-seed-v1"
+    )
+    assert (
+        guard_edgeenv_context["candidate_runtime_telemetry_history_seed_registry_owner"]
+        == "edgeenv"
+    )
+    assert (
+        guard_edgeenv_context["candidate_runtime_telemetry_history_seed_decision_owner"]
+        == "lab"
+    )
+    assert (
+        guard_edgeenv_context[
+            "candidate_runtime_telemetry_history_seed_production_monitoring"
+        ]
+        is False
+    )
+    assert (
+        guard_edgeenv_context[
+            "candidate_runtime_telemetry_history_seed_missing_telemetry_is_failure"
+        ]
+        is False
+    )
     assert bundle["deployment_decision"]["decision"] == "review_required"
     assert bundle["deployment_decision"]["guard_status"] == "warning"
     assert "guard_warning_review" in bundle["deployment_decision"]["triggered_rules"]
@@ -103,11 +146,13 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
         in bundle["markdown"]
     )
     assert "| Orchestrator operation feed context | 1 |" in bundle["markdown"]
+    assert "| Runtime telemetry history seed | 2 |" in bundle["markdown"]
     assert "| Orchestrator context attached runs | candidate |" in bundle["markdown"]
     assert "runtime_queue_overload, runtime_thermal_instability" in bundle["markdown"]
     assert "| AIGuard Orchestrator context handoff | feeds=1.0, candidate |" in bundle[
         "markdown"
     ]
+    assert "| AIGuard history seed handoff | seeds=2.0" in bundle["markdown"]
     assert "Lab remains the final deployment decision owner" in bundle["markdown"]
     assert all(
         "raw_context" in item
@@ -141,10 +186,13 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "runtime_queue_overload" in out
     assert "Runtime Intelligence Risk Summary" in markdown
     assert "Runtime telemetry coverage gaps" in markdown
+    assert "Runtime telemetry history seed" in markdown
     assert "runtime_telemetry_field_gap" in markdown
     assert "coverage_missing_fields" in markdown
     assert "queue_depth" in markdown
     assert "AIGuard runtime operation anomalies" in markdown
     assert "Orchestrator context attached runs" in markdown
+    assert "AIGuard history seed handoff" in markdown
     assert "Runtime Intelligence Risk Summary" in html
+    assert "Runtime telemetry history seed" in html
     assert "runtime_queue_overload, runtime_thermal_instability" in html

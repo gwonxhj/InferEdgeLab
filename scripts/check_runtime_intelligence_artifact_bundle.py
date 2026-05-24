@@ -22,6 +22,7 @@ REQUIRED_MARKDOWN_MARKERS = {
         "Inspect telemetry coverage missing fields"
     ),
     "orchestrator_feed": "| Orchestrator operation feed context | 1 |",
+    "runtime_history_seed": "| Runtime telemetry history seed | 2 |",
     "orchestrator_attached_run": "| Orchestrator context attached runs | candidate |",
     "aiguard_evidence": "| AIGuard deterministic evidence | warning / suspicious |",
     "aiguard_operation_anomalies": (
@@ -31,6 +32,7 @@ REQUIRED_MARKDOWN_MARKERS = {
     "aiguard_orchestrator_handoff": (
         "| AIGuard Orchestrator context handoff | feeds=1.0, candidate |"
     ),
+    "aiguard_history_seed_handoff": "| AIGuard history seed handoff | seeds=2.0",
     "guard_warning_rule": "guard_warning_review",
     "edgeenv_regression_rule": "edgeenv_runtime_regression_review",
 }
@@ -45,6 +47,8 @@ REQUIRED_HTML_MARKERS = {
     ),
     "aiguard_operation_anomalies": "runtime_queue_overload, runtime_thermal_instability",
     "aiguard_orchestrator_handoff": "AIGuard Orchestrator context handoff",
+    "runtime_history_seed": "Runtime telemetry history seed",
+    "aiguard_history_seed_handoff": "AIGuard history seed handoff",
 }
 
 

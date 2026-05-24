@@ -32,6 +32,9 @@ REQUIRED_ARTIFACT_ROLES = {
 }
 REQUIRED_PRODUCER_CONTRACTS = {
     "runtime_result_contract": "lab-compatible-runtime-result-json",
+    "runtime_telemetry_history_seed_schema": (
+        "inferedge-runtime-telemetry-history-seed-v1"
+    ),
     "edgeenv_history_schema": "edgeenv.runtime-telemetry-history.v1",
     "orchestrator_feed_schema": (
         "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1"
@@ -220,6 +223,11 @@ def _validate_edgeenv_report(edgeenv_report: dict[str, Any], errors: list[str]) 
         errors,
         "runtime_telemetry_context.history.summary.orchestrator_feed_runs must be 1",
     )
+    _record(
+        summary.get("history_seed_runs") == 2,
+        errors,
+        "runtime_telemetry_context.history.summary.history_seed_runs must be 2",
+    )
     history_coverage = history.get("telemetry_coverage")
     _record(
         isinstance(history_coverage, dict),
@@ -228,6 +236,7 @@ def _validate_edgeenv_report(edgeenv_report: dict[str, Any], errors: list[str]) 
     )
     if isinstance(history_coverage, dict):
         _validate_edgeenv_history_coverage_summary(history_coverage, errors)
+    _validate_edgeenv_history_seed_runs(history, errors)
 
     candidate = context.get("candidate") or {}
     _record(
@@ -398,6 +407,86 @@ def _validate_edgeenv_history_coverage_summary(
     )
 
 
+def _validate_edgeenv_history_seed_runs(
+    history: dict[str, Any],
+    errors: list[str],
+) -> None:
+    runs = history.get("runs")
+    _record(
+        isinstance(runs, list),
+        errors,
+        "runtime_telemetry_context.history.runs must be a list",
+    )
+    if not isinstance(runs, list):
+        return
+
+    runs_by_id = {
+        item.get("run_id"): item
+        for item in runs
+        if isinstance(item, dict) and isinstance(item.get("run_id"), str)
+    }
+    for run_id in ("edgeenv-smoke-baseline", "edgeenv-smoke-candidate"):
+        run = runs_by_id.get(run_id)
+        _record(
+            isinstance(run, dict),
+            errors,
+            f"runtime_telemetry_context.history.runs must include {run_id}",
+        )
+        if isinstance(run, dict):
+            _validate_runtime_history_seed(
+                run.get("runtime_telemetry_history_seed"),
+                errors,
+                f"runtime_telemetry_context.history.runs[{run_id}]",
+            )
+
+
+def _validate_runtime_history_seed(
+    seed: Any,
+    errors: list[str],
+    path: str,
+) -> None:
+    _record(
+        isinstance(seed, dict),
+        errors,
+        f"{path}.runtime_telemetry_history_seed must be an object",
+    )
+    if not isinstance(seed, dict):
+        return
+    _record(
+        seed.get("schema_version")
+        == REQUIRED_PRODUCER_CONTRACTS["runtime_telemetry_history_seed_schema"],
+        errors,
+        f"{path}.runtime_telemetry_history_seed.schema_version must be "
+        f"{REQUIRED_PRODUCER_CONTRACTS['runtime_telemetry_history_seed_schema']}",
+    )
+    _record(
+        seed.get("registry_owner") == "edgeenv",
+        errors,
+        f"{path}.runtime_telemetry_history_seed.registry_owner must be edgeenv",
+    )
+    _record(
+        seed.get("decision_owner") == "lab",
+        errors,
+        f"{path}.runtime_telemetry_history_seed.decision_owner must be lab",
+    )
+    _record(
+        seed.get("production_monitoring") is False,
+        errors,
+        f"{path}.runtime_telemetry_history_seed.production_monitoring must be false",
+    )
+    _record(
+        seed.get("missing_telemetry_is_failure") is False,
+        errors,
+        f"{path}.runtime_telemetry_history_seed.missing_telemetry_is_failure must be false",
+    )
+    points = seed.get("points")
+    _record(
+        isinstance(points, list) and len(points) >= 1,
+        errors,
+        f"{path}.runtime_telemetry_history_seed.points must include replay points",
+    )
+
+
 def _validate_guard_analysis(guard_analysis: dict[str, Any], errors: list[str]) -> None:
     _record(
         guard_analysis.get("schema_version")
@@ -539,6 +628,7 @@ def _validate_coverage_gap_evidence(
         "AIGuard coverage evidence history coverage missing field run count "
         "must be 1.0",
     )
+    _validate_aiguard_history_seed_context(edgeenv, errors)
     missing_field_runs = edgeenv.get("history_telemetry_coverage_missing_field_runs")
     _record(
         isinstance(missing_field_runs, list),
@@ -569,6 +659,70 @@ def _validate_coverage_gap_evidence(
                 "must be ['queue_depth']",
             )
     _validate_aiguard_orchestrator_mapping_hint(edgeenv, errors)
+
+
+def _validate_aiguard_history_seed_context(
+    edgeenv_context: dict[str, Any],
+    errors: list[str],
+) -> None:
+    _record(
+        edgeenv_context.get("history_telemetry_seed_runs") == 2.0,
+        errors,
+        "AIGuard coverage evidence history_telemetry_seed_runs must be 2.0",
+    )
+    for role in ("baseline", "candidate"):
+        _record(
+            edgeenv_context.get(
+                f"{role}_runtime_telemetry_history_seed_schema_version"
+            )
+            == REQUIRED_PRODUCER_CONTRACTS["runtime_telemetry_history_seed_schema"],
+            errors,
+            "AIGuard coverage evidence "
+            f"{role}_runtime_telemetry_history_seed_schema_version must be "
+            f"{REQUIRED_PRODUCER_CONTRACTS['runtime_telemetry_history_seed_schema']}",
+        )
+        _record(
+            edgeenv_context.get(
+                f"{role}_runtime_telemetry_history_seed_registry_owner"
+            )
+            == "edgeenv",
+            errors,
+            "AIGuard coverage evidence "
+            f"{role}_runtime_telemetry_history_seed_registry_owner must be edgeenv",
+        )
+        _record(
+            edgeenv_context.get(
+                f"{role}_runtime_telemetry_history_seed_decision_owner"
+            )
+            == "lab",
+            errors,
+            "AIGuard coverage evidence "
+            f"{role}_runtime_telemetry_history_seed_decision_owner must be lab",
+        )
+    _record(
+        edgeenv_context.get(
+            "candidate_runtime_telemetry_history_seed_production_monitoring"
+        )
+        is False,
+        errors,
+        "AIGuard coverage evidence candidate history seed production_monitoring "
+        "must be false",
+    )
+    _record(
+        edgeenv_context.get(
+            "candidate_runtime_telemetry_history_seed_missing_telemetry_is_failure"
+        )
+        is False,
+        errors,
+        "AIGuard coverage evidence candidate history seed "
+        "missing_telemetry_is_failure must be false",
+    )
+    _record(
+        edgeenv_context.get("candidate_runtime_telemetry_history_seed_point_count")
+        == 1.0,
+        errors,
+        "AIGuard coverage evidence candidate history seed point count must be 1.0",
+    )
 
 
 def _validate_aiguard_orchestrator_mapping_hint(
