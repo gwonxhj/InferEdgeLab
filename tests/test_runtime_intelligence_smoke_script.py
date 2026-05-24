@@ -66,6 +66,14 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
         output_dir / "runtime_intelligence_bundle_manifest_gate_summary.md"
     ).read_text(encoding="utf-8")
     assert "- Status: passed" in bundle_summary
+    assert (
+        "orchestrator_producer_markers: source_repository=InferEdgeOrchestrator"
+        in bundle_summary
+    )
+    assert (
+        "aiguard_raw_context: orchestrator_producer_markers preserved"
+        in bundle_summary
+    )
     assert "edgeenv_handoff: lab_bundle_alignment validated" in bundle_summary
     assert "edgeenv_handoff: runtime_telemetry_history validated" in bundle_summary
 

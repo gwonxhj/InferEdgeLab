@@ -110,12 +110,17 @@ VALID_GUARD_EVIDENCE_SEVERITIES = {"low", "medium", "high", "critical"}
 SUMMARY_CONTRACT_MARKERS = (
     "source_repositories: Runtime, EdgeEnv, Orchestrator, AIGuard, Lab",
     "producer_contracts: EdgeEnv history, Orchestrator feed, AIGuard diagnosis",
+    "orchestrator_producer_markers: "
+    "source_repository=InferEdgeOrchestrator,"
+    "artifact_role=orchestrator-supplemental-operation-context,"
+    "producer_contract=inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
     "ownership: regression_owner=edgeenv, deployment_decision_owner=lab",
     "orchestrator_mapping_hint: coverage_summary_owner=edgeenv",
     "orchestrator_mapping_hint: operation_context_role=supplemental",
     "orchestrator_mapping_hint: aiguard_evidence_candidates=runtime_queue_overload,runtime_thermal_instability",
     "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
     "aiguard_raw_context: orchestrator_mapping_hint preserved",
+    "aiguard_raw_context: orchestrator_producer_markers preserved",
 )
 EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS = (
     "edgeenv_handoff: lab_bundle_alignment validated",
@@ -549,6 +554,11 @@ def _validate_edgeenv_report(edgeenv_report: dict[str, Any], errors: list[str]) 
         "orchestrator_operation_context.schema_version must be "
         f"{REQUIRED_PRODUCER_CONTRACTS['orchestrator_feed_schema']}",
     )
+    _validate_orchestrator_producer_markers(
+        operation_context,
+        errors,
+        "orchestrator_operation_context",
+    )
     _record(
         operation_context.get("not_a_regression_judgement") is True,
         errors,
@@ -570,6 +580,34 @@ def _validate_edgeenv_report(edgeenv_report: dict[str, Any], errors: list[str]) 
         "orchestrator_operation_context.regression_owner must be edgeenv",
     )
     _validate_orchestrator_mapping_hint(operation_context, errors)
+
+
+def _validate_orchestrator_producer_markers(
+    operation_context: dict[str, Any],
+    errors: list[str],
+    prefix: str,
+) -> None:
+    _record(
+        operation_context.get("source_repository")
+        == REQUIRED_SOURCE_REPOSITORIES["orchestrator_operation_context"],
+        errors,
+        f"{prefix}.source_repository must be "
+        f"{REQUIRED_SOURCE_REPOSITORIES['orchestrator_operation_context']}",
+    )
+    _record(
+        operation_context.get("artifact_role")
+        == REQUIRED_ARTIFACT_ROLES["orchestrator_operation_context"],
+        errors,
+        f"{prefix}.artifact_role must be "
+        f"{REQUIRED_ARTIFACT_ROLES['orchestrator_operation_context']}",
+    )
+    _record(
+        operation_context.get("producer_contract")
+        == REQUIRED_PRODUCER_CONTRACTS["orchestrator_feed_schema"],
+        errors,
+        f"{prefix}.producer_contract must be "
+        f"{REQUIRED_PRODUCER_CONTRACTS['orchestrator_feed_schema']}",
+    )
 
 
 def _validate_orchestrator_mapping_hint(
@@ -1019,6 +1057,28 @@ def _validate_aiguard_orchestrator_mapping_hint(
     edgeenv_context: dict[str, Any],
     errors: list[str],
 ) -> None:
+    _record(
+        edgeenv_context.get("orchestrator_source_repository")
+        == REQUIRED_SOURCE_REPOSITORIES["orchestrator_operation_context"],
+        errors,
+        "AIGuard coverage evidence orchestrator_source_repository must be "
+        f"{REQUIRED_SOURCE_REPOSITORIES['orchestrator_operation_context']}",
+    )
+    _record(
+        edgeenv_context.get("orchestrator_artifact_role")
+        == REQUIRED_ARTIFACT_ROLES["orchestrator_operation_context"],
+        errors,
+        "AIGuard coverage evidence orchestrator_artifact_role must be "
+        f"{REQUIRED_ARTIFACT_ROLES['orchestrator_operation_context']}",
+    )
+    _record(
+        edgeenv_context.get("orchestrator_producer_contract")
+        == REQUIRED_PRODUCER_CONTRACTS["orchestrator_feed_schema"],
+        errors,
+        "AIGuard coverage evidence orchestrator_producer_contract must be "
+        f"{REQUIRED_PRODUCER_CONTRACTS['orchestrator_feed_schema']}",
+    )
+
     mapping_hint = edgeenv_context.get("orchestrator_edgeenv_mapping_hint")
     _record(
         isinstance(mapping_hint, dict),
