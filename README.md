@@ -408,6 +408,7 @@ When `--with-guard` is enabled with an EdgeEnv regression report and the install
 Lab test fixtures also mirror EdgeEnv replay examples for candidate telemetry gaps and baseline/candidate execution sequence inversion under `tests/fixtures/edgeenv_regression/`.
 Markdown and HTML reports now include a Runtime Intelligence Risk Summary that ties EdgeEnv comparability/regression, telemetry replay gaps, Runtime history seed traceability, and AIGuard deterministic evidence back to the Lab-owned deployment decision without changing existing JSON contracts.
 This preserves the boundary: EdgeEnv records registry/comparability/regression evidence, while Lab remains the deployment decision owner.
+Reproduce the local Runtime Intelligence artifact chain with `bash scripts/smoke_runtime_intelligence_chain.sh --output-dir reports/runtime_intelligence_chain`.
 The committed handoff smoke is documented in [docs/portfolio/edgeenv_runtime_regression_lab_handoff.md](docs/portfolio/edgeenv_runtime_regression_lab_handoff.md).
 
 **Core workflow:**
