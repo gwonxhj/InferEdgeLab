@@ -19,6 +19,13 @@ test
 -> deployment risk gate
 ```
 
+The same file-based chain can be reproduced locally without GitLab:
+
+```bash
+bash scripts/smoke_runtime_intelligence_chain.sh \
+  --output-dir reports/runtime_intelligence_chain
+```
+
 This maps to the ecosystem ownership model:
 
 - Runtime evidence stays additive and Lab-compatible.

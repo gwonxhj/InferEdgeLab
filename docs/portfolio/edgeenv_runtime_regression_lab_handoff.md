@@ -75,6 +75,23 @@ poetry run inferedgelab compare \
 Runtime Intelligence cross-repo evidence-chain smoke:
 
 ```bash
+bash scripts/smoke_runtime_intelligence_chain.sh \
+  --output-dir reports/runtime_intelligence_chain
+```
+
+The script runs the full local artifact chain:
+
+```text
+bundle manifest gate
+-> EdgeEnv regression report
+-> Runtime Intelligence report with precomputed AIGuard evidence
+-> report artifact gate
+-> CI artifact gate
+```
+
+The individual report command remains:
+
+```bash
 poetry run inferedgelab compare \
   examples/edgeenv_regression/lab_baseline_result.json \
   examples/edgeenv_regression/lab_candidate_result.json \
