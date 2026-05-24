@@ -152,6 +152,7 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_mapping_hint(
     mapping_hint = operation_context["edgeenv_mapping_hint"]
     mapping_hint["coverage_summary_owner"] = "orchestrator"
     mapping_hint.pop("candidate_context_required_fields")
+    mapping_hint["aiguard_evidence_candidates"] = ["runtime_queue_overload"]
     operation_context["candidate_context"].pop("telemetry_source")
 
     edgeenv_copy = tmp_path / "edgeenv_regression.json"
@@ -170,6 +171,10 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_mapping_hint(
         in summary
     )
     assert "candidate_context_required_fields must be a list" in summary
+    assert (
+        "aiguard_evidence_candidates is missing "
+        "['runtime_thermal_instability']"
+    ) in summary
     assert "candidate_context is missing ['telemetry_source']" in summary
 
 
@@ -376,7 +381,11 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_guard_mapping_h
     edgeenv_context["orchestrator_edgeenv_mapping_hint"][
         "coverage_summary_owner"
     ] = "aiguard"
+    edgeenv_context["orchestrator_edgeenv_mapping_hint"][
+        "aiguard_evidence_candidates"
+    ] = ["runtime_queue_overload"]
     edgeenv_context.pop("orchestrator_mapping_hint_candidate_context_required_fields")
+    edgeenv_context.pop("orchestrator_mapping_hint_aiguard_evidence_candidates")
     edgeenv_context["orchestrator_candidate_context_telemetry_source"] = "unknown"
 
     guard_copy = tmp_path / "aiguard_guard_analysis.json"
@@ -396,6 +405,14 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_guard_mapping_h
     ) in summary
     assert (
         "orchestrator_mapping_hint_candidate_context_required_fields "
+        "must be a list"
+    ) in summary
+    assert (
+        "orchestrator_edgeenv_mapping_hint.aiguard_evidence_candidates "
+        "is missing ['runtime_thermal_instability']"
+    ) in summary
+    assert (
+        "orchestrator_mapping_hint_aiguard_evidence_candidates "
         "must be a list"
     ) in summary
     assert (

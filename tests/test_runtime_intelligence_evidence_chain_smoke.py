@@ -64,6 +64,10 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
         "operation",
         "resource",
     }
+    assert set(mapping_hint["aiguard_evidence_candidates"]) >= {
+        "runtime_queue_overload",
+        "runtime_thermal_instability",
+    }
     assert operation_context["candidate_context"]["telemetry_source"] == (
         "inferedge_orchestrator_operation_summary"
     )
@@ -105,6 +109,16 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert guard_edgeenv_context[
         "orchestrator_mapping_hint_operation_context_role"
     ] == "supplemental"
+    assert set(
+        guard_edgeenv_context["orchestrator_edgeenv_mapping_hint"][
+            "aiguard_evidence_candidates"
+        ]
+    ) >= {"runtime_queue_overload", "runtime_thermal_instability"}
+    assert set(
+        guard_edgeenv_context[
+            "orchestrator_mapping_hint_aiguard_evidence_candidates"
+        ]
+    ) >= {"runtime_queue_overload", "runtime_thermal_instability"}
     assert guard_edgeenv_context["orchestrator_candidate_context_telemetry_source"] == (
         "inferedge_orchestrator_operation_summary"
     )

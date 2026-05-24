@@ -67,6 +67,10 @@ REQUIRED_ORCHESTRATOR_CANDIDATE_CONTEXT_FIELDS = {
     "operation",
     "resource",
 }
+REQUIRED_ORCHESTRATOR_AIGUARD_EVIDENCE_CANDIDATES = {
+    "runtime_queue_overload",
+    "runtime_thermal_instability",
+}
 REQUIRED_GUARD_TYPES = {
     "runtime_telemetry_context_coverage",
     "runtime_queue_overload",
@@ -338,6 +342,25 @@ def _validate_orchestrator_mapping_hint(
             errors,
             "orchestrator_operation_context.edgeenv_mapping_hint."
             f"candidate_context_required_fields is missing {missing_fields}",
+        )
+
+    evidence_candidates = mapping_hint.get("aiguard_evidence_candidates")
+    _record(
+        isinstance(evidence_candidates, list),
+        errors,
+        "orchestrator_operation_context.edgeenv_mapping_hint."
+        "aiguard_evidence_candidates must be a list",
+    )
+    if isinstance(evidence_candidates, list):
+        missing_candidates = sorted(
+            REQUIRED_ORCHESTRATOR_AIGUARD_EVIDENCE_CANDIDATES
+            - set(evidence_candidates)
+        )
+        _record(
+            not missing_candidates,
+            errors,
+            "orchestrator_operation_context.edgeenv_mapping_hint."
+            f"aiguard_evidence_candidates is missing {missing_candidates}",
         )
 
     candidate_context = operation_context.get("candidate_context")
@@ -771,6 +794,25 @@ def _validate_aiguard_orchestrator_mapping_hint(
             f"candidate_context_required_fields is missing {missing_fields}",
         )
 
+    evidence_candidates = mapping_hint.get("aiguard_evidence_candidates")
+    _record(
+        isinstance(evidence_candidates, list),
+        errors,
+        "AIGuard coverage evidence orchestrator_edgeenv_mapping_hint."
+        "aiguard_evidence_candidates must be a list",
+    )
+    if isinstance(evidence_candidates, list):
+        missing_candidates = sorted(
+            REQUIRED_ORCHESTRATOR_AIGUARD_EVIDENCE_CANDIDATES
+            - set(evidence_candidates)
+        )
+        _record(
+            not missing_candidates,
+            errors,
+            "AIGuard coverage evidence orchestrator_edgeenv_mapping_hint."
+            f"aiguard_evidence_candidates is missing {missing_candidates}",
+        )
+
     flattened_required_fields = edgeenv_context.get(
         "orchestrator_mapping_hint_candidate_context_required_fields"
     )
@@ -792,6 +834,29 @@ def _validate_aiguard_orchestrator_mapping_hint(
             "AIGuard coverage evidence "
             "orchestrator_mapping_hint_candidate_context_required_fields "
             f"is missing {missing_flattened_fields}",
+        )
+
+    flattened_evidence_candidates = edgeenv_context.get(
+        "orchestrator_mapping_hint_aiguard_evidence_candidates"
+    )
+    _record(
+        isinstance(flattened_evidence_candidates, list),
+        errors,
+        "AIGuard coverage evidence "
+        "orchestrator_mapping_hint_aiguard_evidence_candidates "
+        "must be a list",
+    )
+    if isinstance(flattened_evidence_candidates, list):
+        missing_flattened_candidates = sorted(
+            REQUIRED_ORCHESTRATOR_AIGUARD_EVIDENCE_CANDIDATES
+            - set(flattened_evidence_candidates)
+        )
+        _record(
+            not missing_flattened_candidates,
+            errors,
+            "AIGuard coverage evidence "
+            "orchestrator_mapping_hint_aiguard_evidence_candidates "
+            f"is missing {missing_flattened_candidates}",
         )
 
     _record(

@@ -72,7 +72,8 @@ The initial gate is conservative:
 - the preserved Orchestrator `edgeenv_mapping_hint` must keep
   `coverage_summary_owner=edgeenv`,
   `coverage_summary_path=runtime_telemetry_context.history.telemetry_coverage`,
-  and `operation_context_role=supplemental`
+  `operation_context_role=supplemental`, and the AIGuard evidence candidate
+  hints for `runtime_queue_overload` and `runtime_thermal_instability`
 - AIGuard coverage evidence raw context must preserve the same mapping hint, so
   CI catches loss of EdgeEnv/Orchestrator ownership markers before Lab report
   generation
