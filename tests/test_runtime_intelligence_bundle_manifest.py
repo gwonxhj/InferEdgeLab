@@ -8,6 +8,12 @@ from scripts.check_runtime_intelligence_bundle_manifest import main as manifest_
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = REPO_ROOT / "examples" / "runtime_intelligence_chain" / "bundle_manifest.json"
+EDGEENV_HANDOFF = (
+    REPO_ROOT
+    / "examples"
+    / "runtime_intelligence_chain"
+    / "edgeenv_lab_handoff_manifest.json"
+)
 
 
 def test_runtime_intelligence_bundle_manifest_gate_passes():
@@ -59,6 +65,55 @@ def test_runtime_intelligence_bundle_manifest_gate_cli_passes(tmp_path):
         "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage"
         in summary
     )
+
+
+def test_runtime_intelligence_bundle_manifest_gate_validates_edgeenv_handoff(
+    tmp_path,
+):
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    assert (
+        manifest_gate(
+            manifest=str(MANIFEST),
+            edgeenv_handoff=str(EDGEENV_HANDOFF),
+            summary_out=str(summary_path),
+        )
+        == 0
+    )
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "edgeenv_handoff: lab_bundle_alignment validated" in summary
+
+
+def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_edgeenv_handoff(
+    tmp_path,
+):
+    handoff = json.loads(EDGEENV_HANDOFF.read_text(encoding="utf-8"))
+    handoff["lab_bundle_alignment"]["artifact_roles"][
+        "aiguard_guard_analysis"
+    ] = "edgeenv-generated-guard-analysis"
+    handoff["lab_bundle_alignment"]["edgeenv_produced_file_keys"].append(
+        "aiguard_guard_analysis"
+    )
+    handoff_path = tmp_path / "edgeenv_lab_handoff_manifest.json"
+    handoff_path.write_text(json.dumps(handoff), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(
+        manifest=str(MANIFEST),
+        edgeenv_handoff=str(handoff_path),
+        summary_out=str(summary_path),
+    )
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert (
+        "edgeenv_produced_file_keys must not include aiguard_guard_analysis"
+        in summary
+    )
+    assert (
+        "lab_bundle_alignment.artifact_roles.aiguard_guard_analysis "
+        "must be aiguard-deterministic-runtime-anomaly-evidence"
+    ) in summary
 
 
 def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_owner(tmp_path):
