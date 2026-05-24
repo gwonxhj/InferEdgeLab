@@ -1,0 +1,155 @@
+{
+  "schema_version": "edgeenv.runtime-telemetry-history.v1",
+  "summary": {
+    "registered_runs": 2,
+    "telemetry_runs": 2,
+    "missing_telemetry_runs": 0,
+    "orchestrator_feed_runs": 1,
+    "history_seed_runs": 2
+  },
+  "telemetry_coverage": {
+    "runs_with_coverage": 2,
+    "runs_without_coverage": 0,
+    "expected_fields": [
+      "gpu_temperature",
+      "queue_depth",
+      "telemetry_timestamp"
+    ],
+    "observed_fields": [
+      "gpu_temperature",
+      "queue_depth",
+      "telemetry_timestamp"
+    ],
+    "missing_fields": [
+      "queue_depth"
+    ],
+    "coverage_ratio_min": 0.666667,
+    "coverage_ratio_max": 1.0,
+    "missing_telemetry_is_failure_values": [
+      false
+    ],
+    "any_missing_telemetry_is_failure": false,
+    "missing_field_run_count": 1,
+    "missing_field_runs": [
+      {
+        "run_id": "edgeenv-smoke-candidate",
+        "missing_fields": [
+          "queue_depth"
+        ],
+        "missing_field_count": 1,
+        "missing_telemetry_is_failure": false
+      }
+    ],
+    "run_summaries": [
+      {
+        "run_id": "edgeenv-smoke-baseline",
+        "coverage_present": true,
+        "expected_fields": [
+          "gpu_temperature",
+          "queue_depth",
+          "telemetry_timestamp"
+        ],
+        "observed_fields": [
+          "gpu_temperature",
+          "queue_depth",
+          "telemetry_timestamp"
+        ],
+        "missing_fields": [],
+        "expected_field_count": 3,
+        "observed_field_count": 3,
+        "missing_field_count": 0,
+        "coverage_ratio": 1.0,
+        "missing_telemetry_is_failure": false
+      },
+      {
+        "run_id": "edgeenv-smoke-candidate",
+        "coverage_present": true,
+        "expected_fields": [
+          "gpu_temperature",
+          "queue_depth",
+          "telemetry_timestamp"
+        ],
+        "observed_fields": [
+          "gpu_temperature",
+          "telemetry_timestamp"
+        ],
+        "missing_fields": [
+          "queue_depth"
+        ],
+        "expected_field_count": 3,
+        "observed_field_count": 2,
+        "missing_field_count": 1,
+        "coverage_ratio": 0.666667,
+        "missing_telemetry_is_failure": false
+      }
+    ]
+  },
+  "runs": [
+    {
+      "run_id": "edgeenv-smoke-baseline",
+      "runtime_telemetry_history_seed": {
+        "schema_version": "inferedge-runtime-telemetry-history-seed-v1",
+        "evidence_role": "runtime_telemetry_history_seed",
+        "registry_owner": "edgeenv",
+        "decision_owner": "lab",
+        "source_result_schema_version": "inferedge-runtime-result-v1",
+        "source_telemetry_schema_version": "inferedge-runtime-telemetry-v1",
+        "replay_scope": "single_result_to_history",
+        "replay_ready": true,
+        "production_monitoring": false,
+        "missing_telemetry_is_failure": false,
+        "source_result": {
+          "run_id": "edgeenv-smoke-baseline",
+          "compare_key": "yolov8n__b1__h640w640__fp32",
+          "backend_key": "onnxruntime__cpu",
+          "engine_backend": "onnxruntime",
+          "device": "cpu",
+          "precision": "fp32",
+          "power_mode": "unknown"
+        },
+        "points": [
+          {
+            "execution_sequence_id": 1,
+            "telemetry_timestamp": "2026-05-21T00:00:01Z",
+            "mean_ms": 100.0,
+            "p99_ms": 130.0,
+            "timeout_observed": false
+          }
+        ]
+      }
+    },
+    {
+      "run_id": "edgeenv-smoke-candidate",
+      "runtime_telemetry_history_seed": {
+        "schema_version": "inferedge-runtime-telemetry-history-seed-v1",
+        "evidence_role": "runtime_telemetry_history_seed",
+        "registry_owner": "edgeenv",
+        "decision_owner": "lab",
+        "source_result_schema_version": "inferedge-runtime-result-v1",
+        "source_telemetry_schema_version": "inferedge-runtime-telemetry-v1",
+        "replay_scope": "single_result_to_history",
+        "replay_ready": true,
+        "production_monitoring": false,
+        "missing_telemetry_is_failure": false,
+        "source_result": {
+          "run_id": "edgeenv-smoke-candidate",
+          "compare_key": "yolov8n__b1__h640w640__fp32",
+          "backend_key": "onnxruntime__cpu",
+          "engine_backend": "onnxruntime",
+          "device": "cpu",
+          "precision": "fp32",
+          "power_mode": "unknown"
+        },
+        "points": [
+          {
+            "execution_sequence_id": 2,
+            "telemetry_timestamp": "2026-05-21T00:05:01Z",
+            "mean_ms": 118.0,
+            "p99_ms": 171.6,
+            "timeout_observed": false
+          }
+        ]
+      }
+    }
+  ]
+}

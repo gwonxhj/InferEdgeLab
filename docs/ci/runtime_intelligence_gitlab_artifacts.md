@@ -57,6 +57,7 @@ Expected artifacts are intentionally file-based and local-first:
 - `BENCHMARKS.md`
 - Runtime Intelligence bundle manifest under `examples/runtime_intelligence_chain/bundle_manifest.json`
 - EdgeEnv producer-side handoff manifest under `examples/runtime_intelligence_chain/edgeenv_lab_handoff_manifest.json`
+- EdgeEnv telemetry history artifact under `examples/runtime_intelligence_chain/runtime_telemetry_history.json`
 - Runtime Intelligence bundle manifest gate summary
 - EdgeEnv regression Markdown / HTML report under `reports/runtime_intelligence_ci/`
 - deterministic Runtime Intelligence summary Markdown / HTML with precomputed AIGuard runtime operation evidence
@@ -109,6 +110,9 @@ The initial gate is conservative:
 - the optional EdgeEnv handoff input must keep `lab_bundle_alignment` metadata
   aligned with the Lab bundle manifest, while leaving `aiguard_guard_analysis`
   as an external AIGuard artifact
+- the EdgeEnv handoff `runtime_telemetry_history` file must exist and preserve
+  the EdgeEnv history schema, telemetry coverage summary, and Runtime history
+  seed ownership markers
 
 The bundle manifest gate is implemented by `scripts/check_runtime_intelligence_bundle_manifest.py`. It verifies that the bundle contains baseline/candidate Runtime results, EdgeEnv regression evidence, AIGuard guard evidence, and explicit owner/boundary metadata before Lab generates the report. In this template it also consumes `--edgeenv-handoff examples/runtime_intelligence_chain/edgeenv_lab_handoff_manifest.json` to verify EdgeEnv producer-side file/source/role/schema alignment.
 The same gate now also checks `source_repositories`, `artifact_roles`, and `producer_contracts` so the smoke remains a cross-repo handoff fixture rather than a Lab-only report sample.
