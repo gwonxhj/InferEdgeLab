@@ -111,6 +111,7 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
                 "- aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
                 "- aiguard_raw_context: orchestrator_mapping_hint preserved",
                 "- edgeenv_handoff: lab_bundle_alignment validated",
+                "- edgeenv_handoff: runtime_telemetry_history validated",
             ]
         ),
         encoding="utf-8",
@@ -343,6 +344,7 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_failed_deployment_risk(
                 "- aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
                 "- aiguard_raw_context: orchestrator_mapping_hint preserved",
                 "- edgeenv_handoff: lab_bundle_alignment validated",
+                "- edgeenv_handoff: runtime_telemetry_history validated",
             ]
         ),
         encoding="utf-8",

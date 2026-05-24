@@ -11,6 +11,7 @@ from rich import print as rprint
 EXPECTED_SCHEMA_VERSION = "inferedge.runtime-intelligence-artifact-bundle.v1"
 EDGEENV_HANDOFF_SCHEMA_VERSION = "edgeenv.runtime-intelligence-lab-handoff.v1"
 EDGEENV_HANDOFF_ROLE = "edgeenv-runtime-intelligence-lab-handoff"
+EDGEENV_HANDOFF_RUNTIME_HISTORY_KEY = "runtime_telemetry_history"
 REQUIRED_FILES = {
     "baseline_result",
     "candidate_result",
@@ -118,6 +119,7 @@ SUMMARY_CONTRACT_MARKERS = (
 )
 EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS = (
     "edgeenv_handoff: lab_bundle_alignment validated",
+    "edgeenv_handoff: runtime_telemetry_history validated",
 )
 
 
@@ -220,6 +222,7 @@ def _validate_manifest_shape(manifest: dict[str, Any], errors: list[str]) -> Non
 def _validate_edgeenv_handoff_alignment(
     handoff: dict[str, Any],
     *,
+    handoff_path: Path,
     manifest: dict[str, Any],
     errors: list[str],
 ) -> None:
@@ -255,6 +258,11 @@ def _validate_edgeenv_handoff_alignment(
             "aiguard_guard_analysis" not in handoff_files,
             errors,
             "EdgeEnv handoff files must not include aiguard_guard_analysis",
+        )
+        _validate_edgeenv_handoff_runtime_history_artifact(
+            handoff_files,
+            handoff_path=handoff_path,
+            errors=errors,
         )
 
     alignment = handoff.get("lab_bundle_alignment")
@@ -357,6 +365,99 @@ def _validate_edgeenv_handoff_alignment(
                 "EdgeEnv handoff lab_bundle_alignment.boundary_flags."
                 f"{key} must be {expected}",
             )
+
+
+def _validate_edgeenv_handoff_runtime_history_artifact(
+    handoff_files: dict[str, Any],
+    *,
+    handoff_path: Path,
+    errors: list[str],
+) -> None:
+    raw_path = handoff_files.get(EDGEENV_HANDOFF_RUNTIME_HISTORY_KEY)
+    _record(
+        isinstance(raw_path, str),
+        errors,
+        "EdgeEnv handoff files.runtime_telemetry_history must be a string path",
+    )
+    if not isinstance(raw_path, str):
+        return
+
+    resolved = _resolve_bundle_path(handoff_path, raw_path)
+    _record(
+        resolved.exists(),
+        errors,
+        f"EdgeEnv handoff files.runtime_telemetry_history does not exist: {resolved}",
+    )
+    if not resolved.exists():
+        return
+
+    try:
+        history = json.loads(resolved.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        errors.append(
+            "EdgeEnv handoff files.runtime_telemetry_history is invalid JSON: "
+            f"{resolved}: {exc}"
+        )
+        return
+    except OSError as exc:
+        errors.append(
+            "EdgeEnv handoff files.runtime_telemetry_history could not be read: "
+            f"{resolved}: {exc}"
+        )
+        return
+
+    _record(
+        isinstance(history, dict),
+        errors,
+        "EdgeEnv handoff files.runtime_telemetry_history must be a JSON object",
+    )
+    if not isinstance(history, dict):
+        return
+    _validate_edgeenv_runtime_history_artifact(history, errors)
+
+
+def _validate_edgeenv_runtime_history_artifact(
+    history: dict[str, Any],
+    errors: list[str],
+) -> None:
+    _record(
+        history.get("schema_version")
+        == REQUIRED_PRODUCER_CONTRACTS["edgeenv_history_schema"],
+        errors,
+        "EdgeEnv handoff runtime_telemetry_history.schema_version must be "
+        f"{REQUIRED_PRODUCER_CONTRACTS['edgeenv_history_schema']}",
+    )
+    summary = history.get("summary") or {}
+    _record(
+        summary.get("registered_runs") == 2,
+        errors,
+        "EdgeEnv handoff runtime_telemetry_history.summary.registered_runs must be 2",
+    )
+    _record(
+        summary.get("telemetry_runs") == 2,
+        errors,
+        "EdgeEnv handoff runtime_telemetry_history.summary.telemetry_runs must be 2",
+    )
+    _record(
+        summary.get("orchestrator_feed_runs") == 1,
+        errors,
+        "EdgeEnv handoff runtime_telemetry_history.summary."
+        "orchestrator_feed_runs must be 1",
+    )
+    _record(
+        summary.get("history_seed_runs") == 2,
+        errors,
+        "EdgeEnv handoff runtime_telemetry_history.summary.history_seed_runs must be 2",
+    )
+    coverage = history.get("telemetry_coverage")
+    _record(
+        isinstance(coverage, dict),
+        errors,
+        "EdgeEnv handoff runtime_telemetry_history must include telemetry_coverage",
+    )
+    if isinstance(coverage, dict):
+        _validate_edgeenv_history_coverage_summary(coverage, errors)
+    _validate_edgeenv_history_seed_runs(history, errors)
 
 
 def _validate_edgeenv_report(edgeenv_report: dict[str, Any], errors: list[str]) -> None:
@@ -1079,8 +1180,10 @@ def main(
     manifest_payload = _load_json(manifest_path, "Runtime Intelligence bundle manifest")
     _validate_manifest_shape(manifest_payload, errors)
     if edgeenv_handoff:
+        edgeenv_handoff_path = Path(edgeenv_handoff).resolve()
         _validate_edgeenv_handoff_alignment(
-            _load_json(Path(edgeenv_handoff).resolve(), "EdgeEnv handoff manifest"),
+            _load_json(edgeenv_handoff_path, "EdgeEnv handoff manifest"),
+            handoff_path=edgeenv_handoff_path,
             manifest=manifest_payload,
             errors=errors,
         )
