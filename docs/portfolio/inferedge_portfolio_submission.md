@@ -8,6 +8,8 @@ InferEdge is not a benchmarking tool, but an end-to-end validation pipeline that
 
 InferEdgeEnv complements this pipeline as a local-first run evidence registry and comparability checker. Lab remains the validation / decision layer; Env records whether benchmark evidence can be trusted and compared.
 
+Runtime Intelligence는 이 구조를 새 제품이나 monitoring SaaS로 키우지 않고, Orchestrator operation context -> EdgeEnv telemetry history/regression -> AIGuard deterministic evidence -> Lab deployment risk report 흐름으로 smoke evidence chain을 고정한다.
+
 이 프로젝트는 단순 latency benchmark가 아니라 artifact provenance, runtime result compatibility, deployment decision까지 연결한다. 목표는 "빠른 숫자"를 보여주는 것이 아니라, 어떤 모델과 산출물이 어떤 환경에서 실행되었고 그 결과를 배포해도 되는지 검토 가능한 evidence로 남기는 것이다.
 
 채용 포트폴리오용 5줄 요약:
@@ -15,6 +17,7 @@ InferEdgeEnv complements this pipeline as a local-first run evidence registry an
 - InferEdgeLab은 Runtime benchmark 결과를 분석해 comparison report, API response, async job result, deployment decision을 생성한다.
 - InferEdge 전체 흐름은 Forge build provenance -> Runtime real execution -> Lab compare/report/API/job/deployment_decision -> optional AIGuard diagnosis evidence로 구성된다.
 - Lab은 InferEdgeForge provenance metadata, InferEdge-Runtime C++ execution output, optional InferEdgeAIGuard diagnostic evidence를 하나의 검증 bundle로 연결한다.
+- Runtime Intelligence smoke chain은 Orchestrator operation feed, EdgeEnv producer-owned telemetry coverage, AIGuard deterministic anomaly evidence, Lab-owned risk summary를 하나의 local-first artifact 흐름으로 연결한다.
 - `yolov8n.onnx` manual smoke에서 Lab -> C++ Runtime CLI -> ONNX Runtime CPU execution -> Lab job result ingestion 경로가 dev-only minimal Runtime execution path로 검증되었다.
 - 현재 상태는 portfolio-grade pipeline foundation이며, production worker daemon, persistent queue/database, file upload, production frontend beyond Local Studio, auth/billing은 future work로 명확히 분리한다.
 
@@ -31,6 +34,12 @@ ONNX model
 
 Supporting sidecar:
 InferEdgeEnv -> local-first run evidence registry / comparability checker
+
+Runtime Intelligence smoke chain:
+InferEdgeOrchestrator operation feed
+-> InferEdgeEnv telemetry history / comparability-first regression context
+-> optional InferEdgeAIGuard deterministic runtime anomaly evidence
+-> InferEdgeLab Runtime Intelligence Risk Summary / deployment risk report
 ```
 
 ## 2. Problem Statement
@@ -49,7 +58,7 @@ InferEdge는 이 질문들을 CLI, JSON schema, report, API contract, worker bou
 
 ## 3. System Architecture
 
-InferEdge는 4개 core repository를 하나의 validation/decision pipeline으로 분리하고, InferEdgeEnv를 supporting run evidence sidecar로 둔다.
+InferEdge는 4개 core repository를 하나의 validation/decision pipeline으로 분리하고, InferEdgeEnv를 supporting run evidence sidecar로 둔다. Runtime operation evidence는 InferEdgeOrchestrator가 supplemental context로 제공하되, regression/comparability owner는 EdgeEnv이고 final deployment decision owner는 Lab이다.
 
 ```text
 Forge = build / provenance
@@ -57,9 +66,10 @@ Runtime = C++ execution / result export
 Lab = compare / report / API / deployment decision
 AIGuard = optional rule + evidence diagnosis
 Env = local run evidence registry / comparability checker
+Orchestrator = supplemental runtime operation context
 ```
 
-이 구조의 핵심은 responsibility boundary다. Forge는 artifact를 만들고 provenance를 남긴다. Runtime은 실제 실행과 profiling evidence를 만든다. Lab은 결과를 비교하고 report/API bundle과 deployment decision을 생성한다. AIGuard는 optional evidence로 provenance mismatch나 failure signal을 진단한다. InferEdgeEnv는 Lab decision과 분리된 local benchmark artifact, registry row, evidence bundle, comparability judgement를 관리한다.
+이 구조의 핵심은 responsibility boundary다. Forge는 artifact를 만들고 provenance를 남긴다. Runtime은 실제 실행과 profiling evidence를 만든다. Lab은 결과를 비교하고 report/API bundle과 deployment decision을 생성한다. AIGuard는 optional evidence로 provenance mismatch나 failure signal을 진단한다. InferEdgeEnv는 Lab decision과 분리된 local benchmark artifact, registry row, evidence bundle, comparability judgement를 관리한다. Orchestrator는 queue/deadline/fallback/thermal/resource context를 제공하지만 EdgeEnv comparability 판단이나 Lab deployment decision을 대신하지 않는다.
 
 ## 4. Repository Roles
 
@@ -72,6 +82,7 @@ Env = local run evidence registry / comparability checker
 | InferEdgeLab | Analysis/API layer for end-to-end Edge AI inference validation, reports, jobs, and deployment decisions. |
 | InferEdgeAIGuard | Optional deterministic diagnosis layer for provenance mismatch and suspicious inference result evidence. |
 | InferEdgeEnv | Local-first run evidence registry and comparability checker for Edge AI inference benchmark results. |
+| InferEdgeOrchestrator | Supplemental runtime operation context provider for queue, deadline, fallback, thermal, and resource evidence. |
 
 **InferEdgeForge**  
 Build/provenance layer. ONNX 모델을 TensorRT/RKNN 등 edge deployment artifact로 변환하고, `metadata.json`, `manifest.json`, `worker_runtime_summary`로 source hash, artifact hash, backend, target, precision, shape, preset 정보를 보존한다.
@@ -87,6 +98,9 @@ Rule + evidence diagnosis layer. Forge summary, Runtime worker_response, Lab res
 
 **InferEdgeEnv**
 Run evidence registry / comparability checker. Edge AI inference benchmark result를 local artifact와 SQLite registry로 고정하고, same-condition / conditional / no comparability judgement를 제공한다. Env는 deployment decision을 소유하지 않으며, Lab의 validation / decision layer와 분리된 evidence portability boundary다.
+
+**InferEdgeOrchestrator**
+Runtime operation context provider. Orchestrator는 queue depth, deadline miss, fallback, thermal/resource pressure 같은 operation evidence를 EdgeEnv feed 후보로 제공한다. 이 context는 supplemental evidence이며, regression 계산 owner는 EdgeEnv, final deployment decision owner는 Lab으로 유지된다.
 
 ## 5. Key Implemented Features
 
@@ -105,6 +119,8 @@ Run evidence registry / comparability checker. Edge AI inference benchmark resul
 - AIGuard guard_analysis preservation in Lab deployment decision/report smoke
 - Local Studio browser workflow for Run, Import, Jetson command helper, demo evidence replay, Compare View, and Lab-owned Deployment Decision inspection
 - InferEdgeEnv run artifact bundle, SQLite registry, export/import, sampler metadata, resource lookup, and comparability-first report UX
+- Runtime Intelligence smoke evidence chain from Orchestrator operation feed through EdgeEnv telemetry history/regression and AIGuard deterministic anomaly evidence into a Lab-owned Runtime Intelligence Risk Summary
+- Runtime Intelligence bundle/report gates for EdgeEnv producer-owned telemetry coverage, Orchestrator `edgeenv_mapping_hint`, AIGuard raw-context preservation, and Lab ownership wording
 - Core repository README pipeline summary sync plus InferEdgeEnv sidecar positioning
 
 ## 6. Validation Evidence
@@ -127,6 +143,7 @@ Recent validation evidence:
 - Local Studio demo evidence: `/studio` can load bundled ONNX Runtime CPU and TensorRT Jetson Runtime result fixtures from `examples/studio_demo`, keep the demo pair selectable in Recent jobs while the local server process is alive, and show TensorRT Jetson vs ONNX Runtime CPU comparison in the browser. The fixture-backed evidence records ONNX Runtime CPU FP32 at mean `45.4299 ms` / p99 `49.2128 ms` / `22.0119 FPS` and TensorRT Jetson FP16 25W at mean `10.066401 ms` / p99 `15.548438 ms` / `99.340373 FPS`, about a `4.51x` TensorRT speedup for this demo pair.
 - YOLOv8 COCO subset evaluation: a 10-image local person-detection subset with 89 ground-truth boxes is converted into a COCO-style annotation fixture and evaluated through the `yolov8_coco` preset. The generated report records metric backend `simplified`, mAP@50 0.1410, precision 0.2941, recall 0.1685, and structural validation passed. This is documented as subset workflow evidence, not a full COCO benchmark claim. `pycocotools` remains an optional explicit backend.
 - Validation problem cases: the demo bundle includes annotation-missing, invalid detection structure, contract shape mismatch, and latency regression reports. These show that InferEdge records review/block evidence explicitly instead of presenting every validation path as successful.
+- Runtime Intelligence smoke chain: the committed bundle manifest and report gates verify Orchestrator `edgeenv_runtime_telemetry_feed`, EdgeEnv `runtime_telemetry_context.history.telemetry_coverage`, AIGuard deterministic runtime operation evidence, and Lab Runtime Intelligence Risk Summary ownership. This is a local-first artifact chain, not production observability or a runtime control plane.
 
 The direct Runtime execution result includes `deployment_decision`. Its `unknown` value is expected before Lab compare/report because the worker response has not yet been compared by Lab.
 
@@ -152,6 +169,7 @@ Forge summary
 - **Provenance-aware validation:** Artifact/source hash, manifest source model identity, and runtime provenance are treated as first-class deployment evidence.
 - **SaaS-ready API + async job workflow:** Lab has API response contracts, in-memory async job stubs, and worker request/response mapping without prematurely adding DB/queue infrastructure.
 - **Deterministic rule-based diagnosis:** AIGuard uses rule + evidence detectors instead of vague LLM judgement.
+- **Runtime Intelligence evidence chain:** Orchestrator operation context, EdgeEnv telemetry coverage/regression, AIGuard deterministic anomaly evidence, and Lab deployment risk reporting are connected through lightweight fixtures and gates without adding a new repo or production monitoring platform.
 - **Deployment decision ownership:** Lab keeps final deploy/review/blocked ownership while preserving optional guard evidence.
 - **Local-first Studio demo:** The browser UI can replay real validation evidence locally without adding DB, queue, upload, auth, billing, or production SaaS infrastructure.
 

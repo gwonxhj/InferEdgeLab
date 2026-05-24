@@ -18,6 +18,7 @@ Language: English | [한국어](README.ko.md)
 - Structured comparison: latency, accuracy, and validation evidence
 - Deployment decision: deployable / review / blocked
 - Comparability layer: InferEdgeEnv v0.1.5 records local benchmark evidence and comparability separately from Lab decisions
+- Runtime Intelligence smoke chain: Orchestrator operation context -> EdgeEnv telemetry history/regression -> AIGuard deterministic evidence -> Lab-owned deployment risk report
 - Local Studio: interactive workflow UI for inference validation
 
 ## What Makes InferEdge Different?
@@ -48,6 +49,12 @@ ONNX model
 
 Experiment hygiene / comparability layer:
 InferEdgeEnv -> v0.1.5 v1-complete local-first run evidence registry / comparability checker
+
+Runtime Intelligence smoke evidence chain:
+InferEdgeOrchestrator operation feed
+-> InferEdgeEnv telemetry history / comparability-first regression context
+-> optional InferEdgeAIGuard deterministic runtime anomaly evidence
+-> InferEdgeLab Runtime Intelligence Risk Summary / deployment risk report
 ```
 
 Repository roles are deliberately split:
@@ -57,10 +64,13 @@ Repository roles are deliberately split:
 - **InferEdgeLab:** compare/report/API/job workflow and final deployment decision ownership.
 - **InferEdgeAIGuard:** optional rule + evidence based failure and provenance diagnosis.
 - **InferEdgeEnv:** v0.1.5 v1-complete experiment hygiene / comparability layer; local-first run evidence registry and comparability checker for Edge AI inference benchmark results.
+- **InferEdgeOrchestrator:** supplemental operation context provider for queue, deadline, fallback, thermal, and resource evidence. It is not a comparability owner or deployment decision owner.
 
 Portfolio boundary: InferEdgeLab is the validation / decision layer. InferEdgeEnv is the v0.1.5 v1-complete experiment hygiene / comparability layer. InferEdge validates whether a model is deployable; InferEdgeEnv records whether benchmark evidence can be trusted and compared.
 
-Implemented today: Lab API response contract, `/api/compare`, `/api/analyze` in-memory jobs, worker request/response mappings, Runtime dry-run validation/export, Forge worker/runtime summary, AIGuard provenance mismatch diagnosis, Lab decision/report evidence smoke coverage, dev-only Lab -> Runtime ONNX Runtime smoke using `yolov8n.onnx`, manual Jetson TensorRT Runtime smoke using a Forge manifest plus TensorRT engine artifact, and Runtime source-model identity preservation for compare-ready TensorRT engine results.
+Runtime Intelligence boundary: the current smoke chain preserves Orchestrator `edgeenv_runtime_telemetry_feed` as supplemental operation context, EdgeEnv `runtime_telemetry_context.history.telemetry_coverage` as producer-owned replay coverage, AIGuard `guard_analysis` as deterministic diagnosis evidence, and Lab as the final report/deployment decision owner. This is local-first runtime evidence automation, not production observability or a runtime control plane.
+
+Implemented today: Lab API response contract, `/api/compare`, `/api/analyze` in-memory jobs, worker request/response mappings, Runtime dry-run validation/export, Forge worker/runtime summary, AIGuard provenance mismatch diagnosis, Lab decision/report evidence smoke coverage, dev-only Lab -> Runtime ONNX Runtime smoke using `yolov8n.onnx`, manual Jetson TensorRT Runtime smoke using a Forge manifest plus TensorRT engine artifact, Runtime source-model identity preservation for compare-ready TensorRT engine results, and the Runtime Intelligence smoke chain from Orchestrator operation feed through EdgeEnv/AIGuard into a Lab-owned risk summary.
 
 Runtime identity polish: when a Forge manifest is applied, Runtime now preserves the manifest `source_model.path` identity for comparison naming. A TensorRT artifact such as `model.engine` can therefore keep `compare_model_name=yolov8n` and `compare_key=yolov8n__b1__h640w640__fp32` instead of degrading to `model__...`. This is provenance/compare-readiness polish, not production SaaS infrastructure.
 
