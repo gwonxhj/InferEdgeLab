@@ -18,6 +18,17 @@ REQUIRED_SUMMARY_ARTIFACTS = {
     "runtime_intelligence_bundle_manifest_gate_summary.md",
     "runtime_anomaly_gate_summary.md",
 }
+REQUIRED_BUNDLE_MANIFEST_SUMMARY_MARKERS = (
+    "## Validated Contract Markers",
+    "source_repositories: Runtime, EdgeEnv, Orchestrator, AIGuard, Lab",
+    "producer_contracts: EdgeEnv history, Orchestrator feed, AIGuard diagnosis",
+    "ownership: regression_owner=edgeenv, deployment_decision_owner=lab",
+    "orchestrator_mapping_hint: coverage_summary_owner=edgeenv",
+    "orchestrator_mapping_hint: operation_context_role=supplemental",
+    "orchestrator_mapping_hint: aiguard_evidence_candidates=runtime_queue_overload,runtime_thermal_instability",
+    "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
+    "aiguard_raw_context: orchestrator_mapping_hint preserved",
+)
 
 
 def _record(condition: bool, errors: list[str], message: str) -> None:
@@ -61,6 +72,20 @@ def _validate_gate_summary(path: Path, errors: list[str], label: str) -> None:
     text = _read_text(path, errors, label)
     if text:
         _record("- Status: passed" in text, errors, f"{label} must have passed status")
+
+
+def _validate_bundle_manifest_gate_summary(path: Path, errors: list[str]) -> None:
+    label = "Runtime Intelligence bundle manifest gate summary"
+    text = _read_text(path, errors, label)
+    if not text:
+        return
+    _record("- Status: passed" in text, errors, f"{label} must have passed status")
+    for marker in REQUIRED_BUNDLE_MANIFEST_SUMMARY_MARKERS:
+        _record(
+            marker in text,
+            errors,
+            f"{label} missing validated contract marker: {marker}",
+        )
 
 
 def _validate_runtime_report(path: Path, errors: list[str]) -> None:
@@ -115,10 +140,9 @@ def main(report_dir: str, summary_out: str = "") -> int:
     _record(report_path.is_dir(), errors, f"report dir not found: {report_path}")
     if report_path.is_dir():
         _validate_required_files(report_path, errors)
-        _validate_gate_summary(
+        _validate_bundle_manifest_gate_summary(
             report_path / "runtime_intelligence_bundle_manifest_gate_summary.md",
             errors,
-            "Runtime Intelligence bundle manifest gate summary",
         )
         _validate_gate_summary(
             report_path / "runtime_anomaly_gate_summary.md",
