@@ -18,6 +18,10 @@ REQUIRED_SUMMARY_ARTIFACTS = {
     "runtime_intelligence_bundle_manifest_gate_summary.md",
     "runtime_anomaly_gate_summary.md",
 }
+REQUIRED_JSON_ARTIFACTS = {
+    "portfolio_demo_check.json",
+    "deployment_risk_summary.json",
+}
 REQUIRED_BUNDLE_MANIFEST_SUMMARY_MARKERS = (
     "## Validated Contract Markers",
     "source_repositories: Runtime, EdgeEnv, Orchestrator, AIGuard, Lab",
@@ -65,6 +69,7 @@ def _validate_required_files(report_dir: Path, errors: list[str]) -> None:
         REQUIRED_MARKDOWN_ARTIFACTS
         | REQUIRED_HTML_ARTIFACTS
         | REQUIRED_SUMMARY_ARTIFACTS
+        | REQUIRED_JSON_ARTIFACTS
     ):
         _record((report_dir / name).is_file(), errors, f"missing artifact: {name}")
 
@@ -117,6 +122,16 @@ def _validate_portfolio_status(path: Path, errors: list[str]) -> None:
         )
 
 
+def _validate_deployment_risk_status(path: Path, errors: list[str]) -> None:
+    payload = _load_json(path, errors, "Deployment risk summary JSON")
+    if payload:
+        _record(
+            payload.get("status") == "pass",
+            errors,
+            "deployment_risk_summary.json status must be pass",
+        )
+
+
 def _write_summary(path: Path, report_dir: Path, errors: list[str]) -> None:
     lines = [
         "# Runtime Intelligence CI Artifact Gate",
@@ -152,6 +167,10 @@ def main(report_dir: str, summary_out: str = "") -> int:
         )
         _validate_runtime_report(report_path / "runtime_anomaly_summary.md", errors)
         _validate_portfolio_status(report_path / "portfolio_demo_check.json", errors)
+        _validate_deployment_risk_status(
+            report_path / "deployment_risk_summary.json",
+            errors,
+        )
 
     if summary_out:
         _write_summary(Path(summary_out), report_path, errors)

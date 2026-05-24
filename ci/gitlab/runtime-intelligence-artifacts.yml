@@ -105,13 +105,18 @@ inferedge:deployment-risk-gate:
     - job: inferedge:portfolio-report
       artifacts: true
   script:
-    - mkdir -p "$INFEREDGE_REPORT_DIR"
-    - poetry run inferedgelab portfolio-demo-check --format json > "$INFEREDGE_REPORT_DIR/deployment_risk_summary.json"
-    - poetry run python scripts/check_runtime_intelligence_ci_artifacts.py --report-dir "$INFEREDGE_REPORT_DIR" --summary-out "$INFEREDGE_REPORT_DIR/runtime_intelligence_ci_artifact_gate_summary.md"
-    - python -c "import json, pathlib, sys; data=json.loads(pathlib.Path('$INFEREDGE_REPORT_DIR/deployment_risk_summary.json').read_text()); sys.exit(0 if data.get('status') == 'pass' else 2)"
+    - bash scripts/smoke_runtime_intelligence_chain.sh --output-dir "$INFEREDGE_REPORT_DIR"
   artifacts:
     when: always
     expire_in: 14 days
     paths:
+      - "$INFEREDGE_REPORT_DIR/edgeenv_runtime_regression.md"
+      - "$INFEREDGE_REPORT_DIR/edgeenv_runtime_regression.html"
+      - "$INFEREDGE_REPORT_DIR/runtime_anomaly_summary.md"
+      - "$INFEREDGE_REPORT_DIR/runtime_anomaly_summary.html"
+      - "$INFEREDGE_REPORT_DIR/runtime_anomaly_gate_summary.md"
+      - "$INFEREDGE_REPORT_DIR/runtime_intelligence_bundle_manifest_gate_summary.md"
+      - "$INFEREDGE_REPORT_DIR/portfolio_demo_check.json"
+      - "$INFEREDGE_REPORT_DIR/portfolio_demo_check.md"
       - "$INFEREDGE_REPORT_DIR/deployment_risk_summary.json"
       - "$INFEREDGE_REPORT_DIR/runtime_intelligence_ci_artifact_gate_summary.md"
