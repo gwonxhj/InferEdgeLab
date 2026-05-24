@@ -89,13 +89,17 @@ The initial gate is conservative:
 - portfolio demo check status must be `pass`
 - the final deployment-risk job must re-check the collected manifest/report
   gate summaries and Runtime Intelligence Risk Summary markers before passing
+- the bundle manifest gate summary must include validated contract markers for
+  source repository separation, producer schemas, Lab/EdgeEnv ownership, the
+  Orchestrator supplemental mapping hint, AIGuard evidence candidates, and
+  AIGuard raw-context preservation
 
 The bundle manifest gate is implemented by `scripts/check_runtime_intelligence_bundle_manifest.py`. It verifies that the bundle contains baseline/candidate Runtime results, EdgeEnv regression evidence, AIGuard guard evidence, and explicit owner/boundary metadata before Lab generates the report.
 The same gate now also checks `source_repositories`, `artifact_roles`, and `producer_contracts` so the smoke remains a cross-repo handoff fixture rather than a Lab-only report sample.
 
 The artifact gate is implemented by `scripts/check_runtime_intelligence_artifact_bundle.py`. It checks the generated Markdown / HTML report for the required Runtime Intelligence rows, including Lab ownership, EdgeEnv comparability, telemetry coverage-gap markers, Orchestrator operation feed context, AIGuard runtime operation anomalies, and triggered deployment review rules.
 
-The CI artifact gate is implemented by `scripts/check_runtime_intelligence_ci_artifacts.py`. It runs in the deployment-risk stage and verifies that the collected optional GitLab artifacts include the manifest gate summary, report gate summary, Runtime Intelligence Risk Summary report, and portfolio demo status. This keeps the final CI gate file-based and deterministic without turning GitLab into a runtime control plane.
+The CI artifact gate is implemented by `scripts/check_runtime_intelligence_ci_artifacts.py`. It runs in the deployment-risk stage and verifies that the collected optional GitLab artifacts include the manifest gate summary, report gate summary, Runtime Intelligence Risk Summary report, portfolio demo status, and the validated contract markers from the bundle manifest gate. This keeps the final CI gate file-based and deterministic without turning GitLab into a runtime control plane.
 
 Future GitLab-specific gates may include latency regression thresholds, anomaly severity thresholds, thermal instability thresholds, and deployment risk thresholds, but only after the corresponding deterministic evidence is already represented in the artifact bundle.
 

@@ -41,6 +41,24 @@ def test_runtime_intelligence_bundle_manifest_gate_cli_passes(tmp_path):
     summary = summary_path.read_text(encoding="utf-8")
     assert "- Status: passed" in summary
     assert "- Error count: 0" in summary
+    assert "## Validated Contract Markers" in summary
+    assert (
+        "source_repositories: Runtime, EdgeEnv, Orchestrator, AIGuard, Lab"
+        in summary
+    )
+    assert (
+        "producer_contracts: EdgeEnv history, Orchestrator feed, AIGuard diagnosis"
+        in summary
+    )
+    assert (
+        "orchestrator_mapping_hint: "
+        "aiguard_evidence_candidates=runtime_queue_overload,runtime_thermal_instability"
+        in summary
+    )
+    assert (
+        "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage"
+        in summary
+    )
 
 
 def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_owner(tmp_path):

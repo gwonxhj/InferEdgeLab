@@ -95,6 +95,16 @@ REQUIRED_GUARD_EVIDENCE_FIELDS = {
 }
 VALID_GUARD_EVIDENCE_STATUSES = {"passed", "warning", "failed", "skipped"}
 VALID_GUARD_EVIDENCE_SEVERITIES = {"low", "medium", "high", "critical"}
+SUMMARY_CONTRACT_MARKERS = (
+    "source_repositories: Runtime, EdgeEnv, Orchestrator, AIGuard, Lab",
+    "producer_contracts: EdgeEnv history, Orchestrator feed, AIGuard diagnosis",
+    "ownership: regression_owner=edgeenv, deployment_decision_owner=lab",
+    "orchestrator_mapping_hint: coverage_summary_owner=edgeenv",
+    "orchestrator_mapping_hint: operation_context_role=supplemental",
+    "orchestrator_mapping_hint: aiguard_evidence_candidates=runtime_queue_overload,runtime_thermal_instability",
+    "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
+    "aiguard_raw_context: orchestrator_mapping_hint preserved",
+)
 
 
 def _load_json(path: Path, label: str) -> dict[str, Any]:
@@ -878,6 +888,10 @@ def _write_summary(path: str, *, manifest_path: Path, errors: list[str]) -> None
         f"- Manifest: `{manifest_path}`",
         f"- Status: {'failed' if errors else 'passed'}",
         f"- Error count: {len(errors)}",
+        "",
+        "## Validated Contract Markers",
+        "",
+        *[f"- {marker}" for marker in SUMMARY_CONTRACT_MARKERS],
         "",
     ]
     if errors:
