@@ -66,7 +66,7 @@ inferedge:deterministic-anomaly-summary:
   stage: anomaly-analysis
   script:
     - mkdir -p "$INFEREDGE_REPORT_DIR"
-    - poetry run python scripts/check_runtime_intelligence_bundle_manifest.py --manifest examples/runtime_intelligence_chain/bundle_manifest.json --summary-out "$INFEREDGE_REPORT_DIR/runtime_intelligence_bundle_manifest_gate_summary.md"
+    - poetry run python scripts/check_runtime_intelligence_bundle_manifest.py --manifest examples/runtime_intelligence_chain/bundle_manifest.json --edgeenv-handoff examples/runtime_intelligence_chain/edgeenv_lab_handoff_manifest.json --summary-out "$INFEREDGE_REPORT_DIR/runtime_intelligence_bundle_manifest_gate_summary.md"
     - poetry run inferedgelab compare examples/edgeenv_regression/lab_baseline_result.json examples/edgeenv_regression/lab_candidate_result.json --edgeenv-regression examples/runtime_intelligence_chain/edgeenv_regression_with_orchestrator_context.json --guard-analysis examples/runtime_intelligence_chain/aiguard_runtime_operation_guard_analysis.json --markdown-out "$INFEREDGE_REPORT_DIR/runtime_anomaly_summary.md" --html-out "$INFEREDGE_REPORT_DIR/runtime_anomaly_summary.html"
     - poetry run python scripts/check_runtime_intelligence_artifact_bundle.py --markdown "$INFEREDGE_REPORT_DIR/runtime_anomaly_summary.md" --html "$INFEREDGE_REPORT_DIR/runtime_anomaly_summary.html" --summary-out "$INFEREDGE_REPORT_DIR/runtime_anomaly_gate_summary.md"
   artifacts:
@@ -78,6 +78,7 @@ inferedge:deterministic-anomaly-summary:
       - "$INFEREDGE_REPORT_DIR/runtime_anomaly_gate_summary.md"
       - "$INFEREDGE_REPORT_DIR/runtime_intelligence_bundle_manifest_gate_summary.md"
       - examples/runtime_intelligence_chain/bundle_manifest.json
+      - examples/runtime_intelligence_chain/edgeenv_lab_handoff_manifest.json
       - examples/runtime_intelligence_chain/edgeenv_regression_with_orchestrator_context.json
       - examples/runtime_intelligence_chain/aiguard_runtime_operation_guard_analysis.json
 

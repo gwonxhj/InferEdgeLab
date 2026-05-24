@@ -28,6 +28,7 @@ REQUIRED_BUNDLE_MANIFEST_SUMMARY_MARKERS = (
     "orchestrator_mapping_hint: aiguard_evidence_candidates=runtime_queue_overload,runtime_thermal_instability",
     "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
     "aiguard_raw_context: orchestrator_mapping_hint preserved",
+    "edgeenv_handoff: lab_bundle_alignment validated",
 )
 
 

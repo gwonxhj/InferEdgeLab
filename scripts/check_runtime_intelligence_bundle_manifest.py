@@ -9,6 +9,8 @@ from rich import print as rprint
 
 
 EXPECTED_SCHEMA_VERSION = "inferedge.runtime-intelligence-artifact-bundle.v1"
+EDGEENV_HANDOFF_SCHEMA_VERSION = "edgeenv.runtime-intelligence-lab-handoff.v1"
+EDGEENV_HANDOFF_ROLE = "edgeenv-runtime-intelligence-lab-handoff"
 REQUIRED_FILES = {
     "baseline_result",
     "candidate_result",
@@ -71,6 +73,15 @@ REQUIRED_ORCHESTRATOR_AIGUARD_EVIDENCE_CANDIDATES = {
     "runtime_queue_overload",
     "runtime_thermal_instability",
 }
+REQUIRED_EDGEENV_HANDOFF_BOUNDARY_FLAGS = {
+    "orchestrator_context_is_verdict": False,
+    "orchestrator_context_is_comparability_gate": False,
+    "aiguard_guard_analysis_is_external": True,
+    "aiguard_is_final_decision_owner": False,
+    "edgeenv_does_not_generate_guard_analysis": True,
+    "lab_is_final_decision_owner": True,
+    "production_observability_platform": False,
+}
 REQUIRED_GUARD_TYPES = {
     "runtime_telemetry_context_coverage",
     "runtime_queue_overload",
@@ -104,6 +115,9 @@ SUMMARY_CONTRACT_MARKERS = (
     "orchestrator_mapping_hint: aiguard_evidence_candidates=runtime_queue_overload,runtime_thermal_instability",
     "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
     "aiguard_raw_context: orchestrator_mapping_hint preserved",
+)
+EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS = (
+    "edgeenv_handoff: lab_bundle_alignment validated",
 )
 
 
@@ -200,6 +214,148 @@ def _validate_manifest_shape(manifest: dict[str, Any], errors: list[str]) -> Non
                 boundaries.get(key) is expected,
                 errors,
                 f"boundaries.{key} must be {expected}",
+            )
+
+
+def _validate_edgeenv_handoff_alignment(
+    handoff: dict[str, Any],
+    *,
+    manifest: dict[str, Any],
+    errors: list[str],
+) -> None:
+    _record(
+        handoff.get("schema_version") == EDGEENV_HANDOFF_SCHEMA_VERSION,
+        errors,
+        f"EdgeEnv handoff schema_version must be {EDGEENV_HANDOFF_SCHEMA_VERSION}",
+    )
+    _record(
+        handoff.get("role") == EDGEENV_HANDOFF_ROLE,
+        errors,
+        f"EdgeEnv handoff role must be {EDGEENV_HANDOFF_ROLE}",
+    )
+
+    handoff_files = handoff.get("files")
+    _record(
+        isinstance(handoff_files, dict),
+        errors,
+        "EdgeEnv handoff files must be an object",
+    )
+    manifest_files = (
+        manifest.get("files") if isinstance(manifest.get("files"), dict) else {}
+    )
+    if isinstance(handoff_files, dict):
+        for key in sorted(REQUIRED_FILES - {"aiguard_guard_analysis"}):
+            _record(
+                handoff_files.get(key) == manifest_files.get(key),
+                errors,
+                "EdgeEnv handoff files."
+                f"{key} must match bundle manifest files.{key}",
+            )
+        _record(
+            "aiguard_guard_analysis" not in handoff_files,
+            errors,
+            "EdgeEnv handoff files must not include aiguard_guard_analysis",
+        )
+
+    alignment = handoff.get("lab_bundle_alignment")
+    _record(
+        isinstance(alignment, dict),
+        errors,
+        "EdgeEnv handoff lab_bundle_alignment must be an object",
+    )
+    if not isinstance(alignment, dict):
+        return
+
+    _record(
+        alignment.get("bundle_schema_version") == EXPECTED_SCHEMA_VERSION,
+        errors,
+        "EdgeEnv handoff lab_bundle_alignment.bundle_schema_version must be "
+        f"{EXPECTED_SCHEMA_VERSION}",
+    )
+    _record(
+        set(alignment.get("required_file_keys") or []) == REQUIRED_FILES,
+        errors,
+        "EdgeEnv handoff lab_bundle_alignment.required_file_keys must match "
+        "Lab required files",
+    )
+    produced_file_keys = set(alignment.get("edgeenv_produced_file_keys") or [])
+    _record(
+        (REQUIRED_FILES - {"aiguard_guard_analysis"}).issubset(produced_file_keys),
+        errors,
+        "EdgeEnv handoff lab_bundle_alignment.edgeenv_produced_file_keys "
+        "must include baseline_result, candidate_result, and edgeenv_regression_report",
+    )
+    _record(
+        produced_file_keys.isdisjoint({"aiguard_guard_analysis"}),
+        errors,
+        "EdgeEnv handoff lab_bundle_alignment.edgeenv_produced_file_keys "
+        "must not include aiguard_guard_analysis",
+    )
+    _record(
+        alignment.get("external_file_keys") == ["aiguard_guard_analysis"],
+        errors,
+        "EdgeEnv handoff lab_bundle_alignment.external_file_keys must be "
+        "['aiguard_guard_analysis']",
+    )
+
+    source_repositories = alignment.get("source_repositories")
+    _record(
+        isinstance(source_repositories, dict),
+        errors,
+        "EdgeEnv handoff lab_bundle_alignment.source_repositories must be an object",
+    )
+    if isinstance(source_repositories, dict):
+        for key, expected in REQUIRED_SOURCE_REPOSITORIES.items():
+            _record(
+                source_repositories.get(key) == expected,
+                errors,
+                "EdgeEnv handoff lab_bundle_alignment.source_repositories."
+                f"{key} must be {expected}",
+            )
+
+    artifact_roles = alignment.get("artifact_roles")
+    _record(
+        isinstance(artifact_roles, dict),
+        errors,
+        "EdgeEnv handoff lab_bundle_alignment.artifact_roles must be an object",
+    )
+    if isinstance(artifact_roles, dict):
+        for key, expected in REQUIRED_ARTIFACT_ROLES.items():
+            _record(
+                artifact_roles.get(key) == expected,
+                errors,
+                "EdgeEnv handoff lab_bundle_alignment.artifact_roles."
+                f"{key} must be {expected}",
+            )
+
+    producer_contracts = alignment.get("producer_contracts")
+    _record(
+        isinstance(producer_contracts, dict),
+        errors,
+        "EdgeEnv handoff lab_bundle_alignment.producer_contracts must be an object",
+    )
+    if isinstance(producer_contracts, dict):
+        for key, expected in REQUIRED_PRODUCER_CONTRACTS.items():
+            _record(
+                producer_contracts.get(key) == expected,
+                errors,
+                "EdgeEnv handoff lab_bundle_alignment.producer_contracts."
+                f"{key} must be {expected}",
+            )
+
+    boundary_flags = alignment.get("boundary_flags")
+    _record(
+        isinstance(boundary_flags, dict),
+        errors,
+        "EdgeEnv handoff lab_bundle_alignment.boundary_flags must be an object",
+    )
+    if isinstance(boundary_flags, dict):
+        for key, expected in REQUIRED_EDGEENV_HANDOFF_BOUNDARY_FLAGS.items():
+            _record(
+                boundary_flags.get(key) is expected,
+                errors,
+                "EdgeEnv handoff lab_bundle_alignment.boundary_flags."
+                f"{key} must be {expected}",
             )
 
 
@@ -879,9 +1035,18 @@ def _validate_aiguard_orchestrator_mapping_hint(
     )
 
 
-def _write_summary(path: str, *, manifest_path: Path, errors: list[str]) -> None:
+def _write_summary(
+    path: str,
+    *,
+    manifest_path: Path,
+    errors: list[str],
+    edgeenv_handoff_present: bool,
+) -> None:
     if not path:
         return
+    contract_markers = list(SUMMARY_CONTRACT_MARKERS)
+    if edgeenv_handoff_present:
+        contract_markers.extend(EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS)
     lines = [
         "# Runtime Intelligence Bundle Manifest Gate",
         "",
@@ -891,7 +1056,7 @@ def _write_summary(path: str, *, manifest_path: Path, errors: list[str]) -> None
         "",
         "## Validated Contract Markers",
         "",
-        *[f"- {marker}" for marker in SUMMARY_CONTRACT_MARKERS],
+        *[f"- {marker}" for marker in contract_markers],
         "",
     ]
     if errors:
@@ -904,11 +1069,21 @@ def _write_summary(path: str, *, manifest_path: Path, errors: list[str]) -> None
     out_path.write_text("\n".join(lines), encoding="utf-8")
 
 
-def main(manifest: str, summary_out: str = "") -> int:
+def main(
+    manifest: str,
+    summary_out: str = "",
+    edgeenv_handoff: str = "",
+) -> int:
     manifest_path = Path(manifest).resolve()
     errors: list[str] = []
     manifest_payload = _load_json(manifest_path, "Runtime Intelligence bundle manifest")
     _validate_manifest_shape(manifest_payload, errors)
+    if edgeenv_handoff:
+        _validate_edgeenv_handoff_alignment(
+            _load_json(Path(edgeenv_handoff).resolve(), "EdgeEnv handoff manifest"),
+            manifest=manifest_payload,
+            errors=errors,
+        )
 
     files = manifest_payload.get("files") or {}
     resolved_files: dict[str, Path] = {}
@@ -943,7 +1118,12 @@ def main(manifest: str, summary_out: str = "") -> int:
             errors,
         )
 
-    _write_summary(summary_out, manifest_path=manifest_path, errors=errors)
+    _write_summary(
+        summary_out,
+        manifest_path=manifest_path,
+        errors=errors,
+        edgeenv_handoff_present=bool(edgeenv_handoff),
+    )
     if errors:
         rprint("[red]Runtime Intelligence bundle manifest gate failed.[/red]")
         for error in errors:
@@ -962,13 +1142,24 @@ def cli(
         "--manifest",
         help="Runtime Intelligence bundle manifest path",
     ),
+    edgeenv_handoff: str = typer.Option(
+        "",
+        "--edgeenv-handoff",
+        help="Optional EdgeEnv producer-side Runtime Intelligence handoff manifest path",
+    ),
     summary_out: str = typer.Option(
         "",
         "--summary-out",
         help="Optional Markdown gate summary output path",
     ),
 ) -> None:
-    raise typer.Exit(main(manifest=manifest, summary_out=summary_out))
+    raise typer.Exit(
+        main(
+            manifest=manifest,
+            summary_out=summary_out,
+            edgeenv_handoff=edgeenv_handoff,
+        )
+    )
 
 
 if __name__ == "__main__":

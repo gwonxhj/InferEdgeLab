@@ -1,0 +1,110 @@
+{
+  "schema_version": "edgeenv.runtime-intelligence-lab-handoff.v1",
+  "role": "edgeenv-runtime-intelligence-lab-handoff",
+  "description": "EdgeEnv producer-side manifest for a Lab-owned Runtime Intelligence deployment risk report.",
+  "files": {
+    "baseline_result": "../edgeenv_regression/lab_baseline_result.json",
+    "candidate_result": "../edgeenv_regression/lab_candidate_result.json",
+    "edgeenv_regression_report": "edgeenv_regression_with_orchestrator_context.json",
+    "runtime_telemetry_history": "runtime_telemetry_history.json"
+  },
+  "source_repositories": {
+    "runtime_result": "InferEdge-Runtime",
+    "edgeenv_regression_report": "InferEdgeEnv",
+    "orchestrator_operation_context": "InferEdgeOrchestrator",
+    "lab_report_owner": "InferEdgeLab"
+  },
+  "artifact_roles": {
+    "baseline_result": "runtime-lab-compatible-baseline-result",
+    "candidate_result": "runtime-lab-compatible-candidate-result",
+    "edgeenv_regression_report": "edgeenv-comparability-first-runtime-regression-report",
+    "orchestrator_operation_context": "orchestrator-supplemental-operation-context",
+    "lab_report": "lab-owned-deployment-risk-report"
+  },
+  "producer_contracts": {
+    "runtime_result_contract": "lab-compatible-runtime-result-json",
+    "edgeenv_history_schema": "edgeenv.runtime-telemetry-history.v1",
+    "runtime_telemetry_history_seed_schema": "inferedge-runtime-telemetry-history-seed-v1",
+    "orchestrator_feed_schema": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1"
+  },
+  "ownership": {
+    "runtime_result_owner": "runtime",
+    "regression_owner": "edgeenv",
+    "operation_context_owner": "orchestrator",
+    "deployment_decision_owner": "lab"
+  },
+  "boundaries": {
+    "orchestrator_context_is_verdict": false,
+    "orchestrator_context_is_comparability_gate": false,
+    "edgeenv_is_final_decision_owner": false,
+    "lab_is_final_decision_owner": true,
+    "production_observability_platform": false
+  },
+  "lab_bundle_alignment": {
+    "bundle_schema_version": "inferedge.runtime-intelligence-artifact-bundle.v1",
+    "required_file_keys": [
+      "baseline_result",
+      "candidate_result",
+      "edgeenv_regression_report",
+      "aiguard_guard_analysis"
+    ],
+    "edgeenv_produced_file_keys": [
+      "baseline_result",
+      "candidate_result",
+      "edgeenv_regression_report",
+      "runtime_telemetry_history"
+    ],
+    "external_file_keys": [
+      "aiguard_guard_analysis"
+    ],
+    "source_repositories": {
+      "runtime_result": "InferEdge-Runtime",
+      "edgeenv_regression_report": "InferEdgeEnv",
+      "orchestrator_operation_context": "InferEdgeOrchestrator",
+      "aiguard_guard_analysis": "InferEdgeAIGuard",
+      "lab_report_owner": "InferEdgeLab"
+    },
+    "artifact_roles": {
+      "baseline_result": "runtime-lab-compatible-baseline-result",
+      "candidate_result": "runtime-lab-compatible-candidate-result",
+      "edgeenv_regression_report": "edgeenv-comparability-first-runtime-regression-report",
+      "orchestrator_operation_context": "orchestrator-supplemental-operation-context",
+      "aiguard_guard_analysis": "aiguard-deterministic-runtime-anomaly-evidence",
+      "lab_report": "lab-owned-deployment-risk-report"
+    },
+    "producer_contracts": {
+      "runtime_result_contract": "lab-compatible-runtime-result-json",
+      "runtime_telemetry_history_seed_schema": "inferedge-runtime-telemetry-history-seed-v1",
+      "edgeenv_history_schema": "edgeenv.runtime-telemetry-history.v1",
+      "orchestrator_feed_schema": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
+      "aiguard_schema": "inferedge-aiguard-diagnosis-v1"
+    },
+    "boundary_flags": {
+      "orchestrator_context_is_verdict": false,
+      "orchestrator_context_is_comparability_gate": false,
+      "aiguard_guard_analysis_is_external": true,
+      "aiguard_is_final_decision_owner": false,
+      "edgeenv_does_not_generate_guard_analysis": true,
+      "lab_is_final_decision_owner": true,
+      "production_observability_platform": false
+    }
+  },
+  "edgeenv_report_summary": {
+    "baseline_run_id": "edgeenv-smoke-baseline",
+    "candidate_run_id": "edgeenv-smoke-candidate",
+    "comparable": true,
+    "mode": "same-condition",
+    "regression_detected": true,
+    "regression_type": "mixed",
+    "severity": "high",
+    "runtime_telemetry_context_present": true,
+    "history_seed_runs": 2,
+    "orchestrator_context_present": true
+  },
+  "notes": [
+    "This manifest is EdgeEnv producer-side handoff metadata.",
+    "AIGuard guard_analysis is intentionally not produced by EdgeEnv.",
+    "Lab remains the final deployment decision owner.",
+    "This is a local artifact contract, not production observability."
+  ]
+}
