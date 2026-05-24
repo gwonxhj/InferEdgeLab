@@ -26,6 +26,10 @@ bash scripts/smoke_runtime_intelligence_chain.sh \
   --output-dir reports/runtime_intelligence_chain
 ```
 
+The optional template uses the same smoke script in the final
+`deployment-risk` stage so the GitLab artifact gate and the local reproduction
+path validate the same file bundle.
+
 This maps to the ecosystem ownership model:
 
 - Runtime evidence stays additive and Lab-compatible.
@@ -95,6 +99,7 @@ The initial gate is conservative:
 - producer schema markers for EdgeEnv history, Orchestrator feed, and AIGuard
   diagnosis evidence must stay aligned with the committed smoke artifacts
 - portfolio demo check status must be `pass`
+- deployment risk summary status must be `pass`
 - the final deployment-risk job must re-check the collected manifest/report
   gate summaries and Runtime Intelligence Risk Summary markers before passing
 - the bundle manifest gate summary must include validated contract markers for

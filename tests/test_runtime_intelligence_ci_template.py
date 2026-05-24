@@ -43,8 +43,9 @@ def test_runtime_intelligence_gitlab_template_keeps_local_first_artifact_contrac
     assert "--guard-analysis" in text
     assert "check_runtime_intelligence_artifact_bundle.py" in text
     assert "runtime_anomaly_gate_summary.md" in text
-    assert "check_runtime_intelligence_ci_artifacts.py" in text
+    assert "smoke_runtime_intelligence_chain.sh --output-dir" in text
     assert "runtime_intelligence_ci_artifact_gate_summary.md" in text
+    assert "deployment_risk_summary.json" in text
     assert "needs:" in text
     assert "inferedge:deterministic-anomaly-summary" in text
     assert "inferedge:portfolio-report" in text
@@ -126,6 +127,10 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         '{"status": "pass"}',
         encoding="utf-8",
     )
+    (report_dir / "deployment_risk_summary.json").write_text(
+        '{"status": "pass"}',
+        encoding="utf-8",
+    )
     summary_path = tmp_path / "ci_artifact_gate_summary.md"
 
     result = ci_artifact_gate(
@@ -160,6 +165,10 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_risk_summary(
     ):
         (report_dir / name).write_text("- Status: passed\n", encoding="utf-8")
     (report_dir / "portfolio_demo_check.json").write_text(
+        '{"status": "pass"}',
+        encoding="utf-8",
+    )
+    (report_dir / "deployment_risk_summary.json").write_text(
         '{"status": "pass"}',
         encoding="utf-8",
     )
@@ -221,6 +230,10 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_contract_marker
         '{"status": "pass"}',
         encoding="utf-8",
     )
+    (report_dir / "deployment_risk_summary.json").write_text(
+        '{"status": "pass"}',
+        encoding="utf-8",
+    )
     summary_path = tmp_path / "ci_artifact_gate_summary.md"
 
     result = ci_artifact_gate(
@@ -272,6 +285,10 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_coverage_gap_ma
         '{"status": "pass"}',
         encoding="utf-8",
     )
+    (report_dir / "deployment_risk_summary.json").write_text(
+        '{"status": "pass"}',
+        encoding="utf-8",
+    )
     summary_path = tmp_path / "ci_artifact_gate_summary.md"
 
     result = ci_artifact_gate(
@@ -282,3 +299,73 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_coverage_gap_ma
     assert result == 2
     summary = summary_path.read_text(encoding="utf-8")
     assert "runtime report missing marker: runtime_telemetry_field_gap" in summary
+
+
+def test_runtime_intelligence_ci_artifact_gate_fails_for_failed_deployment_risk(
+    tmp_path,
+):
+    report_dir = tmp_path / "runtime_intelligence_ci"
+    report_dir.mkdir()
+    for name in (
+        "edgeenv_runtime_regression.md",
+        "edgeenv_runtime_regression.html",
+        "runtime_anomaly_summary.html",
+        "portfolio_demo_check.md",
+    ):
+        (report_dir / name).write_text("placeholder\n", encoding="utf-8")
+    (report_dir / "runtime_anomaly_summary.md").write_text(
+        "\n".join(
+            [
+                "## Runtime Intelligence Risk Summary",
+                "Lab remains the final deployment decision owner.",
+                "AIGuard runtime operation anomalies",
+                "runtime_queue_overload, runtime_thermal_instability",
+                "Runtime telemetry coverage gaps",
+                "runtime_telemetry_field_gap",
+                "Inspect telemetry coverage missing fields",
+                "guard_warning_review",
+                "edgeenv_runtime_regression_review",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (report_dir / "runtime_intelligence_bundle_manifest_gate_summary.md").write_text(
+        "\n".join(
+            [
+                "- Status: passed",
+                "## Validated Contract Markers",
+                "- source_repositories: Runtime, EdgeEnv, Orchestrator, AIGuard, Lab",
+                "- producer_contracts: EdgeEnv history, Orchestrator feed, AIGuard diagnosis",
+                "- ownership: regression_owner=edgeenv, deployment_decision_owner=lab",
+                "- orchestrator_mapping_hint: coverage_summary_owner=edgeenv",
+                "- orchestrator_mapping_hint: operation_context_role=supplemental",
+                "- orchestrator_mapping_hint: aiguard_evidence_candidates=runtime_queue_overload,runtime_thermal_instability",
+                "- aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
+                "- aiguard_raw_context: orchestrator_mapping_hint preserved",
+                "- edgeenv_handoff: lab_bundle_alignment validated",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (report_dir / "runtime_anomaly_gate_summary.md").write_text(
+        "- Status: passed\n",
+        encoding="utf-8",
+    )
+    (report_dir / "portfolio_demo_check.json").write_text(
+        '{"status": "pass"}',
+        encoding="utf-8",
+    )
+    (report_dir / "deployment_risk_summary.json").write_text(
+        '{"status": "fail"}',
+        encoding="utf-8",
+    )
+    summary_path = tmp_path / "ci_artifact_gate_summary.md"
+
+    result = ci_artifact_gate(
+        report_dir=str(report_dir),
+        summary_out=str(summary_path),
+    )
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "deployment_risk_summary.json status must be pass" in summary
