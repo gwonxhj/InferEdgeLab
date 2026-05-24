@@ -87,9 +87,16 @@ The initial gate is conservative:
   `coverage_summary_path=runtime_telemetry_context.history.telemetry_coverage`,
   `operation_context_role=supplemental`, and the AIGuard evidence candidate
   hints for `runtime_queue_overload` and `runtime_thermal_instability`
+- the preserved Orchestrator operation context must keep the producer markers
+  `source_repository=InferEdgeOrchestrator`,
+  `artifact_role=orchestrator-supplemental-operation-context`, and
+  `producer_contract=inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1`
 - AIGuard coverage evidence raw context must preserve the same mapping hint, so
   CI catches loss of EdgeEnv/Orchestrator ownership markers before Lab report
   generation
+- AIGuard coverage evidence raw context must also preserve the same
+  Orchestrator producer markers, so the diagnostic artifact remains traceable
+  to the Orchestrator feed without making AIGuard the producer or decision owner
 - Orchestrator candidate context must include `run_id`, `telemetry_source`,
   `operation`, and `resource`, so CI can catch incomplete handoffs without
   making Orchestrator a regression owner
