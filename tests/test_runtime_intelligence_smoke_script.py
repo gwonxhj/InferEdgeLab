@@ -74,6 +74,10 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
         "aiguard_raw_context: orchestrator_producer_markers preserved"
         in bundle_summary
     )
+    assert (
+        "aiguard_raw_context: missing_telemetry_orchestrator_context preserved"
+        in bundle_summary
+    )
     assert "edgeenv_handoff: lab_bundle_alignment validated" in bundle_summary
     assert "edgeenv_handoff: runtime_telemetry_history validated" in bundle_summary
     assert (

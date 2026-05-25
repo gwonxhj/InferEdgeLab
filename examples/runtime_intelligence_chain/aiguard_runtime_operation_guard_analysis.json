@@ -47,8 +47,8 @@
           "runtime_telemetry_context_present": true,
           "runtime_telemetry_source": "result_artifacts+runtime_telemetry_history",
           "runtime_telemetry_history_schema_version": "edgeenv.runtime-telemetry-history.v1",
-          "history_orchestrator_feed_runs": 1.0,
-          "history_registered_runs": 2.0,
+          "history_orchestrator_feed_runs": 2.0,
+          "history_registered_runs": 3.0,
           "history_telemetry_runs": 2.0,
           "history_telemetry_seed_runs": 2.0,
           "baseline_runtime_telemetry_history_seed_schema_version": "inferedge-runtime-telemetry-history-seed-v1",
@@ -60,7 +60,7 @@
           "candidate_runtime_telemetry_history_seed_production_monitoring": false,
           "candidate_runtime_telemetry_history_seed_missing_telemetry_is_failure": false,
           "candidate_runtime_telemetry_history_seed_point_count": 1.0,
-          "history_missing_telemetry_runs": 0.0,
+          "history_missing_telemetry_runs": 1.0,
           "telemetry_coverage_source": "history_telemetry_coverage",
           "history_telemetry_coverage_missing_field_run_count": 1.0,
           "history_telemetry_coverage_missing_field_runs": [
@@ -133,7 +133,81 @@
           "baseline_queue_depth": null,
           "candidate_queue_depth": 7.0,
           "evidence_gap_count": 1.0,
-          "evidence_gaps": []
+          "evidence_gaps": [],
+          "history_missing_orchestrator_context_count": 1.0,
+          "history_missing_orchestrator_context_run_ids": [
+            "edgeenv-smoke-missing"
+          ],
+          "history_missing_orchestrator_contexts": [
+            {
+              "schema_version": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
+              "role": "orchestrator_operation_context_for_edgeenv",
+              "source_repository": "InferEdgeOrchestrator",
+              "artifact_role": "orchestrator-supplemental-operation-context",
+              "producer_contract": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
+              "source": "orchestration_summary",
+              "run_id": "edgeenv-smoke-missing",
+              "not_a_regression_judgement": true,
+              "not_a_comparability_gate": true,
+              "decision_owner": "lab",
+              "regression_owner": "edgeenv",
+              "candidate_context": {
+                "run_id": "edgeenv-smoke-missing",
+                "telemetry_source": "inferedge_orchestrator_operation_summary",
+                "queue_depth": 4,
+                "operation": {
+                  "queue_depth": 4,
+                  "deadline_missed_count": 1,
+                  "fallback_count": 0
+                },
+                "resource": {
+                  "source": "runtime_health_snapshot",
+                  "gpu_temperature": 72.0,
+                  "throttling_detected": false
+                }
+              },
+              "edgeenv_mapping_hint": {
+                "copy_candidate_context_to": "runtime_telemetry_context.candidate",
+                "operation_context_role": "supplemental",
+                "coverage_summary_owner": "edgeenv",
+                "coverage_summary_path": "runtime_telemetry_context.history.telemetry_coverage",
+                "candidate_context_required_fields": [
+                  "run_id",
+                  "telemetry_source",
+                  "operation",
+                  "resource"
+                ],
+                "aiguard_evidence_candidates": [
+                  "runtime_queue_overload",
+                  "runtime_thermal_instability"
+                ]
+              }
+            }
+          ],
+          "history_missing_orchestrator_source_repository": "InferEdgeOrchestrator",
+          "history_missing_orchestrator_artifact_role": "orchestrator-supplemental-operation-context",
+          "history_missing_orchestrator_producer_contract": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
+          "history_missing_orchestrator_candidate_context_telemetry_source": "inferedge_orchestrator_operation_summary",
+          "history_missing_orchestrator_edgeenv_mapping_hint": {
+            "copy_candidate_context_to": "runtime_telemetry_context.candidate",
+            "operation_context_role": "supplemental",
+            "coverage_summary_owner": "edgeenv",
+            "coverage_summary_path": "runtime_telemetry_context.history.telemetry_coverage",
+            "candidate_context_required_fields": [
+              "run_id",
+              "telemetry_source",
+              "operation",
+              "resource"
+            ],
+            "aiguard_evidence_candidates": [
+              "runtime_queue_overload",
+              "runtime_thermal_instability"
+            ]
+          },
+          "history_missing_orchestrator_mapping_hint_aiguard_evidence_candidates": [
+            "runtime_queue_overload",
+            "runtime_thermal_instability"
+          ]
         }
       }
     },
@@ -175,8 +249,8 @@
           "runtime_telemetry_context_present": true,
           "runtime_telemetry_source": "result_artifacts+runtime_telemetry_history",
           "runtime_telemetry_history_schema_version": "edgeenv.runtime-telemetry-history.v1",
-          "history_orchestrator_feed_runs": 1.0,
-          "history_registered_runs": 2.0,
+          "history_orchestrator_feed_runs": 2.0,
+          "history_registered_runs": 3.0,
           "history_telemetry_runs": 2.0,
           "history_telemetry_seed_runs": 2.0,
           "baseline_runtime_telemetry_history_seed_schema_version": "inferedge-runtime-telemetry-history-seed-v1",
@@ -188,7 +262,7 @@
           "candidate_runtime_telemetry_history_seed_production_monitoring": false,
           "candidate_runtime_telemetry_history_seed_missing_telemetry_is_failure": false,
           "candidate_runtime_telemetry_history_seed_point_count": 1.0,
-          "history_missing_telemetry_runs": 0.0,
+          "history_missing_telemetry_runs": 1.0,
           "telemetry_coverage_source": "history_telemetry_coverage",
           "history_telemetry_coverage_missing_field_run_count": 1.0,
           "history_telemetry_coverage_missing_field_runs": [
@@ -261,7 +335,81 @@
           "baseline_queue_depth": null,
           "candidate_queue_depth": 7.0,
           "evidence_gap_count": 1.0,
-          "evidence_gaps": []
+          "evidence_gaps": [],
+          "history_missing_orchestrator_context_count": 1.0,
+          "history_missing_orchestrator_context_run_ids": [
+            "edgeenv-smoke-missing"
+          ],
+          "history_missing_orchestrator_contexts": [
+            {
+              "schema_version": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
+              "role": "orchestrator_operation_context_for_edgeenv",
+              "source_repository": "InferEdgeOrchestrator",
+              "artifact_role": "orchestrator-supplemental-operation-context",
+              "producer_contract": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
+              "source": "orchestration_summary",
+              "run_id": "edgeenv-smoke-missing",
+              "not_a_regression_judgement": true,
+              "not_a_comparability_gate": true,
+              "decision_owner": "lab",
+              "regression_owner": "edgeenv",
+              "candidate_context": {
+                "run_id": "edgeenv-smoke-missing",
+                "telemetry_source": "inferedge_orchestrator_operation_summary",
+                "queue_depth": 4,
+                "operation": {
+                  "queue_depth": 4,
+                  "deadline_missed_count": 1,
+                  "fallback_count": 0
+                },
+                "resource": {
+                  "source": "runtime_health_snapshot",
+                  "gpu_temperature": 72.0,
+                  "throttling_detected": false
+                }
+              },
+              "edgeenv_mapping_hint": {
+                "copy_candidate_context_to": "runtime_telemetry_context.candidate",
+                "operation_context_role": "supplemental",
+                "coverage_summary_owner": "edgeenv",
+                "coverage_summary_path": "runtime_telemetry_context.history.telemetry_coverage",
+                "candidate_context_required_fields": [
+                  "run_id",
+                  "telemetry_source",
+                  "operation",
+                  "resource"
+                ],
+                "aiguard_evidence_candidates": [
+                  "runtime_queue_overload",
+                  "runtime_thermal_instability"
+                ]
+              }
+            }
+          ],
+          "history_missing_orchestrator_source_repository": "InferEdgeOrchestrator",
+          "history_missing_orchestrator_artifact_role": "orchestrator-supplemental-operation-context",
+          "history_missing_orchestrator_producer_contract": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
+          "history_missing_orchestrator_candidate_context_telemetry_source": "inferedge_orchestrator_operation_summary",
+          "history_missing_orchestrator_edgeenv_mapping_hint": {
+            "copy_candidate_context_to": "runtime_telemetry_context.candidate",
+            "operation_context_role": "supplemental",
+            "coverage_summary_owner": "edgeenv",
+            "coverage_summary_path": "runtime_telemetry_context.history.telemetry_coverage",
+            "candidate_context_required_fields": [
+              "run_id",
+              "telemetry_source",
+              "operation",
+              "resource"
+            ],
+            "aiguard_evidence_candidates": [
+              "runtime_queue_overload",
+              "runtime_thermal_instability"
+            ]
+          },
+          "history_missing_orchestrator_mapping_hint_aiguard_evidence_candidates": [
+            "runtime_queue_overload",
+            "runtime_thermal_instability"
+          ]
         }
       }
     },
@@ -303,8 +451,8 @@
           "runtime_telemetry_context_present": true,
           "runtime_telemetry_source": "result_artifacts+runtime_telemetry_history",
           "runtime_telemetry_history_schema_version": "edgeenv.runtime-telemetry-history.v1",
-          "history_orchestrator_feed_runs": 1.0,
-          "history_registered_runs": 2.0,
+          "history_orchestrator_feed_runs": 2.0,
+          "history_registered_runs": 3.0,
           "history_telemetry_runs": 2.0,
           "history_telemetry_seed_runs": 2.0,
           "baseline_runtime_telemetry_history_seed_schema_version": "inferedge-runtime-telemetry-history-seed-v1",
@@ -316,7 +464,7 @@
           "candidate_runtime_telemetry_history_seed_production_monitoring": false,
           "candidate_runtime_telemetry_history_seed_missing_telemetry_is_failure": false,
           "candidate_runtime_telemetry_history_seed_point_count": 1.0,
-          "history_missing_telemetry_runs": 0.0,
+          "history_missing_telemetry_runs": 1.0,
           "telemetry_coverage_source": "history_telemetry_coverage",
           "history_telemetry_coverage_missing_field_run_count": 1.0,
           "history_telemetry_coverage_missing_field_runs": [
@@ -389,7 +537,81 @@
           "baseline_queue_depth": null,
           "candidate_queue_depth": 7.0,
           "evidence_gap_count": 1.0,
-          "evidence_gaps": []
+          "evidence_gaps": [],
+          "history_missing_orchestrator_context_count": 1.0,
+          "history_missing_orchestrator_context_run_ids": [
+            "edgeenv-smoke-missing"
+          ],
+          "history_missing_orchestrator_contexts": [
+            {
+              "schema_version": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
+              "role": "orchestrator_operation_context_for_edgeenv",
+              "source_repository": "InferEdgeOrchestrator",
+              "artifact_role": "orchestrator-supplemental-operation-context",
+              "producer_contract": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
+              "source": "orchestration_summary",
+              "run_id": "edgeenv-smoke-missing",
+              "not_a_regression_judgement": true,
+              "not_a_comparability_gate": true,
+              "decision_owner": "lab",
+              "regression_owner": "edgeenv",
+              "candidate_context": {
+                "run_id": "edgeenv-smoke-missing",
+                "telemetry_source": "inferedge_orchestrator_operation_summary",
+                "queue_depth": 4,
+                "operation": {
+                  "queue_depth": 4,
+                  "deadline_missed_count": 1,
+                  "fallback_count": 0
+                },
+                "resource": {
+                  "source": "runtime_health_snapshot",
+                  "gpu_temperature": 72.0,
+                  "throttling_detected": false
+                }
+              },
+              "edgeenv_mapping_hint": {
+                "copy_candidate_context_to": "runtime_telemetry_context.candidate",
+                "operation_context_role": "supplemental",
+                "coverage_summary_owner": "edgeenv",
+                "coverage_summary_path": "runtime_telemetry_context.history.telemetry_coverage",
+                "candidate_context_required_fields": [
+                  "run_id",
+                  "telemetry_source",
+                  "operation",
+                  "resource"
+                ],
+                "aiguard_evidence_candidates": [
+                  "runtime_queue_overload",
+                  "runtime_thermal_instability"
+                ]
+              }
+            }
+          ],
+          "history_missing_orchestrator_source_repository": "InferEdgeOrchestrator",
+          "history_missing_orchestrator_artifact_role": "orchestrator-supplemental-operation-context",
+          "history_missing_orchestrator_producer_contract": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
+          "history_missing_orchestrator_candidate_context_telemetry_source": "inferedge_orchestrator_operation_summary",
+          "history_missing_orchestrator_edgeenv_mapping_hint": {
+            "copy_candidate_context_to": "runtime_telemetry_context.candidate",
+            "operation_context_role": "supplemental",
+            "coverage_summary_owner": "edgeenv",
+            "coverage_summary_path": "runtime_telemetry_context.history.telemetry_coverage",
+            "candidate_context_required_fields": [
+              "run_id",
+              "telemetry_source",
+              "operation",
+              "resource"
+            ],
+            "aiguard_evidence_candidates": [
+              "runtime_queue_overload",
+              "runtime_thermal_instability"
+            ]
+          },
+          "history_missing_orchestrator_mapping_hint_aiguard_evidence_candidates": [
+            "runtime_queue_overload",
+            "runtime_thermal_instability"
+          ]
         }
       }
     }
@@ -468,8 +690,8 @@
       "runtime_telemetry_context_present": true,
       "runtime_telemetry_source": "result_artifacts+runtime_telemetry_history",
       "runtime_telemetry_history_schema_version": "edgeenv.runtime-telemetry-history.v1",
-      "history_orchestrator_feed_runs": 1.0,
-      "history_registered_runs": 2.0,
+      "history_orchestrator_feed_runs": 2.0,
+      "history_registered_runs": 3.0,
       "history_telemetry_runs": 2.0,
       "history_telemetry_seed_runs": 2.0,
       "baseline_runtime_telemetry_history_seed_schema_version": "inferedge-runtime-telemetry-history-seed-v1",
@@ -481,7 +703,7 @@
       "candidate_runtime_telemetry_history_seed_production_monitoring": false,
       "candidate_runtime_telemetry_history_seed_missing_telemetry_is_failure": false,
       "candidate_runtime_telemetry_history_seed_point_count": 1.0,
-      "history_missing_telemetry_runs": 0.0,
+      "history_missing_telemetry_runs": 1.0,
       "telemetry_coverage_source": "history_telemetry_coverage",
       "history_telemetry_coverage_missing_field_run_count": 1.0,
       "history_telemetry_coverage_missing_field_runs": [
@@ -522,31 +744,31 @@
         "operation_context_role": "supplemental",
         "coverage_summary_owner": "edgeenv",
         "coverage_summary_path": "runtime_telemetry_context.history.telemetry_coverage",
-      "candidate_context_required_fields": [
+        "candidate_context_required_fields": [
+          "run_id",
+          "telemetry_source",
+          "operation",
+          "resource"
+        ],
+        "aiguard_evidence_candidates": [
+          "runtime_queue_overload",
+          "runtime_thermal_instability"
+        ]
+      },
+      "orchestrator_mapping_hint_copy_candidate_context_to": "runtime_telemetry_context.candidate",
+      "orchestrator_mapping_hint_operation_context_role": "supplemental",
+      "orchestrator_mapping_hint_coverage_summary_owner": "edgeenv",
+      "orchestrator_mapping_hint_coverage_summary_path": "runtime_telemetry_context.history.telemetry_coverage",
+      "orchestrator_mapping_hint_candidate_context_required_fields": [
         "run_id",
         "telemetry_source",
         "operation",
         "resource"
       ],
-      "aiguard_evidence_candidates": [
+      "orchestrator_mapping_hint_aiguard_evidence_candidates": [
         "runtime_queue_overload",
         "runtime_thermal_instability"
-      ]
-    },
-      "orchestrator_mapping_hint_copy_candidate_context_to": "runtime_telemetry_context.candidate",
-      "orchestrator_mapping_hint_operation_context_role": "supplemental",
-      "orchestrator_mapping_hint_coverage_summary_owner": "edgeenv",
-      "orchestrator_mapping_hint_coverage_summary_path": "runtime_telemetry_context.history.telemetry_coverage",
-    "orchestrator_mapping_hint_candidate_context_required_fields": [
-      "run_id",
-      "telemetry_source",
-      "operation",
-      "resource"
-    ],
-    "orchestrator_mapping_hint_aiguard_evidence_candidates": [
-      "runtime_queue_overload",
-      "runtime_thermal_instability"
-    ],
+      ],
       "baseline_max_temperature_c": null,
       "candidate_max_temperature_c": 78.5,
       "baseline_throttling_detected": null,
@@ -554,7 +776,81 @@
       "baseline_queue_depth": null,
       "candidate_queue_depth": 7.0,
       "evidence_gap_count": 1.0,
-      "evidence_gaps": []
+      "evidence_gaps": [],
+      "history_missing_orchestrator_context_count": 1.0,
+      "history_missing_orchestrator_context_run_ids": [
+        "edgeenv-smoke-missing"
+      ],
+      "history_missing_orchestrator_contexts": [
+        {
+          "schema_version": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
+          "role": "orchestrator_operation_context_for_edgeenv",
+          "source_repository": "InferEdgeOrchestrator",
+          "artifact_role": "orchestrator-supplemental-operation-context",
+          "producer_contract": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
+          "source": "orchestration_summary",
+          "run_id": "edgeenv-smoke-missing",
+          "not_a_regression_judgement": true,
+          "not_a_comparability_gate": true,
+          "decision_owner": "lab",
+          "regression_owner": "edgeenv",
+          "candidate_context": {
+            "run_id": "edgeenv-smoke-missing",
+            "telemetry_source": "inferedge_orchestrator_operation_summary",
+            "queue_depth": 4,
+            "operation": {
+              "queue_depth": 4,
+              "deadline_missed_count": 1,
+              "fallback_count": 0
+            },
+            "resource": {
+              "source": "runtime_health_snapshot",
+              "gpu_temperature": 72.0,
+              "throttling_detected": false
+            }
+          },
+          "edgeenv_mapping_hint": {
+            "copy_candidate_context_to": "runtime_telemetry_context.candidate",
+            "operation_context_role": "supplemental",
+            "coverage_summary_owner": "edgeenv",
+            "coverage_summary_path": "runtime_telemetry_context.history.telemetry_coverage",
+            "candidate_context_required_fields": [
+              "run_id",
+              "telemetry_source",
+              "operation",
+              "resource"
+            ],
+            "aiguard_evidence_candidates": [
+              "runtime_queue_overload",
+              "runtime_thermal_instability"
+            ]
+          }
+        }
+      ],
+      "history_missing_orchestrator_source_repository": "InferEdgeOrchestrator",
+      "history_missing_orchestrator_artifact_role": "orchestrator-supplemental-operation-context",
+      "history_missing_orchestrator_producer_contract": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
+      "history_missing_orchestrator_candidate_context_telemetry_source": "inferedge_orchestrator_operation_summary",
+      "history_missing_orchestrator_edgeenv_mapping_hint": {
+        "copy_candidate_context_to": "runtime_telemetry_context.candidate",
+        "operation_context_role": "supplemental",
+        "coverage_summary_owner": "edgeenv",
+        "coverage_summary_path": "runtime_telemetry_context.history.telemetry_coverage",
+        "candidate_context_required_fields": [
+          "run_id",
+          "telemetry_source",
+          "operation",
+          "resource"
+        ],
+        "aiguard_evidence_candidates": [
+          "runtime_queue_overload",
+          "runtime_thermal_instability"
+        ]
+      },
+      "history_missing_orchestrator_mapping_hint_aiguard_evidence_candidates": [
+        "runtime_queue_overload",
+        "runtime_thermal_instability"
+      ]
     },
     "runtime_telemetry_context": {
       "role": "supplemental_runtime_telemetry_context",

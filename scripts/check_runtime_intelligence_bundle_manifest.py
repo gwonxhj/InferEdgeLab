@@ -121,6 +121,7 @@ SUMMARY_CONTRACT_MARKERS = (
     "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
     "aiguard_raw_context: orchestrator_mapping_hint preserved",
     "aiguard_raw_context: orchestrator_producer_markers preserved",
+    "aiguard_raw_context: missing_telemetry_orchestrator_context preserved",
 )
 EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS = (
     "edgeenv_handoff: lab_bundle_alignment validated",
@@ -470,7 +471,11 @@ def _validate_edgeenv_runtime_history_artifact(
     if isinstance(coverage, dict):
         _validate_edgeenv_history_coverage_summary(coverage, errors)
     _validate_edgeenv_history_seed_runs(history, errors)
-    _validate_edgeenv_missing_telemetry_orchestrator_context(history, errors)
+    _validate_edgeenv_missing_telemetry_orchestrator_context(
+        history,
+        errors,
+        "EdgeEnv handoff runtime_telemetry_history",
+    )
 
 
 def _validate_edgeenv_report(edgeenv_report: dict[str, Any], errors: list[str]) -> None:
@@ -503,9 +508,14 @@ def _validate_edgeenv_report(edgeenv_report: dict[str, Any], errors: list[str]) 
     )
     summary = history.get("summary") or {}
     _record(
-        summary.get("orchestrator_feed_runs") == 1,
+        summary.get("orchestrator_feed_runs") == 2,
         errors,
-        "runtime_telemetry_context.history.summary.orchestrator_feed_runs must be 1",
+        "runtime_telemetry_context.history.summary.orchestrator_feed_runs must be 2",
+    )
+    _record(
+        summary.get("missing_telemetry_runs") == 1,
+        errors,
+        "runtime_telemetry_context.history.summary.missing_telemetry_runs must be 1",
     )
     _record(
         summary.get("history_seed_runs") == 2,
@@ -521,6 +531,11 @@ def _validate_edgeenv_report(edgeenv_report: dict[str, Any], errors: list[str]) 
     if isinstance(history_coverage, dict):
         _validate_edgeenv_history_coverage_summary(history_coverage, errors)
     _validate_edgeenv_history_seed_runs(history, errors)
+    _validate_edgeenv_missing_telemetry_orchestrator_context(
+        history,
+        errors,
+        "runtime_telemetry_context.history",
+    )
 
     candidate = context.get("candidate") or {}
     _record(
@@ -779,12 +794,13 @@ def _validate_edgeenv_history_seed_runs(
 def _validate_edgeenv_missing_telemetry_orchestrator_context(
     history: dict[str, Any],
     errors: list[str],
+    label: str,
 ) -> None:
     missing_telemetry = history.get("missing_telemetry")
     _record(
         isinstance(missing_telemetry, list),
         errors,
-        "EdgeEnv handoff runtime_telemetry_history.missing_telemetry must be a list",
+        f"{label}.missing_telemetry must be a list",
     )
     if not isinstance(missing_telemetry, list):
         return
@@ -801,8 +817,7 @@ def _validate_edgeenv_missing_telemetry_orchestrator_context(
     _record(
         isinstance(missing_run, dict),
         errors,
-        "EdgeEnv handoff runtime_telemetry_history.missing_telemetry must "
-        "include edgeenv-smoke-missing",
+        f"{label}.missing_telemetry must include edgeenv-smoke-missing",
     )
     if not isinstance(missing_run, dict):
         return
@@ -810,22 +825,22 @@ def _validate_edgeenv_missing_telemetry_orchestrator_context(
     _record(
         missing_run.get("reason") == "runtime_telemetry_missing",
         errors,
-        "EdgeEnv handoff runtime_telemetry_history.missing_telemetry"
-        "[edgeenv-smoke-missing].reason must be runtime_telemetry_missing",
+        f"{label}.missing_telemetry[edgeenv-smoke-missing].reason "
+        "must be runtime_telemetry_missing",
     )
     operation_context = missing_run.get("orchestrator_operation_context")
     _record(
         isinstance(operation_context, dict),
         errors,
-        "EdgeEnv handoff runtime_telemetry_history.missing_telemetry"
-        "[edgeenv-smoke-missing] must include orchestrator_operation_context",
+        f"{label}.missing_telemetry[edgeenv-smoke-missing] must include "
+        "orchestrator_operation_context",
     )
     if not isinstance(operation_context, dict):
         return
 
     prefix = (
-        "EdgeEnv handoff runtime_telemetry_history.missing_telemetry"
-        "[edgeenv-smoke-missing].orchestrator_operation_context"
+        f"{label}.missing_telemetry[edgeenv-smoke-missing]."
+        "orchestrator_operation_context"
     )
     _record(
         operation_context.get("schema_version")
@@ -1077,6 +1092,7 @@ def _validate_coverage_gap_evidence(
                 "must be ['queue_depth']",
             )
     _validate_aiguard_orchestrator_mapping_hint(edgeenv, errors)
+    _validate_aiguard_missing_orchestrator_context(edgeenv, errors)
 
 
 def _validate_aiguard_history_seed_context(
@@ -1284,6 +1300,103 @@ def _validate_aiguard_orchestrator_mapping_hint(
         "orchestrator_candidate_context_telemetry_source must be "
         "inferedge_orchestrator_operation_summary",
     )
+
+
+def _validate_aiguard_missing_orchestrator_context(
+    edgeenv_context: dict[str, Any],
+    errors: list[str],
+) -> None:
+    _record(
+        edgeenv_context.get("history_missing_telemetry_runs") == 1.0,
+        errors,
+        "AIGuard coverage evidence history_missing_telemetry_runs must be 1.0",
+    )
+    _record(
+        edgeenv_context.get("history_missing_orchestrator_context_count") == 1.0,
+        errors,
+        "AIGuard coverage evidence "
+        "history_missing_orchestrator_context_count must be 1.0",
+    )
+    run_ids = edgeenv_context.get("history_missing_orchestrator_context_run_ids")
+    _record(
+        isinstance(run_ids, list) and "edgeenv-smoke-missing" in run_ids,
+        errors,
+        "AIGuard coverage evidence "
+        "history_missing_orchestrator_context_run_ids must include "
+        "edgeenv-smoke-missing",
+    )
+    _record(
+        edgeenv_context.get("history_missing_orchestrator_source_repository")
+        == REQUIRED_SOURCE_REPOSITORIES["orchestrator_operation_context"],
+        errors,
+        "AIGuard coverage evidence "
+        "history_missing_orchestrator_source_repository must be "
+        f"{REQUIRED_SOURCE_REPOSITORIES['orchestrator_operation_context']}",
+    )
+    _record(
+        edgeenv_context.get("history_missing_orchestrator_artifact_role")
+        == REQUIRED_ARTIFACT_ROLES["orchestrator_operation_context"],
+        errors,
+        "AIGuard coverage evidence history_missing_orchestrator_artifact_role "
+        f"must be {REQUIRED_ARTIFACT_ROLES['orchestrator_operation_context']}",
+    )
+    _record(
+        edgeenv_context.get("history_missing_orchestrator_producer_contract")
+        == REQUIRED_PRODUCER_CONTRACTS["orchestrator_feed_schema"],
+        errors,
+        "AIGuard coverage evidence history_missing_orchestrator_producer_contract "
+        f"must be {REQUIRED_PRODUCER_CONTRACTS['orchestrator_feed_schema']}",
+    )
+    _record(
+        edgeenv_context.get(
+            "history_missing_orchestrator_candidate_context_telemetry_source"
+        )
+        == "inferedge_orchestrator_operation_summary",
+        errors,
+        "AIGuard coverage evidence "
+        "history_missing_orchestrator_candidate_context_telemetry_source must be "
+        "inferedge_orchestrator_operation_summary",
+    )
+    mapping_hint = edgeenv_context.get(
+        "history_missing_orchestrator_edgeenv_mapping_hint"
+    )
+    _record(
+        isinstance(mapping_hint, dict),
+        errors,
+        "AIGuard coverage evidence "
+        "history_missing_orchestrator_edgeenv_mapping_hint must be an object",
+    )
+    if isinstance(mapping_hint, dict):
+        for key, expected in REQUIRED_ORCHESTRATOR_MAPPING_HINT.items():
+            _record(
+                mapping_hint.get(key) == expected,
+                errors,
+                "AIGuard coverage evidence "
+                f"history_missing_orchestrator_edgeenv_mapping_hint.{key} "
+                f"must be {expected}",
+            )
+    evidence_candidates = edgeenv_context.get(
+        "history_missing_orchestrator_mapping_hint_aiguard_evidence_candidates"
+    )
+    _record(
+        isinstance(evidence_candidates, list),
+        errors,
+        "AIGuard coverage evidence "
+        "history_missing_orchestrator_mapping_hint_aiguard_evidence_candidates "
+        "must be a list",
+    )
+    if isinstance(evidence_candidates, list):
+        missing_candidates = sorted(
+            REQUIRED_ORCHESTRATOR_AIGUARD_EVIDENCE_CANDIDATES
+            - set(evidence_candidates)
+        )
+        _record(
+            not missing_candidates,
+            errors,
+            "AIGuard coverage evidence "
+            "history_missing_orchestrator_mapping_hint_aiguard_evidence_candidates "
+            f"is missing {missing_candidates}",
+        )
 
 
 def _write_summary(
