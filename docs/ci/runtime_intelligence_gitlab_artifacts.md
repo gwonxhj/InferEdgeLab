@@ -131,8 +131,8 @@ The initial gate is conservative:
 - the same handoff history may include runs with missing Runtime telemetry; the
   gate treats them as evidence gaps, but requires any preserved Orchestrator
   context on those entries to keep source repository, artifact role, producer
-  contract, owner boundary flags, EdgeEnv mapping hints, and device-local
-  producer lineage intact
+  contract, owner boundary flags, EdgeEnv mapping hints, device-local producer
+  lineage, per-task source/stage mappings, and positive event counts intact
 
 The bundle manifest gate is implemented by `scripts/check_runtime_intelligence_bundle_manifest.py`. It verifies that the bundle contains baseline/candidate Runtime results, EdgeEnv regression evidence, AIGuard guard evidence, and explicit owner/boundary metadata before Lab generates the report. In this template it also consumes `--edgeenv-handoff examples/runtime_intelligence_chain/edgeenv_lab_handoff_manifest.json` to verify EdgeEnv producer-side file/source/role/schema alignment.
 The same gate now also checks `source_repositories`, `artifact_roles`,

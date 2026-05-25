@@ -35,6 +35,7 @@ REQUIRED_BUNDLE_MANIFEST_SUMMARY_MARKERS = (
     "orchestrator_mapping_hint: operation_context_role=supplemental",
     "orchestrator_mapping_hint: aiguard_evidence_candidates=runtime_queue_overload,runtime_thermal_instability",
     "orchestrator_device_local_producer_lineage: candidate_context.producer validated",
+    "orchestrator_producer_lineage_shape: per-task source/stage/count mappings validated",
     "aiguard_evidence: edgeenv_orchestrator_producer_lineage validated",
     "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
     "aiguard_raw_context: orchestrator_mapping_hint preserved",

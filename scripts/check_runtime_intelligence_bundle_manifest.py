@@ -120,6 +120,7 @@ SUMMARY_CONTRACT_MARKERS = (
     "orchestrator_mapping_hint: operation_context_role=supplemental",
     "orchestrator_mapping_hint: aiguard_evidence_candidates=runtime_queue_overload,runtime_thermal_instability",
     "orchestrator_device_local_producer_lineage: candidate_context.producer validated",
+    "orchestrator_producer_lineage_shape: per-task source/stage/count mappings validated",
     "aiguard_evidence: edgeenv_orchestrator_producer_lineage validated",
     "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
     "aiguard_raw_context: orchestrator_mapping_hint preserved",
@@ -973,7 +974,16 @@ def _validate_orchestrator_device_local_producer_lineage(
             f"{prefix}.candidate_context.producer.{field} must be a "
             "non-empty string list",
         )
+    producer_sources = producer.get("producer_sources")
     device_sources = producer.get("device_local_producer_sources")
+    if isinstance(producer_sources, list) and isinstance(device_sources, list):
+        missing_from_sources = sorted(set(device_sources) - set(producer_sources))
+        _record(
+            not missing_from_sources,
+            errors,
+            f"{prefix}.candidate_context.producer.device_local_producer_sources "
+            f"must also appear in producer_sources: {missing_from_sources}",
+        )
     if isinstance(device_sources, list):
         _record(
             "device_local_cli_override" in device_sources,
@@ -981,14 +991,66 @@ def _validate_orchestrator_device_local_producer_lineage(
             f"{prefix}.candidate_context.producer.device_local_producer_sources "
             "must include device_local_cli_override",
         )
-    for field in ("producer_sources_by_task", "producer_stage_by_task"):
-        values = producer.get(field)
-        _record(
-            isinstance(values, dict) and bool(values),
-            errors,
-            f"{prefix}.candidate_context.producer.{field} must be a "
-            "non-empty object",
-        )
+    sources_by_task = producer.get("producer_sources_by_task")
+    _record(
+        isinstance(sources_by_task, dict) and bool(sources_by_task),
+        errors,
+        f"{prefix}.candidate_context.producer.producer_sources_by_task must be a "
+        "non-empty object",
+    )
+    if isinstance(sources_by_task, dict):
+        flattened_task_sources: set[str] = set()
+        for task_name, sources in sources_by_task.items():
+            _record(
+                isinstance(task_name, str) and bool(task_name),
+                errors,
+                f"{prefix}.candidate_context.producer.producer_sources_by_task "
+                "keys must be non-empty strings",
+            )
+            _record(
+                isinstance(sources, list)
+                and bool(sources)
+                and all(isinstance(item, str) and item for item in sources),
+                errors,
+                f"{prefix}.candidate_context.producer.producer_sources_by_task."
+                f"{task_name} must be a non-empty string list",
+            )
+            if isinstance(sources, list):
+                flattened_task_sources.update(
+                    item for item in sources if isinstance(item, str)
+                )
+        if isinstance(device_sources, list):
+            missing_from_task_sources = sorted(
+                set(device_sources) - flattened_task_sources
+            )
+            _record(
+                not missing_from_task_sources,
+                errors,
+                f"{prefix}.candidate_context.producer.device_local_producer_sources "
+                "must also appear in producer_sources_by_task: "
+                f"{missing_from_task_sources}",
+            )
+    stage_by_task = producer.get("producer_stage_by_task")
+    _record(
+        isinstance(stage_by_task, dict) and bool(stage_by_task),
+        errors,
+        f"{prefix}.candidate_context.producer.producer_stage_by_task must be a "
+        "non-empty object",
+    )
+    if isinstance(stage_by_task, dict):
+        for task_name, stage in stage_by_task.items():
+            _record(
+                isinstance(task_name, str) and bool(task_name),
+                errors,
+                f"{prefix}.candidate_context.producer.producer_stage_by_task "
+                "keys must be non-empty strings",
+            )
+            _record(
+                isinstance(stage, str) and bool(stage),
+                errors,
+                f"{prefix}.candidate_context.producer.producer_stage_by_task."
+                f"{task_name} must be a non-empty string",
+            )
     for field in (
         "producer_event_count",
         "device_local_event_count",
