@@ -75,6 +75,8 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert bundle["guard_analysis"]["primary_reason"] == (
         "Runtime telemetry context has evidence gaps that require review."
     )
+    evidence_types = {item["type"] for item in bundle["guard_analysis"]["evidence"]}
+    assert "edgeenv_orchestrator_producer_lineage" in evidence_types
     coverage_evidence = next(
         item
         for item in bundle["guard_analysis"]["evidence"]
@@ -166,6 +168,23 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert guard_edgeenv_context["history_missing_orchestrator_context_run_ids"] == [
         "edgeenv-smoke-missing"
     ]
+    producer_lineage_evidence = next(
+        item
+        for item in bundle["guard_analysis"]["evidence"]
+        if item["type"] == "edgeenv_orchestrator_producer_lineage"
+    )
+    assert producer_lineage_evidence["status"] == "passed"
+    assert producer_lineage_evidence["observed_value"] == 2
+    assert producer_lineage_evidence["baseline_value"] == 2
+    assert producer_lineage_evidence["raw_context"]["producer_lineage"][
+        "candidate_device_local_sources"
+    ] == ["device_local_cli_override"]
+    assert producer_lineage_evidence["raw_context"]["producer_lineage"][
+        "missing_device_local_sources"
+    ] == ["device_local_cli_override"]
+    assert producer_lineage_evidence["raw_context"]["producer_lineage"][
+        "missing_context_run_ids"
+    ] == ["edgeenv-smoke-missing"]
     assert (
         guard_edgeenv_context["history_missing_orchestrator_source_repository"]
         == "InferEdgeOrchestrator"
@@ -242,10 +261,14 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "AIGuard runtime operation anomalies" in markdown
     assert "Orchestrator context attached runs" in markdown
     assert "AIGuard producer lineage handoff" in markdown
+    assert "edgeenv_orchestrator_producer_lineage" in markdown
+    assert "Device-local Orchestrator producer lineage is preserved" in markdown
     assert "device_local_cli_override" in markdown
     assert "AIGuard history seed handoff" in markdown
     assert "Runtime Intelligence Risk Summary" in html
     assert "AIGuard producer lineage handoff" in html
+    assert "edgeenv_orchestrator_producer_lineage" in html
+    assert "Device-local Orchestrator producer lineage is preserved" in html
     assert "device_local_cli_override" in html
     assert "Runtime telemetry history seed" in html
     assert "runtime_queue_overload, runtime_thermal_instability" in html

@@ -85,6 +85,7 @@ REQUIRED_EDGEENV_HANDOFF_BOUNDARY_FLAGS = {
 }
 REQUIRED_GUARD_TYPES = {
     "runtime_telemetry_context_coverage",
+    "edgeenv_orchestrator_producer_lineage",
     "runtime_queue_overload",
     "runtime_thermal_instability",
 }
@@ -119,6 +120,7 @@ SUMMARY_CONTRACT_MARKERS = (
     "orchestrator_mapping_hint: operation_context_role=supplemental",
     "orchestrator_mapping_hint: aiguard_evidence_candidates=runtime_queue_overload,runtime_thermal_instability",
     "orchestrator_device_local_producer_lineage: candidate_context.producer validated",
+    "aiguard_evidence: edgeenv_orchestrator_producer_lineage validated",
     "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
     "aiguard_raw_context: orchestrator_mapping_hint preserved",
     "aiguard_raw_context: orchestrator_producer_markers preserved",
@@ -1134,6 +1136,82 @@ def _validate_guard_analysis(guard_analysis: dict[str, Any], errors: list[str]) 
         )
         if item.get("type") == "runtime_telemetry_context_coverage":
             _validate_coverage_gap_evidence(item, index, errors)
+        if item.get("type") == "edgeenv_orchestrator_producer_lineage":
+            _validate_producer_lineage_evidence(item, index, errors)
+
+
+def _validate_producer_lineage_evidence(
+    item: dict[str, Any],
+    index: int,
+    errors: list[str],
+) -> None:
+    _record(
+        item.get("status") == "passed",
+        errors,
+        f"AIGuard evidence[{index}] producer lineage status must be passed",
+    )
+    _record(
+        item.get("observed_value") == 2,
+        errors,
+        f"AIGuard evidence[{index}] producer lineage observed_value must be 2",
+    )
+    _record(
+        item.get("baseline_value") == 2,
+        errors,
+        f"AIGuard evidence[{index}] producer lineage baseline_value must be 2",
+    )
+    raw_context = item.get("raw_context") or {}
+    _record(
+        isinstance(raw_context.get("edgeenv_regression"), dict),
+        errors,
+        f"AIGuard evidence[{index}] raw_context.edgeenv_regression must be an object",
+    )
+    producer_lineage = raw_context.get("producer_lineage")
+    _record(
+        isinstance(producer_lineage, dict),
+        errors,
+        f"AIGuard evidence[{index}] raw_context.producer_lineage must be an object",
+    )
+    if not isinstance(producer_lineage, dict):
+        return
+    _record(
+        producer_lineage.get("candidate_device_local_sources")
+        == ["device_local_cli_override"],
+        errors,
+        "AIGuard producer lineage candidate_device_local_sources must be "
+        "['device_local_cli_override']",
+    )
+    _record(
+        producer_lineage.get("missing_device_local_sources")
+        == ["device_local_cli_override"],
+        errors,
+        "AIGuard producer lineage missing_device_local_sources must be "
+        "['device_local_cli_override']",
+    )
+    _record(
+        producer_lineage.get("candidate_stage_by_task")
+        == {"vision_agent": "device_local_starter"},
+        errors,
+        "AIGuard producer lineage candidate_stage_by_task must preserve "
+        "vision_agent:device_local_starter",
+    )
+    _record(
+        producer_lineage.get("missing_context_run_ids")
+        == ["edgeenv-smoke-missing"],
+        errors,
+        "AIGuard producer lineage missing_context_run_ids must include "
+        "edgeenv-smoke-missing",
+    )
+    _record(
+        producer_lineage.get("operation_context_role") == "supplemental",
+        errors,
+        "AIGuard producer lineage operation_context_role must be supplemental",
+    )
+    _record(
+        producer_lineage.get("missing_operation_context_role") == "supplemental",
+        errors,
+        "AIGuard producer lineage missing_operation_context_role must be supplemental",
+    )
 
 
 def _validate_coverage_gap_evidence(

@@ -675,6 +675,45 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_guard_producer_
     ) in summary
 
 
+def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_guard_lineage_evidence(
+    tmp_path,
+):
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    guard_path = (
+        REPO_ROOT
+        / "examples"
+        / "runtime_intelligence_chain"
+        / manifest["files"]["aiguard_guard_analysis"]
+    )
+    guard_analysis = json.loads(guard_path.read_text(encoding="utf-8"))
+    lineage_evidence = next(
+        item
+        for item in guard_analysis["evidence"]
+        if item.get("type") == "edgeenv_orchestrator_producer_lineage"
+    )
+    lineage_evidence["observed_value"] = 1
+    lineage_evidence["raw_context"]["producer_lineage"][
+        "missing_device_local_sources"
+    ] = []
+
+    guard_copy = tmp_path / "aiguard_guard_analysis.json"
+    guard_copy.write_text(json.dumps(guard_analysis), encoding="utf-8")
+    manifest["files"]["aiguard_guard_analysis"] = str(guard_copy)
+    manifest_path = tmp_path / "bundle_manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(manifest=str(manifest_path), summary_out=str(summary_path))
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "producer lineage observed_value must be 2" in summary
+    assert (
+        "AIGuard producer lineage missing_device_local_sources must be "
+        "['device_local_cli_override']"
+    ) in summary
+
+
 def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_guard_missing_context(
     tmp_path,
 ):
