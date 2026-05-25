@@ -120,6 +120,10 @@ The initial gate is conservative:
 - the EdgeEnv handoff `runtime_telemetry_history` file must exist and preserve
   the EdgeEnv history schema, telemetry coverage summary, and Runtime history
   seed ownership markers
+- the same handoff history may include runs with missing Runtime telemetry; the
+  gate treats them as evidence gaps, but requires any preserved Orchestrator
+  context on those entries to keep source repository, artifact role, producer
+  contract, owner boundary flags, and EdgeEnv mapping hints intact
 
 The bundle manifest gate is implemented by `scripts/check_runtime_intelligence_bundle_manifest.py`. It verifies that the bundle contains baseline/candidate Runtime results, EdgeEnv regression evidence, AIGuard guard evidence, and explicit owner/boundary metadata before Lab generates the report. In this template it also consumes `--edgeenv-handoff examples/runtime_intelligence_chain/edgeenv_lab_handoff_manifest.json` to verify EdgeEnv producer-side file/source/role/schema alignment.
 The same gate now also checks `source_repositories`, `artifact_roles`, and `producer_contracts` so the smoke remains a cross-repo handoff fixture rather than a Lab-only report sample.

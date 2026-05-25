@@ -125,6 +125,7 @@ SUMMARY_CONTRACT_MARKERS = (
 EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS = (
     "edgeenv_handoff: lab_bundle_alignment validated",
     "edgeenv_handoff: runtime_telemetry_history validated",
+    "edgeenv_handoff: missing_telemetry_orchestrator_context validated",
 )
 
 
@@ -434,9 +435,9 @@ def _validate_edgeenv_runtime_history_artifact(
     )
     summary = history.get("summary") or {}
     _record(
-        summary.get("registered_runs") == 2,
+        summary.get("registered_runs") == 3,
         errors,
-        "EdgeEnv handoff runtime_telemetry_history.summary.registered_runs must be 2",
+        "EdgeEnv handoff runtime_telemetry_history.summary.registered_runs must be 3",
     )
     _record(
         summary.get("telemetry_runs") == 2,
@@ -444,10 +445,16 @@ def _validate_edgeenv_runtime_history_artifact(
         "EdgeEnv handoff runtime_telemetry_history.summary.telemetry_runs must be 2",
     )
     _record(
-        summary.get("orchestrator_feed_runs") == 1,
+        summary.get("missing_telemetry_runs") == 1,
         errors,
         "EdgeEnv handoff runtime_telemetry_history.summary."
-        "orchestrator_feed_runs must be 1",
+        "missing_telemetry_runs must be 1",
+    )
+    _record(
+        summary.get("orchestrator_feed_runs") == 2,
+        errors,
+        "EdgeEnv handoff runtime_telemetry_history.summary."
+        "orchestrator_feed_runs must be 2",
     )
     _record(
         summary.get("history_seed_runs") == 2,
@@ -463,6 +470,7 @@ def _validate_edgeenv_runtime_history_artifact(
     if isinstance(coverage, dict):
         _validate_edgeenv_history_coverage_summary(coverage, errors)
     _validate_edgeenv_history_seed_runs(history, errors)
+    _validate_edgeenv_missing_telemetry_orchestrator_context(history, errors)
 
 
 def _validate_edgeenv_report(edgeenv_report: dict[str, Any], errors: list[str]) -> None:
@@ -766,6 +774,88 @@ def _validate_edgeenv_history_seed_runs(
                 errors,
                 f"runtime_telemetry_context.history.runs[{run_id}]",
             )
+
+
+def _validate_edgeenv_missing_telemetry_orchestrator_context(
+    history: dict[str, Any],
+    errors: list[str],
+) -> None:
+    missing_telemetry = history.get("missing_telemetry")
+    _record(
+        isinstance(missing_telemetry, list),
+        errors,
+        "EdgeEnv handoff runtime_telemetry_history.missing_telemetry must be a list",
+    )
+    if not isinstance(missing_telemetry, list):
+        return
+
+    missing_run = next(
+        (
+            item
+            for item in missing_telemetry
+            if isinstance(item, dict)
+            and item.get("run_id") == "edgeenv-smoke-missing"
+        ),
+        None,
+    )
+    _record(
+        isinstance(missing_run, dict),
+        errors,
+        "EdgeEnv handoff runtime_telemetry_history.missing_telemetry must "
+        "include edgeenv-smoke-missing",
+    )
+    if not isinstance(missing_run, dict):
+        return
+
+    _record(
+        missing_run.get("reason") == "runtime_telemetry_missing",
+        errors,
+        "EdgeEnv handoff runtime_telemetry_history.missing_telemetry"
+        "[edgeenv-smoke-missing].reason must be runtime_telemetry_missing",
+    )
+    operation_context = missing_run.get("orchestrator_operation_context")
+    _record(
+        isinstance(operation_context, dict),
+        errors,
+        "EdgeEnv handoff runtime_telemetry_history.missing_telemetry"
+        "[edgeenv-smoke-missing] must include orchestrator_operation_context",
+    )
+    if not isinstance(operation_context, dict):
+        return
+
+    prefix = (
+        "EdgeEnv handoff runtime_telemetry_history.missing_telemetry"
+        "[edgeenv-smoke-missing].orchestrator_operation_context"
+    )
+    _record(
+        operation_context.get("schema_version")
+        == REQUIRED_PRODUCER_CONTRACTS["orchestrator_feed_schema"],
+        errors,
+        f"{prefix}.schema_version must be "
+        f"{REQUIRED_PRODUCER_CONTRACTS['orchestrator_feed_schema']}",
+    )
+    _validate_orchestrator_producer_markers(operation_context, errors, prefix)
+    _record(
+        operation_context.get("not_a_regression_judgement") is True,
+        errors,
+        f"{prefix}.not_a_regression_judgement must be true",
+    )
+    _record(
+        operation_context.get("not_a_comparability_gate") is True,
+        errors,
+        f"{prefix}.not_a_comparability_gate must be true",
+    )
+    _record(
+        operation_context.get("decision_owner") == "lab",
+        errors,
+        f"{prefix}.decision_owner must be lab",
+    )
+    _record(
+        operation_context.get("regression_owner") == "edgeenv",
+        errors,
+        f"{prefix}.regression_owner must be edgeenv",
+    )
+    _validate_orchestrator_mapping_hint(operation_context, errors)
 
 
 def _validate_runtime_history_seed(
