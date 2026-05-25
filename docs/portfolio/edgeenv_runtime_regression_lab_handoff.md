@@ -105,7 +105,7 @@ This second smoke uses committed lightweight artifacts to represent the cross-re
 
 - `examples/runtime_intelligence_chain/bundle_manifest.json` declares the local-first artifact bundle, file paths, source repositories, artifact roles, producer contracts, owners, and boundary flags.
 - `examples/runtime_intelligence_chain/edgeenv_lab_handoff_manifest.json` mirrors the EdgeEnv producer-side handoff manifest and its `lab_bundle_alignment` metadata, so Lab can verify EdgeEnv-produced file keys separately from external AIGuard evidence.
-- `examples/runtime_intelligence_chain/runtime_telemetry_history.json` is the EdgeEnv producer-side telemetry history artifact referenced by the handoff manifest.
+- `examples/runtime_intelligence_chain/runtime_telemetry_history.json` is the EdgeEnv producer-side telemetry history artifact referenced by the handoff manifest. It includes a missing-telemetry run as an evidence gap and preserves Orchestrator context on that entry without turning Orchestrator into a regression or deployment decision owner.
 - Orchestrator context is preserved inside the EdgeEnv regression artifact as `orchestrator_operation_context`.
 - AIGuard deterministic queue/thermal evidence is passed as a precomputed `guard_analysis` artifact that mirrors the AIGuard producer-side diagnosis v1 evidence shape.
 - Lab owns the combined report and deployment decision.
@@ -129,6 +129,7 @@ Expected Lab behavior:
 - The same gate requires EdgeEnv-preserved Orchestrator producer markers to carry `source_repository=InferEdgeOrchestrator`, `artifact_role=orchestrator-supplemental-operation-context`, and `producer_contract=inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1`.
 - When an EdgeEnv handoff manifest is provided, the bundle gate requires EdgeEnv-produced file keys, external AIGuard file keys, source repository mapping, artifact roles, producer contracts, and boundary flags to match Lab's Runtime Intelligence bundle contract.
 - The same handoff gate verifies that the referenced `runtime_telemetry_history` artifact exists and preserves EdgeEnv history schema, telemetry coverage, and Runtime history seed ownership markers.
+- The same handoff gate verifies that missing telemetry entries remain evidence gaps while preserving Orchestrator producer markers, owner boundary flags, and EdgeEnv mapping hints when Orchestrator context is attached.
 - The bundle gate also requires AIGuard coverage evidence raw context to preserve the same Orchestrator mapping hint and producer markers, proving that AIGuard kept EdgeEnv/Orchestrator ownership markers as diagnosis context rather than recomputing coverage or owning deployment policy.
 - Additional Lab test fixtures under `tests/fixtures/edgeenv_regression/` mirror EdgeEnv replay examples for candidate telemetry gaps and execution sequence inversion. These fixture smokes verify that replay warnings become Lab-owned report context without making Lab recompute EdgeEnv comparability.
 - Markdown/HTML reports include a `Runtime Intelligence Risk Summary` that summarizes EdgeEnv comparability/regression, telemetry replay gaps, Runtime history seed traceability, AIGuard deterministic evidence, and the Lab-owned deployment decision in one reviewer-facing table.

@@ -76,6 +76,10 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
     )
     assert "edgeenv_handoff: lab_bundle_alignment validated" in bundle_summary
     assert "edgeenv_handoff: runtime_telemetry_history validated" in bundle_summary
+    assert (
+        "edgeenv_handoff: missing_telemetry_orchestrator_context validated"
+        in bundle_summary
+    )
 
     ci_summary = (
         output_dir / "runtime_intelligence_ci_artifact_gate_summary.md"
