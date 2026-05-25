@@ -19,6 +19,12 @@ ONNX model
 
 Experiment hygiene / comparability layer:
 InferEdgeEnv -> v0.1.5 v1-complete local-first run evidence registry / comparability checker
+
+Runtime Intelligence smoke evidence chain:
+InferEdgeOrchestrator operation feed
+-> InferEdgeEnv telemetry history / comparability-first regression context
+-> optional InferEdgeAIGuard deterministic runtime anomaly evidence
+-> InferEdgeLab Runtime Intelligence Risk Summary / deployment risk report
 ```
 
 ## Summary
@@ -28,6 +34,7 @@ InferEdgeEnv -> v0.1.5 v1-complete local-first run evidence registry / comparabi
 - Structured comparison: latency, accuracy, validation evidence
 - Deployment decision: deployable / review / blocked
 - Comparability layer: InferEdgeEnv `v0.1.5`는 Lab decision과 분리된 local benchmark evidence와 comparability를 기록
+- Runtime Intelligence smoke chain: Orchestrator operation context → EdgeEnv telemetry history/regression → AIGuard deterministic evidence → Lab-owned deployment risk report
 - Local Studio: inference validation을 브라우저에서 확인하는 local-first workflow UI
 
 ## What Makes InferEdge Different?
@@ -120,16 +127,64 @@ bash scripts/demo_pipeline_full.sh --run-jetson-command-print
 - **InferEdgeAIGuard:** provenance mismatch나 suspicious result를 rule/evidence 기반으로 진단하는 optional evidence layer입니다.
 - **InferEdgeEnv:** `v0.1.5` v1-complete experiment hygiene / comparability layer로, Edge AI inference benchmark result를 local artifact와 SQLite registry로 고정하고 비교 가능성을 판정합니다.
 
-포트폴리오 경계: InferEdgeLab은 validation / decision layer이고, InferEdgeEnv는 `v0.1.5` v1-complete experiment hygiene / comparability layer입니다. InferEdge는 모델이 배포 가능한지 검증하고, InferEdgeEnv는 benchmark evidence가 신뢰 가능하고 비교 가능한 형태로 기록됐는지 관리합니다. EdgeEnv runtime regression report에 `runtime_telemetry_context`가 포함되면 Lab은 이를 supplemental telemetry coverage / evidence-gap context로 표시하되, final deployment decision ownership은 Lab에 남깁니다.
+## 현재 역할 경계
+
+InferEdgeLab은 validation / decision layer이고, InferEdgeEnv는 experiment hygiene / comparability layer입니다.
+
+실제 책임은 다음처럼 나뉩니다.
+
+- InferEdge는 모델 후보가 배포 가능한지 검증합니다.
+- InferEdgeEnv는 benchmark evidence가 신뢰 가능하고 비교 가능한 형태인지 기록합니다.
+- AIGuard는 사용 가능한 경우 deterministic diagnosis evidence를 추가합니다.
+- Orchestrator는 supplemental operation context를 제공하며 최종 verdict를 소유하지 않습니다.
+- Lab은 final deployment decision owner로 남습니다.
+
+Runtime Intelligence는 local-first evidence automation으로 구현됩니다.
+
+```text
+Orchestrator supplemental operation context
+-> EdgeEnv telemetry history / regression evidence
+-> optional AIGuard deterministic diagnosis evidence
+-> Lab Runtime Intelligence Risk Summary
+```
+
+이 흐름은 production observability platform이나 runtime control plane이 아닙니다.
+
+## 현재 구현 상태
+
+Core Lab workflow:
+
+- API response contract
+- `/api/compare`, `/api/analyze` in-memory jobs
+- worker request/response mappings
+- compare/report/deployment decision smoke coverage
+
+Cross-repo evidence:
+
+- Runtime dry-run validation/export
+- Forge worker/runtime summary
+- AIGuard provenance mismatch diagnosis
+- dev-only Lab → Runtime ONNX Runtime smoke using `yolov8n.onnx`
+- Forge manifest와 TensorRT engine artifact를 사용하는 manual Jetson TensorRT Runtime smoke
+- compare-ready TensorRT engine result에서 Runtime source-model identity preservation
+
+Runtime Intelligence smoke:
+
+- Orchestrator operation feed를 supplemental context로 보존
+- EdgeEnv telemetry history/regression evidence를 Lab report에 연결
+- 사용 가능한 경우 AIGuard deterministic runtime evidence 보존
+- 기존 JSON contract를 바꾸지 않고 Lab-owned Runtime Intelligence Risk Summary 생성
+
+EdgeEnv runtime regression report에 `runtime_telemetry_context`가 포함되면 Lab은 이를 supplemental telemetry coverage / evidence-gap context로 표시하되, final deployment decision ownership은 Lab에 남깁니다.
 
 ## 현재 범위와 future work
 
-현재 상태는 **SaaS-ready validation foundation**입니다. API/job/worker contract와 dev/manual smoke evidence는 갖췄지만, production SaaS가 완성된 것은 아닙니다.
+현재 상태는 **local-first validation foundation**입니다. API/job/worker contract와 dev/manual smoke evidence는 갖췄지만, production SaaS가 완성된 것은 아닙니다.
 
 Future work:
 
 - production worker daemon
 - persistent DB/queue
 - file upload flow
-- SaaS frontend
+- production frontend beyond Local Studio
 - production auth/billing/deployment controls
