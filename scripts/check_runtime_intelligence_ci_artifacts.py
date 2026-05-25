@@ -37,6 +37,7 @@ REQUIRED_BUNDLE_MANIFEST_SUMMARY_MARKERS = (
     "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
     "aiguard_raw_context: orchestrator_mapping_hint preserved",
     "aiguard_raw_context: orchestrator_producer_markers preserved",
+    "aiguard_raw_context: missing_telemetry_orchestrator_context preserved",
     "edgeenv_handoff: lab_bundle_alignment validated",
     "edgeenv_handoff: runtime_telemetry_history validated",
     "edgeenv_handoff: missing_telemetry_orchestrator_context validated",

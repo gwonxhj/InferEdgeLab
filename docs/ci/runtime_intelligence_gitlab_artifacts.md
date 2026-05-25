@@ -97,6 +97,10 @@ The initial gate is conservative:
 - AIGuard coverage evidence raw context must also preserve the same
   Orchestrator producer markers, so the diagnostic artifact remains traceable
   to the Orchestrator feed without making AIGuard the producer or decision owner
+- AIGuard coverage evidence raw context must preserve Orchestrator producer
+  markers and mapping hints for EdgeEnv history `missing_telemetry` entries
+  when such context exists, while keeping the entry an evidence gap rather than
+  successful Runtime telemetry
 - Orchestrator candidate context must include `run_id`, `telemetry_source`,
   `operation`, and `resource`, so CI can catch incomplete handoffs without
   making Orchestrator a regression owner

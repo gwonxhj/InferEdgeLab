@@ -149,6 +149,23 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
         ]
         is False
     )
+    assert guard_edgeenv_context["history_missing_telemetry_runs"] == 1.0
+    assert guard_edgeenv_context["history_missing_orchestrator_context_run_ids"] == [
+        "edgeenv-smoke-missing"
+    ]
+    assert (
+        guard_edgeenv_context["history_missing_orchestrator_source_repository"]
+        == "InferEdgeOrchestrator"
+    )
+    assert (
+        guard_edgeenv_context["history_missing_orchestrator_artifact_role"]
+        == "orchestrator-supplemental-operation-context"
+    )
+    assert set(
+        guard_edgeenv_context[
+            "history_missing_orchestrator_mapping_hint_aiguard_evidence_candidates"
+        ]
+    ) >= {"runtime_queue_overload", "runtime_thermal_instability"}
     assert bundle["deployment_decision"]["decision"] == "review_required"
     assert bundle["deployment_decision"]["guard_status"] == "warning"
     assert "guard_warning_review" in bundle["deployment_decision"]["triggered_rules"]
@@ -159,11 +176,11 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
         "| Runtime telemetry coverage gaps | baseline=none; candidate=queue_depth |"
         in bundle["markdown"]
     )
-    assert "| Orchestrator operation feed context | 1 |" in bundle["markdown"]
+    assert "| Orchestrator operation feed context | 2 |" in bundle["markdown"]
     assert "| Runtime telemetry history seed | 2 |" in bundle["markdown"]
     assert "| Orchestrator context attached runs | candidate |" in bundle["markdown"]
     assert "runtime_queue_overload, runtime_thermal_instability" in bundle["markdown"]
-    assert "| AIGuard Orchestrator context handoff | feeds=1.0, candidate |" in bundle[
+    assert "| AIGuard Orchestrator context handoff | feeds=2.0, candidate |" in bundle[
         "markdown"
     ]
     assert "| AIGuard history seed handoff | seeds=2.0" in bundle["markdown"]
