@@ -32,6 +32,7 @@ Expected ownership:
 
 - Orchestrator provides supplemental queue, deadline, fallback, thermal, and resource context. It does not make a deployment decision.
 - EdgeEnv preserves that context as `orchestrator_operation_context` inside the runtime telemetry context and keeps comparability-first regression ownership.
+- EdgeEnv handoff smoke requires preserved device-local `candidate_context.producer` lineage for Orchestrator context so producer/source/stage ownership survives replay.
 - AIGuard may translate the nested operation context into deterministic evidence such as `runtime_queue_overload` or `runtime_thermal_instability`.
 - Lab displays the combined evidence in the Runtime Intelligence Risk Summary and keeps the final deployment decision policy.
 
@@ -61,6 +62,7 @@ The EdgeEnv report fixture represents a same-condition runtime regression:
 - `runtime_telemetry_context.history.runs[].runtime_telemetry_history_seed`: Runtime seed preserved by EdgeEnv for local replay traceability
 - `runtime_telemetry_context.<run>.orchestrator_operation_context`: supplemental operation context when EdgeEnv history was exported with an Orchestrator feed
 - `runtime_telemetry_context.<run>.orchestrator_operation_context.edgeenv_mapping_hint`: producer hint that keeps Orchestrator candidate context supplemental while naming EdgeEnv as the telemetry coverage summary owner
+- `runtime_telemetry_context.<run>.orchestrator_operation_context.candidate_context.producer`: device-local producer lineage preserved as traceability evidence, not as a Lab decision override
 
 ## Reproduction Command
 

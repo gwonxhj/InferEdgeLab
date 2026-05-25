@@ -34,12 +34,14 @@ REQUIRED_BUNDLE_MANIFEST_SUMMARY_MARKERS = (
     "orchestrator_mapping_hint: coverage_summary_owner=edgeenv",
     "orchestrator_mapping_hint: operation_context_role=supplemental",
     "orchestrator_mapping_hint: aiguard_evidence_candidates=runtime_queue_overload,runtime_thermal_instability",
+    "orchestrator_device_local_producer_lineage: candidate_context.producer validated",
     "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
     "aiguard_raw_context: orchestrator_mapping_hint preserved",
     "aiguard_raw_context: orchestrator_producer_markers preserved",
     "aiguard_raw_context: missing_telemetry_orchestrator_context preserved",
     "edgeenv_handoff: lab_bundle_alignment validated",
     "edgeenv_handoff: runtime_telemetry_history validated",
+    "edgeenv_handoff: device_local_producer_lineage validated",
     "edgeenv_handoff: missing_telemetry_orchestrator_context validated",
 )
 

@@ -149,6 +149,71 @@
             "timeout_observed": false
           }
         ]
+      },
+      "orchestrator_operation_context": {
+        "schema_version": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
+        "role": "orchestrator_operation_context_for_edgeenv",
+        "source_repository": "InferEdgeOrchestrator",
+        "artifact_role": "orchestrator-supplemental-operation-context",
+        "producer_contract": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
+        "source": "orchestration_summary",
+        "run_id": "edgeenv-smoke-candidate",
+        "not_a_regression_judgement": true,
+        "not_a_comparability_gate": true,
+        "decision_owner": "lab",
+        "regression_owner": "edgeenv",
+        "candidate_context": {
+          "run_id": "edgeenv-smoke-candidate",
+          "telemetry_source": "inferedge_orchestrator_operation_summary",
+          "queue_depth": 7,
+          "operation": {
+            "queue_depth": 7,
+            "deadline_missed_count": 2,
+            "fallback_count": 1
+          },
+          "resource": {
+            "source": "tegrastats_timeline",
+            "gpu_temperature": 78.5,
+            "throttling_detected": true
+          },
+          "producer": {
+            "operation_context_role": "supplemental",
+            "producer_sources": [
+              "device_local_cli_override",
+              "orchestration_summary"
+            ],
+            "device_local_producer_sources": [
+              "device_local_cli_override"
+            ],
+            "producer_sources_by_task": {
+              "vision_agent": [
+                "device_local_cli_override"
+              ]
+            },
+            "producer_stage_by_task": {
+              "vision_agent": "device_local_starter"
+            },
+            "producer_event_count": 4,
+            "device_local_event_count": 2,
+            "device_local_task_count": 1
+          }
+        },
+        "edgeenv_mapping_hint": {
+          "copy_candidate_context_to": "runtime_telemetry_context.candidate",
+          "operation_context_role": "supplemental",
+          "coverage_summary_owner": "edgeenv",
+          "coverage_summary_path": "runtime_telemetry_context.history.telemetry_coverage",
+          "candidate_context_required_fields": [
+            "run_id",
+            "telemetry_source",
+            "operation",
+            "resource"
+          ],
+          "aiguard_evidence_candidates": [
+            "runtime_queue_overload",
+            "runtime_thermal_instability"
+          ]
+        }
       }
     }
   ],
@@ -183,6 +248,27 @@
             "source": "runtime_health_snapshot",
             "gpu_temperature": 72.0,
             "throttling_detected": false
+          },
+          "producer": {
+            "operation_context_role": "supplemental",
+            "producer_sources": [
+              "device_local_cli_override",
+              "orchestration_summary"
+            ],
+            "device_local_producer_sources": [
+              "device_local_cli_override"
+            ],
+            "producer_sources_by_task": {
+              "vision_agent": [
+                "device_local_cli_override"
+              ]
+            },
+            "producer_stage_by_task": {
+              "vision_agent": "device_local_starter"
+            },
+            "producer_event_count": 4,
+            "device_local_event_count": 2,
+            "device_local_task_count": 1
           }
         },
         "edgeenv_mapping_hint": {

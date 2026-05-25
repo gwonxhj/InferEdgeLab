@@ -118,6 +118,7 @@ SUMMARY_CONTRACT_MARKERS = (
     "orchestrator_mapping_hint: coverage_summary_owner=edgeenv",
     "orchestrator_mapping_hint: operation_context_role=supplemental",
     "orchestrator_mapping_hint: aiguard_evidence_candidates=runtime_queue_overload,runtime_thermal_instability",
+    "orchestrator_device_local_producer_lineage: candidate_context.producer validated",
     "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
     "aiguard_raw_context: orchestrator_mapping_hint preserved",
     "aiguard_raw_context: orchestrator_producer_markers preserved",
@@ -126,6 +127,7 @@ SUMMARY_CONTRACT_MARKERS = (
 EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS = (
     "edgeenv_handoff: lab_bundle_alignment validated",
     "edgeenv_handoff: runtime_telemetry_history validated",
+    "edgeenv_handoff: device_local_producer_lineage validated",
     "edgeenv_handoff: missing_telemetry_orchestrator_context validated",
 )
 
@@ -471,6 +473,11 @@ def _validate_edgeenv_runtime_history_artifact(
     if isinstance(coverage, dict):
         _validate_edgeenv_history_coverage_summary(coverage, errors)
     _validate_edgeenv_history_seed_runs(history, errors)
+    _validate_edgeenv_history_candidate_orchestrator_context(
+        history,
+        errors,
+        "EdgeEnv handoff runtime_telemetry_history",
+    )
     _validate_edgeenv_missing_telemetry_orchestrator_context(
         history,
         errors,
@@ -603,6 +610,11 @@ def _validate_edgeenv_report(edgeenv_report: dict[str, Any], errors: list[str]) 
         "orchestrator_operation_context.regression_owner must be edgeenv",
     )
     _validate_orchestrator_mapping_hint(operation_context, errors)
+    _validate_orchestrator_device_local_producer_lineage(
+        operation_context,
+        errors,
+        "orchestrator_operation_context",
+    )
 
 
 def _validate_orchestrator_producer_markers(
@@ -791,6 +803,47 @@ def _validate_edgeenv_history_seed_runs(
             )
 
 
+def _validate_edgeenv_history_candidate_orchestrator_context(
+    history: dict[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    runs = history.get("runs")
+    _record(isinstance(runs, list), errors, f"{label}.runs must be a list")
+    if not isinstance(runs, list):
+        return
+
+    candidate_run = next(
+        (
+            item
+            for item in runs
+            if isinstance(item, dict)
+            and item.get("run_id") == "edgeenv-smoke-candidate"
+        ),
+        None,
+    )
+    _record(
+        isinstance(candidate_run, dict),
+        errors,
+        f"{label}.runs must include edgeenv-smoke-candidate",
+    )
+    if not isinstance(candidate_run, dict):
+        return
+
+    operation_context = candidate_run.get("orchestrator_operation_context")
+    _record(
+        isinstance(operation_context, dict),
+        errors,
+        f"{label}.runs[edgeenv-smoke-candidate] must include "
+        "orchestrator_operation_context",
+    )
+    if not isinstance(operation_context, dict):
+        return
+
+    prefix = f"{label}.runs[edgeenv-smoke-candidate].orchestrator_operation_context"
+    _validate_preserved_orchestrator_context(operation_context, errors, prefix)
+
+
 def _validate_edgeenv_missing_telemetry_orchestrator_context(
     history: dict[str, Any],
     errors: list[str],
@@ -842,6 +895,14 @@ def _validate_edgeenv_missing_telemetry_orchestrator_context(
         f"{label}.missing_telemetry[edgeenv-smoke-missing]."
         "orchestrator_operation_context"
     )
+    _validate_preserved_orchestrator_context(operation_context, errors, prefix)
+
+
+def _validate_preserved_orchestrator_context(
+    operation_context: dict[str, Any],
+    errors: list[str],
+    prefix: str,
+) -> None:
     _record(
         operation_context.get("schema_version")
         == REQUIRED_PRODUCER_CONTRACTS["orchestrator_feed_schema"],
@@ -871,6 +932,73 @@ def _validate_edgeenv_missing_telemetry_orchestrator_context(
         f"{prefix}.regression_owner must be edgeenv",
     )
     _validate_orchestrator_mapping_hint(operation_context, errors)
+    _validate_orchestrator_device_local_producer_lineage(
+        operation_context,
+        errors,
+        prefix,
+    )
+
+
+def _validate_orchestrator_device_local_producer_lineage(
+    operation_context: dict[str, Any],
+    errors: list[str],
+    prefix: str,
+) -> None:
+    candidate_context = operation_context.get("candidate_context")
+    if not isinstance(candidate_context, dict):
+        return
+    producer = candidate_context.get("producer")
+    _record(
+        isinstance(producer, dict),
+        errors,
+        f"{prefix}.candidate_context.producer must be an object",
+    )
+    if not isinstance(producer, dict):
+        return
+    _record(
+        producer.get("operation_context_role") == "supplemental",
+        errors,
+        f"{prefix}.candidate_context.producer.operation_context_role "
+        "must be supplemental",
+    )
+    for field in ("producer_sources", "device_local_producer_sources"):
+        values = producer.get(field)
+        _record(
+            isinstance(values, list)
+            and bool(values)
+            and all(isinstance(item, str) and item for item in values),
+            errors,
+            f"{prefix}.candidate_context.producer.{field} must be a "
+            "non-empty string list",
+        )
+    device_sources = producer.get("device_local_producer_sources")
+    if isinstance(device_sources, list):
+        _record(
+            "device_local_cli_override" in device_sources,
+            errors,
+            f"{prefix}.candidate_context.producer.device_local_producer_sources "
+            "must include device_local_cli_override",
+        )
+    for field in ("producer_sources_by_task", "producer_stage_by_task"):
+        values = producer.get(field)
+        _record(
+            isinstance(values, dict) and bool(values),
+            errors,
+            f"{prefix}.candidate_context.producer.{field} must be a "
+            "non-empty object",
+        )
+    for field in (
+        "producer_event_count",
+        "device_local_event_count",
+        "device_local_task_count",
+    ):
+        value = producer.get(field)
+        _record(
+            type(value) is int and value > 0,
+            errors,
+            f"{prefix}.candidate_context.producer.{field} must be a "
+            "positive integer",
+        )
 
 
 def _validate_runtime_history_seed(

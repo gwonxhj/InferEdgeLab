@@ -111,6 +111,7 @@ Runtime Intelligence smoke:
 
 - Orchestrator operation feed preserved as supplemental context
 - EdgeEnv telemetry history/regression evidence ingested by Lab
+- EdgeEnv handoff gate checks device-local producer lineage in preserved Orchestrator context
 - AIGuard deterministic runtime evidence preserved when available
 - Lab-owned Runtime Intelligence Risk Summary generated without changing existing JSON contracts
 
@@ -489,6 +490,11 @@ Reproduce the local Runtime Intelligence artifact chain with:
 bash scripts/smoke_runtime_intelligence_chain.sh \
   --output-dir reports/runtime_intelligence_chain
 ```
+
+The smoke now gates the EdgeEnv handoff history fixture for preserved
+device-local Orchestrator `candidate_context.producer` lineage. This is an
+artifact integrity check only; EdgeEnv still owns comparability/regression
+evidence and Lab still owns the deployment decision.
 
 The committed handoff smoke is documented in [docs/portfolio/edgeenv_runtime_regression_lab_handoff.md](docs/portfolio/edgeenv_runtime_regression_lab_handoff.md).
 
