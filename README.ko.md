@@ -53,28 +53,59 @@ InferEdge는 다음을 연결하는 validation pipeline입니다.
 Local Studio는 CLI/API/job workflow를 브라우저에서 조작하고 관찰하는 local-first interface입니다.
 cloud SaaS dashboard가 아니며, 사용자의 PC에서 실행되는 demo/review UI입니다.
 
-Recommended demo flow:
+### 브라우저 데모 실행
 
 1. `poetry run inferedgelab serve --host 127.0.0.1 --port 8000` 실행
 2. `http://localhost:8000/studio` 접속
 3. `Load Demo Evidence` 클릭
 4. TensorRT vs ONNX Runtime 비교와 Lab-owned deployment decision context 확인
 
+### CLI 검증 명령
+
 브라우저를 열지 않고도 같은 evidence 수치를 CLI에서 확인하거나 Markdown으로 export할 수 있습니다.
 
 ```bash
 poetry run inferedgelab demo-evidence-summary
 poetry run inferedgelab demo-evidence-summary --format json
+poetry run inferedgelab portfolio-demo-check
+poetry run inferedgelab core4-conformance-check
 poetry run inferedgelab agent-runtime-report \
   --orchestration-summary examples/agent_runtime/agent_3_orchestration_summary.json \
   --guard-analysis examples/agent_runtime/aiguard_runtime_guard_analysis.json
 poetry run inferedgelab export-demo-evidence --output reports/studio_demo_evidence.md
 ```
 
-Load Demo Evidence는 bundled ONNX Runtime CPU / TensorRT Jetson result fixture를 불러오고, Run / Import / Jetson Helper는 기존 CLI/API workflow를 local UI로 확장하는 보조 기능입니다.
-Studio evidence와 jobs는 in-memory이며 local server process가 재시작되면 초기화됩니다.
+Guardrail:
 
-`agent-runtime-report`는 Orchestrator scheduling evidence와 AIGuard runtime reliability `guard_analysis`를 Lab-owned agent deployment decision context로 묶는 additive report path입니다. 기존 Runtime result나 compare contract는 변경하지 않습니다.
+- `portfolio-demo-check`는 committed Studio fixture, README/PPT 수치, portfolio docs, local Studio asset을 검증합니다.
+- `core4-conformance-check`는 Forge manifest/metadata fixture, Runtime result JSON, Lab compare/deployment decision surface, AIGuard `guard_analysis` evidence를 기존 schema 변경 없이 검증합니다.
+
+추가 report path:
+
+- `agent-runtime-report`는 Orchestrator scheduling evidence와 AIGuard runtime reliability `guard_analysis`를 Lab-owned agent deployment decision context로 묶습니다.
+- 현재 bundled agent evidence는 local review용 synthetic sustained high-load 3-agent scenario입니다.
+- Runtime result JSON에 `runtime_health_snapshot`, `runtime_events`, `runtime_operation_summary`가 있으면 `--runtime-result <path>`로 같은 Lab report에 Runtime-side operation context를 추가할 수 있습니다.
+- Orchestrator `inferedge-remote-dispatch-result-v1` JSON이 있으면 `--remote-dispatch <path>`로 file-based worker selection, retry/fallback plan, remote execution starter context를 추가할 수 있습니다.
+- remote dispatch는 local-first review용 starter evidence이며 production remote execution을 주장하지 않습니다.
+
+### Studio에서 볼 수 있는 것
+
+Load Demo Evidence는 bundled ONNX Runtime CPU / TensorRT Jetson result fixture를 불러오고, Run / Import / Jetson Helper는 기존 CLI/API workflow를 local UI로 확장하는 보조 기능입니다.
+AIGuard는 이 local Studio path에서 optional이며, Guard evidence가 없으면 Lab comparison은 가능하지만 diagnosis evidence는 제공되지 않았다고 decision context에 표시됩니다.
+
+현재 Studio flow는 작은 `yolov8_coco` evaluation report summary도 함께 보여줍니다. 기준 값은 10 images, 89 ground-truth boxes, mAP@50 `0.1410`, precision `0.2941`, recall `0.1685`, structural validation `passed`입니다.
+
+### 현재 범위
+
+- Run은 기존 `/api/analyze` contract를 통해 in-memory analyze job을 생성합니다.
+- Import는 Runtime result JSON path 또는 pasted JSON payload를 받아 compare-ready evidence set에 추가합니다.
+- Load Demo Evidence는 stable browser demo를 위해 bundled ONNX Runtime CPU / TensorRT Jetson fixture를 불러옵니다.
+- Compare View는 compatible evidence가 로드되면 mean latency, p99, FPS, latency diff, speedup을 보여줍니다.
+- Jetson Helper는 Jetson device에서 Runtime을 실행하기 위한 local command shape를 보여줍니다.
+- Deployment Decision은 Lab-owned이며, AIGuard는 optional deterministic diagnosis evidence입니다.
+
+현재 non-goal은 변하지 않습니다. DB, queue, upload service, production auth, billing, production SaaS worker orchestration은 포함하지 않습니다.
+Studio evidence와 jobs는 in-memory이며 local server process가 재시작되면 초기화됩니다.
 
 ## 이 레포의 역할
 
