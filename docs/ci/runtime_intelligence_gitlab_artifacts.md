@@ -139,7 +139,7 @@ The same gate now also checks `source_repositories`, `artifact_roles`,
 `producer_contracts`, and device-local producer lineage so the smoke remains a
 cross-repo handoff fixture rather than a Lab-only report sample.
 
-The artifact gate is implemented by `scripts/check_runtime_intelligence_artifact_bundle.py`. It checks the generated Markdown / HTML report for the required Runtime Intelligence rows, including Lab ownership, EdgeEnv comparability, telemetry coverage-gap markers, Orchestrator operation feed context, AIGuard runtime operation anomalies, and triggered deployment review rules.
+The artifact gate is implemented by `scripts/check_runtime_intelligence_artifact_bundle.py`. It checks the generated Markdown / HTML report for the required Runtime Intelligence rows, including Lab ownership, EdgeEnv comparability, telemetry coverage-gap markers, Orchestrator operation feed context, AIGuard runtime operation anomalies, `edgeenv_orchestrator_producer_lineage`, and triggered deployment review rules.
 
 The CI artifact gate is implemented by `scripts/check_runtime_intelligence_ci_artifacts.py`. It runs in the deployment-risk stage and verifies that the collected optional GitLab artifacts include the manifest gate summary, report gate summary, Runtime Intelligence Risk Summary report, portfolio demo status, and the validated contract markers from the bundle manifest gate. This keeps the final CI gate file-based and deterministic without turning GitLab into a runtime control plane.
 

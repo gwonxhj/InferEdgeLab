@@ -35,6 +35,10 @@ REQUIRED_MARKDOWN_MARKERS = {
     "aiguard_producer_lineage_handoff": (
         "| AIGuard producer lineage handoff | sources=device_local_cli_override"
     ),
+    "aiguard_producer_lineage_evidence": "edgeenv_orchestrator_producer_lineage",
+    "aiguard_producer_lineage_recommendation": (
+        "Device-local Orchestrator producer lineage is preserved"
+    ),
     "aiguard_history_seed_handoff": "| AIGuard history seed handoff | seeds=2.0",
     "guard_warning_rule": "guard_warning_review",
     "edgeenv_regression_rule": "edgeenv_runtime_regression_review",
@@ -51,6 +55,10 @@ REQUIRED_HTML_MARKERS = {
     "aiguard_operation_anomalies": "runtime_queue_overload, runtime_thermal_instability",
     "aiguard_orchestrator_handoff": "AIGuard Orchestrator context handoff",
     "aiguard_producer_lineage_handoff": "AIGuard producer lineage handoff",
+    "aiguard_producer_lineage_evidence": "edgeenv_orchestrator_producer_lineage",
+    "aiguard_producer_lineage_recommendation": (
+        "Device-local Orchestrator producer lineage is preserved"
+    ),
     "aiguard_device_local_producer_source": "device_local_cli_override",
     "runtime_history_seed": "Runtime telemetry history seed",
     "aiguard_history_seed_handoff": "AIGuard history seed handoff",
