@@ -151,14 +151,16 @@ It runs on the user's machine through the FastAPI server and is intended as a lo
 InferEdge Local Studio can replay the bundled portfolio evidence without requiring a live Jetson device during an interview walkthrough.
 The `Load Demo Evidence` flow imports the ONNX Runtime CPU and TensorRT Jetson Runtime JSON fixtures from [examples/studio_demo](examples/studio_demo), refreshes Compare View, and keeps the demo pair selectable in Recent jobs while the local server process is running.
 
-Recommended demo flow:
+### Run the Browser Demo
 
 1. Run `poetry run inferedgelab serve --host 127.0.0.1 --port 8000`
 2. Open `http://localhost:8000/studio`
 3. Click `Load Demo Evidence`
 4. Review TensorRT vs ONNX Runtime comparison and deployment decision context
 
-The same evidence can be exported from the CLI without opening the browser:
+### CLI Review Checks
+
+The same evidence can be checked or exported from the CLI without opening the browser:
 
 ```bash
 poetry run inferedgelab demo-evidence-summary
@@ -171,24 +173,23 @@ poetry run inferedgelab agent-runtime-report \
 poetry run inferedgelab export-demo-evidence --output reports/studio_demo_evidence.md
 ```
 
-`portfolio-demo-check` is the pre-submission guardrail for this portfolio demo.
-It validates the committed Studio fixtures, expected README/PPT metrics, portfolio docs, and local Studio assets without starting workers, queues, databases, or a production SaaS service.
-`core4-conformance-check` is the cross-repo contract guardrail.
-It validates the bundled Forge manifest/metadata fixture, Runtime result JSON, Lab compare/deployment decision surface, and AIGuard `guard_analysis` evidence without mutating existing schemas.
-The Lab decision surface now also exposes `policy_version`, `triggered_rules`, and `policy_summary` so reviewers can see which local policy rules produced deploy/review/block/unknown outcomes.
+Guardrails:
 
-`agent-runtime-report` is an additive reliable edge agent runtime report path.
-It bundles Orchestrator scheduling evidence and AIGuard runtime reliability `guard_analysis` into a Lab-owned agent deployment decision context without changing existing Runtime result or compare contracts.
-The current bundled evidence is a synthetic/dummy sustained high-load 3-agent scenario.
-The report preserves sustained queue-depth, worker health, Runtime result health/error/event evidence, optional remote dispatch worker-selection context, runtime event summary/timeline, policy decision reason, and `sustained_overload_risk` evidence as local-first deployment review context.
-When a Runtime result JSON with `runtime_health_snapshot` / `runtime_events` / `runtime_operation_summary` is available, add `--runtime-result <path>` to include Runtime-side operation context in the same Lab report.
-`runtime_operation_summary` fields such as `health_reason`, `risk_labels`, `evidence_gaps`, and `recommended_action` are surfaced as Lab-owned review context while preserving Runtime as the evidence exporter and Orchestrator as the scheduler owner.
-Retryable Runtime error classifications such as `runtime_execution_skipped` are surfaced as Lab `review_required` evidence with the Runtime-provided `retry_hint`; this remains report evidence, not a production retry loop.
-When an InferEdgeOrchestrator `inferedge-remote-dispatch-result-v1` JSON is available, add `--remote-dispatch <path>` to include file-based worker selection, retry/fallback plan, and remote execution starter context.
-If Orchestrator was run with explicit HTTP/SSH execution, Lab preserves the starter `remote_execution_result` status, transport, error category, and additive `fallback_execution_result` recovery context as local review evidence.
-This is remote dispatch starter evidence for local-first review; it does not claim production remote execution.
+- `portfolio-demo-check` validates committed Studio fixtures, README/PPT metrics, portfolio docs, and local Studio assets without starting workers, queues, databases, or a production SaaS service.
+- `core4-conformance-check` validates bundled Forge manifest/metadata, Runtime result JSON, Lab compare/deployment decision surface, and AIGuard `guard_analysis` without mutating existing schemas.
+- The Lab decision surface exposes `policy_version`, `triggered_rules`, and `policy_summary` so reviewers can see which local policy rules produced deploy/review/block/unknown outcomes.
+
+Additional report paths:
+
+- `agent-runtime-report` bundles Orchestrator scheduling evidence and AIGuard runtime reliability `guard_analysis` into a Lab-owned agent deployment decision context without changing Runtime result or compare contracts.
+- The bundled agent evidence is a synthetic sustained high-load 3-agent scenario for local review.
+- Optional `--runtime-result <path>` input adds Runtime-side `runtime_health_snapshot`, `runtime_events`, and `runtime_operation_summary` context to the same Lab report.
+- Optional `--remote-dispatch <path>` input adds file-based worker selection, retry/fallback plan, and remote execution starter context when an Orchestrator `inferedge-remote-dispatch-result-v1` JSON is available.
+- Remote dispatch remains starter evidence for local-first review; it does not claim production remote execution.
 
 ![InferEdge Local Studio demo evidence](assets/images/local-studio-demo-evidence.png)
+
+### What Studio Shows
 
 Verified demo fixture values:
 
@@ -202,7 +203,7 @@ AIGuard remains optional in this local Studio path; if Guard evidence is not loa
 The same demo flow also surfaces a small `yolov8_coco` evaluation report summary: 10 images, 89 ground-truth boxes, mAP@50 `0.1410`, precision `0.2941`, recall `0.1685`, structural validation `passed`.
 It also includes problem-case summaries for annotation-missing review, invalid detection structure blocking, contract shape mismatch blocking, and latency regression review.
 
-What works today:
+### Current Scope
 
 - Run creates an in-memory analyze job through the existing `/api/analyze` contract.
 - Import accepts a Runtime result JSON path or pasted JSON payload and adds it to the in-memory compare-ready evidence set.
