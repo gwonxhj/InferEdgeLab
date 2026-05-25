@@ -213,6 +213,7 @@ Runtime Intelligence smoke:
 - Orchestrator operation feed를 supplemental context로 보존
 - EdgeEnv telemetry history/regression evidence를 Lab report에 연결
 - 사용 가능한 경우 AIGuard deterministic runtime evidence 보존
+- AIGuard raw context의 device-local producer lineage를 traceability evidence로 표시
 - 기존 JSON contract를 바꾸지 않고 Lab-owned Runtime Intelligence Risk Summary 생성
 
 EdgeEnv runtime regression report에 `runtime_telemetry_context`가 포함되면 Lab은 이를 supplemental telemetry coverage / evidence-gap context로 표시하되, final deployment decision ownership은 Lab에 남깁니다.

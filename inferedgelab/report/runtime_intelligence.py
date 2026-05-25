@@ -301,6 +301,16 @@ def _append_aiguard_runtime_operation_rows(
             )
         )
 
+    producer_label = _aiguard_producer_lineage_label(edgeenv_metrics)
+    if producer_label:
+        rows.append(
+            (
+                "AIGuard producer lineage handoff",
+                producer_label,
+                "Device-local producer provenance is traceability evidence; Lab still owns the deployment decision.",
+            )
+        )
+
     seed_runs = edgeenv_metrics.get("history_telemetry_seed_runs")
     if seed_runs is not None:
         seed_schema = edgeenv_metrics.get(
@@ -326,6 +336,46 @@ def _append_aiguard_runtime_operation_rows(
                 "AIGuard preserves EdgeEnv/Runtime seed markers as raw context, not as deployment policy.",
             )
         )
+
+
+def _aiguard_producer_lineage_label(edgeenv_metrics: dict[str, Any]) -> str:
+    sources = _string_list(
+        edgeenv_metrics.get("orchestrator_candidate_device_local_producer_sources")
+    )
+    if not sources:
+        sources = _string_list(
+            edgeenv_metrics.get("orchestrator_candidate_producer_sources")
+        )
+    stage_by_task = edgeenv_metrics.get("orchestrator_candidate_producer_stage_by_task")
+    stage_labels: list[str] = []
+    if isinstance(stage_by_task, dict):
+        for task_name, stage in stage_by_task.items():
+            if (
+                isinstance(task_name, str)
+                and task_name
+                and isinstance(stage, str)
+                and stage
+            ):
+                stage_labels.append(f"{task_name}:{stage}")
+    role = edgeenv_metrics.get("orchestrator_candidate_operation_context_role")
+    event_count = edgeenv_metrics.get("orchestrator_candidate_device_local_event_count")
+
+    parts: list[str] = []
+    if sources:
+        parts.append("sources=" + ",".join(sources))
+    if stage_labels:
+        parts.append("stages=" + ",".join(stage_labels))
+    if event_count is not None:
+        parts.append(f"device_local_events={event_count}")
+    if role is not None:
+        parts.append(f"role={role}")
+    return ", ".join(parts)
+
+
+def _string_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, str) and item]
 
 
 def _orchestrator_context_labels(telemetry_context: dict[str, Any]) -> list[str]:

@@ -122,6 +122,19 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert guard_edgeenv_context["orchestrator_candidate_context_telemetry_source"] == (
         "inferedge_orchestrator_operation_summary"
     )
+    assert guard_edgeenv_context["orchestrator_candidate_context_producer"][
+        "operation_context_role"
+    ] == "supplemental"
+    assert guard_edgeenv_context[
+        "orchestrator_candidate_device_local_producer_sources"
+    ] == ["device_local_cli_override"]
+    assert guard_edgeenv_context["orchestrator_candidate_producer_stage_by_task"] == {
+        "vision_agent": "device_local_starter"
+    }
+    assert guard_edgeenv_context["orchestrator_candidate_device_local_event_count"] == 2.0
+    assert guard_edgeenv_context[
+        "history_missing_orchestrator_candidate_device_local_producer_sources"
+    ] == ["device_local_cli_override"]
     assert guard_edgeenv_context["history_telemetry_seed_runs"] == 2.0
     assert (
         guard_edgeenv_context[
@@ -183,6 +196,11 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert "| AIGuard Orchestrator context handoff | feeds=2.0, candidate |" in bundle[
         "markdown"
     ]
+    assert (
+        "| AIGuard producer lineage handoff | "
+        "sources=device_local_cli_override, stages=vision_agent:device_local_starter, "
+        "device_local_events=2.0, role=supplemental |"
+    ) in bundle["markdown"]
     assert "| AIGuard history seed handoff | seeds=2.0" in bundle["markdown"]
     assert "Lab remains the final deployment decision owner" in bundle["markdown"]
     assert all(
@@ -223,7 +241,11 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "queue_depth" in markdown
     assert "AIGuard runtime operation anomalies" in markdown
     assert "Orchestrator context attached runs" in markdown
+    assert "AIGuard producer lineage handoff" in markdown
+    assert "device_local_cli_override" in markdown
     assert "AIGuard history seed handoff" in markdown
     assert "Runtime Intelligence Risk Summary" in html
+    assert "AIGuard producer lineage handoff" in html
+    assert "device_local_cli_override" in html
     assert "Runtime telemetry history seed" in html
     assert "runtime_queue_overload, runtime_thermal_instability" in html
