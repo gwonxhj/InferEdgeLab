@@ -94,6 +94,7 @@ def test_runtime_intelligence_bundle_manifest_gate_validates_edgeenv_handoff(
     summary = summary_path.read_text(encoding="utf-8")
     assert "edgeenv_handoff: lab_bundle_alignment validated" in summary
     assert "edgeenv_handoff: runtime_telemetry_history validated" in summary
+    assert "edgeenv_handoff: device_local_producer_lineage validated" in summary
     assert "edgeenv_handoff: missing_telemetry_orchestrator_context validated" in summary
 
 
@@ -188,6 +189,43 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_missing_history
     assert (
         "orchestrator_operation_context.edgeenv_mapping_hint."
         "coverage_summary_owner must be edgeenv"
+    ) in summary
+
+
+def test_runtime_intelligence_bundle_manifest_gate_fails_for_missing_history_producer(
+    tmp_path,
+):
+    handoff = json.loads(EDGEENV_HANDOFF.read_text(encoding="utf-8"))
+    runtime_history_path = (
+        REPO_ROOT
+        / "examples"
+        / "runtime_intelligence_chain"
+        / handoff["files"]["runtime_telemetry_history"]
+    )
+    runtime_history = json.loads(runtime_history_path.read_text(encoding="utf-8"))
+    candidate_context = runtime_history["runs"][1]["orchestrator_operation_context"][
+        "candidate_context"
+    ]
+    candidate_context.pop("producer")
+
+    runtime_history_copy = tmp_path / "runtime_telemetry_history.json"
+    runtime_history_copy.write_text(json.dumps(runtime_history), encoding="utf-8")
+    handoff["files"]["runtime_telemetry_history"] = str(runtime_history_copy)
+    handoff_path = tmp_path / "edgeenv_lab_handoff_manifest.json"
+    handoff_path.write_text(json.dumps(handoff), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(
+        manifest=str(MANIFEST),
+        edgeenv_handoff=str(handoff_path),
+        summary_out=str(summary_path),
+    )
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert (
+        "runs[edgeenv-smoke-candidate].orchestrator_operation_context."
+        "candidate_context.producer must be an object"
     ) in summary
 
 

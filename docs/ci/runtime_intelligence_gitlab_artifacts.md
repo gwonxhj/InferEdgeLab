@@ -91,6 +91,10 @@ The initial gate is conservative:
   `source_repository=InferEdgeOrchestrator`,
   `artifact_role=orchestrator-supplemental-operation-context`, and
   `producer_contract=inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1`
+- the preserved Orchestrator operation context in the EdgeEnv handoff history
+  must also keep device-local `candidate_context.producer` lineage, including
+  device-local producer sources, per-task source/stage mappings, positive
+  event/task counts, and `operation_context_role=supplemental`
 - AIGuard coverage evidence raw context must preserve the same mapping hint, so
   CI catches loss of EdgeEnv/Orchestrator ownership markers before Lab report
   generation
@@ -127,10 +131,13 @@ The initial gate is conservative:
 - the same handoff history may include runs with missing Runtime telemetry; the
   gate treats them as evidence gaps, but requires any preserved Orchestrator
   context on those entries to keep source repository, artifact role, producer
-  contract, owner boundary flags, and EdgeEnv mapping hints intact
+  contract, owner boundary flags, EdgeEnv mapping hints, and device-local
+  producer lineage intact
 
 The bundle manifest gate is implemented by `scripts/check_runtime_intelligence_bundle_manifest.py`. It verifies that the bundle contains baseline/candidate Runtime results, EdgeEnv regression evidence, AIGuard guard evidence, and explicit owner/boundary metadata before Lab generates the report. In this template it also consumes `--edgeenv-handoff examples/runtime_intelligence_chain/edgeenv_lab_handoff_manifest.json` to verify EdgeEnv producer-side file/source/role/schema alignment.
-The same gate now also checks `source_repositories`, `artifact_roles`, and `producer_contracts` so the smoke remains a cross-repo handoff fixture rather than a Lab-only report sample.
+The same gate now also checks `source_repositories`, `artifact_roles`,
+`producer_contracts`, and device-local producer lineage so the smoke remains a
+cross-repo handoff fixture rather than a Lab-only report sample.
 
 The artifact gate is implemented by `scripts/check_runtime_intelligence_artifact_bundle.py`. It checks the generated Markdown / HTML report for the required Runtime Intelligence rows, including Lab ownership, EdgeEnv comparability, telemetry coverage-gap markers, Orchestrator operation feed context, AIGuard runtime operation anomalies, and triggered deployment review rules.
 
