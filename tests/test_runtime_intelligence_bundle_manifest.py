@@ -69,6 +69,11 @@ def test_runtime_intelligence_bundle_manifest_gate_cli_passes(tmp_path):
         in summary
     )
     assert (
+        "orchestrator_producer_lineage_shape: "
+        "per-task source/stage/count mappings validated"
+        in summary
+    )
+    assert (
         "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage"
         in summary
     )
@@ -227,6 +232,76 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_missing_history_pro
         "runs[edgeenv-smoke-candidate].orchestrator_operation_context."
         "candidate_context.producer must be an object"
     ) in summary
+
+
+def test_runtime_intelligence_bundle_manifest_gate_fails_for_unmapped_device_source(
+    tmp_path,
+):
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    edgeenv_path = (
+        REPO_ROOT
+        / "examples"
+        / "runtime_intelligence_chain"
+        / manifest["files"]["edgeenv_regression_report"]
+    )
+    edgeenv = json.loads(edgeenv_path.read_text(encoding="utf-8"))
+    producer = edgeenv["runtime_telemetry_context"]["candidate"][
+        "orchestrator_operation_context"
+    ]["candidate_context"]["producer"]
+    producer["producer_sources_by_task"] = {"vision_agent": ["orchestration_summary"]}
+
+    edgeenv_copy = tmp_path / "edgeenv_regression.json"
+    edgeenv_copy.write_text(json.dumps(edgeenv), encoding="utf-8")
+    manifest["files"]["edgeenv_regression_report"] = str(edgeenv_copy)
+    manifest_path = tmp_path / "bundle_manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(manifest=str(manifest_path), summary_out=str(summary_path))
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert (
+        "device_local_producer_sources must also appear in "
+        "producer_sources_by_task: ['device_local_cli_override']"
+    ) in summary
+
+
+def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_handoff_stage_map(
+    tmp_path,
+):
+    handoff = json.loads(EDGEENV_HANDOFF.read_text(encoding="utf-8"))
+    runtime_history_path = (
+        REPO_ROOT
+        / "examples"
+        / "runtime_intelligence_chain"
+        / handoff["files"]["runtime_telemetry_history"]
+    )
+    runtime_history = json.loads(runtime_history_path.read_text(encoding="utf-8"))
+    producer = runtime_history["runs"][1]["orchestrator_operation_context"][
+        "candidate_context"
+    ]["producer"]
+    producer["producer_stage_by_task"] = {"vision_agent": ""}
+
+    runtime_history_copy = tmp_path / "runtime_telemetry_history.json"
+    runtime_history_copy.write_text(json.dumps(runtime_history), encoding="utf-8")
+    handoff["files"]["runtime_telemetry_history"] = str(runtime_history_copy)
+    handoff_path = tmp_path / "edgeenv_lab_handoff_manifest.json"
+    handoff_path.write_text(json.dumps(handoff), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(
+        manifest=str(MANIFEST),
+        edgeenv_handoff=str(handoff_path),
+        summary_out=str(summary_path),
+    )
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert (
+        "producer_stage_by_task.vision_agent must be a non-empty string"
+        in summary
+    )
 
 
 def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_owner(tmp_path):
