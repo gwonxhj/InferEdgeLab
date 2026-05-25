@@ -73,6 +73,7 @@ def test_runtime_intelligence_bundle_manifest_gate_cli_passes(tmp_path):
         "per-task source/stage/count mappings validated"
         in summary
     )
+    assert "aiguard_raw_context: producer_lineage_shape preserved" in summary
     assert (
         "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage"
         in summary
@@ -770,6 +771,9 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_guard_lineage_e
     lineage_evidence["raw_context"]["producer_lineage"][
         "missing_device_local_sources"
     ] = []
+    lineage_evidence["raw_context"]["producer_lineage"][
+        "candidate_lineage_shape_valid"
+    ] = False
 
     guard_copy = tmp_path / "aiguard_guard_analysis.json"
     guard_copy.write_text(json.dumps(guard_analysis), encoding="utf-8")
@@ -787,6 +791,7 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_guard_lineage_e
         "AIGuard producer lineage missing_device_local_sources must be "
         "['device_local_cli_override']"
     ) in summary
+    assert "candidate_lineage_shape_valid must be true" in summary
 
 
 def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_guard_missing_context(

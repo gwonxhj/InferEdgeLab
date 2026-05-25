@@ -122,6 +122,7 @@ SUMMARY_CONTRACT_MARKERS = (
     "orchestrator_device_local_producer_lineage: candidate_context.producer validated",
     "orchestrator_producer_lineage_shape: per-task source/stage/count mappings validated",
     "aiguard_evidence: edgeenv_orchestrator_producer_lineage validated",
+    "aiguard_raw_context: producer_lineage_shape preserved",
     "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
     "aiguard_raw_context: orchestrator_mapping_hint preserved",
     "aiguard_raw_context: orchestrator_producer_markers preserved",
@@ -1244,6 +1245,20 @@ def _validate_producer_lineage_evidence(
         "['device_local_cli_override']",
     )
     _record(
+        producer_lineage.get("candidate_producer_sources")
+        == ["device_local_cli_override", "orchestration_summary"],
+        errors,
+        "AIGuard producer lineage candidate_producer_sources must preserve "
+        "device_local_cli_override and orchestration_summary",
+    )
+    _record(
+        producer_lineage.get("candidate_sources_by_task")
+        == {"vision_agent": ["device_local_cli_override"]},
+        errors,
+        "AIGuard producer lineage candidate_sources_by_task must preserve "
+        "vision_agent:device_local_cli_override",
+    )
+    _record(
         producer_lineage.get("missing_device_local_sources")
         == ["device_local_cli_override"],
         errors,
@@ -1251,11 +1266,58 @@ def _validate_producer_lineage_evidence(
         "['device_local_cli_override']",
     )
     _record(
+        producer_lineage.get("missing_producer_sources")
+        == ["device_local_cli_override", "orchestration_summary"],
+        errors,
+        "AIGuard producer lineage missing_producer_sources must preserve "
+        "device_local_cli_override and orchestration_summary",
+    )
+    _record(
+        producer_lineage.get("missing_sources_by_task")
+        == {"vision_agent": ["device_local_cli_override"]},
+        errors,
+        "AIGuard producer lineage missing_sources_by_task must preserve "
+        "vision_agent:device_local_cli_override",
+    )
+    _record(
         producer_lineage.get("candidate_stage_by_task")
         == {"vision_agent": "device_local_starter"},
         errors,
         "AIGuard producer lineage candidate_stage_by_task must preserve "
         "vision_agent:device_local_starter",
+    )
+    _record(
+        producer_lineage.get("missing_stage_by_task")
+        == {"vision_agent": "device_local_starter"},
+        errors,
+        "AIGuard producer lineage missing_stage_by_task must preserve "
+        "vision_agent:device_local_starter",
+    )
+    for key in (
+        "candidate_producer_event_count",
+        "candidate_device_local_event_count",
+        "candidate_device_local_task_count",
+        "missing_producer_event_count",
+        "missing_device_local_event_count",
+        "missing_device_local_task_count",
+    ):
+        value = producer_lineage.get(key)
+        _record(
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and value > 0,
+            errors,
+            f"AIGuard producer lineage {key} must be positive",
+        )
+    _record(
+        producer_lineage.get("candidate_lineage_shape_valid") is True,
+        errors,
+        "AIGuard producer lineage candidate_lineage_shape_valid must be true",
+    )
+    _record(
+        producer_lineage.get("missing_lineage_shape_valid") is True,
+        errors,
+        "AIGuard producer lineage missing_lineage_shape_valid must be true",
     )
     _record(
         producer_lineage.get("missing_context_run_ids")
