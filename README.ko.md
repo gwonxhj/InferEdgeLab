@@ -86,15 +86,24 @@ Studio evidence와 jobs는 in-memory이며 local server process가 재시작되�
 
 ## 현재 구현 evidence
 
-- macOS ONNX Runtime CPU smoke: Lab -> C++ Runtime CLI -> ONNX Runtime CPU execution -> Lab job result ingestion 경로 검증.
-- Jetson Orin Nano TensorRT smoke: Forge manifest + TensorRT engine artifact를 C++ Runtime CLI가 실행한 evidence 확보.
-- Local Studio demo evidence:
-  - TensorRT Jetson FP16 25W: mean `10.066401 ms`, p95 `15.476641 ms`, p99 `15.548438 ms`, FPS `99.340373`
-  - ONNX Runtime CPU: mean `45.4299 ms`, p99 `49.2128 ms`, FPS `22.0119`
-- Jetson Evidence Track:
-  - TensorRT Jetson FP16 15W: mean `10.799106 ms`, p95 `15.438690 ms`, p99 `15.529218 ms`, FPS `92.600262`
-  - power mode는 run configuration의 일부이므로 15W/25W 결과는 같은 조건 회귀가 아니라 system evidence로 해석합니다.
-- Runtime source model identity polish: TensorRT `model.engine` 실행에서도 Forge manifest의 `source_model.path`를 우선해 `compare_key=yolov8n__b1__h640w640__fp32`를 유지할 수 있습니다.
+YOLOv8n은 현재 Local Studio evidence fixture와 Jetson Evidence Track result JSON으로 검증됩니다.
+InferEdgeRuntime은 compare-ready JSON result를 생성하고, InferEdgeLab은 `compare_key`, `backend_key`, precision, run context 기준으로 결과를 묶고 비교합니다.
+
+| Evidence | Backend | Precision | Power Mode | Mean ms | P95 ms | P99 ms | FPS |
+|---|---|---|---|---:|---:|---:|---:|
+| Local Studio baseline | ONNX Runtime CPU | FP32 | n/a | 45.4299 | n/a | 49.2128 | 22.0119 |
+| Local Studio candidate | TensorRT Jetson | FP16 | 25W | 10.066401 | 15.476641 | 15.548438 | 99.340373 |
+| Jetson power-mode evidence | TensorRT Jetson | FP16 | 15W | 10.799106 | 15.438690 | 15.529218 | 92.600262 |
+
+현재 Local Studio demo 기준 TensorRT Jetson FP16 25W는 ONNX Runtime CPU FP32 baseline보다 약 4.51배 빠릅니다.
+Jetson 15W/25W 비교는 power mode가 run configuration의 일부이므로 같은 조건 회귀가 아니라 system evidence로 해석합니다.
+이 수치는 `trtexec` GPU-only latency가 아니라 InferEdgeRuntime end-to-end Runtime latency입니다.
+
+추가 검증 경로:
+
+- macOS ONNX Runtime CPU smoke: Lab -> C++ Runtime CLI -> ONNX Runtime CPU execution -> Lab job result ingestion 경로 검증
+- Jetson Orin Nano TensorRT smoke: Forge manifest + TensorRT engine artifact를 C++ Runtime CLI가 실행한 evidence 확보
+- Runtime source model identity polish: TensorRT `model.engine` 실행에서도 Forge manifest의 `source_model.path`를 우선해 `compare_key=yolov8n__b1__h640w640__fp32` 유지 가능
 
 ## 설치와 빠른 실행
 
