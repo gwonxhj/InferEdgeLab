@@ -398,17 +398,53 @@ poetry run inferedgelab compare-latest \
 ```
 
 Optional Guard reasoning is available with `compare --with-guard` and `compare-latest --with-guard`.
-InferEdgeAIGuard is an optional dependency; when it is installed, Lab appends Guard Analysis based on the compare result and judgement, and when it is not installed, compare still runs normally.
-Compare and compare-latest also include a Deployment Decision that combines Lab judgement with Guard status into a deployable, review, blocked, or unknown release signal.
-When an InferEdgeEnv runtime regression report is available, `compare --edgeenv-regression path/to/regression.json` appends optional Runtime Regression Evidence to the Lab report and requires review for same-condition regression evidence.
-If that EdgeEnv report includes `runtime_telemetry_context`, Lab also renders the supplemental telemetry coverage/evidence-gap context so reviewers can see whether baseline/candidate telemetry and telemetry-history entries were present.
-If EdgeEnv preserves `runtime_telemetry.coverage`, Lab shows coverage ratio, missing fields, and `missing_telemetry_is_failure` as evidence quality metadata; coverage gaps do not change EdgeEnv comparability or Lab deployment policy.
-If EdgeEnv provides `runtime_telemetry_context.history.telemetry_coverage`, Lab reuses that producer-side replay summary for history-level missing-field runs instead of recalculating coverage ownership downstream.
-When `--with-guard` is enabled with an EdgeEnv regression report and the installed AIGuard exposes EdgeEnv regression reasoning, Lab preserves deterministic Guard evidence such as runtime latency regression, telemetry-context coverage, and telemetry replay-history context in the same Lab-owned decision report.
-Lab test fixtures also mirror EdgeEnv replay examples for candidate telemetry gaps and baseline/candidate execution sequence inversion under `tests/fixtures/edgeenv_regression/`.
-Markdown and HTML reports now include a Runtime Intelligence Risk Summary that ties EdgeEnv comparability/regression, telemetry replay gaps, Runtime history seed traceability, and AIGuard deterministic evidence back to the Lab-owned deployment decision without changing existing JSON contracts.
-This preserves the boundary: EdgeEnv records registry/comparability/regression evidence, while Lab remains the deployment decision owner.
-Reproduce the local Runtime Intelligence artifact chain with `bash scripts/smoke_runtime_intelligence_chain.sh --output-dir reports/runtime_intelligence_chain`.
+
+InferEdgeAIGuard is optional. If it is installed, Lab appends Guard Analysis from the compare result and judgement; if it is not installed, compare still runs normally.
+
+Compare commands also emit a Deployment Decision. The decision combines Lab judgement with optional Guard status into one release signal:
+
+- `deployable`
+- `review`
+- `blocked`
+- `unknown`
+
+Optional EdgeEnv regression evidence can be attached with:
+
+```bash
+poetry run inferedgelab compare \
+  baseline.json \
+  candidate.json \
+  --edgeenv-regression path/to/regression.json
+```
+
+When EdgeEnv evidence is attached, Lab keeps the ownership boundary explicit:
+
+- EdgeEnv records registry, comparability, telemetry coverage, and runtime regression evidence.
+- Lab renders that evidence in the report and remains the deployment decision owner.
+- Same-condition runtime regression evidence requires review.
+- Telemetry coverage gaps are shown as evidence quality metadata, not as a Lab policy override.
+
+If the EdgeEnv report includes `runtime_telemetry_context`, Lab also shows supplemental telemetry context, including baseline/candidate coverage, telemetry-history entries, missing fields, and producer-side replay summaries such as `runtime_telemetry_context.history.telemetry_coverage`.
+
+When `--with-guard` is used with EdgeEnv evidence, Lab preserves deterministic AIGuard evidence in the same Lab-owned report. This can include runtime latency regression, telemetry-context coverage, and telemetry replay-history context.
+
+Markdown and HTML reports include a Runtime Intelligence Risk Summary that connects:
+
+- EdgeEnv comparability and regression evidence
+- telemetry replay gaps
+- Runtime history seed traceability
+- AIGuard deterministic evidence
+- the Lab-owned deployment decision
+
+This does not change existing JSON contracts. Lab fixtures for these cases live under `tests/fixtures/edgeenv_regression/`.
+
+Reproduce the local Runtime Intelligence artifact chain with:
+
+```bash
+bash scripts/smoke_runtime_intelligence_chain.sh \
+  --output-dir reports/runtime_intelligence_chain
+```
+
 The committed handoff smoke is documented in [docs/portfolio/edgeenv_runtime_regression_lab_handoff.md](docs/portfolio/edgeenv_runtime_regression_lab_handoff.md).
 
 **Core workflow:**
