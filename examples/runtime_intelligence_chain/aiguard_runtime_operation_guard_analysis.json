@@ -276,6 +276,14 @@
           "history_missing_orchestrator_candidate_device_local_producer_sources": [
             "device_local_cli_override"
           ],
+          "history_missing_orchestrator_candidate_producer_sources_by_task": {
+            "vision_agent": [
+              "device_local_cli_override"
+            ]
+          },
+          "history_missing_orchestrator_candidate_producer_stage_by_task": {
+            "vision_agent": "device_local_starter"
+          },
           "history_missing_orchestrator_candidate_producer_event_count": 4.0,
           "history_missing_orchestrator_candidate_device_local_event_count": 2.0,
           "history_missing_orchestrator_candidate_device_local_task_count": 1.0,
@@ -556,13 +564,42 @@
           "candidate_device_local_sources": [
             "device_local_cli_override"
           ],
+          "candidate_producer_sources": [
+            "device_local_cli_override",
+            "orchestration_summary"
+          ],
+          "candidate_sources_by_task": {
+            "vision_agent": [
+              "device_local_cli_override"
+            ]
+          },
           "candidate_stage_by_task": {
             "vision_agent": "device_local_starter"
           },
+          "candidate_producer_event_count": 4.0,
+          "candidate_device_local_event_count": 2.0,
+          "candidate_device_local_task_count": 1.0,
+          "candidate_lineage_shape_valid": true,
           "missing_expected": true,
           "missing_device_local_sources": [
             "device_local_cli_override"
           ],
+          "missing_producer_sources": [
+            "device_local_cli_override",
+            "orchestration_summary"
+          ],
+          "missing_sources_by_task": {
+            "vision_agent": [
+              "device_local_cli_override"
+            ]
+          },
+          "missing_stage_by_task": {
+            "vision_agent": "device_local_starter"
+          },
+          "missing_producer_event_count": 4.0,
+          "missing_device_local_event_count": 2.0,
+          "missing_device_local_task_count": 1.0,
+          "missing_lineage_shape_valid": true,
           "missing_context_run_ids": [
             "edgeenv-smoke-missing"
           ],

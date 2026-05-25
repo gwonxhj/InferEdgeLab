@@ -37,6 +37,7 @@ REQUIRED_BUNDLE_MANIFEST_SUMMARY_MARKERS = (
     "orchestrator_device_local_producer_lineage: candidate_context.producer validated",
     "orchestrator_producer_lineage_shape: per-task source/stage/count mappings validated",
     "aiguard_evidence: edgeenv_orchestrator_producer_lineage validated",
+    "aiguard_raw_context: producer_lineage_shape preserved",
     "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
     "aiguard_raw_context: orchestrator_mapping_hint preserved",
     "aiguard_raw_context: orchestrator_producer_markers preserved",
