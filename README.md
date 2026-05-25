@@ -470,12 +470,14 @@ When EdgeEnv evidence is attached, Lab keeps the ownership boundary explicit:
 If the EdgeEnv report includes `runtime_telemetry_context`, Lab also shows supplemental telemetry context, including baseline/candidate coverage, telemetry-history entries, missing fields, and producer-side replay summaries such as `runtime_telemetry_context.history.telemetry_coverage`.
 
 When `--with-guard` is used with EdgeEnv evidence, Lab preserves deterministic AIGuard evidence in the same Lab-owned report. This can include runtime latency regression, telemetry-context coverage, and telemetry replay-history context.
+If AIGuard preserves EdgeEnv/Orchestrator `candidate_context.producer` lineage, Lab shows the device-local producer source, task stage, event count, and supplemental role as traceability evidence.
 
 Markdown and HTML reports include a Runtime Intelligence Risk Summary that connects:
 
 - EdgeEnv comparability and regression evidence
 - telemetry replay gaps
 - Runtime history seed traceability
+- device-local producer lineage handoff
 - AIGuard deterministic evidence
 - the Lab-owned deployment decision
 

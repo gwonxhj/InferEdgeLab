@@ -63,7 +63,7 @@ Portfolio boundary: InferEdgeLab is the validation / decision layer. InferEdgeEn
 - Forge worker/runtime summary
 - AIGuard evidence diagnosis cases for provenance mismatch, bbox collapse, score saturation, temporal instability, and normal/pass paths
 - Runtime Intelligence smoke evidence chain: Orchestrator `edgeenv_runtime_telemetry_feed` -> EdgeEnv telemetry history and producer-owned `history.telemetry_coverage` -> AIGuard deterministic runtime anomaly evidence -> Lab Runtime Intelligence Risk Summary
-- Bundle/report gates that preserve EdgeEnv coverage ownership, Orchestrator `edgeenv_mapping_hint`, AIGuard raw-context handoff, and Lab-owned deployment risk wording
+- Bundle/report gates that preserve EdgeEnv coverage ownership, Orchestrator `edgeenv_mapping_hint`, AIGuard raw-context producer lineage handoff, and Lab-owned deployment risk wording
 - Lab decision/report guard evidence smoke
 - all repo README pipeline summaries synced
 
