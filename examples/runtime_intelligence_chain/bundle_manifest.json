@@ -49,6 +49,8 @@
     "Runtime Intelligence Risk Summary",
     "Orchestrator operation feed context",
     "AIGuard runtime operation anomalies",
+    "AIGuard remote dispatch event summary",
+    "AIGuard remote event summary consistency",
     "AIGuard producer-lineage guard alignment",
     "Lab remains the final deployment decision owner."
   ]
