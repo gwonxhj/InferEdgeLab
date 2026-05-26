@@ -78,8 +78,16 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
         "aiguard_raw_context: missing_telemetry_orchestrator_context preserved"
         in bundle_summary
     )
+    assert (
+        "aiguard_handoff_alignment: external required evidence types satisfied"
+        in bundle_summary
+    )
     assert "edgeenv_handoff: lab_bundle_alignment validated" in bundle_summary
     assert "edgeenv_handoff: runtime_telemetry_history validated" in bundle_summary
+    assert (
+        "edgeenv_handoff: external AIGuard evidence requirements declared"
+        in bundle_summary
+    )
     assert "edgeenv_handoff: device_local_producer_lineage validated" in bundle_summary
     assert (
         "edgeenv_handoff: missing_telemetry_orchestrator_context validated"

@@ -125,8 +125,10 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
                 "- aiguard_raw_context: orchestrator_mapping_hint preserved",
                 "- aiguard_raw_context: orchestrator_producer_markers preserved",
                 "- aiguard_raw_context: missing_telemetry_orchestrator_context preserved",
+                "- aiguard_handoff_alignment: external required evidence types satisfied",
                 "- edgeenv_handoff: lab_bundle_alignment validated",
                 "- edgeenv_handoff: runtime_telemetry_history validated",
+                "- edgeenv_handoff: external AIGuard evidence requirements declared",
                 "- edgeenv_handoff: device_local_producer_lineage validated",
                 "- edgeenv_handoff: missing_telemetry_orchestrator_context validated",
             ]
@@ -379,8 +381,10 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_failed_deployment_risk(
                 "- aiguard_raw_context: orchestrator_mapping_hint preserved",
                 "- aiguard_raw_context: orchestrator_producer_markers preserved",
                 "- aiguard_raw_context: missing_telemetry_orchestrator_context preserved",
+                "- aiguard_handoff_alignment: external required evidence types satisfied",
                 "- edgeenv_handoff: lab_bundle_alignment validated",
                 "- edgeenv_handoff: runtime_telemetry_history validated",
+                "- edgeenv_handoff: external AIGuard evidence requirements declared",
                 "- edgeenv_handoff: device_local_producer_lineage validated",
                 "- edgeenv_handoff: missing_telemetry_orchestrator_context validated",
             ]

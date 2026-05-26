@@ -78,6 +78,10 @@ def test_runtime_intelligence_bundle_manifest_gate_cli_passes(tmp_path):
         "aiguard_evidence: runtime_history_seed_run_config_traceability validated"
         in summary
     )
+    assert (
+        "aiguard_handoff_alignment: external required evidence types satisfied"
+        in summary
+    )
     assert "aiguard_raw_context: producer_lineage_shape preserved" in summary
     assert (
         "aiguard_raw_context: history_seed_run_config_traceability preserved"
@@ -112,6 +116,10 @@ def test_runtime_intelligence_bundle_manifest_gate_validates_edgeenv_handoff(
     assert "edgeenv_handoff: history_seed_run_config validated" in summary
     assert "edgeenv_handoff: device_local_producer_lineage validated" in summary
     assert "edgeenv_handoff: missing_telemetry_orchestrator_context validated" in summary
+    assert (
+        "edgeenv_handoff: external AIGuard evidence requirements declared"
+        in summary
+    )
 
 
 def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_seed_run_config(
@@ -180,6 +188,70 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_edgeenv_handoff
     assert (
         "lab_bundle_alignment.artifact_roles.aiguard_guard_analysis "
         "must be aiguard-deterministic-runtime-anomaly-evidence"
+    ) in summary
+
+
+def test_runtime_intelligence_bundle_manifest_gate_fails_for_missing_external_guard_type(
+    tmp_path,
+):
+    handoff = json.loads(EDGEENV_HANDOFF.read_text(encoding="utf-8"))
+    required_types = handoff["lab_bundle_alignment"][
+        "external_aiguard_required_evidence_types"
+    ]
+    required_types.remove("runtime_history_seed_run_config_traceability")
+    handoff_path = tmp_path / "edgeenv_lab_handoff_manifest.json"
+    handoff_path.write_text(json.dumps(handoff), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(
+        manifest=str(MANIFEST),
+        edgeenv_handoff=str(handoff_path),
+        summary_out=str(summary_path),
+    )
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert (
+        "external_aiguard_required_evidence_types must match Lab-required "
+        "AIGuard evidence types"
+    ) in summary
+
+
+def test_runtime_intelligence_bundle_manifest_gate_fails_for_guard_handoff_mismatch(
+    tmp_path,
+):
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    guard_path = (
+        REPO_ROOT
+        / "examples"
+        / "runtime_intelligence_chain"
+        / manifest["files"]["aiguard_guard_analysis"]
+    )
+    guard_analysis = json.loads(guard_path.read_text(encoding="utf-8"))
+    guard_analysis["evidence"] = [
+        item
+        for item in guard_analysis["evidence"]
+        if item.get("type") != "runtime_history_seed_run_config_traceability"
+    ]
+
+    guard_copy = tmp_path / "aiguard_guard_analysis.json"
+    guard_copy.write_text(json.dumps(guard_analysis), encoding="utf-8")
+    manifest["files"]["aiguard_guard_analysis"] = str(guard_copy)
+    manifest_path = tmp_path / "bundle_manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(
+        manifest=str(manifest_path),
+        edgeenv_handoff=str(EDGEENV_HANDOFF),
+        summary_out=str(summary_path),
+    )
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert (
+        "AIGuard handoff alignment missing required evidence types: "
+        "['runtime_history_seed_run_config_traceability']"
     ) in summary
 
 
