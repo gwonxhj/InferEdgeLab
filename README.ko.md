@@ -236,7 +236,9 @@ bash scripts/smoke_runtime_intelligence_chain.sh \
   --output-dir reports/runtime_intelligence_chain
 ```
 
-이 smoke는 artifact integrity check이며, EdgeEnv나 AIGuard가 Lab의 final deployment decision을 대체하지 않습니다.
+이 smoke는 EdgeEnv가 선언한 external AIGuard evidence requirement가 bundled
+`guard_analysis`로 충족되는지도 확인하는 artifact integrity check입니다.
+EdgeEnv나 AIGuard가 Lab의 final deployment decision을 대체하지 않습니다.
 
 ## 현재 범위와 future work
 

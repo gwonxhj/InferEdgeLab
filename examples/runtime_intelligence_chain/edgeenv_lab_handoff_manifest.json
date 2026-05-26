@@ -57,6 +57,13 @@
     "external_file_keys": [
       "aiguard_guard_analysis"
     ],
+    "external_aiguard_required_evidence_types": [
+      "runtime_telemetry_context_coverage",
+      "edgeenv_orchestrator_producer_lineage",
+      "runtime_history_seed_run_config_traceability",
+      "runtime_queue_overload",
+      "runtime_thermal_instability"
+    ],
     "source_repositories": {
       "runtime_result": "InferEdge-Runtime",
       "edgeenv_regression_report": "InferEdgeEnv",

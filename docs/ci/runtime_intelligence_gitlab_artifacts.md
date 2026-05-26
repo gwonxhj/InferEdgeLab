@@ -126,6 +126,9 @@ The initial gate is conservative:
 - the optional EdgeEnv handoff input must keep `lab_bundle_alignment` metadata
   aligned with the Lab bundle manifest, while leaving `aiguard_guard_analysis`
   as an external AIGuard artifact
+- the same handoff must declare `external_aiguard_required_evidence_types`, and
+  the bundle gate verifies those requirements against the bundled
+  `guard_analysis.evidence` type set
 - the EdgeEnv handoff `runtime_telemetry_history` file must exist and preserve
   the EdgeEnv history schema, telemetry coverage summary, and Runtime history
   seed ownership markers
@@ -140,7 +143,10 @@ The same gate now also checks `source_repositories`, `artifact_roles`,
 `producer_contracts`, device-local producer lineage, and AIGuard's preserved
 producer-lineage source/stage/count shape. It also requires AIGuard
 `runtime_history_seed_run_config_traceability` evidence so the smoke remains a
-cross-repo handoff fixture rather than a Lab-only report sample.
+cross-repo handoff fixture rather than a Lab-only report sample. When an
+EdgeEnv handoff is provided, the gate also checks that
+`external_aiguard_required_evidence_types` is satisfied by the external
+AIGuard artifact.
 
 The artifact gate is implemented by `scripts/check_runtime_intelligence_artifact_bundle.py`. It checks the generated Markdown / HTML report for the required Runtime Intelligence rows, including Lab ownership, EdgeEnv comparability, telemetry coverage-gap markers, Orchestrator operation feed context, AIGuard runtime operation anomalies, `edgeenv_orchestrator_producer_lineage`, `runtime_history_seed_run_config_traceability`, and triggered deployment review rules.
 

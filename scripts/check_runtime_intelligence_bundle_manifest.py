@@ -131,6 +131,7 @@ SUMMARY_CONTRACT_MARKERS = (
     "aiguard_raw_context: orchestrator_mapping_hint preserved",
     "aiguard_raw_context: orchestrator_producer_markers preserved",
     "aiguard_raw_context: missing_telemetry_orchestrator_context preserved",
+    "aiguard_handoff_alignment: external required evidence types satisfied",
 )
 EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS = (
     "edgeenv_handoff: lab_bundle_alignment validated",
@@ -138,6 +139,7 @@ EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS = (
     "edgeenv_handoff: history_seed_run_config validated",
     "edgeenv_handoff: device_local_producer_lineage validated",
     "edgeenv_handoff: missing_telemetry_orchestrator_context validated",
+    "edgeenv_handoff: external AIGuard evidence requirements declared",
 )
 
 
@@ -323,6 +325,35 @@ def _validate_edgeenv_handoff_alignment(
         "EdgeEnv handoff lab_bundle_alignment.external_file_keys must be "
         "['aiguard_guard_analysis']",
     )
+    required_aiguard_evidence_types = alignment.get(
+        "external_aiguard_required_evidence_types"
+    )
+    _record(
+        isinstance(required_aiguard_evidence_types, list),
+        errors,
+        "EdgeEnv handoff lab_bundle_alignment."
+        "external_aiguard_required_evidence_types must be a list",
+    )
+    if isinstance(required_aiguard_evidence_types, list):
+        invalid_types = [
+            item
+            for item in required_aiguard_evidence_types
+            if not isinstance(item, str) or not item
+        ]
+        _record(
+            not invalid_types,
+            errors,
+            "EdgeEnv handoff lab_bundle_alignment."
+            "external_aiguard_required_evidence_types must contain "
+            "non-empty strings",
+        )
+        _record(
+            set(required_aiguard_evidence_types) == REQUIRED_GUARD_TYPES,
+            errors,
+            "EdgeEnv handoff lab_bundle_alignment."
+            "external_aiguard_required_evidence_types must match Lab-required "
+            "AIGuard evidence types",
+        )
 
     source_repositories = alignment.get("source_repositories")
     _record(
@@ -1250,6 +1281,39 @@ def _validate_guard_analysis(guard_analysis: dict[str, Any], errors: list[str]) 
             _validate_run_config_traceability_evidence(item, index, errors)
 
 
+def _validate_external_aiguard_evidence_alignment(
+    handoff: dict[str, Any],
+    guard_analysis: dict[str, Any],
+    errors: list[str],
+) -> None:
+    alignment = handoff.get("lab_bundle_alignment")
+    if not isinstance(alignment, dict):
+        return
+    required_types = alignment.get("external_aiguard_required_evidence_types")
+    if not isinstance(required_types, list):
+        return
+    evidence = guard_analysis.get("evidence")
+    _record(
+        isinstance(evidence, list),
+        errors,
+        "AIGuard handoff alignment requires guard_analysis.evidence to be a list",
+    )
+    if not isinstance(evidence, list):
+        return
+    guard_evidence_types = {
+        item.get("type")
+        for item in evidence
+        if isinstance(item, dict) and isinstance(item.get("type"), str)
+    }
+    missing = sorted(set(required_types) - guard_evidence_types)
+    _record(
+        not missing,
+        errors,
+        "AIGuard handoff alignment missing required evidence types: "
+        f"{missing}",
+    )
+
+
 def _validate_run_config_traceability_evidence(
     item: dict[str, Any],
     index: int,
@@ -1887,10 +1951,12 @@ def main(
     errors: list[str] = []
     manifest_payload = _load_json(manifest_path, "Runtime Intelligence bundle manifest")
     _validate_manifest_shape(manifest_payload, errors)
+    handoff_payload: dict[str, Any] | None = None
     if edgeenv_handoff:
         edgeenv_handoff_path = Path(edgeenv_handoff).resolve()
+        handoff_payload = _load_json(edgeenv_handoff_path, "EdgeEnv handoff manifest")
         _validate_edgeenv_handoff_alignment(
-            _load_json(edgeenv_handoff_path, "EdgeEnv handoff manifest"),
+            handoff_payload,
             handoff_path=edgeenv_handoff_path,
             manifest=manifest_payload,
             errors=errors,
@@ -1921,13 +1987,17 @@ def main(
     if "aiguard_guard_analysis" in resolved_files and resolved_files[
         "aiguard_guard_analysis"
     ].exists():
-        _validate_guard_analysis(
-            _load_json(
-                resolved_files["aiguard_guard_analysis"],
-                "AIGuard guard_analysis",
-            ),
-            errors,
+        guard_analysis = _load_json(
+            resolved_files["aiguard_guard_analysis"],
+            "AIGuard guard_analysis",
         )
+        _validate_guard_analysis(guard_analysis, errors)
+        if handoff_payload is not None:
+            _validate_external_aiguard_evidence_alignment(
+                handoff_payload,
+                guard_analysis,
+                errors,
+            )
 
     _write_summary(
         summary_out,
