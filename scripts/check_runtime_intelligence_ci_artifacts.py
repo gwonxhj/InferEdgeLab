@@ -46,6 +46,7 @@ REQUIRED_BUNDLE_MANIFEST_SUMMARY_MARKERS = (
     "aiguard_raw_context: producer_lineage_shape preserved",
     "aiguard_raw_context: history_seed_run_config_traceability preserved",
     "aiguard_raw_context: remote_runtime_event_summary preserved",
+    "aiguard_raw_context: remote_runtime_summary_boundary preserved",
     "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
     "aiguard_raw_context: orchestrator_mapping_hint preserved",
     "aiguard_raw_context: orchestrator_producer_markers preserved",

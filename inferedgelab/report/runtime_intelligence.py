@@ -455,6 +455,16 @@ def _append_aiguard_remote_dispatch_rows(
                 )
             )
 
+        boundary_label = _remote_runtime_event_boundary_label(remote_dispatch)
+        if boundary_label:
+            rows.append(
+                (
+                    "AIGuard remote summary boundary",
+                    boundary_label,
+                    "Remote dispatch remains starter evidence only; Lab does not treat it as production remote execution.",
+                )
+            )
+
     evidence_types = sorted(
         {
             str(item.get("type"))
@@ -550,6 +560,21 @@ def _remote_runtime_event_consistency_label(remote_dispatch: dict[str, Any]) -> 
     if consistent is False:
         return "mismatch=" + (",".join(mismatch_errors) if mismatch_errors else "unknown")
     return ""
+
+
+def _remote_runtime_event_boundary_label(remote_dispatch: dict[str, Any]) -> str:
+    event_summary = remote_dispatch.get("remote_runtime_event_summary")
+    if not isinstance(event_summary, dict):
+        event_summary = {}
+
+    boundary = _first_present(
+        remote_dispatch.get("remote_runtime_event_summary_operation_boundary"),
+        remote_dispatch.get("operation_boundary"),
+        event_summary.get("operation_boundary"),
+    )
+    if boundary is None:
+        return ""
+    return str(boundary)
 
 
 def _first_present(*values: Any) -> Any:

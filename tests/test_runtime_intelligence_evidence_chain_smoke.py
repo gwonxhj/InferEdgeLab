@@ -298,8 +298,20 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     ]
     assert remote_dispatch_context["source_repository"] == "InferEdgeOrchestrator"
     assert remote_dispatch_context["production_remote_execution"] is False
+    assert (
+        remote_dispatch_context["operation_boundary"]
+        == "remote dispatch starter evidence only"
+    )
     assert remote_dispatch_context["remote_runtime_event_summary_present"] is True
     assert remote_dispatch_context["remote_runtime_event_summary_consistent"] is True
+    assert (
+        remote_dispatch_context["remote_runtime_event_summary_runtime_event_count"]
+        == 3
+    )
+    assert (
+        remote_dispatch_context["remote_runtime_event_summary_operation_boundary"]
+        == "remote dispatch starter evidence only"
+    )
     assert remote_dispatch_context["remote_runtime_event_summary"][
         "schema_version"
     ] == "inferedge-remote-runtime-event-summary-v1"
@@ -309,6 +321,12 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert remote_dispatch_context["remote_runtime_event_summary"][
         "fallback_recovered"
     ] is True
+    assert (
+        remote_dispatch_context["remote_runtime_event_summary"][
+            "operation_boundary"
+        ]
+        == "remote dispatch starter evidence only"
+    )
     assert set(
         guard_edgeenv_context[
             "history_missing_orchestrator_mapping_hint_aiguard_evidence_candidates"
@@ -324,6 +342,10 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
         "| Runtime telemetry coverage gaps | baseline=none; candidate=queue_depth |"
         in bundle["markdown"]
     )
+    assert (
+        "| AIGuard remote summary boundary | "
+        "remote dispatch starter evidence only |"
+    ) in bundle["markdown"]
     assert "| Orchestrator operation feed context | 2 |" in bundle["markdown"]
     assert "| Runtime telemetry history seed | 2 |" in bundle["markdown"]
     assert "| Runtime history seed run_config | 2 |" in bundle["markdown"]

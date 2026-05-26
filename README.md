@@ -488,6 +488,8 @@ When `--with-guard` is used with EdgeEnv evidence, Lab preserves deterministic A
 
 If AIGuard preserves EdgeEnv/Orchestrator `candidate_context.producer` lineage, Lab shows the device-local producer source, task stage, event count, and supplemental role as traceability evidence. Lab also surfaces the Orchestrator-declared downstream guard alignment marker, including `producer_lineage_evidence_type=edgeenv_orchestrator_producer_lineage`, so reviewers can see which deterministic AIGuard evidence type was expected without making Orchestrator or AIGuard the final decision owner. The Runtime Intelligence gates also require `edgeenv_orchestrator_producer_lineage` and `runtime_history_seed_run_config_traceability` so these handoffs cannot disappear silently from the Lab-owned report.
 
+For the remote dispatch starter path, Lab surfaces AIGuard's compact remote runtime event summary, count alias, consistency state, and `operation_boundary=remote dispatch starter evidence only` marker. This keeps fallback recovery visible as operation review evidence without presenting it as production remote execution.
+
 Markdown and HTML reports include a Runtime Intelligence Risk Summary that connects:
 
 - EdgeEnv comparability and regression evidence
@@ -495,6 +497,7 @@ Markdown and HTML reports include a Runtime Intelligence Risk Summary that conne
 - Runtime history seed and run_config traceability
 - device-local producer lineage handoff
 - Orchestrator-declared downstream guard alignment
+- remote dispatch starter boundary evidence
 - AIGuard deterministic evidence
 - the Lab-owned deployment decision
 
