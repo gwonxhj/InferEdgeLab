@@ -147,6 +147,7 @@ EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS = (
     "edgeenv_handoff: runtime_telemetry_history validated",
     "edgeenv_handoff: history_seed_run_config validated",
     "edgeenv_handoff: device_local_producer_lineage validated",
+    "edgeenv_handoff: producer_lineage_guard_alignment validated",
     "edgeenv_handoff: missing_telemetry_orchestrator_context validated",
     "edgeenv_handoff: external AIGuard evidence requirements declared",
 )
@@ -293,6 +294,12 @@ def _validate_edgeenv_handoff_alignment(
             handoff_path=handoff_path,
             errors=errors,
         )
+        _validate_edgeenv_handoff_report_summary(
+            handoff,
+            handoff_files,
+            handoff_path=handoff_path,
+            errors=errors,
+        )
 
     alignment = handoff.get("lab_bundle_alignment")
     _record(
@@ -423,6 +430,163 @@ def _validate_edgeenv_handoff_alignment(
                 "EdgeEnv handoff lab_bundle_alignment.boundary_flags."
                 f"{key} must be {expected}",
             )
+
+
+def _validate_edgeenv_handoff_report_summary(
+    handoff: dict[str, Any],
+    handoff_files: dict[str, Any],
+    *,
+    handoff_path: Path,
+    errors: list[str],
+) -> None:
+    summary = handoff.get("edgeenv_report_summary")
+    _record(
+        isinstance(summary, dict),
+        errors,
+        "EdgeEnv handoff edgeenv_report_summary must be an object",
+    )
+    if not isinstance(summary, dict):
+        return
+
+    raw_path = handoff_files.get("edgeenv_regression_report")
+    _record(
+        isinstance(raw_path, str),
+        errors,
+        "EdgeEnv handoff files.edgeenv_regression_report must be a string path",
+    )
+    if not isinstance(raw_path, str):
+        return
+
+    resolved = _resolve_bundle_path(handoff_path, raw_path)
+    _record(
+        resolved.exists(),
+        errors,
+        f"EdgeEnv handoff files.edgeenv_regression_report does not exist: {resolved}",
+    )
+    if not resolved.exists():
+        return
+
+    try:
+        regression_report = json.loads(resolved.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        errors.append(
+            "EdgeEnv handoff files.edgeenv_regression_report is invalid JSON: "
+            f"{resolved}: {exc}"
+        )
+        return
+    except OSError as exc:
+        errors.append(
+            "EdgeEnv handoff files.edgeenv_regression_report cannot be read: "
+            f"{resolved}: {exc}"
+        )
+        return
+    if not isinstance(regression_report, dict):
+        errors.append(
+            "EdgeEnv handoff files.edgeenv_regression_report must be a JSON object"
+        )
+        return
+
+    context = regression_report.get("runtime_telemetry_context")
+    device_local_run_ids = _device_local_producer_context_run_ids(context)
+    guard_alignment_run_ids = _producer_lineage_guard_alignment_run_ids(context)
+
+    _record(
+        summary.get("device_local_producer_context_present")
+        is bool(device_local_run_ids),
+        errors,
+        "EdgeEnv handoff edgeenv_report_summary."
+        "device_local_producer_context_present must match preserved "
+        "Orchestrator device-local producer lineage",
+    )
+    _record(
+        summary.get("device_local_producer_context_run_ids") == device_local_run_ids,
+        errors,
+        "EdgeEnv handoff edgeenv_report_summary."
+        "device_local_producer_context_run_ids must match preserved "
+        "Orchestrator device-local producer lineage run IDs",
+    )
+    _record(
+        summary.get("producer_lineage_guard_alignment_present")
+        is bool(guard_alignment_run_ids),
+        errors,
+        "EdgeEnv handoff edgeenv_report_summary."
+        "producer_lineage_guard_alignment_present must match preserved "
+        "downstream guard alignment",
+    )
+    _record(
+        summary.get("producer_lineage_guard_alignment_run_ids")
+        == guard_alignment_run_ids,
+        errors,
+        "EdgeEnv handoff edgeenv_report_summary."
+        "producer_lineage_guard_alignment_run_ids must match preserved "
+        "downstream guard alignment run IDs",
+    )
+
+
+def _device_local_producer_context_run_ids(context: Any) -> list[str]:
+    return [
+        run_id
+        for run_id, operation_context in _runtime_operation_contexts(context)
+        if _has_device_local_producer_context(operation_context)
+    ]
+
+
+def _producer_lineage_guard_alignment_run_ids(context: Any) -> list[str]:
+    return [
+        run_id
+        for run_id, operation_context in _runtime_operation_contexts(context)
+        if _has_producer_lineage_guard_alignment(operation_context)
+    ]
+
+
+def _runtime_operation_contexts(context: Any) -> list[tuple[str, dict[str, Any]]]:
+    if not isinstance(context, dict):
+        return []
+    contexts: list[tuple[str, dict[str, Any]]] = []
+
+    def append(run_context: Any) -> None:
+        if not isinstance(run_context, dict):
+            return
+        run_id = run_context.get("run_id")
+        operation_context = run_context.get("orchestrator_operation_context")
+        if (
+            isinstance(run_id, str)
+            and run_id
+            and isinstance(operation_context, dict)
+            and run_id not in {existing for existing, _ in contexts}
+        ):
+            contexts.append((run_id, operation_context))
+
+    append(context.get("baseline"))
+    append(context.get("candidate"))
+    history = context.get("history")
+    if isinstance(history, dict):
+        for section in ("runs", "missing_telemetry"):
+            for entry in history.get(section, []):
+                append(entry)
+    return contexts
+
+
+def _has_device_local_producer_context(operation_context: dict[str, Any]) -> bool:
+    candidate_context = operation_context.get("candidate_context")
+    if not isinstance(candidate_context, dict):
+        return False
+    producer = candidate_context.get("producer")
+    if not isinstance(producer, dict):
+        return False
+    sources = producer.get("device_local_producer_sources")
+    return isinstance(sources, list) and bool(sources)
+
+
+def _has_producer_lineage_guard_alignment(
+    operation_context: dict[str, Any],
+) -> bool:
+    alignment = operation_context.get("downstream_guard_alignment")
+    return (
+        isinstance(alignment, dict)
+        and alignment.get("producer_lineage_evidence_type")
+        == REQUIRED_ORCHESTRATOR_GUARD_ALIGNMENT["producer_lineage_evidence_type"]
+    )
 
 
 def _validate_edgeenv_handoff_runtime_history_artifact(
