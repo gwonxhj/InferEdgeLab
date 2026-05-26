@@ -503,7 +503,13 @@ def make_remote_runtime_event_guard_analysis() -> dict:
                 "recommendation": "Review primary worker connectivity.",
                 "raw_context": {
                     "remote_dispatch": {
+                        "operation_boundary": (
+                            "remote dispatch starter evidence only"
+                        ),
                         "remote_runtime_event_summary_runtime_event_count": 3,
+                        "remote_runtime_event_summary_operation_boundary": (
+                            "remote dispatch starter evidence only"
+                        ),
                         "remote_runtime_event_summary_final_status": "succeeded",
                         "remote_runtime_event_summary_fallback_recovered": True,
                         "remote_runtime_event_summary_present": True,
@@ -516,7 +522,11 @@ def make_remote_runtime_event_guard_analysis() -> dict:
             "remote_dispatch": {
                 "execution_status": "failed",
                 "fallback_final_status": "succeeded",
+                "operation_boundary": "remote dispatch starter evidence only",
                 "remote_runtime_event_summary_runtime_event_count": 3,
+                "remote_runtime_event_summary_operation_boundary": (
+                    "remote dispatch starter evidence only"
+                ),
                 "remote_runtime_event_summary_final_status": "succeeded",
                 "remote_runtime_event_summary_fallback_recovered": True,
                 "remote_runtime_event_summary_present": True,
@@ -763,6 +773,10 @@ def test_generate_compare_markdown_summarizes_remote_runtime_event_summary():
     ) in text
     assert "| AIGuard remote event summary consistency | consistent |" in text
     assert (
+        "| AIGuard remote summary boundary | "
+        "remote dispatch starter evidence only |"
+    ) in text
+    assert (
         "| AIGuard remote dispatch evidence | "
         "remote_execution_recovered_by_fallback |"
     ) in text
@@ -1007,6 +1021,8 @@ def test_generate_compare_html_summarizes_remote_runtime_event_summary():
     assert "events=3, final=succeeded, fallback_recovered=True" in html
     assert "AIGuard remote event summary consistency" in html
     assert "consistent" in html
+    assert "AIGuard remote summary boundary" in html
+    assert "remote dispatch starter evidence only" in html
     assert "remote_execution_recovered_by_fallback" in html
     assert "Lab remains the final decision owner" in html
 

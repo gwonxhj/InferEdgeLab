@@ -137,6 +137,7 @@ SUMMARY_CONTRACT_MARKERS = (
     "aiguard_raw_context: producer_lineage_shape preserved",
     "aiguard_raw_context: history_seed_run_config_traceability preserved",
     "aiguard_raw_context: remote_runtime_event_summary preserved",
+    "aiguard_raw_context: remote_runtime_summary_boundary preserved",
     "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
     "aiguard_raw_context: orchestrator_mapping_hint preserved",
     "aiguard_raw_context: orchestrator_producer_markers preserved",
@@ -1566,6 +1567,12 @@ def _validate_remote_runtime_event_summary_evidence(
         f"AIGuard evidence[{index}] remote_dispatch.production_remote_execution must be false",
     )
     _record(
+        remote_dispatch.get("operation_boundary")
+        == "remote dispatch starter evidence only",
+        errors,
+        f"AIGuard evidence[{index}] remote_dispatch.operation_boundary must preserve starter boundary",
+    )
+    _record(
         remote_dispatch.get("remote_runtime_event_summary_present") is True,
         errors,
         f"AIGuard evidence[{index}] remote_runtime_event_summary_present must be true",
@@ -1574,6 +1581,18 @@ def _validate_remote_runtime_event_summary_evidence(
         remote_dispatch.get("remote_runtime_event_summary_consistent") is True,
         errors,
         f"AIGuard evidence[{index}] remote_runtime_event_summary_consistent must be true",
+    )
+    _record(
+        remote_dispatch.get("remote_runtime_event_summary_runtime_event_count")
+        == 3,
+        errors,
+        f"AIGuard evidence[{index}] remote_runtime_event_summary_runtime_event_count must be 3",
+    )
+    _record(
+        remote_dispatch.get("remote_runtime_event_summary_operation_boundary")
+        == "remote dispatch starter evidence only",
+        errors,
+        f"AIGuard evidence[{index}] remote_runtime_event_summary_operation_boundary must preserve starter boundary",
     )
 
     summary = remote_dispatch.get("remote_runtime_event_summary")
@@ -1603,6 +1622,11 @@ def _validate_remote_runtime_event_summary_evidence(
         summary.get("fallback_recovered") is True,
         errors,
         f"AIGuard evidence[{index}] remote_runtime_event_summary.fallback_recovered must be true",
+    )
+    _record(
+        summary.get("operation_boundary") == "remote dispatch starter evidence only",
+        errors,
+        f"AIGuard evidence[{index}] remote_runtime_event_summary.operation_boundary must preserve starter boundary",
     )
 
 

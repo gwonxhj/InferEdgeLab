@@ -37,6 +37,10 @@ REQUIRED_MARKDOWN_MARKERS = {
     "aiguard_remote_dispatch_consistency": (
         "| AIGuard remote event summary consistency | consistent |"
     ),
+    "aiguard_remote_dispatch_boundary": (
+        "| AIGuard remote summary boundary | "
+        "remote dispatch starter evidence only |"
+    ),
     "aiguard_remote_dispatch_evidence": "remote_execution_recovered_by_fallback",
     "aiguard_orchestrator_handoff": (
         "| AIGuard Orchestrator context handoff | feeds=2.0, candidate |"
@@ -77,6 +81,10 @@ REQUIRED_HTML_MARKERS = {
         "events=3, final=succeeded, fallback_recovered=True"
     ),
     "aiguard_remote_dispatch_consistency": "AIGuard remote event summary consistency",
+    "aiguard_remote_dispatch_boundary": "AIGuard remote summary boundary",
+    "aiguard_remote_dispatch_boundary_label": (
+        "remote dispatch starter evidence only"
+    ),
     "aiguard_remote_dispatch_evidence": "remote_execution_recovered_by_fallback",
     "aiguard_orchestrator_handoff": "AIGuard Orchestrator context handoff",
     "aiguard_producer_lineage_handoff": "AIGuard producer lineage handoff",

@@ -112,11 +112,11 @@ This second smoke uses committed lightweight artifacts to represent the cross-re
 - `examples/runtime_intelligence_chain/runtime_telemetry_history.json` is the EdgeEnv producer-side telemetry history artifact referenced by the handoff manifest. It includes a missing-telemetry run as an evidence gap and preserves Orchestrator context on that entry without turning Orchestrator into a regression or deployment decision owner.
 - Orchestrator context is preserved inside the EdgeEnv regression artifact as `orchestrator_operation_context`.
 - AIGuard deterministic queue/thermal evidence is passed as a precomputed `guard_analysis` artifact that mirrors the AIGuard producer-side diagnosis v1 evidence shape.
-- AIGuard also preserves a compact `remote_runtime_event_summary` for the remote dispatch starter path, including fallback recovery status and consistency metadata. This is operation review evidence only; it is not production remote execution.
+- AIGuard also preserves a compact `remote_runtime_event_summary` for the remote dispatch starter path, including the Lab-facing `runtime_event_count` alias, fallback recovery status, consistency metadata, and `operation_boundary=remote dispatch starter evidence only`. This is operation review evidence only; it is not production remote execution.
 - Lab owns the combined report and deployment decision.
 - `scripts/check_runtime_intelligence_bundle_manifest.py` gates the bundle manifest before report generation, including source repository mapping, schema markers, and evidence-item shape for the EdgeEnv history, Orchestrator feed, and AIGuard diagnosis artifacts.
 - The same gate can also consume `--edgeenv-handoff` to compare EdgeEnv producer-side `lab_bundle_alignment` metadata against Lab's bundle manifest contract.
-- `scripts/check_runtime_intelligence_artifact_bundle.py` gates the generated report so required Runtime Intelligence rows, remote dispatch summary rows, and ownership text cannot disappear silently.
+- `scripts/check_runtime_intelligence_artifact_bundle.py` gates the generated report so required Runtime Intelligence rows, remote dispatch summary/boundary rows, and ownership text cannot disappear silently.
 
 Expected Lab behavior:
 
