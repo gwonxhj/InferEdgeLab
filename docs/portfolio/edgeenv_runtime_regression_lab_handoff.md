@@ -63,6 +63,7 @@ The EdgeEnv report fixture represents a same-condition runtime regression:
 - `runtime_telemetry_context.<run>.orchestrator_operation_context`: supplemental operation context when EdgeEnv history was exported with an Orchestrator feed
 - `runtime_telemetry_context.<run>.orchestrator_operation_context.edgeenv_mapping_hint`: producer hint that keeps Orchestrator candidate context supplemental while naming EdgeEnv as the telemetry coverage summary owner
 - `runtime_telemetry_context.<run>.orchestrator_operation_context.candidate_context.producer`: device-local producer lineage preserved as traceability evidence, not as a Lab decision override
+- `runtime_telemetry_context.<run>.orchestrator_operation_context.downstream_guard_alignment`: Orchestrator-declared marker that expects `edgeenv_orchestrator_producer_lineage` evidence downstream while keeping Lab as final decision owner
 
 ## Reproduction Command
 
@@ -137,6 +138,7 @@ Expected Lab behavior:
 - The same handoff gate verifies that missing telemetry entries remain evidence gaps while preserving Orchestrator producer markers, owner boundary flags, and EdgeEnv mapping hints when Orchestrator context is attached.
 - The bundle gate also requires AIGuard coverage evidence raw context to preserve the same Orchestrator mapping hint and producer markers, proving that AIGuard kept EdgeEnv/Orchestrator ownership markers as diagnosis context rather than recomputing coverage or owning deployment policy.
 - The same gate requires AIGuard `edgeenv_orchestrator_producer_lineage` evidence to preserve candidate and missing-telemetry device-local producer lineage as traceability evidence.
+- The gate also requires the Orchestrator-declared downstream guard-alignment marker to survive the EdgeEnv/AIGuard handoff, so the Lab report can show which producer-lineage evidence type was expected without recomputing AIGuard reasoning.
 - The same gate requires AIGuard replay raw context to preserve Orchestrator producer markers and mapping hints for EdgeEnv history `missing_telemetry` entries when present, keeping missing telemetry as replay evidence gap context.
 - Additional Lab test fixtures under `tests/fixtures/edgeenv_regression/` mirror EdgeEnv replay examples for candidate telemetry gaps and execution sequence inversion. These fixture smokes verify that replay warnings become Lab-owned report context without making Lab recompute EdgeEnv comparability.
 - Markdown/HTML reports include a `Runtime Intelligence Risk Summary` that summarizes EdgeEnv comparability/regression, telemetry replay gaps, Runtime history seed/run_config traceability, AIGuard deterministic evidence, and the Lab-owned deployment decision in one reviewer-facing table.

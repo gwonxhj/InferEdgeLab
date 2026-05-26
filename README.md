@@ -486,7 +486,7 @@ If the EdgeEnv report includes `runtime_telemetry_context`, Lab shows supplement
 
 When `--with-guard` is used with EdgeEnv evidence, Lab preserves deterministic AIGuard evidence in the same Lab-owned report. This can include runtime latency regression, telemetry-context coverage, and telemetry replay-history context.
 
-If AIGuard preserves EdgeEnv/Orchestrator `candidate_context.producer` lineage, Lab shows the device-local producer source, task stage, event count, and supplemental role as traceability evidence. The Runtime Intelligence gates also require `edgeenv_orchestrator_producer_lineage` and `runtime_history_seed_run_config_traceability` so these handoffs cannot disappear silently from the Lab-owned report.
+If AIGuard preserves EdgeEnv/Orchestrator `candidate_context.producer` lineage, Lab shows the device-local producer source, task stage, event count, and supplemental role as traceability evidence. Lab also surfaces the Orchestrator-declared downstream guard alignment marker, including `producer_lineage_evidence_type=edgeenv_orchestrator_producer_lineage`, so reviewers can see which deterministic AIGuard evidence type was expected without making Orchestrator or AIGuard the final decision owner. The Runtime Intelligence gates also require `edgeenv_orchestrator_producer_lineage` and `runtime_history_seed_run_config_traceability` so these handoffs cannot disappear silently from the Lab-owned report.
 
 Markdown and HTML reports include a Runtime Intelligence Risk Summary that connects:
 
@@ -494,6 +494,7 @@ Markdown and HTML reports include a Runtime Intelligence Risk Summary that conne
 - telemetry replay gaps
 - Runtime history seed and run_config traceability
 - device-local producer lineage handoff
+- Orchestrator-declared downstream guard alignment
 - AIGuard deterministic evidence
 - the Lab-owned deployment decision
 

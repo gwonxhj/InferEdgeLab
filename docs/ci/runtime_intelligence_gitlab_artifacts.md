@@ -91,6 +91,9 @@ The initial gate is conservative:
   `source_repository=InferEdgeOrchestrator`,
   `artifact_role=orchestrator-supplemental-operation-context`, and
   `producer_contract=inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1`
+- the same Orchestrator context must keep the downstream guard-alignment marker
+  `downstream_guard_alignment.producer_lineage_evidence_type=edgeenv_orchestrator_producer_lineage`,
+  with Lab marked as the final decision owner
 - the preserved Orchestrator operation context in the EdgeEnv handoff history
   must also keep device-local `candidate_context.producer` lineage, including
   device-local producer sources, per-task source/stage mappings, positive
@@ -101,6 +104,9 @@ The initial gate is conservative:
 - AIGuard coverage evidence raw context must also preserve the same
   Orchestrator producer markers, so the diagnostic artifact remains traceable
   to the Orchestrator feed without making AIGuard the producer or decision owner
+- AIGuard raw context must preserve the downstream guard-alignment marker and
+  the producer-lineage evidence must confirm the marker on candidate and
+  missing-telemetry Orchestrator contexts
 - AIGuard coverage evidence raw context must preserve Orchestrator producer
   markers and mapping hints for EdgeEnv history `missing_telemetry` entries
   when such context exists, while keeping the entry an evidence gap rather than
@@ -141,7 +147,9 @@ The initial gate is conservative:
 The bundle manifest gate is implemented by `scripts/check_runtime_intelligence_bundle_manifest.py`. It verifies that the bundle contains baseline/candidate Runtime results, EdgeEnv regression evidence, AIGuard guard evidence, and explicit owner/boundary metadata before Lab generates the report. In this template it also consumes `--edgeenv-handoff examples/runtime_intelligence_chain/edgeenv_lab_handoff_manifest.json` to verify EdgeEnv producer-side file/source/role/schema alignment.
 The same gate now also checks `source_repositories`, `artifact_roles`,
 `producer_contracts`, device-local producer lineage, and AIGuard's preserved
-producer-lineage source/stage/count shape. It also requires AIGuard
+producer-lineage source/stage/count shape. It also requires the Orchestrator
+downstream guard-alignment marker for `edgeenv_orchestrator_producer_lineage`
+to remain present in EdgeEnv/AIGuard handoff context. It also requires AIGuard
 `runtime_history_seed_run_config_traceability` evidence so the smoke remains a
 cross-repo handoff fixture rather than a Lab-only report sample. When an
 EdgeEnv handoff is provided, the gate also checks that

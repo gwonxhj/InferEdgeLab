@@ -84,6 +84,12 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert operation_context["candidate_context"]["telemetry_source"] == (
         "inferedge_orchestrator_operation_summary"
     )
+    assert operation_context["downstream_guard_alignment"][
+        "producer_lineage_evidence_type"
+    ] == "edgeenv_orchestrator_producer_lineage"
+    assert operation_context["downstream_guard_alignment"][
+        "lab_is_final_decision_owner"
+    ] is True
     assert bundle["guard_analysis"]["guard_verdict"] == "suspicious"
     assert bundle["guard_analysis"]["primary_reason"] == (
         "Runtime telemetry context has evidence gaps that require review."
@@ -137,6 +143,21 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     ) >= {"runtime_queue_overload", "runtime_thermal_instability"}
     assert guard_edgeenv_context["orchestrator_candidate_context_telemetry_source"] == (
         "inferedge_orchestrator_operation_summary"
+    )
+    assert guard_edgeenv_context["orchestrator_downstream_guard_alignment"][
+        "producer_lineage_evidence_type"
+    ] == "edgeenv_orchestrator_producer_lineage"
+    assert guard_edgeenv_context[
+        "orchestrator_guard_alignment_producer_lineage_evidence_type"
+    ] == "edgeenv_orchestrator_producer_lineage"
+    assert guard_edgeenv_context[
+        "orchestrator_guard_alignment_operation_evidence_candidates"
+    ] == ["runtime_queue_overload", "runtime_thermal_instability"]
+    assert (
+        guard_edgeenv_context[
+            "orchestrator_guard_alignment_lab_is_final_decision_owner"
+        ]
+        is True
     )
     assert guard_edgeenv_context["orchestrator_candidate_context_producer"][
         "operation_context_role"
@@ -229,6 +250,18 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert producer_lineage_evidence["raw_context"]["producer_lineage"][
         "missing_context_run_ids"
     ] == ["edgeenv-smoke-missing"]
+    assert producer_lineage_evidence["raw_context"]["producer_lineage"][
+        "candidate_guard_alignment_valid"
+    ] is True
+    assert producer_lineage_evidence["raw_context"]["producer_lineage"][
+        "candidate_guard_alignment_producer_lineage_evidence_type"
+    ] == "edgeenv_orchestrator_producer_lineage"
+    assert producer_lineage_evidence["raw_context"]["producer_lineage"][
+        "missing_guard_alignment_valid"
+    ] is True
+    assert producer_lineage_evidence["raw_context"]["producer_lineage"][
+        "missing_guard_alignment_producer_lineage_evidence_type"
+    ] == "edgeenv_orchestrator_producer_lineage"
     assert (
         guard_edgeenv_context["history_missing_orchestrator_source_repository"]
         == "InferEdgeOrchestrator"
@@ -281,6 +314,12 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
         "| AIGuard producer lineage handoff | "
         "sources=device_local_cli_override, stages=vision_agent:device_local_starter, "
         "device_local_events=2.0, role=supplemental |"
+    ) in bundle["markdown"]
+    assert (
+        "| AIGuard producer-lineage guard alignment | "
+        "evidence=edgeenv_orchestrator_producer_lineage, "
+        "candidates=runtime_queue_overload,runtime_thermal_instability, "
+        "lab_final_owner=true |"
     ) in bundle["markdown"]
     assert "| AIGuard history seed handoff | seeds=2.0" in bundle["markdown"]
     assert (
@@ -338,6 +377,7 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "AIGuard runtime operation anomalies" in markdown
     assert "Orchestrator context attached runs" in markdown
     assert "AIGuard producer lineage handoff" in markdown
+    assert "AIGuard producer-lineage guard alignment" in markdown
     assert "edgeenv_orchestrator_producer_lineage" in markdown
     assert "Device-local Orchestrator producer lineage is preserved" in markdown
     assert "device_local_cli_override" in markdown
@@ -352,6 +392,7 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     ) in markdown
     assert "Runtime Intelligence Risk Summary" in html
     assert "AIGuard producer lineage handoff" in html
+    assert "AIGuard producer-lineage guard alignment" in html
     assert "edgeenv_orchestrator_producer_lineage" in html
     assert "Device-local Orchestrator producer lineage is preserved" in html
     assert "device_local_cli_override" in html

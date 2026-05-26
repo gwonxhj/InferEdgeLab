@@ -464,6 +464,14 @@ def make_runtime_operation_guard_analysis() -> dict:
                 "candidate_queue_depth": 7.0,
                 "candidate_max_temperature_c": 78.5,
                 "candidate_throttling_detected": True,
+                "orchestrator_guard_alignment_producer_lineage_evidence_type": (
+                    "edgeenv_orchestrator_producer_lineage"
+                ),
+                "orchestrator_guard_alignment_operation_evidence_candidates": [
+                    "runtime_queue_overload",
+                    "runtime_thermal_instability",
+                ],
+                "orchestrator_guard_alignment_lab_is_final_decision_owner": True,
             }
         },
     }
@@ -668,6 +676,12 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
         "runtime_thermal_instability |"
     ) in text
     assert "| AIGuard Orchestrator context handoff | feeds=1.0, candidate |" in text
+    assert (
+        "| AIGuard producer-lineage guard alignment | "
+        "evidence=edgeenv_orchestrator_producer_lineage, "
+        "candidates=runtime_queue_overload,runtime_thermal_instability, "
+        "lab_final_owner=true |"
+    ) in text
     assert (
         "| AIGuard history seed run_config markers | "
         "baseline/candidate=shape=1x640x640, input_mode=dummy, "
