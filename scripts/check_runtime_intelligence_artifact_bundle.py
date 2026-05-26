@@ -23,6 +23,7 @@ REQUIRED_MARKDOWN_MARKERS = {
     ),
     "orchestrator_feed": "| Orchestrator operation feed context | 2 |",
     "runtime_history_seed": "| Runtime telemetry history seed | 2 |",
+    "runtime_history_seed_run_config": "| Runtime history seed run_config | 2 |",
     "orchestrator_attached_run": "| Orchestrator context attached runs | candidate |",
     "aiguard_evidence": "| AIGuard deterministic evidence | warning / suspicious |",
     "aiguard_operation_anomalies": (
@@ -61,6 +62,7 @@ REQUIRED_HTML_MARKERS = {
     ),
     "aiguard_device_local_producer_source": "device_local_cli_override",
     "runtime_history_seed": "Runtime telemetry history seed",
+    "runtime_history_seed_run_config": "Runtime history seed run_config",
     "aiguard_history_seed_handoff": "AIGuard history seed handoff",
 }
 

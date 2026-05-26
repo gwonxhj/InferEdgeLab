@@ -219,7 +219,8 @@
         "telemetry_runs": 2,
         "missing_telemetry_runs": 1,
         "orchestrator_feed_runs": 2,
-        "history_seed_runs": 2
+        "history_seed_runs": 2,
+        "history_seed_run_config_runs": 2
       },
       "telemetry_coverage": {
         "runs_with_coverage": 2,
@@ -321,6 +322,18 @@
               "precision": "fp32",
               "power_mode": "unknown"
             },
+            "run_config": {
+              "batch": 1,
+              "height": 640,
+              "width": 640,
+              "warmup": 1,
+              "runs": 10,
+              "timeout_ms": null,
+              "input_mode": "dummy",
+              "input_preprocess": "none",
+              "power_mode": "unknown",
+              "jetson_clocks": "unknown"
+            },
             "points": [
               {
                 "execution_sequence_id": 1,
@@ -353,6 +366,18 @@
               "device": "cpu",
               "precision": "fp32",
               "power_mode": "unknown"
+            },
+            "run_config": {
+              "batch": 1,
+              "height": 640,
+              "width": 640,
+              "warmup": 1,
+              "runs": 10,
+              "timeout_ms": null,
+              "input_mode": "dummy",
+              "input_preprocess": "none",
+              "power_mode": "unknown",
+              "jetson_clocks": "unknown"
             },
             "points": [
               {
