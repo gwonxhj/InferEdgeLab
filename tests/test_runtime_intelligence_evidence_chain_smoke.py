@@ -165,6 +165,36 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
         guard_edgeenv_context["candidate_runtime_telemetry_history_seed_decision_owner"]
         == "lab"
     )
+    assert guard_edgeenv_context["history_telemetry_seed_run_config_runs"] == 2.0
+    assert (
+        guard_edgeenv_context[
+            "candidate_runtime_telemetry_history_seed_run_config_present"
+        ]
+        is True
+    )
+    assert guard_edgeenv_context[
+        "candidate_runtime_telemetry_history_seed_run_config"
+    ] == {
+        "batch": 1,
+        "height": 640,
+        "width": 640,
+        "warmup": 1,
+        "runs": 10,
+        "timeout_ms": None,
+        "input_mode": "dummy",
+        "input_preprocess": "none",
+        "power_mode": "unknown",
+        "jetson_clocks": "unknown",
+    }
+    guard_candidate_summary = bundle["guard_analysis"]["candidate_summary"][
+        "edgeenv_regression"
+    ]
+    assert (
+        guard_candidate_summary[
+            "candidate_runtime_telemetry_history_seed_run_config_present"
+        ]
+        is True
+    )
     assert (
         guard_edgeenv_context[
             "candidate_runtime_telemetry_history_seed_production_monitoring"
