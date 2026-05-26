@@ -76,11 +76,15 @@ inferedge:deterministic-anomaly-summary:
       - "$INFEREDGE_REPORT_DIR/runtime_anomaly_summary.md"
       - "$INFEREDGE_REPORT_DIR/runtime_anomaly_summary.html"
       - "$INFEREDGE_REPORT_DIR/runtime_anomaly_gate_summary.md"
+      - "$INFEREDGE_REPORT_DIR/aiguard_edgeenv_handoff_alignment.json"
+      - "$INFEREDGE_REPORT_DIR/aiguard_edgeenv_handoff_alignment.md"
       - "$INFEREDGE_REPORT_DIR/runtime_intelligence_bundle_manifest_gate_summary.md"
       - examples/runtime_intelligence_chain/bundle_manifest.json
       - examples/runtime_intelligence_chain/edgeenv_lab_handoff_manifest.json
       - examples/runtime_intelligence_chain/edgeenv_regression_with_orchestrator_context.json
       - examples/runtime_intelligence_chain/aiguard_runtime_operation_guard_analysis.json
+      - examples/runtime_intelligence_chain/aiguard_edgeenv_handoff_alignment.json
+      - examples/runtime_intelligence_chain/aiguard_edgeenv_handoff_alignment.md
 
 inferedge:portfolio-report:
   extends: .inferedge_python
@@ -115,6 +119,8 @@ inferedge:deployment-risk-gate:
       - "$INFEREDGE_REPORT_DIR/runtime_anomaly_summary.md"
       - "$INFEREDGE_REPORT_DIR/runtime_anomaly_summary.html"
       - "$INFEREDGE_REPORT_DIR/runtime_anomaly_gate_summary.md"
+      - "$INFEREDGE_REPORT_DIR/aiguard_edgeenv_handoff_alignment.json"
+      - "$INFEREDGE_REPORT_DIR/aiguard_edgeenv_handoff_alignment.md"
       - "$INFEREDGE_REPORT_DIR/runtime_intelligence_bundle_manifest_gate_summary.md"
       - "$INFEREDGE_REPORT_DIR/portfolio_demo_check.json"
       - "$INFEREDGE_REPORT_DIR/portfolio_demo_check.md"

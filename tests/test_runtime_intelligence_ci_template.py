@@ -36,6 +36,8 @@ def test_runtime_intelligence_gitlab_template_keeps_local_first_artifact_contrac
     assert "examples/runtime_intelligence_chain/edgeenv_regression_with_orchestrator_context.json" in text
     assert "examples/runtime_intelligence_chain/edgeenv_lab_handoff_manifest.json" in text
     assert "examples/runtime_intelligence_chain/aiguard_runtime_operation_guard_analysis.json" in text
+    assert "examples/runtime_intelligence_chain/aiguard_edgeenv_handoff_alignment.json" in text
+    assert "examples/runtime_intelligence_chain/aiguard_edgeenv_handoff_alignment.md" in text
     assert "examples/runtime_intelligence_chain/bundle_manifest.json" in text
     assert "check_runtime_intelligence_bundle_manifest.py" in text
     assert "--edgeenv-handoff" in text
@@ -43,6 +45,8 @@ def test_runtime_intelligence_gitlab_template_keeps_local_first_artifact_contrac
     assert "--guard-analysis" in text
     assert "check_runtime_intelligence_artifact_bundle.py" in text
     assert "runtime_anomaly_gate_summary.md" in text
+    assert "aiguard_edgeenv_handoff_alignment.json" in text
+    assert "aiguard_edgeenv_handoff_alignment.md" in text
     assert "smoke_runtime_intelligence_chain.sh --output-dir" in text
     assert "runtime_intelligence_ci_artifact_gate_summary.md" in text
     assert "deployment_risk_summary.json" in text
@@ -135,6 +139,7 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
                 "- edgeenv_handoff: runtime_telemetry_history validated",
                 "- edgeenv_handoff: external AIGuard evidence requirements declared",
                 "- edgeenv_handoff: device_local_producer_lineage validated",
+                "- edgeenv_handoff: producer_lineage_guard_alignment validated",
                 "- edgeenv_handoff: missing_telemetry_orchestrator_context validated",
             ]
         ),
@@ -142,6 +147,28 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
     )
     (report_dir / "runtime_anomaly_gate_summary.md").write_text(
         "- Status: passed\n",
+        encoding="utf-8",
+    )
+    (report_dir / "aiguard_edgeenv_handoff_alignment.json").write_text(
+        '{"schema_version":"inferedge-aiguard-edgeenv-handoff-alignment-v1",'
+        '"status":"passed","decision_owner":"lab","diagnosis_owner":"aiguard",'
+        '"handoff_producer_lineage_guard_alignment_run_ids":'
+        '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
+        '"guard_analysis_producer_lineage_guard_alignment_run_ids":'
+        '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
+        '"guard_alignment_summary_errors":[],"errors":[]}',
+        encoding="utf-8",
+    )
+    (report_dir / "aiguard_edgeenv_handoff_alignment.md").write_text(
+        "\n".join(
+            [
+                "- status: passed",
+                "- decision_owner: lab",
+                "- diagnosis_owner: aiguard",
+                "- handoff_producer_lineage_guard_alignment_run_ids: edgeenv-smoke-candidate, edgeenv-smoke-missing",
+                "- guard_analysis_producer_lineage_guard_alignment_run_ids: edgeenv-smoke-candidate, edgeenv-smoke-missing",
+            ]
+        ),
         encoding="utf-8",
     )
     (report_dir / "portfolio_demo_check.md").write_text(
@@ -400,6 +427,7 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_failed_deployment_risk(
                 "- edgeenv_handoff: runtime_telemetry_history validated",
                 "- edgeenv_handoff: external AIGuard evidence requirements declared",
                 "- edgeenv_handoff: device_local_producer_lineage validated",
+                "- edgeenv_handoff: producer_lineage_guard_alignment validated",
                 "- edgeenv_handoff: missing_telemetry_orchestrator_context validated",
             ]
         ),
@@ -407,6 +435,28 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_failed_deployment_risk(
     )
     (report_dir / "runtime_anomaly_gate_summary.md").write_text(
         "- Status: passed\n",
+        encoding="utf-8",
+    )
+    (report_dir / "aiguard_edgeenv_handoff_alignment.json").write_text(
+        '{"schema_version":"inferedge-aiguard-edgeenv-handoff-alignment-v1",'
+        '"status":"passed","decision_owner":"lab","diagnosis_owner":"aiguard",'
+        '"handoff_producer_lineage_guard_alignment_run_ids":'
+        '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
+        '"guard_analysis_producer_lineage_guard_alignment_run_ids":'
+        '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
+        '"guard_alignment_summary_errors":[],"errors":[]}',
+        encoding="utf-8",
+    )
+    (report_dir / "aiguard_edgeenv_handoff_alignment.md").write_text(
+        "\n".join(
+            [
+                "- status: passed",
+                "- decision_owner: lab",
+                "- diagnosis_owner: aiguard",
+                "- handoff_producer_lineage_guard_alignment_run_ids: edgeenv-smoke-candidate, edgeenv-smoke-missing",
+                "- guard_analysis_producer_lineage_guard_alignment_run_ids: edgeenv-smoke-candidate, edgeenv-smoke-missing",
+            ]
+        ),
         encoding="utf-8",
     )
     (report_dir / "portfolio_demo_check.json").write_text(

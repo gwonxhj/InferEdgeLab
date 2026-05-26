@@ -49,6 +49,8 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
 
     expected_artifacts = [
         "runtime_intelligence_bundle_manifest_gate_summary.md",
+        "aiguard_edgeenv_handoff_alignment.json",
+        "aiguard_edgeenv_handoff_alignment.md",
         "edgeenv_runtime_regression.md",
         "edgeenv_runtime_regression.html",
         "runtime_anomaly_summary.md",
@@ -100,9 +102,28 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
     )
     assert "edgeenv_handoff: device_local_producer_lineage validated" in bundle_summary
     assert (
+        "edgeenv_handoff: producer_lineage_guard_alignment validated"
+        in bundle_summary
+    )
+    assert (
         "edgeenv_handoff: missing_telemetry_orchestrator_context validated"
         in bundle_summary
     )
+
+    alignment_summary = (
+        output_dir / "aiguard_edgeenv_handoff_alignment.md"
+    ).read_text(encoding="utf-8")
+    assert "status: passed" in alignment_summary
+    assert "decision_owner: lab" in alignment_summary
+    assert "diagnosis_owner: aiguard" in alignment_summary
+    assert (
+        "handoff_producer_lineage_guard_alignment_run_ids: "
+        "edgeenv-smoke-candidate, edgeenv-smoke-missing"
+    ) in alignment_summary
+    assert (
+        "guard_analysis_producer_lineage_guard_alignment_run_ids: "
+        "edgeenv-smoke-candidate, edgeenv-smoke-missing"
+    ) in alignment_summary
 
     ci_summary = (
         output_dir / "runtime_intelligence_ci_artifact_gate_summary.md"

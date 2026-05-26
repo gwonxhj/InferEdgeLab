@@ -509,7 +509,7 @@ bash scripts/smoke_runtime_intelligence_chain.sh \
   --output-dir reports/runtime_intelligence_chain
 ```
 
-The smoke gates the EdgeEnv handoff history fixture for preserved device-local Orchestrator `candidate_context.producer` lineage and checks that EdgeEnv-declared external AIGuard evidence requirements are satisfied by the bundled `guard_analysis`. This is an artifact integrity check only; EdgeEnv still owns comparability/regression evidence, AIGuard remains an optional deterministic evidence provider, and Lab still owns the deployment decision.
+The smoke gates the EdgeEnv handoff history fixture for preserved device-local Orchestrator `candidate_context.producer` lineage and checks that EdgeEnv-declared external AIGuard evidence requirements are satisfied by the bundled `guard_analysis`. It also carries a precomputed AIGuard handoff-alignment artifact so the EdgeEnv handoff summary and AIGuard producer-lineage raw context agree on the same `producer_lineage_guard_alignment_run_ids`. This is an artifact integrity check only; EdgeEnv still owns comparability/regression evidence, AIGuard remains an optional deterministic evidence provider, and Lab still owns the deployment decision.
 
 The committed handoff smoke is documented in [docs/portfolio/edgeenv_runtime_regression_lab_handoff.md](docs/portfolio/edgeenv_runtime_regression_lab_handoff.md).
 
