@@ -723,6 +723,34 @@ def remote_dispatch_fallback_recovered_result() -> dict:
     return data
 
 
+def remote_dispatch_with_runtime_event_summary() -> dict:
+    data = remote_dispatch_fallback_recovered_result()
+    data["remote_operation_summary"] = {
+        "schema_version": "inferedge-remote-operation-summary-v1",
+        "final_status": "succeeded",
+        "fallback_recovered": True,
+        "decision_owner": "lab",
+        "operation_boundary": "remote dispatch starter evidence only",
+    }
+    data["remote_runtime_event_summary"] = {
+        "schema_version": "inferedge-remote-runtime-event-summary-v1",
+        "runtime_event_count": 3,
+        "latest_event": "remote_fallback_execution_completed",
+        "final_status": "succeeded",
+        "fallback_recovered": True,
+        "fallback_event_count": 1,
+        "event_type_counts": {
+            "remote_dispatch_selected": 1,
+            "remote_execution_failed": 1,
+            "remote_fallback_execution_completed": 1,
+        },
+        "error_category_counts": {"connection_error": 1},
+        "status_counts": {"failed": 1, "succeeded": 1},
+        "operation_boundary": "remote dispatch starter evidence only",
+    }
+    return data
+
+
 def remote_execution_guard_analysis() -> dict:
     data = passing_guard_analysis()
     data.update(
@@ -1485,6 +1513,41 @@ def test_agent_runtime_report_surfaces_remote_fallback_recovery():
     )
     assert "primary worker" in recovery_evidence["recommendation"]
     assert "production remote execution" in markdown
+
+
+def test_agent_runtime_report_surfaces_remote_runtime_event_summary():
+    report = build_agent_runtime_reliability_report(
+        orchestration_summary=quiet_orchestration_summary(),
+        guard_analysis=remote_fallback_recovered_guard_analysis(),
+        remote_dispatch=remote_dispatch_with_runtime_event_summary(),
+    )
+
+    remote_context = report["agent_runtime_summary"]["remote_dispatch_context"]
+    operation_summary = remote_context["remote_operation_summary"]
+    event_summary = remote_context["remote_runtime_event_summary"]
+
+    assert operation_summary["final_status"] == "succeeded"
+    assert operation_summary["fallback_recovered"] is True
+    assert event_summary["schema_version"] == (
+        "inferedge-remote-runtime-event-summary-v1"
+    )
+    assert event_summary["runtime_event_count"] == 3
+    assert event_summary["final_status"] == "succeeded"
+    assert event_summary["event_type_counts"]["remote_execution_failed"] == 1
+    assert event_summary["error_category_counts"]["connection_error"] == 1
+
+    markdown = build_agent_runtime_reliability_markdown(report)
+    assert "remote_operation_final_status" in markdown
+    assert "remote_operation_fallback_recovered" in markdown
+    assert "remote_runtime_event_summary_schema" in markdown
+    assert "inferedge-remote-runtime-event-summary-v1" in markdown
+    assert "remote_runtime_event_count" in markdown
+    assert "remote_runtime_event_final_status" in markdown
+    assert "remote_runtime_fallback_recovered" in markdown
+    assert "remote_runtime_event_type_counts" in markdown
+    assert "remote_runtime_error_category_counts" in markdown
+    assert "remote_runtime_status_counts" in markdown
+    assert "remote_runtime_summary_boundary" in markdown
 
 
 def test_agent_runtime_report_command_outputs_json(tmp_path, capsys):

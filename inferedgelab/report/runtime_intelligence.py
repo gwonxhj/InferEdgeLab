@@ -16,6 +16,19 @@ ORCHESTRATOR_PRODUCER_LINEAGE_EVIDENCE_TYPE = (
 
 RUN_CONFIG_TRACEABILITY_EVIDENCE_TYPE = "runtime_history_seed_run_config_traceability"
 
+REMOTE_RUNTIME_EVENT_SUMMARY_MISMATCH_EVIDENCE_TYPE = (
+    "remote_runtime_event_summary_mismatch"
+)
+
+REMOTE_DISPATCH_EVIDENCE_TYPES = {
+    "remote_execution_failed",
+    "remote_execution_recovered_by_fallback",
+    "remote_fallback_execution_failed",
+    "remote_execution_plan_only",
+    "remote_execution_starter_success",
+    REMOTE_RUNTIME_EVENT_SUMMARY_MISMATCH_EVIDENCE_TYPE,
+}
+
 RUN_CONFIG_MARKER_FIELDS = (
     "input_mode",
     "input_preprocess",
@@ -102,6 +115,7 @@ def build_runtime_intelligence_risk_rows(
             warning_items,
             evidence_items,
         )
+        _append_aiguard_remote_dispatch_rows(rows, guard_analysis, evidence_items)
         _append_aiguard_run_config_traceability_row(rows, evidence_items)
 
     return rows
@@ -409,6 +423,140 @@ def _append_aiguard_run_config_traceability_row(
             "AIGuard confirms Runtime history seed run_config traceability; Lab still owns the deployment decision.",
         )
     )
+
+
+def _append_aiguard_remote_dispatch_rows(
+    rows: list[tuple[str, str, str]],
+    guard_analysis: dict[str, Any],
+    evidence_items: list[dict[str, Any]],
+) -> None:
+    remote_dispatch = _aiguard_remote_dispatch_summary(
+        guard_analysis,
+        evidence_items,
+    )
+    if isinstance(remote_dispatch, dict):
+        event_label = _remote_dispatch_event_summary_label(remote_dispatch)
+        if event_label:
+            rows.append(
+                (
+                    "AIGuard remote dispatch event summary",
+                    event_label,
+                    "Remote dispatch starter evidence is deterministic operation context; Lab remains the final decision owner.",
+                )
+            )
+
+        consistency_label = _remote_runtime_event_consistency_label(remote_dispatch)
+        if consistency_label:
+            rows.append(
+                (
+                    "AIGuard remote event summary consistency",
+                    consistency_label,
+                    "Compact remote event summaries are checked before Lab reports trust them as operation context.",
+                )
+            )
+
+    evidence_types = sorted(
+        {
+            str(item.get("type"))
+            for item in evidence_items
+            if item.get("type") in REMOTE_DISPATCH_EVIDENCE_TYPES
+        }
+    )
+    if evidence_types:
+        rows.append(
+            (
+                "AIGuard remote dispatch evidence",
+                ", ".join(evidence_types),
+                "AIGuard warning evidence informs Lab review policy but does not own deployment decision.",
+            )
+        )
+
+
+def _aiguard_remote_dispatch_summary(
+    guard_analysis: dict[str, Any],
+    evidence_items: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    candidate_summary = guard_analysis.get("candidate_summary")
+    if isinstance(candidate_summary, dict):
+        remote_dispatch = candidate_summary.get("remote_dispatch")
+        if isinstance(remote_dispatch, dict):
+            return remote_dispatch
+
+    for item in evidence_items:
+        raw_context = item.get("raw_context")
+        if not isinstance(raw_context, dict):
+            continue
+        remote_dispatch = raw_context.get("remote_dispatch")
+        if isinstance(remote_dispatch, dict):
+            return remote_dispatch
+    return None
+
+
+def _remote_dispatch_event_summary_label(remote_dispatch: dict[str, Any]) -> str:
+    event_summary = remote_dispatch.get("remote_runtime_event_summary")
+    if not isinstance(event_summary, dict):
+        event_summary = {}
+
+    event_count = _first_present(
+        remote_dispatch.get("remote_runtime_event_summary_runtime_event_count"),
+        event_summary.get("runtime_event_count"),
+        remote_dispatch.get("runtime_event_count"),
+    )
+    final_status = _first_present(
+        remote_dispatch.get("remote_runtime_event_summary_final_status"),
+        event_summary.get("final_status"),
+        remote_dispatch.get("fallback_final_status"),
+        remote_dispatch.get("execution_status"),
+    )
+    fallback_recovered = _first_present(
+        remote_dispatch.get("remote_runtime_event_summary_fallback_recovered"),
+        event_summary.get("fallback_recovered"),
+        remote_dispatch.get("fallback_recovered"),
+    )
+
+    parts: list[str] = []
+    if event_count is not None:
+        parts.append(f"events={_format_compact_value(event_count)}")
+    if final_status is not None:
+        parts.append(f"final={final_status}")
+    if fallback_recovered is not None:
+        parts.append(f"fallback_recovered={fallback_recovered}")
+    return ", ".join(parts)
+
+
+def _remote_runtime_event_consistency_label(remote_dispatch: dict[str, Any]) -> str:
+    event_summary = remote_dispatch.get("remote_runtime_event_summary")
+    if not isinstance(event_summary, dict):
+        event_summary = {}
+
+    present = _first_present(
+        remote_dispatch.get("remote_runtime_event_summary_present"),
+        bool(event_summary) if event_summary else None,
+    )
+    consistent = _first_present(
+        remote_dispatch.get("remote_runtime_event_summary_consistent"),
+        event_summary.get("consistent"),
+    )
+    mismatch_errors = _string_list(
+        remote_dispatch.get("remote_runtime_event_summary_mismatch_errors")
+    )
+    if not mismatch_errors:
+        mismatch_errors = _string_list(event_summary.get("mismatch_errors"))
+
+    if present is False:
+        return "missing"
+    if consistent is True:
+        return "consistent"
+    if consistent is False:
+        return "mismatch=" + (",".join(mismatch_errors) if mismatch_errors else "unknown")
+    return ""
+
+
+def _first_present(*values: Any) -> Any:
+    for value in values:
+        if value is not None:
+            return value
+    return None
 
 
 def _find_evidence_item(

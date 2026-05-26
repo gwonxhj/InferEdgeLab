@@ -69,6 +69,10 @@ def _text_summary(report: dict) -> str:
     remote_context = report["agent_runtime_summary"].get("remote_dispatch_context") or {}
     remote_execution_result = remote_context.get("remote_execution_result") or {}
     fallback_execution_result = remote_context.get("fallback_execution_result") or {}
+    remote_operation_summary = remote_context.get("remote_operation_summary") or {}
+    remote_runtime_event_summary = (
+        remote_context.get("remote_runtime_event_summary") or {}
+    )
     health = runtime_context.get("runtime_health_snapshot") or {}
     error = runtime_context.get("runtime_error_classification") or {}
     operation_summary = runtime_context.get("runtime_operation_summary") or {}
@@ -96,6 +100,10 @@ def _text_summary(report: dict) -> str:
         f"remote_execution_error_category: {remote_execution_result.get('error_category')}",
         f"remote_fallback_status: {fallback_execution_result.get('final_status')}",
         f"remote_fallback_workers: {', '.join(fallback_execution_result.get('attempted_worker_ids') or [])}",
+        f"remote_operation_final_status: {remote_operation_summary.get('final_status')}",
+        f"remote_runtime_event_count: {remote_runtime_event_summary.get('runtime_event_count')}",
+        f"remote_runtime_event_final_status: {remote_runtime_event_summary.get('final_status')}",
+        f"remote_runtime_summary_boundary: {remote_runtime_event_summary.get('operation_boundary')}",
         "triggered_rules:",
     ]
     lines.extend(f"- {rule}" for rule in decision["triggered_rules"])

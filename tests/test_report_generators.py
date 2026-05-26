@@ -477,6 +477,55 @@ def make_runtime_operation_guard_analysis() -> dict:
     }
 
 
+def make_remote_runtime_event_guard_analysis() -> dict:
+    return {
+        "schema_version": "inferedge-aiguard-diagnosis-v1",
+        "guard_verdict": "review_required",
+        "severity": "medium",
+        "confidence": 0.81,
+        "primary_reason": (
+            "Remote dispatch starter recovered through fallback and needs review."
+        ),
+        "evidence": [
+            {
+                "type": "remote_execution_recovered_by_fallback",
+                "metric_name": "remote_fallback_recovered",
+                "observed_value": 1,
+                "baseline_value": 0,
+                "threshold": 0,
+                "status": "warning",
+                "severity": "medium",
+                "why_it_matters": (
+                    "Fallback recovery keeps the starter runnable but still "
+                    "indicates remote worker reliability risk."
+                ),
+                "suspected_causes": ["remote_worker_unreachable"],
+                "recommendation": "Review primary worker connectivity.",
+                "raw_context": {
+                    "remote_dispatch": {
+                        "remote_runtime_event_summary_runtime_event_count": 3,
+                        "remote_runtime_event_summary_final_status": "succeeded",
+                        "remote_runtime_event_summary_fallback_recovered": True,
+                        "remote_runtime_event_summary_present": True,
+                        "remote_runtime_event_summary_consistent": True,
+                    }
+                },
+            }
+        ],
+        "candidate_summary": {
+            "remote_dispatch": {
+                "execution_status": "failed",
+                "fallback_final_status": "succeeded",
+                "remote_runtime_event_summary_runtime_event_count": 3,
+                "remote_runtime_event_summary_final_status": "succeeded",
+                "remote_runtime_event_summary_fallback_recovered": True,
+                "remote_runtime_event_summary_present": True,
+                "remote_runtime_event_summary_consistent": True,
+            }
+        },
+    }
+
+
 def test_generate_compare_markdown_includes_classification_primary_metric_and_summary():
     compare_result = make_compare_result()
     judgement = make_judgement()
@@ -695,6 +744,29 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
         "jetson_clocks=unknown, warmup=1, runs=10 |"
     ) in text
     assert "AIGuard does not own the final decision" in text
+
+
+def test_generate_compare_markdown_summarizes_remote_runtime_event_summary():
+    compare_result = make_compare_result()
+    judgement = make_judgement()
+
+    text = generate_compare_markdown(
+        compare_result,
+        judgement,
+        guard_analysis=make_remote_runtime_event_guard_analysis(),
+    )
+
+    assert "## Runtime Intelligence Risk Summary" in text
+    assert (
+        "| AIGuard remote dispatch event summary | "
+        "events=3, final=succeeded, fallback_recovered=True |"
+    ) in text
+    assert "| AIGuard remote event summary consistency | consistent |" in text
+    assert (
+        "| AIGuard remote dispatch evidence | "
+        "remote_execution_recovered_by_fallback |"
+    ) in text
+    assert "Lab remains the final decision owner" in text
 
 
 def test_generate_compare_markdown_includes_diagnosis_guard_evidence():
@@ -918,6 +990,25 @@ def test_generate_compare_html_summarizes_orchestrator_context_risk():
     assert "AIGuard run_config traceability evidence" in html
     assert "status=passed, count=2/2" in html
     assert "supplemental operation evidence" in html
+
+
+def test_generate_compare_html_summarizes_remote_runtime_event_summary():
+    compare_result = make_compare_result()
+    judgement = make_judgement()
+
+    html = generate_compare_html(
+        compare_result,
+        judgement,
+        guard_analysis=make_remote_runtime_event_guard_analysis(),
+    )
+
+    assert "Runtime Intelligence Risk Summary" in html
+    assert "AIGuard remote dispatch event summary" in html
+    assert "events=3, final=succeeded, fallback_recovered=True" in html
+    assert "AIGuard remote event summary consistency" in html
+    assert "consistent" in html
+    assert "remote_execution_recovered_by_fallback" in html
+    assert "Lab remains the final decision owner" in html
 
 
 def test_generate_compare_html_includes_diagnosis_guard_evidence():

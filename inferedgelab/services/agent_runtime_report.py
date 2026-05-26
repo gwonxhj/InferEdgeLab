@@ -515,6 +515,12 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
     fallback_execution_result = (
         remote_dispatch_context.get("fallback_execution_result") or {}
     )
+    remote_operation_summary = (
+        remote_dispatch_context.get("remote_operation_summary") or {}
+    )
+    remote_runtime_event_summary = (
+        remote_dispatch_context.get("remote_runtime_event_summary") or {}
+    )
     retry_fallback_plan = remote_dispatch_context.get("retry_fallback_plan") or {}
     worker_selection = remote_dispatch_context.get("worker_selection") or {}
 
@@ -886,6 +892,18 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             f"| fallback_worker_ids | {', '.join(worker_selection.get('fallback_worker_ids') or []) or '-'} |",
             f"| retry_max_attempts | {_fmt_number(retry_fallback_plan.get('max_attempts'))} |",
             f"| retry_execution_performed | {retry_fallback_plan.get('execution_performed', '-')} |",
+            f"| remote_operation_final_status | {remote_operation_summary.get('final_status') or '-'} |",
+            f"| remote_operation_fallback_recovered | {remote_operation_summary.get('fallback_recovered', '-')} |",
+            f"| remote_runtime_event_summary_schema | {remote_runtime_event_summary.get('schema_version') or '-'} |",
+            f"| remote_runtime_event_count | {_fmt_number(remote_runtime_event_summary.get('runtime_event_count'))} |",
+            f"| remote_runtime_event_latest | {remote_runtime_event_summary.get('latest_event') or '-'} |",
+            f"| remote_runtime_event_final_status | {remote_runtime_event_summary.get('final_status') or '-'} |",
+            f"| remote_runtime_fallback_recovered | {remote_runtime_event_summary.get('fallback_recovered', '-')} |",
+            f"| remote_runtime_fallback_event_count | {_fmt_number(remote_runtime_event_summary.get('fallback_event_count'))} |",
+            f"| remote_runtime_event_type_counts | {_fmt_mapping(remote_runtime_event_summary.get('event_type_counts'))} |",
+            f"| remote_runtime_error_category_counts | {_fmt_mapping(remote_runtime_event_summary.get('error_category_counts'))} |",
+            f"| remote_runtime_status_counts | {_fmt_mapping(remote_runtime_event_summary.get('status_counts'))} |",
+            f"| remote_runtime_summary_boundary | {remote_runtime_event_summary.get('operation_boundary') or 'starter evidence only; not production remote execution'} |",
             "",
             "Remote execution starter evidence:",
             "",
@@ -1522,6 +1540,8 @@ def _remote_dispatch_context(
             "retry_fallback_plan": {},
             "worker_evaluations": [],
             "runtime_event_sample": [],
+            "remote_operation_summary": {},
+            "remote_runtime_event_summary": {},
         }
 
     worker_selection = remote_dispatch.get("worker_selection")
@@ -1538,6 +1558,8 @@ def _remote_dispatch_context(
     remote_execution = remote_dispatch.get("remote_execution")
     remote_execution_result = remote_dispatch.get("remote_execution_result")
     fallback_execution_result = remote_dispatch.get("fallback_execution_result")
+    remote_operation_summary = remote_dispatch.get("remote_operation_summary")
+    remote_runtime_event_summary = remote_dispatch.get("remote_runtime_event_summary")
     runtime_events = _dict_list(remote_dispatch.get("runtime_events"))
     evaluations = _dict_list(worker_selection.get("evaluations"))
     return {
@@ -1563,6 +1585,12 @@ def _remote_dispatch_context(
         else {},
         "worker_evaluations": evaluations[:8],
         "runtime_event_sample": runtime_events[:8],
+        "remote_operation_summary": dict(remote_operation_summary)
+        if isinstance(remote_operation_summary, dict)
+        else {},
+        "remote_runtime_event_summary": dict(remote_runtime_event_summary)
+        if isinstance(remote_runtime_event_summary, dict)
+        else {},
     }
 
 
