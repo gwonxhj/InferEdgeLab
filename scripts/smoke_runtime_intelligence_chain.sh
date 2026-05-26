@@ -14,6 +14,7 @@ Usage:
 
 This smoke reproduces the local-first Runtime Intelligence artifact chain:
   bundle manifest gate
+  -> AIGuard EdgeEnv handoff alignment gate fixture
   -> EdgeEnv regression report
   -> Runtime Intelligence report with precomputed AIGuard evidence
   -> report artifact gate
@@ -65,6 +66,11 @@ echo "Output: $OUTPUT_DIR"
   --manifest examples/runtime_intelligence_chain/bundle_manifest.json \
   --edgeenv-handoff examples/runtime_intelligence_chain/edgeenv_lab_handoff_manifest.json \
   --summary-out "$OUTPUT_DIR/runtime_intelligence_bundle_manifest_gate_summary.md"
+
+cp examples/runtime_intelligence_chain/aiguard_edgeenv_handoff_alignment.json \
+  "$OUTPUT_DIR/aiguard_edgeenv_handoff_alignment.json"
+cp examples/runtime_intelligence_chain/aiguard_edgeenv_handoff_alignment.md \
+  "$OUTPUT_DIR/aiguard_edgeenv_handoff_alignment.md"
 
 "${LAB_CMD[@]}" compare \
   examples/edgeenv_regression/lab_baseline_result.json \

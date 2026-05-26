@@ -61,6 +61,7 @@ Expected artifacts are intentionally file-based and local-first:
 - Runtime Intelligence bundle manifest gate summary
 - EdgeEnv regression Markdown / HTML report under `reports/runtime_intelligence_ci/`
 - deterministic Runtime Intelligence summary Markdown / HTML with precomputed AIGuard runtime operation evidence
+- AIGuard EdgeEnv handoff alignment JSON / Markdown summary
 - Runtime Intelligence artifact gate summary
 - portfolio demo check JSON / Markdown
 - deployment risk summary JSON
@@ -107,6 +108,9 @@ The initial gate is conservative:
 - AIGuard raw context must preserve the downstream guard-alignment marker and
   the producer-lineage evidence must confirm the marker on candidate and
   missing-telemetry Orchestrator contexts
+- AIGuard EdgeEnv handoff alignment must show the same
+  `producer_lineage_guard_alignment_run_ids` on the EdgeEnv handoff summary and
+  the AIGuard `edgeenv_orchestrator_producer_lineage` raw context
 - AIGuard coverage evidence raw context must preserve Orchestrator producer
   markers and mapping hints for EdgeEnv history `missing_telemetry` entries
   when such context exists, while keeping the entry an evidence gap rather than
@@ -156,9 +160,16 @@ EdgeEnv handoff is provided, the gate also checks that
 `external_aiguard_required_evidence_types` is satisfied by the external
 AIGuard artifact.
 
+The smoke also includes the precomputed AIGuard
+`aiguard_edgeenv_handoff_alignment` artifact. That artifact verifies that the
+EdgeEnv handoff summary and AIGuard deterministic evidence agree on
+`edgeenv-smoke-candidate` and `edgeenv-smoke-missing` as the preserved
+producer-lineage guard-alignment run IDs. This keeps the cross-repo marker
+check file-based and does not make AIGuard a deployment decision owner.
+
 The artifact gate is implemented by `scripts/check_runtime_intelligence_artifact_bundle.py`. It checks the generated Markdown / HTML report for the required Runtime Intelligence rows, including Lab ownership, EdgeEnv comparability, telemetry coverage-gap markers, Orchestrator operation feed context, AIGuard runtime operation anomalies, `edgeenv_orchestrator_producer_lineage`, `runtime_history_seed_run_config_traceability`, and triggered deployment review rules.
 
-The CI artifact gate is implemented by `scripts/check_runtime_intelligence_ci_artifacts.py`. It runs in the deployment-risk stage and verifies that the collected optional GitLab artifacts include the manifest gate summary, report gate summary, Runtime Intelligence Risk Summary report, portfolio demo status, and the validated contract markers from the bundle manifest gate. This keeps the final CI gate file-based and deterministic without turning GitLab into a runtime control plane.
+The CI artifact gate is implemented by `scripts/check_runtime_intelligence_ci_artifacts.py`. It runs in the deployment-risk stage and verifies that the collected optional GitLab artifacts include the manifest gate summary, AIGuard handoff alignment artifact, report gate summary, Runtime Intelligence Risk Summary report, portfolio demo status, and the validated contract markers from the bundle manifest gate. This keeps the final CI gate file-based and deterministic without turning GitLab into a runtime control plane.
 
 Future GitLab-specific gates may include latency regression thresholds, anomaly severity thresholds, thermal instability thresholds, and deployment risk thresholds, but only after the corresponding deterministic evidence is already represented in the artifact bundle.
 

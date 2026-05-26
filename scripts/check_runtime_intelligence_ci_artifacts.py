@@ -15,10 +15,12 @@ REQUIRED_HTML_ARTIFACTS = {
     "runtime_anomaly_summary.html",
 }
 REQUIRED_SUMMARY_ARTIFACTS = {
+    "aiguard_edgeenv_handoff_alignment.md",
     "runtime_intelligence_bundle_manifest_gate_summary.md",
     "runtime_anomaly_gate_summary.md",
 }
 REQUIRED_JSON_ARTIFACTS = {
+    "aiguard_edgeenv_handoff_alignment.json",
     "portfolio_demo_check.json",
     "deployment_risk_summary.json",
 }
@@ -53,8 +55,13 @@ REQUIRED_BUNDLE_MANIFEST_SUMMARY_MARKERS = (
     "edgeenv_handoff: runtime_telemetry_history validated",
     "edgeenv_handoff: external AIGuard evidence requirements declared",
     "edgeenv_handoff: device_local_producer_lineage validated",
+    "edgeenv_handoff: producer_lineage_guard_alignment validated",
     "edgeenv_handoff: missing_telemetry_orchestrator_context validated",
 )
+REQUIRED_AIGUARD_ALIGNMENT_RUN_IDS = [
+    "edgeenv-smoke-candidate",
+    "edgeenv-smoke-missing",
+]
 
 
 def _record(condition: bool, errors: list[str], message: str) -> None:
@@ -157,6 +164,79 @@ def _validate_deployment_risk_status(path: Path, errors: list[str]) -> None:
         )
 
 
+def _validate_aiguard_handoff_alignment(
+    json_path: Path,
+    markdown_path: Path,
+    errors: list[str],
+) -> None:
+    payload = _load_json(json_path, errors, "AIGuard EdgeEnv handoff alignment JSON")
+    if payload:
+        _record(
+            payload.get("schema_version")
+            == "inferedge-aiguard-edgeenv-handoff-alignment-v1",
+            errors,
+            "aiguard_edgeenv_handoff_alignment.json schema_version is invalid",
+        )
+        _record(
+            payload.get("status") == "passed",
+            errors,
+            "aiguard_edgeenv_handoff_alignment.json status must be passed",
+        )
+        _record(
+            payload.get("decision_owner") == "lab",
+            errors,
+            "aiguard_edgeenv_handoff_alignment.json decision_owner must be lab",
+        )
+        _record(
+            payload.get("diagnosis_owner") == "aiguard",
+            errors,
+            "aiguard_edgeenv_handoff_alignment.json diagnosis_owner must be aiguard",
+        )
+        _record(
+            payload.get("handoff_producer_lineage_guard_alignment_run_ids")
+            == REQUIRED_AIGUARD_ALIGNMENT_RUN_IDS,
+            errors,
+            "AIGuard alignment handoff run IDs must match EdgeEnv summary",
+        )
+        _record(
+            payload.get("guard_analysis_producer_lineage_guard_alignment_run_ids")
+            == REQUIRED_AIGUARD_ALIGNMENT_RUN_IDS,
+            errors,
+            "AIGuard alignment guard_analysis run IDs must match EdgeEnv summary",
+        )
+        _record(
+            payload.get("guard_alignment_summary_errors") == [],
+            errors,
+            "AIGuard alignment guard_alignment_summary_errors must be empty",
+        )
+        _record(
+            payload.get("errors") == [],
+            errors,
+            "AIGuard alignment errors must be empty",
+        )
+
+    text = _read_text(
+        markdown_path,
+        errors,
+        "AIGuard EdgeEnv handoff alignment Markdown",
+    )
+    if text:
+        for marker in (
+            "status: passed",
+            "decision_owner: lab",
+            "diagnosis_owner: aiguard",
+            "handoff_producer_lineage_guard_alignment_run_ids: "
+            "edgeenv-smoke-candidate, edgeenv-smoke-missing",
+            "guard_analysis_producer_lineage_guard_alignment_run_ids: "
+            "edgeenv-smoke-candidate, edgeenv-smoke-missing",
+        ):
+            _record(
+                marker in text,
+                errors,
+                f"AIGuard alignment Markdown missing marker: {marker}",
+            )
+
+
 def _write_summary(path: Path, report_dir: Path, errors: list[str]) -> None:
     lines = [
         "# Runtime Intelligence CI Artifact Gate",
@@ -189,6 +269,11 @@ def main(report_dir: str, summary_out: str = "") -> int:
             report_path / "runtime_anomaly_gate_summary.md",
             errors,
             "Runtime Intelligence artifact gate summary",
+        )
+        _validate_aiguard_handoff_alignment(
+            report_path / "aiguard_edgeenv_handoff_alignment.json",
+            report_path / "aiguard_edgeenv_handoff_alignment.md",
+            errors,
         )
         _validate_runtime_report(report_path / "runtime_anomaly_summary.md", errors)
         _validate_portfolio_status(report_path / "portfolio_demo_check.json", errors)
