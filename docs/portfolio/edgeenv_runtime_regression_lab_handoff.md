@@ -126,6 +126,7 @@ Expected Lab behavior:
 - The Runtime Intelligence bundle gate requires AIGuard coverage evidence to declare `telemetry_coverage_source=history_telemetry_coverage`, proving that the precomputed guard artifact consumed EdgeEnv's producer-side replay summary.
 - The Runtime Intelligence bundle gate requires Runtime `runtime_telemetry_history_seed` markers to remain visible through EdgeEnv history and AIGuard raw context, including `registry_owner=edgeenv` and `decision_owner=lab`.
 - When EdgeEnv preserves Runtime `history_seed.run_config` snapshots, Lab surfaces the run_config seed count as replay/comparability traceability in the Runtime Intelligence Risk Summary. This does not override EdgeEnv comparability or Lab deployment policy.
+- The same gate now requires AIGuard `runtime_history_seed_run_config_traceability` evidence so Runtime history seed `run_config` markers cannot disappear from the cross-repo Lab handoff silently.
 - The Runtime Intelligence bundle gate requires the preserved Orchestrator `edgeenv_mapping_hint` to keep `coverage_summary_owner=edgeenv`, `coverage_summary_path=runtime_telemetry_context.history.telemetry_coverage`, and `operation_context_role=supplemental`.
 - The same gate requires Orchestrator's AIGuard evidence candidate hint to preserve `runtime_queue_overload` and `runtime_thermal_instability`, keeping runtime operation anomaly evidence deterministic and supplemental.
 - The same gate requires Orchestrator candidate context to carry `run_id`, `telemetry_source`, `operation`, and `resource`, so Lab can verify handoff completeness without treating Orchestrator context as a regression judgement.
@@ -140,7 +141,7 @@ Expected Lab behavior:
 - Markdown/HTML reports include a `Runtime Intelligence Risk Summary` that summarizes EdgeEnv comparability/regression, telemetry replay gaps, Runtime history seed/run_config traceability, AIGuard deterministic evidence, and the Lab-owned deployment decision in one reviewer-facing table.
 - When EdgeEnv includes preserved Orchestrator feed context, the `Runtime Intelligence Risk Summary` surfaces queue, thermal, throttling, memory, and fallback context as supplemental runtime evidence.
 - When `--guard-analysis` is provided, Lab ingests the precomputed AIGuard artifact as evidence without requiring AIGuard to be installed in the Lab environment.
-- The committed Runtime Intelligence guard fixture preserves AIGuard's coverage-gap diagnosis, `edgeenv_orchestrator_producer_lineage`, and EdgeEnv history missing-field runs as deterministic review context rather than a Lab policy override.
+- The committed Runtime Intelligence guard fixture preserves AIGuard's coverage-gap diagnosis, `edgeenv_orchestrator_producer_lineage`, `runtime_history_seed_run_config_traceability`, and EdgeEnv history missing-field runs as deterministic review context rather than a Lab policy override.
 - Guard evidence details preserve explanatory fields such as `why_it_matters`, evidence-local `suspected_causes`, and `recommendation`.
 - Deployment decision is `review_required`.
 - Triggered rules include `edgeenv_runtime_regression_review`.

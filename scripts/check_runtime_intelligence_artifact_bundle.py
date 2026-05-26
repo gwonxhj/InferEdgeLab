@@ -41,6 +41,12 @@ REQUIRED_MARKDOWN_MARKERS = {
         "Device-local Orchestrator producer lineage is preserved"
     ),
     "aiguard_history_seed_handoff": "| AIGuard history seed handoff | seeds=2.0",
+    "aiguard_run_config_traceability": (
+        "| AIGuard run_config traceability evidence | status=passed, count=2/2"
+    ),
+    "aiguard_run_config_traceability_evidence": (
+        "runtime_history_seed_run_config_traceability"
+    ),
     "guard_warning_rule": "guard_warning_review",
     "edgeenv_regression_rule": "edgeenv_runtime_regression_review",
 }
@@ -64,6 +70,10 @@ REQUIRED_HTML_MARKERS = {
     "runtime_history_seed": "Runtime telemetry history seed",
     "runtime_history_seed_run_config": "Runtime history seed run_config",
     "aiguard_history_seed_handoff": "AIGuard history seed handoff",
+    "aiguard_run_config_traceability": "AIGuard run_config traceability evidence",
+    "aiguard_run_config_traceability_evidence": (
+        "runtime_history_seed_run_config_traceability"
+    ),
 }
 
 

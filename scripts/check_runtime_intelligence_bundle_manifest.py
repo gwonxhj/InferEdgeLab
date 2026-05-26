@@ -86,6 +86,7 @@ REQUIRED_EDGEENV_HANDOFF_BOUNDARY_FLAGS = {
 REQUIRED_GUARD_TYPES = {
     "runtime_telemetry_context_coverage",
     "edgeenv_orchestrator_producer_lineage",
+    "runtime_history_seed_run_config_traceability",
     "runtime_queue_overload",
     "runtime_thermal_instability",
 }
@@ -123,7 +124,9 @@ SUMMARY_CONTRACT_MARKERS = (
     "orchestrator_producer_lineage_shape: per-task source/stage/count mappings validated",
     "edgeenv_history_seed_run_config: run_config snapshots validated",
     "aiguard_evidence: edgeenv_orchestrator_producer_lineage validated",
+    "aiguard_evidence: runtime_history_seed_run_config_traceability validated",
     "aiguard_raw_context: producer_lineage_shape preserved",
+    "aiguard_raw_context: history_seed_run_config_traceability preserved",
     "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
     "aiguard_raw_context: orchestrator_mapping_hint preserved",
     "aiguard_raw_context: orchestrator_producer_markers preserved",
@@ -1243,6 +1246,76 @@ def _validate_guard_analysis(guard_analysis: dict[str, Any], errors: list[str]) 
             _validate_coverage_gap_evidence(item, index, errors)
         if item.get("type") == "edgeenv_orchestrator_producer_lineage":
             _validate_producer_lineage_evidence(item, index, errors)
+        if item.get("type") == "runtime_history_seed_run_config_traceability":
+            _validate_run_config_traceability_evidence(item, index, errors)
+
+
+def _validate_run_config_traceability_evidence(
+    item: dict[str, Any],
+    index: int,
+    errors: list[str],
+) -> None:
+    _record(
+        item.get("status") == "passed",
+        errors,
+        f"AIGuard evidence[{index}] run_config traceability status must be passed",
+    )
+    _record(
+        item.get("observed_value") == 2,
+        errors,
+        f"AIGuard evidence[{index}] run_config traceability observed_value must be 2",
+    )
+    _record(
+        item.get("baseline_value") == 2,
+        errors,
+        f"AIGuard evidence[{index}] run_config traceability baseline_value must be 2",
+    )
+    raw_context = item.get("raw_context") or {}
+    history_seed = raw_context.get("history_seed_run_config")
+    _record(
+        isinstance(history_seed, dict),
+        errors,
+        f"AIGuard evidence[{index}] raw_context.history_seed_run_config must be an object",
+    )
+    if not isinstance(history_seed, dict):
+        return
+    marker_labels = history_seed.get("marker_labels")
+    expected_marker = (
+        "baseline/candidate=shape=1x640x640, input_mode=dummy, "
+        "input_preprocess=none, power_mode=unknown, jetson_clocks=unknown, "
+        "warmup=1, runs=10"
+    )
+    _record(
+        isinstance(marker_labels, list) and expected_marker in marker_labels,
+        errors,
+        "AIGuard run_config traceability marker_labels must preserve "
+        "baseline/candidate run_config markers",
+    )
+    _record(
+        history_seed.get("history_seed_run_config_runs") == 2,
+        errors,
+        "AIGuard run_config traceability history_seed_run_config_runs must be 2",
+    )
+    _record(
+        history_seed.get("baseline_run_config_present") is True,
+        errors,
+        "AIGuard run_config traceability baseline_run_config_present must be true",
+    )
+    _record(
+        history_seed.get("candidate_run_config_present") is True,
+        errors,
+        "AIGuard run_config traceability candidate_run_config_present must be true",
+    )
+    _record(
+        history_seed.get("registry_owner") == "edgeenv",
+        errors,
+        "AIGuard run_config traceability registry_owner must be edgeenv",
+    )
+    _record(
+        history_seed.get("decision_owner") == "lab",
+        errors,
+        "AIGuard run_config traceability decision_owner must be lab",
+    )
 
 
 def _validate_producer_lineage_evidence(
