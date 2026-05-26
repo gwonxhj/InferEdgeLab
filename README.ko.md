@@ -212,6 +212,7 @@ Runtime Intelligence smoke:
 
 - Orchestrator operation feed를 supplemental context로 보존
 - EdgeEnv telemetry history/regression evidence를 Lab report에 연결
+- Runtime history seed `run_config` snapshot을 replay/comparability traceability로 표시
 - 사용 가능한 경우 AIGuard deterministic runtime evidence 보존
 - AIGuard raw context의 device-local producer lineage를 traceability evidence로 표시
 - 기존 JSON contract를 바꾸지 않고 Lab-owned Runtime Intelligence Risk Summary 생성

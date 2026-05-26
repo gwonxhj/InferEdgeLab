@@ -133,6 +133,14 @@ def _append_telemetry_context_rows(
                 "EdgeEnv preserves Runtime history seeds as replay traceability; Lab owns the final decision.",
             )
         )
+    if "history_seed_run_config_runs" in history_summary:
+        rows.append(
+            (
+                "Runtime history seed run_config",
+                str(history_summary.get("history_seed_run_config_runs")),
+                "Runtime run_config snapshots are replay/comparability context from EdgeEnv, not a Lab regression override.",
+            )
+        )
 
     coverage_labels = _runtime_telemetry_coverage_labels(telemetry_context)
     if coverage_labels:

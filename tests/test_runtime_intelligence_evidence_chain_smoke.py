@@ -36,6 +36,7 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
         "history"
     ]
     assert history["summary"]["history_seed_runs"] == 2
+    assert history["summary"]["history_seed_run_config_runs"] == 2
     candidate_history_seed = next(
         item["runtime_telemetry_history_seed"]
         for item in history["runs"]
@@ -48,6 +49,18 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert candidate_history_seed["registry_owner"] == "edgeenv"
     assert candidate_history_seed["decision_owner"] == "lab"
     assert candidate_history_seed["production_monitoring"] is False
+    assert candidate_history_seed["run_config"] == {
+        "batch": 1,
+        "height": 640,
+        "width": 640,
+        "warmup": 1,
+        "runs": 10,
+        "timeout_ms": None,
+        "input_mode": "dummy",
+        "input_preprocess": "none",
+        "power_mode": "unknown",
+        "jetson_clocks": "unknown",
+    }
     operation_context = bundle["edgeenv_runtime_regression"][
         "runtime_telemetry_context"
     ]["candidate"]["orchestrator_operation_context"]
@@ -210,6 +223,7 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     )
     assert "| Orchestrator operation feed context | 2 |" in bundle["markdown"]
     assert "| Runtime telemetry history seed | 2 |" in bundle["markdown"]
+    assert "| Runtime history seed run_config | 2 |" in bundle["markdown"]
     assert "| Orchestrator context attached runs | candidate |" in bundle["markdown"]
     assert "runtime_queue_overload, runtime_thermal_instability" in bundle["markdown"]
     assert "| AIGuard Orchestrator context handoff | feeds=2.0, candidate |" in bundle[
@@ -255,6 +269,7 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "Runtime Intelligence Risk Summary" in markdown
     assert "Runtime telemetry coverage gaps" in markdown
     assert "Runtime telemetry history seed" in markdown
+    assert "Runtime history seed run_config" in markdown
     assert "runtime_telemetry_field_gap" in markdown
     assert "coverage_missing_fields" in markdown
     assert "queue_depth" in markdown
@@ -271,4 +286,5 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "Device-local Orchestrator producer lineage is preserved" in html
     assert "device_local_cli_override" in html
     assert "Runtime telemetry history seed" in html
+    assert "Runtime history seed run_config" in html
     assert "runtime_queue_overload, runtime_thermal_instability" in html

@@ -99,6 +99,7 @@
     "severity": "high",
     "runtime_telemetry_context_present": true,
     "history_seed_runs": 2,
+    "history_seed_run_config_runs": 2,
     "orchestrator_context_present": true
   },
   "notes": [

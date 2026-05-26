@@ -121,6 +121,7 @@ SUMMARY_CONTRACT_MARKERS = (
     "orchestrator_mapping_hint: aiguard_evidence_candidates=runtime_queue_overload,runtime_thermal_instability",
     "orchestrator_device_local_producer_lineage: candidate_context.producer validated",
     "orchestrator_producer_lineage_shape: per-task source/stage/count mappings validated",
+    "edgeenv_history_seed_run_config: run_config snapshots validated",
     "aiguard_evidence: edgeenv_orchestrator_producer_lineage validated",
     "aiguard_raw_context: producer_lineage_shape preserved",
     "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
@@ -131,6 +132,7 @@ SUMMARY_CONTRACT_MARKERS = (
 EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS = (
     "edgeenv_handoff: lab_bundle_alignment validated",
     "edgeenv_handoff: runtime_telemetry_history validated",
+    "edgeenv_handoff: history_seed_run_config validated",
     "edgeenv_handoff: device_local_producer_lineage validated",
     "edgeenv_handoff: missing_telemetry_orchestrator_context validated",
 )
@@ -468,6 +470,12 @@ def _validate_edgeenv_runtime_history_artifact(
         errors,
         "EdgeEnv handoff runtime_telemetry_history.summary.history_seed_runs must be 2",
     )
+    _record(
+        summary.get("history_seed_run_config_runs") == 2,
+        errors,
+        "EdgeEnv handoff runtime_telemetry_history.summary."
+        "history_seed_run_config_runs must be 2",
+    )
     coverage = history.get("telemetry_coverage")
     _record(
         isinstance(coverage, dict),
@@ -532,6 +540,12 @@ def _validate_edgeenv_report(edgeenv_report: dict[str, Any], errors: list[str]) 
         summary.get("history_seed_runs") == 2,
         errors,
         "runtime_telemetry_context.history.summary.history_seed_runs must be 2",
+    )
+    _record(
+        summary.get("history_seed_run_config_runs") == 2,
+        errors,
+        "runtime_telemetry_context.history.summary."
+        "history_seed_run_config_runs must be 2",
     )
     history_coverage = history.get("telemetry_coverage")
     _record(
@@ -1111,6 +1125,34 @@ def _validate_runtime_history_seed(
         errors,
         f"{path}.runtime_telemetry_history_seed.points must include replay points",
     )
+    run_config = seed.get("run_config")
+    _record(
+        isinstance(run_config, dict),
+        errors,
+        f"{path}.runtime_telemetry_history_seed.run_config must be an object",
+    )
+    if isinstance(run_config, dict):
+        for field in ("batch", "height", "width", "warmup", "runs"):
+            _record(
+                type(run_config.get(field)) is int,
+                errors,
+                f"{path}.runtime_telemetry_history_seed.run_config.{field} "
+                "must be an integer",
+            )
+        timeout_ms = run_config.get("timeout_ms")
+        _record(
+            timeout_ms is None or type(timeout_ms) is int,
+            errors,
+            f"{path}.runtime_telemetry_history_seed.run_config.timeout_ms "
+            "must be an integer or null",
+        )
+        for field in ("input_mode", "input_preprocess", "power_mode", "jetson_clocks"):
+            _record(
+                isinstance(run_config.get(field), str),
+                errors,
+                f"{path}.runtime_telemetry_history_seed.run_config.{field} "
+                "must be a string",
+            )
 
 
 def _validate_guard_analysis(guard_analysis: dict[str, Any], errors: list[str]) -> None:

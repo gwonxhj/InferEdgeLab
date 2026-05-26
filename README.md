@@ -477,7 +477,7 @@ Markdown and HTML reports include a Runtime Intelligence Risk Summary that conne
 
 - EdgeEnv comparability and regression evidence
 - telemetry replay gaps
-- Runtime history seed traceability
+- Runtime history seed and run_config traceability
 - device-local producer lineage handoff
 - AIGuard deterministic evidence
 - the Lab-owned deployment decision
