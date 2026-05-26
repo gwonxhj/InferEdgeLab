@@ -60,7 +60,7 @@ def _render_guard_analysis(guard_analysis: dict | None) -> None:
         rprint(f"- primary_reason: {guard_analysis.get('primary_reason')}")
     rprint(f"- confidence: {guard_analysis.get('confidence')}")
 
-    for field in ("anomalies", "evidence", "suspected_causes", "recommendations"):
+    for field in ("anomalies", "suspected_causes", "recommendations"):
         rprint(f"- {field}:")
         values = guard_analysis.get(field) or []
         if values:
@@ -68,6 +68,38 @@ def _render_guard_analysis(guard_analysis: dict | None) -> None:
                 rprint(f"  - {value}")
         else:
             rprint("  - -")
+
+    evidence = guard_analysis.get("evidence") or []
+    rprint("- evidence:")
+    if evidence:
+        for item in evidence:
+            rprint(f"  - {_fmt_guard_evidence_item(item)}")
+            if isinstance(item, dict) and "raw_context" in item:
+                rprint(
+                    "    raw_context: preserved in artifact; "
+                    "omitted from console summary"
+                )
+    else:
+        rprint("  - -")
+
+
+def _fmt_guard_evidence_item(item) -> str:
+    if not isinstance(item, dict):
+        return str(item)
+
+    parts = [str(item.get("type") or "evidence")]
+    for key in (
+        "metric_name",
+        "observed_value",
+        "baseline_value",
+        "threshold",
+        "status",
+        "severity",
+    ):
+        value = item.get(key)
+        if value is not None:
+            parts.append(f"{key}={value}")
+    return ", ".join(parts)
 
 
 def _render_deployment_decision(deployment_decision: dict | None) -> None:
