@@ -401,6 +401,39 @@ def make_runtime_operation_guard_analysis() -> dict:
                 "suspected_causes": ["queue_overload", "scheduler_contention"],
                 "recommendation": "Review Orchestrator queue policy.",
             },
+            {
+                "type": "runtime_history_seed_run_config_traceability",
+                "metric_name": "runtime_history_seed_run_config_runs",
+                "observed_value": 2,
+                "baseline_value": 2,
+                "threshold": 2,
+                "status": "passed",
+                "severity": "info",
+                "why_it_matters": (
+                    "Runtime history seed run_config markers make replay and "
+                    "comparability context traceable without changing Lab policy."
+                ),
+                "suspected_causes": [],
+                "recommendation": (
+                    "Preserve Runtime history seed run_config markers in the Lab "
+                    "report as traceability evidence."
+                ),
+                "raw_context": {
+                    "history_seed_run_config": {
+                        "marker_labels": [
+                            (
+                                "baseline/candidate=shape=1x640x640, "
+                                "input_mode=dummy, input_preprocess=none, "
+                                "power_mode=unknown, jetson_clocks=unknown, "
+                                "warmup=1, runs=10"
+                            )
+                        ],
+                        "history_seed_run_config_runs": 2,
+                        "baseline_run_config_present": True,
+                        "candidate_run_config_present": True,
+                    }
+                },
+            },
         ],
         "candidate_summary": {
             "edgeenv_regression": {
@@ -641,6 +674,12 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
         "input_preprocess=none, power_mode=unknown, jetson_clocks=unknown, "
         "warmup=1, runs=10 |"
     ) in text
+    assert (
+        "| AIGuard run_config traceability evidence | "
+        "status=passed, count=2/2, markers=baseline/candidate=shape=1x640x640, "
+        "input_mode=dummy, input_preprocess=none, power_mode=unknown, "
+        "jetson_clocks=unknown, warmup=1, runs=10 |"
+    ) in text
     assert "AIGuard does not own the final decision" in text
 
 
@@ -862,6 +901,8 @@ def test_generate_compare_html_summarizes_orchestrator_context_risk():
         "input_preprocess=none, power_mode=unknown, jetson_clocks=unknown, "
         "warmup=1, runs=10"
     ) in html
+    assert "AIGuard run_config traceability evidence" in html
+    assert "status=passed, count=2/2" in html
     assert "supplemental operation evidence" in html
 
 
