@@ -661,6 +661,34 @@
       }
     },
     {
+      "type": "runtime_history_seed_run_config_traceability",
+      "metric_name": "runtime_history_seed_run_config_runs",
+      "observed_value": 2,
+      "baseline_value": 2,
+      "threshold": 2,
+      "delta": 0,
+      "delta_pct": null,
+      "increase_factor": null,
+      "severity": "low",
+      "status": "passed",
+      "explanation": "Runtime history seed run_config markers are preserved for 2 of 2 expected Runtime history seed runs.",
+      "why_it_matters": "Runtime history seed run_config markers make EdgeEnv replay and comparability context traceable without making AIGuard or EdgeEnv the deployment decision owner.",
+      "suspected_causes": [],
+      "recommendation": "Preserve Runtime history seed run_config markers in the Lab report as traceability evidence.",
+      "raw_context": {
+        "history_seed_run_config": {
+          "marker_labels": [
+            "baseline/candidate=shape=1x640x640, input_mode=dummy, input_preprocess=none, power_mode=unknown, jetson_clocks=unknown, warmup=1, runs=10"
+          ],
+          "history_seed_run_config_runs": 2,
+          "baseline_run_config_present": true,
+          "candidate_run_config_present": true,
+          "registry_owner": "edgeenv",
+          "decision_owner": "lab"
+        }
+      }
+    },
+    {
       "type": "runtime_thermal_instability",
       "metric_name": "candidate_max_temperature_c",
       "observed_value": 78.5,

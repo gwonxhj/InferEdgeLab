@@ -90,6 +90,7 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     )
     evidence_types = {item["type"] for item in bundle["guard_analysis"]["evidence"]}
     assert "edgeenv_orchestrator_producer_lineage" in evidence_types
+    assert "runtime_history_seed_run_config_traceability" in evidence_types
     coverage_evidence = next(
         item
         for item in bundle["guard_analysis"]["evidence"]
@@ -236,6 +237,23 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
         guard_edgeenv_context["history_missing_orchestrator_artifact_role"]
         == "orchestrator-supplemental-operation-context"
     )
+    run_config_traceability_evidence = next(
+        item
+        for item in bundle["guard_analysis"]["evidence"]
+        if item["type"] == "runtime_history_seed_run_config_traceability"
+    )
+    assert run_config_traceability_evidence["status"] == "passed"
+    assert run_config_traceability_evidence["observed_value"] == 2
+    assert run_config_traceability_evidence["baseline_value"] == 2
+    assert run_config_traceability_evidence["raw_context"]["history_seed_run_config"][
+        "marker_labels"
+    ] == [
+        (
+            "baseline/candidate=shape=1x640x640, input_mode=dummy, "
+            "input_preprocess=none, power_mode=unknown, jetson_clocks=unknown, "
+            "warmup=1, runs=10"
+        )
+    ]
     assert set(
         guard_edgeenv_context[
             "history_missing_orchestrator_mapping_hint_aiguard_evidence_candidates"
@@ -270,6 +288,12 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
         "baseline/candidate=shape=1x640x640, input_mode=dummy, "
         "input_preprocess=none, power_mode=unknown, jetson_clocks=unknown, "
         "warmup=1, runs=10 |"
+    ) in bundle["markdown"]
+    assert (
+        "| AIGuard run_config traceability evidence | "
+        "status=passed, count=2/2, markers=baseline/candidate=shape=1x640x640, "
+        "input_mode=dummy, input_preprocess=none, power_mode=unknown, "
+        "jetson_clocks=unknown, warmup=1, runs=10 |"
     ) in bundle["markdown"]
     assert "Lab remains the final deployment decision owner" in bundle["markdown"]
     assert all(
@@ -319,6 +343,8 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "device_local_cli_override" in markdown
     assert "AIGuard history seed handoff" in markdown
     assert "AIGuard history seed run_config markers" in markdown
+    assert "AIGuard run_config traceability evidence" in markdown
+    assert "runtime_history_seed_run_config_traceability" in markdown
     assert (
         "baseline/candidate=shape=1x640x640, input_mode=dummy, "
         "input_preprocess=none, power_mode=unknown, jetson_clocks=unknown, "
@@ -332,4 +358,6 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "Runtime telemetry history seed" in html
     assert "Runtime history seed run_config" in html
     assert "AIGuard history seed run_config markers" in html
+    assert "AIGuard run_config traceability evidence" in html
+    assert "runtime_history_seed_run_config_traceability" in html
     assert "runtime_queue_overload, runtime_thermal_instability" in html

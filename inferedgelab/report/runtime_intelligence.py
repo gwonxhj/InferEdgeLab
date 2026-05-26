@@ -10,6 +10,8 @@ RUNTIME_OPERATION_ANOMALY_TYPES = {
     "runtime_thermal_instability",
 }
 
+RUN_CONFIG_TRACEABILITY_EVIDENCE_TYPE = "runtime_history_seed_run_config_traceability"
+
 RUN_CONFIG_MARKER_FIELDS = (
     "input_mode",
     "input_preprocess",
@@ -91,6 +93,7 @@ def build_runtime_intelligence_risk_rows(
                 )
             )
         _append_aiguard_runtime_operation_rows(rows, guard_analysis, warning_items)
+        _append_aiguard_run_config_traceability_row(rows, evidence_items)
 
     return rows
 
@@ -363,6 +366,89 @@ def _append_aiguard_runtime_operation_rows(
                 "Compact Runtime run_config markers improve replay traceability without changing Lab policy.",
             )
         )
+
+
+def _append_aiguard_run_config_traceability_row(
+    rows: list[tuple[str, str, str]],
+    evidence_items: list[dict[str, Any]],
+) -> None:
+    evidence = _find_evidence_item(evidence_items, RUN_CONFIG_TRACEABILITY_EVIDENCE_TYPE)
+    if evidence is None:
+        return
+
+    label = _aiguard_run_config_traceability_label(evidence)
+    if not label:
+        return
+    rows.append(
+        (
+            "AIGuard run_config traceability evidence",
+            label,
+            "AIGuard confirms Runtime history seed run_config traceability; Lab still owns the deployment decision.",
+        )
+    )
+
+
+def _find_evidence_item(
+    evidence_items: list[dict[str, Any]],
+    evidence_type: str,
+) -> dict[str, Any] | None:
+    for item in evidence_items:
+        if item.get("type") == evidence_type:
+            return item
+    return None
+
+
+def _aiguard_run_config_traceability_label(evidence: dict[str, Any]) -> str:
+    parts: list[str] = []
+    status = evidence.get("status")
+    if status is not None:
+        parts.append(f"status={status}")
+
+    observed = evidence.get("observed_value")
+    baseline = evidence.get("baseline_value")
+    if observed is not None or baseline is not None:
+        observed_label = _format_compact_value(observed)
+        baseline_label = _format_compact_value(baseline)
+        parts.append(f"count={observed_label}/{baseline_label}")
+
+    marker_labels = _aiguard_run_config_traceability_marker_labels(evidence)
+    if marker_labels:
+        parts.append("markers=" + "; ".join(marker_labels))
+    return ", ".join(parts)
+
+
+def _aiguard_run_config_traceability_marker_labels(
+    evidence: dict[str, Any],
+) -> list[str]:
+    raw_context = evidence.get("raw_context")
+    if not isinstance(raw_context, dict):
+        return []
+
+    context = raw_context.get("history_seed_run_config")
+    if isinstance(context, dict):
+        labels = _string_list(context.get("marker_labels"))
+        if labels:
+            return labels
+        markers = context.get("markers")
+        if isinstance(markers, str) and markers:
+            return [markers]
+        if isinstance(markers, dict):
+            labels = _string_list(list(markers.values()))
+            if labels:
+                return labels
+
+    edgeenv_metrics = raw_context.get("edgeenv_regression")
+    if isinstance(edgeenv_metrics, dict):
+        label = _aiguard_history_seed_run_config_label(edgeenv_metrics)
+        return [label] if label else []
+
+    return []
+
+
+def _format_compact_value(value: Any) -> str:
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    return str(value)
 
 
 def _aiguard_producer_lineage_label(edgeenv_metrics: dict[str, Any]) -> str:
