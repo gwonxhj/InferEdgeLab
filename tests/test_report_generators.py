@@ -406,6 +406,28 @@ def make_runtime_operation_guard_analysis() -> dict:
             "edgeenv_regression": {
                 "history_orchestrator_feed_runs": 1.0,
                 "candidate_orchestrator_context_present": True,
+                "baseline_runtime_telemetry_history_seed_run_config": {
+                    "batch": 1,
+                    "height": 640,
+                    "width": 640,
+                    "warmup": 1,
+                    "runs": 10,
+                    "input_mode": "dummy",
+                    "input_preprocess": "none",
+                    "power_mode": "unknown",
+                    "jetson_clocks": "unknown",
+                },
+                "candidate_runtime_telemetry_history_seed_run_config": {
+                    "batch": 1,
+                    "height": 640,
+                    "width": 640,
+                    "warmup": 1,
+                    "runs": 10,
+                    "input_mode": "dummy",
+                    "input_preprocess": "none",
+                    "power_mode": "unknown",
+                    "jetson_clocks": "unknown",
+                },
                 "candidate_queue_depth": 7.0,
                 "candidate_max_temperature_c": 78.5,
                 "candidate_throttling_detected": True,
@@ -613,6 +635,12 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
         "runtime_thermal_instability |"
     ) in text
     assert "| AIGuard Orchestrator context handoff | feeds=1.0, candidate |" in text
+    assert (
+        "| AIGuard history seed run_config markers | "
+        "baseline/candidate=shape=1x640x640, input_mode=dummy, "
+        "input_preprocess=none, power_mode=unknown, jetson_clocks=unknown, "
+        "warmup=1, runs=10 |"
+    ) in text
     assert "AIGuard does not own the final decision" in text
 
 
@@ -828,6 +856,12 @@ def test_generate_compare_html_summarizes_orchestrator_context_risk():
     assert "Orchestrator context attached runs" in html
     assert "runtime_queue_overload, runtime_thermal_instability" in html
     assert "AIGuard Orchestrator context handoff" in html
+    assert "AIGuard history seed run_config markers" in html
+    assert (
+        "baseline/candidate=shape=1x640x640, input_mode=dummy, "
+        "input_preprocess=none, power_mode=unknown, jetson_clocks=unknown, "
+        "warmup=1, runs=10"
+    ) in html
     assert "supplemental operation evidence" in html
 
 

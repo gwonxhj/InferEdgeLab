@@ -10,6 +10,15 @@ RUNTIME_OPERATION_ANOMALY_TYPES = {
     "runtime_thermal_instability",
 }
 
+RUN_CONFIG_MARKER_FIELDS = (
+    "input_mode",
+    "input_preprocess",
+    "power_mode",
+    "jetson_clocks",
+    "warmup",
+    "runs",
+)
+
 
 def build_runtime_intelligence_risk_rows(
     *,
@@ -345,6 +354,16 @@ def _append_aiguard_runtime_operation_rows(
             )
         )
 
+    run_config_label = _aiguard_history_seed_run_config_label(edgeenv_metrics)
+    if run_config_label:
+        rows.append(
+            (
+                "AIGuard history seed run_config markers",
+                run_config_label,
+                "Compact Runtime run_config markers improve replay traceability without changing Lab policy.",
+            )
+        )
+
 
 def _aiguard_producer_lineage_label(edgeenv_metrics: dict[str, Any]) -> str:
     sources = _string_list(
@@ -378,6 +397,54 @@ def _aiguard_producer_lineage_label(edgeenv_metrics: dict[str, Any]) -> str:
     if role is not None:
         parts.append(f"role={role}")
     return ", ".join(parts)
+
+
+def _aiguard_history_seed_run_config_label(edgeenv_metrics: dict[str, Any]) -> str:
+    baseline = edgeenv_metrics.get("baseline_runtime_telemetry_history_seed_run_config")
+    candidate = edgeenv_metrics.get(
+        "candidate_runtime_telemetry_history_seed_run_config"
+    )
+    if not isinstance(baseline, dict) and not isinstance(candidate, dict):
+        return ""
+
+    if (
+        isinstance(baseline, dict)
+        and isinstance(candidate, dict)
+        and baseline == candidate
+    ):
+        markers = _format_run_config_markers(candidate)
+        return f"baseline/candidate={markers}" if markers else ""
+
+    labels: list[str] = []
+    if isinstance(baseline, dict):
+        markers = _format_run_config_markers(baseline)
+        if markers:
+            labels.append(f"baseline={markers}")
+    if isinstance(candidate, dict):
+        markers = _format_run_config_markers(candidate)
+        if markers:
+            labels.append(f"candidate={markers}")
+    return "; ".join(labels)
+
+
+def _format_run_config_markers(run_config: dict[str, Any]) -> str:
+    markers: list[str] = []
+    shape = _run_config_shape_label(run_config)
+    if shape:
+        markers.append(f"shape={shape}")
+    for field in RUN_CONFIG_MARKER_FIELDS:
+        if field in run_config:
+            markers.append(f"{field}={run_config.get(field)}")
+    return ", ".join(markers)
+
+
+def _run_config_shape_label(run_config: dict[str, Any]) -> str:
+    batch = run_config.get("batch")
+    height = run_config.get("height")
+    width = run_config.get("width")
+    if batch is None and height is None and width is None:
+        return ""
+    return f"{batch or '-'}x{height or '-'}x{width or '-'}"
 
 
 def _string_list(value: Any) -> list[str]:

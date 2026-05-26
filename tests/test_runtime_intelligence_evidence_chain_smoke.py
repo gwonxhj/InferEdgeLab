@@ -265,6 +265,12 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
         "device_local_events=2.0, role=supplemental |"
     ) in bundle["markdown"]
     assert "| AIGuard history seed handoff | seeds=2.0" in bundle["markdown"]
+    assert (
+        "| AIGuard history seed run_config markers | "
+        "baseline/candidate=shape=1x640x640, input_mode=dummy, "
+        "input_preprocess=none, power_mode=unknown, jetson_clocks=unknown, "
+        "warmup=1, runs=10 |"
+    ) in bundle["markdown"]
     assert "Lab remains the final deployment decision owner" in bundle["markdown"]
     assert all(
         "raw_context" in item
@@ -296,6 +302,8 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
 
     assert "Guard Analysis" in out
     assert "runtime_queue_overload" in out
+    assert "raw_context: preserved in artifact; omitted from console summary" in out
+    assert "'raw_context':" not in out
     assert "Runtime Intelligence Risk Summary" in markdown
     assert "Runtime telemetry coverage gaps" in markdown
     assert "Runtime telemetry history seed" in markdown
@@ -310,6 +318,12 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "Device-local Orchestrator producer lineage is preserved" in markdown
     assert "device_local_cli_override" in markdown
     assert "AIGuard history seed handoff" in markdown
+    assert "AIGuard history seed run_config markers" in markdown
+    assert (
+        "baseline/candidate=shape=1x640x640, input_mode=dummy, "
+        "input_preprocess=none, power_mode=unknown, jetson_clocks=unknown, "
+        "warmup=1, runs=10"
+    ) in markdown
     assert "Runtime Intelligence Risk Summary" in html
     assert "AIGuard producer lineage handoff" in html
     assert "edgeenv_orchestrator_producer_lineage" in html
@@ -317,4 +331,5 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "device_local_cli_override" in html
     assert "Runtime telemetry history seed" in html
     assert "Runtime history seed run_config" in html
+    assert "AIGuard history seed run_config markers" in html
     assert "runtime_queue_overload, runtime_thermal_instability" in html
