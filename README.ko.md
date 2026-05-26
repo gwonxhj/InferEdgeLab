@@ -219,6 +219,24 @@ Runtime Intelligence smoke:
 
 EdgeEnv runtime regression report에 `runtime_telemetry_context`가 포함되면 Lab은 이를 supplemental telemetry coverage / evidence-gap context로 표시하되, final deployment decision ownership은 Lab에 남깁니다.
 
+Runtime Intelligence report에서 읽어야 할 핵심 row:
+
+- EdgeEnv comparability / regression evidence
+- telemetry replay gap
+- Runtime history seed `run_config` traceability
+- Orchestrator device-local producer lineage
+- AIGuard deterministic anomaly evidence
+- Lab-owned deployment decision
+
+재현 smoke:
+
+```bash
+bash scripts/smoke_runtime_intelligence_chain.sh \
+  --output-dir reports/runtime_intelligence_chain
+```
+
+이 smoke는 artifact integrity check이며, EdgeEnv나 AIGuard가 Lab의 final deployment decision을 대체하지 않습니다.
+
 ## 현재 범위와 future work
 
 현재 상태는 **local-first validation foundation**입니다. API/job/worker contract와 dev/manual smoke evidence는 갖췄지만, production SaaS가 완성된 것은 아닙니다.
