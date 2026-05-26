@@ -30,6 +30,14 @@ REQUIRED_MARKDOWN_MARKERS = {
         "| AIGuard runtime operation anomalies | "
         "runtime_queue_overload, runtime_thermal_instability |"
     ),
+    "aiguard_remote_dispatch_summary": (
+        "| AIGuard remote dispatch event summary | "
+        "events=3, final=succeeded, fallback_recovered=True |"
+    ),
+    "aiguard_remote_dispatch_consistency": (
+        "| AIGuard remote event summary consistency | consistent |"
+    ),
+    "aiguard_remote_dispatch_evidence": "remote_execution_recovered_by_fallback",
     "aiguard_orchestrator_handoff": (
         "| AIGuard Orchestrator context handoff | feeds=2.0, candidate |"
     ),
@@ -64,6 +72,12 @@ REQUIRED_HTML_MARKERS = {
         "Inspect telemetry coverage missing fields"
     ),
     "aiguard_operation_anomalies": "runtime_queue_overload, runtime_thermal_instability",
+    "aiguard_remote_dispatch_summary": "AIGuard remote dispatch event summary",
+    "aiguard_remote_dispatch_label": (
+        "events=3, final=succeeded, fallback_recovered=True"
+    ),
+    "aiguard_remote_dispatch_consistency": "AIGuard remote event summary consistency",
+    "aiguard_remote_dispatch_evidence": "remote_execution_recovered_by_fallback",
     "aiguard_orchestrator_handoff": "AIGuard Orchestrator context handoff",
     "aiguard_producer_lineage_handoff": "AIGuard producer lineage handoff",
     "aiguard_producer_lineage_evidence": "edgeenv_orchestrator_producer_lineage",

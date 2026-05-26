@@ -95,6 +95,7 @@ REQUIRED_GUARD_TYPES = {
     "runtime_history_seed_run_config_traceability",
     "runtime_queue_overload",
     "runtime_thermal_instability",
+    "remote_execution_recovered_by_fallback",
 }
 REQUIRED_GUARD_EVIDENCE_FIELDS = {
     "type",
@@ -132,8 +133,10 @@ SUMMARY_CONTRACT_MARKERS = (
     "edgeenv_history_seed_run_config: run_config snapshots validated",
     "aiguard_evidence: edgeenv_orchestrator_producer_lineage validated",
     "aiguard_evidence: runtime_history_seed_run_config_traceability validated",
+    "aiguard_evidence: remote_execution_recovered_by_fallback validated",
     "aiguard_raw_context: producer_lineage_shape preserved",
     "aiguard_raw_context: history_seed_run_config_traceability preserved",
+    "aiguard_raw_context: remote_runtime_event_summary preserved",
     "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
     "aiguard_raw_context: orchestrator_mapping_hint preserved",
     "aiguard_raw_context: orchestrator_producer_markers preserved",
@@ -1495,6 +1498,8 @@ def _validate_guard_analysis(guard_analysis: dict[str, Any], errors: list[str]) 
             _validate_producer_lineage_evidence(item, index, errors)
         if item.get("type") == "runtime_history_seed_run_config_traceability":
             _validate_run_config_traceability_evidence(item, index, errors)
+        if item.get("type") == "remote_execution_recovered_by_fallback":
+            _validate_remote_runtime_event_summary_evidence(item, index, errors)
 
 
 def _validate_external_aiguard_evidence_alignment(
@@ -1527,6 +1532,77 @@ def _validate_external_aiguard_evidence_alignment(
         errors,
         "AIGuard handoff alignment missing required evidence types: "
         f"{missing}",
+    )
+
+
+def _validate_remote_runtime_event_summary_evidence(
+    item: dict[str, Any],
+    index: int,
+    errors: list[str],
+) -> None:
+    _record(
+        item.get("status") == "warning",
+        errors,
+        f"AIGuard evidence[{index}] remote fallback status must be warning",
+    )
+    raw_context = item.get("raw_context") or {}
+    remote_dispatch = raw_context.get("remote_dispatch")
+    _record(
+        isinstance(remote_dispatch, dict),
+        errors,
+        f"AIGuard evidence[{index}] raw_context.remote_dispatch must be an object",
+    )
+    if not isinstance(remote_dispatch, dict):
+        return
+
+    _record(
+        remote_dispatch.get("source_repository") == "InferEdgeOrchestrator",
+        errors,
+        f"AIGuard evidence[{index}] remote_dispatch.source_repository must be InferEdgeOrchestrator",
+    )
+    _record(
+        remote_dispatch.get("production_remote_execution") is False,
+        errors,
+        f"AIGuard evidence[{index}] remote_dispatch.production_remote_execution must be false",
+    )
+    _record(
+        remote_dispatch.get("remote_runtime_event_summary_present") is True,
+        errors,
+        f"AIGuard evidence[{index}] remote_runtime_event_summary_present must be true",
+    )
+    _record(
+        remote_dispatch.get("remote_runtime_event_summary_consistent") is True,
+        errors,
+        f"AIGuard evidence[{index}] remote_runtime_event_summary_consistent must be true",
+    )
+
+    summary = remote_dispatch.get("remote_runtime_event_summary")
+    _record(
+        isinstance(summary, dict),
+        errors,
+        f"AIGuard evidence[{index}] remote_runtime_event_summary must be an object",
+    )
+    if not isinstance(summary, dict):
+        return
+    _record(
+        summary.get("schema_version") == "inferedge-remote-runtime-event-summary-v1",
+        errors,
+        f"AIGuard evidence[{index}] remote_runtime_event_summary.schema_version is invalid",
+    )
+    _record(
+        summary.get("runtime_event_count") == 3,
+        errors,
+        f"AIGuard evidence[{index}] remote_runtime_event_summary.runtime_event_count must be 3",
+    )
+    _record(
+        summary.get("final_status") == "succeeded",
+        errors,
+        f"AIGuard evidence[{index}] remote_runtime_event_summary.final_status must be succeeded",
+    )
+    _record(
+        summary.get("fallback_recovered") is True,
+        errors,
+        f"AIGuard evidence[{index}] remote_runtime_event_summary.fallback_recovered must be true",
     )
 
 

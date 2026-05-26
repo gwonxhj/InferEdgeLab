@@ -97,6 +97,7 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     evidence_types = {item["type"] for item in bundle["guard_analysis"]["evidence"]}
     assert "edgeenv_orchestrator_producer_lineage" in evidence_types
     assert "runtime_history_seed_run_config_traceability" in evidence_types
+    assert "remote_execution_recovered_by_fallback" in evidence_types
     coverage_evidence = next(
         item
         for item in bundle["guard_analysis"]["evidence"]
@@ -287,6 +288,27 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
             "warmup=1, runs=10"
         )
     ]
+    remote_fallback_evidence = next(
+        item
+        for item in bundle["guard_analysis"]["evidence"]
+        if item["type"] == "remote_execution_recovered_by_fallback"
+    )
+    remote_dispatch_context = remote_fallback_evidence["raw_context"][
+        "remote_dispatch"
+    ]
+    assert remote_dispatch_context["source_repository"] == "InferEdgeOrchestrator"
+    assert remote_dispatch_context["production_remote_execution"] is False
+    assert remote_dispatch_context["remote_runtime_event_summary_present"] is True
+    assert remote_dispatch_context["remote_runtime_event_summary_consistent"] is True
+    assert remote_dispatch_context["remote_runtime_event_summary"][
+        "schema_version"
+    ] == "inferedge-remote-runtime-event-summary-v1"
+    assert remote_dispatch_context["remote_runtime_event_summary"][
+        "runtime_event_count"
+    ] == 3
+    assert remote_dispatch_context["remote_runtime_event_summary"][
+        "fallback_recovered"
+    ] is True
     assert set(
         guard_edgeenv_context[
             "history_missing_orchestrator_mapping_hint_aiguard_evidence_candidates"
@@ -333,6 +355,17 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
         "status=passed, count=2/2, markers=baseline/candidate=shape=1x640x640, "
         "input_mode=dummy, input_preprocess=none, power_mode=unknown, "
         "jetson_clocks=unknown, warmup=1, runs=10 |"
+    ) in bundle["markdown"]
+    assert (
+        "| AIGuard remote dispatch event summary | "
+        "events=3, final=succeeded, fallback_recovered=True |"
+    ) in bundle["markdown"]
+    assert "| AIGuard remote event summary consistency | consistent |" in bundle[
+        "markdown"
+    ]
+    assert (
+        "| AIGuard remote dispatch evidence | "
+        "remote_execution_recovered_by_fallback |"
     ) in bundle["markdown"]
     assert "Lab remains the final deployment decision owner" in bundle["markdown"]
     assert all(
@@ -385,6 +418,10 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "AIGuard history seed run_config markers" in markdown
     assert "AIGuard run_config traceability evidence" in markdown
     assert "runtime_history_seed_run_config_traceability" in markdown
+    assert "AIGuard remote dispatch event summary" in markdown
+    assert "events=3, final=succeeded, fallback_recovered=True" in markdown
+    assert "AIGuard remote event summary consistency" in markdown
+    assert "remote_execution_recovered_by_fallback" in markdown
     assert (
         "baseline/candidate=shape=1x640x640, input_mode=dummy, "
         "input_preprocess=none, power_mode=unknown, jetson_clocks=unknown, "
@@ -402,3 +439,7 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "AIGuard run_config traceability evidence" in html
     assert "runtime_history_seed_run_config_traceability" in html
     assert "runtime_queue_overload, runtime_thermal_instability" in html
+    assert "AIGuard remote dispatch event summary" in html
+    assert "events=3, final=succeeded, fallback_recovered=True" in html
+    assert "AIGuard remote event summary consistency" in html
+    assert "remote_execution_recovered_by_fallback" in html

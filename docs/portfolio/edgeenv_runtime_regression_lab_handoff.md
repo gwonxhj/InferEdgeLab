@@ -87,7 +87,7 @@ The script runs the full local artifact chain:
 ```text
 bundle manifest gate
 -> EdgeEnv regression report
--> Runtime Intelligence report with precomputed AIGuard evidence
+-> Runtime Intelligence report with precomputed AIGuard and remote dispatch summary evidence
 -> report artifact gate
 -> CI artifact gate
 ```
@@ -112,10 +112,11 @@ This second smoke uses committed lightweight artifacts to represent the cross-re
 - `examples/runtime_intelligence_chain/runtime_telemetry_history.json` is the EdgeEnv producer-side telemetry history artifact referenced by the handoff manifest. It includes a missing-telemetry run as an evidence gap and preserves Orchestrator context on that entry without turning Orchestrator into a regression or deployment decision owner.
 - Orchestrator context is preserved inside the EdgeEnv regression artifact as `orchestrator_operation_context`.
 - AIGuard deterministic queue/thermal evidence is passed as a precomputed `guard_analysis` artifact that mirrors the AIGuard producer-side diagnosis v1 evidence shape.
+- AIGuard also preserves a compact `remote_runtime_event_summary` for the remote dispatch starter path, including fallback recovery status and consistency metadata. This is operation review evidence only; it is not production remote execution.
 - Lab owns the combined report and deployment decision.
 - `scripts/check_runtime_intelligence_bundle_manifest.py` gates the bundle manifest before report generation, including source repository mapping, schema markers, and evidence-item shape for the EdgeEnv history, Orchestrator feed, and AIGuard diagnosis artifacts.
 - The same gate can also consume `--edgeenv-handoff` to compare EdgeEnv producer-side `lab_bundle_alignment` metadata against Lab's bundle manifest contract.
-- `scripts/check_runtime_intelligence_artifact_bundle.py` gates the generated report so required Runtime Intelligence rows and ownership text cannot disappear silently.
+- `scripts/check_runtime_intelligence_artifact_bundle.py` gates the generated report so required Runtime Intelligence rows, remote dispatch summary rows, and ownership text cannot disappear silently.
 
 Expected Lab behavior:
 
@@ -128,7 +129,7 @@ Expected Lab behavior:
 - The Runtime Intelligence bundle gate requires AIGuard coverage evidence to declare `telemetry_coverage_source=history_telemetry_coverage`, proving that the precomputed guard artifact consumed EdgeEnv's producer-side replay summary.
 - The Runtime Intelligence bundle gate requires Runtime `runtime_telemetry_history_seed` markers to remain visible through EdgeEnv history and AIGuard raw context, including `registry_owner=edgeenv` and `decision_owner=lab`.
 - When EdgeEnv preserves Runtime `history_seed.run_config` snapshots, Lab surfaces the run_config seed count as replay/comparability traceability in the Runtime Intelligence Risk Summary. This does not override EdgeEnv comparability or Lab deployment policy.
-- The same gate now requires AIGuard `runtime_history_seed_run_config_traceability` evidence so Runtime history seed `run_config` markers cannot disappear from the cross-repo Lab handoff silently.
+- The same gate now requires AIGuard `runtime_history_seed_run_config_traceability` and `remote_execution_recovered_by_fallback` evidence so Runtime history seed `run_config` markers and remote dispatch starter summary context cannot disappear from the cross-repo Lab handoff silently.
 - The Runtime Intelligence bundle gate requires the preserved Orchestrator `edgeenv_mapping_hint` to keep `coverage_summary_owner=edgeenv`, `coverage_summary_path=runtime_telemetry_context.history.telemetry_coverage`, and `operation_context_role=supplemental`.
 - The same gate requires Orchestrator's AIGuard evidence candidate hint to preserve `runtime_queue_overload` and `runtime_thermal_instability`, keeping runtime operation anomaly evidence deterministic and supplemental.
 - The same gate requires Orchestrator candidate context to carry `run_id`, `telemetry_source`, `operation`, and `resource`, so Lab can verify handoff completeness without treating Orchestrator context as a regression judgement.
@@ -146,7 +147,7 @@ Expected Lab behavior:
 - Markdown/HTML reports include a `Runtime Intelligence Risk Summary` that summarizes EdgeEnv comparability/regression, telemetry replay gaps, Runtime history seed/run_config traceability, AIGuard deterministic evidence, and the Lab-owned deployment decision in one reviewer-facing table.
 - When EdgeEnv includes preserved Orchestrator feed context, the `Runtime Intelligence Risk Summary` surfaces queue, thermal, throttling, memory, and fallback context as supplemental runtime evidence.
 - When `--guard-analysis` is provided, Lab ingests the precomputed AIGuard artifact as evidence without requiring AIGuard to be installed in the Lab environment.
-- The committed Runtime Intelligence guard fixture preserves AIGuard's coverage-gap diagnosis, `edgeenv_orchestrator_producer_lineage`, `runtime_history_seed_run_config_traceability`, and EdgeEnv history missing-field runs as deterministic review context rather than a Lab policy override.
+- The committed Runtime Intelligence guard fixture preserves AIGuard's coverage-gap diagnosis, `edgeenv_orchestrator_producer_lineage`, `runtime_history_seed_run_config_traceability`, `remote_execution_recovered_by_fallback`, and EdgeEnv history missing-field runs as deterministic review context rather than a Lab policy override.
 - Guard evidence details preserve explanatory fields such as `why_it_matters`, evidence-local `suspected_causes`, and `recommendation`.
 - Deployment decision is `review_required`.
 - Triggered rules include `edgeenv_runtime_regression_review`.

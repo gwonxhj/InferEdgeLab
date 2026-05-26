@@ -62,7 +62,8 @@
       "edgeenv_orchestrator_producer_lineage",
       "runtime_history_seed_run_config_traceability",
       "runtime_queue_overload",
-      "runtime_thermal_instability"
+      "runtime_thermal_instability",
+      "remote_execution_recovered_by_fallback"
     ],
     "source_repositories": {
       "runtime_result": "InferEdge-Runtime",

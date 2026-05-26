@@ -1375,6 +1375,61 @@
           "history_missing_orchestrator_candidate_operation_context_role": "supplemental"
         }
       }
+    },
+    {
+      "type": "remote_execution_recovered_by_fallback",
+      "metric_name": "remote_fallback_recovered",
+      "observed_value": 1,
+      "baseline_value": 0,
+      "threshold": 0,
+      "delta": null,
+      "delta_pct": null,
+      "increase_factor": null,
+      "severity": "medium",
+      "status": "warning",
+      "explanation": "Remote dispatch starter failed on the primary worker and recovered through fallback. This is operation review evidence, not a production remote execution claim.",
+      "why_it_matters": "Fallback recovery keeps the local-first remote dispatch starter reproducible, but it still indicates primary worker reliability or connectivity risk before deployment.",
+      "suspected_causes": [
+        "remote_worker_unreachable",
+        "remote_dispatch_fallback_used"
+      ],
+      "recommendation": "Review primary worker health, endpoint reachability, and fallback policy before treating the remote dispatch path as stable.",
+      "raw_context": {
+        "remote_dispatch": {
+          "source_repository": "InferEdgeOrchestrator",
+          "artifact_role": "orchestrator-remote-dispatch-starter-evidence",
+          "operation_boundary": "remote dispatch starter evidence only",
+          "production_remote_execution": false,
+          "execution_status": "failed",
+          "fallback_final_status": "succeeded",
+          "remote_runtime_event_summary_runtime_event_count": 3,
+          "remote_runtime_event_summary_final_status": "succeeded",
+          "remote_runtime_event_summary_fallback_recovered": true,
+          "remote_runtime_event_summary_present": true,
+          "remote_runtime_event_summary_consistent": true,
+          "remote_runtime_event_summary": {
+            "schema_version": "inferedge-remote-runtime-event-summary-v1",
+            "runtime_event_count": 3,
+            "latest_event": "remote_fallback_execution_completed",
+            "final_status": "succeeded",
+            "fallback_recovered": true,
+            "fallback_event_count": 1,
+            "event_type_counts": {
+              "remote_dispatch_selected": 1,
+              "remote_execution_failed": 1,
+              "remote_fallback_execution_completed": 1
+            },
+            "error_category_counts": {
+              "connection_error": 1
+            },
+            "status_counts": {
+              "failed": 1,
+              "succeeded": 1
+            },
+            "operation_boundary": "remote dispatch starter evidence only"
+          }
+        }
+      }
     }
   ],
   "suspected_causes": [
@@ -1385,13 +1440,16 @@
     "power_mode_or_cooling_constraint",
     "queue_overload",
     "scheduler_contention",
-    "input_rate_exceeds_runtime_capacity"
+    "input_rate_exceeds_runtime_capacity",
+    "remote_worker_unreachable",
+    "remote_dispatch_fallback_used"
   ],
   "recommendations": [
     "Inspect telemetry coverage missing fields, rerun telemetry history export if needed, and preserve runtime_telemetry artifacts for both baseline and candidate before relying on trend diagnosis.",
     "Device-local Orchestrator producer lineage is preserved in the EdgeEnv runtime telemetry context.",
     "Review EdgeEnv telemetry history, power mode, cooling, and sustained run conditions before treating runtime regression as stable.",
-    "Inspect Orchestrator queue policy, target FPS, drop/fallback behavior, and runtime telemetry before deployment."
+    "Inspect Orchestrator queue policy, target FPS, drop/fallback behavior, and runtime telemetry before deployment.",
+    "Review primary worker health, endpoint reachability, and fallback policy before treating the remote dispatch path as stable."
   ],
   "thresholds": {
     "deadline_miss_rate_review": 0.05,
@@ -1734,6 +1792,40 @@
       "history_missing_orchestrator_candidate_device_local_event_count": 2.0,
       "history_missing_orchestrator_candidate_device_local_task_count": 1.0,
       "history_missing_orchestrator_candidate_operation_context_role": "supplemental"
+    },
+    "remote_dispatch": {
+      "source_repository": "InferEdgeOrchestrator",
+      "artifact_role": "orchestrator-remote-dispatch-starter-evidence",
+      "operation_boundary": "remote dispatch starter evidence only",
+      "production_remote_execution": false,
+      "execution_status": "failed",
+      "fallback_final_status": "succeeded",
+      "remote_runtime_event_summary_runtime_event_count": 3,
+      "remote_runtime_event_summary_final_status": "succeeded",
+      "remote_runtime_event_summary_fallback_recovered": true,
+      "remote_runtime_event_summary_present": true,
+      "remote_runtime_event_summary_consistent": true,
+      "remote_runtime_event_summary": {
+        "schema_version": "inferedge-remote-runtime-event-summary-v1",
+        "runtime_event_count": 3,
+        "latest_event": "remote_fallback_execution_completed",
+        "final_status": "succeeded",
+        "fallback_recovered": true,
+        "fallback_event_count": 1,
+        "event_type_counts": {
+          "remote_dispatch_selected": 1,
+          "remote_execution_failed": 1,
+          "remote_fallback_execution_completed": 1
+        },
+        "error_category_counts": {
+          "connection_error": 1
+        },
+        "status_counts": {
+          "failed": 1,
+          "succeeded": 1
+        },
+        "operation_boundary": "remote dispatch starter evidence only"
+      }
     },
     "runtime_telemetry_context": {
       "role": "supplemental_runtime_telemetry_context",

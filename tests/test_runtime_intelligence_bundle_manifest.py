@@ -84,6 +84,10 @@ def test_runtime_intelligence_bundle_manifest_gate_cli_passes(tmp_path):
         in summary
     )
     assert (
+        "aiguard_evidence: remote_execution_recovered_by_fallback validated"
+        in summary
+    )
+    assert (
         "aiguard_handoff_alignment: external required evidence types satisfied"
         in summary
     )
@@ -92,6 +96,7 @@ def test_runtime_intelligence_bundle_manifest_gate_cli_passes(tmp_path):
         "aiguard_raw_context: history_seed_run_config_traceability preserved"
         in summary
     )
+    assert "aiguard_raw_context: remote_runtime_event_summary preserved" in summary
     assert (
         "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage"
         in summary
