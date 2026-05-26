@@ -128,3 +128,30 @@ def test_runtime_intelligence_artifact_gate_fails_when_coverage_gap_marker_is_mi
     assert result == 2
     summary = summary_path.read_text(encoding="utf-8")
     assert "`aiguard_coverage_field_gap`" in summary
+
+
+def test_runtime_intelligence_artifact_gate_fails_when_run_config_traceability_is_missing(
+    tmp_path,
+):
+    markdown_path, html_path = _write_runtime_intelligence_reports(tmp_path)
+    markdown = markdown_path.read_text(encoding="utf-8").replace(
+        "runtime_history_seed_run_config_traceability",
+        "run_config traceability marker removed",
+    )
+    html = html_path.read_text(encoding="utf-8").replace(
+        "runtime_history_seed_run_config_traceability",
+        "run_config traceability marker removed",
+    )
+    markdown_path.write_text(markdown, encoding="utf-8")
+    html_path.write_text(html, encoding="utf-8")
+    summary_path = tmp_path / "gate_summary.md"
+
+    result = gate_main(
+        markdown=str(markdown_path),
+        html=str(html_path),
+        summary_out=str(summary_path),
+    )
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "`aiguard_run_config_traceability_evidence`" in summary
