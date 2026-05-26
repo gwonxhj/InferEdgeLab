@@ -69,6 +69,11 @@ def test_runtime_intelligence_bundle_manifest_gate_cli_passes(tmp_path):
         in summary
     )
     assert (
+        "orchestrator_downstream_guard_alignment: "
+        "producer_lineage_evidence_type=edgeenv_orchestrator_producer_lineage"
+        in summary
+    )
+    assert (
         "orchestrator_producer_lineage_shape: "
         "per-task source/stage/count mappings validated"
         in summary
@@ -95,6 +100,8 @@ def test_runtime_intelligence_bundle_manifest_gate_cli_passes(tmp_path):
         "aiguard_raw_context: missing_telemetry_orchestrator_context preserved"
         in summary
     )
+    assert "aiguard_raw_context: downstream_guard_alignment preserved" in summary
+    assert "aiguard_raw_context: producer_lineage_guard_alignment preserved" in summary
 
 
 def test_runtime_intelligence_bundle_manifest_gate_validates_edgeenv_handoff(

@@ -10,6 +10,10 @@ RUNTIME_OPERATION_ANOMALY_TYPES = {
     "runtime_thermal_instability",
 }
 
+ORCHESTRATOR_PRODUCER_LINEAGE_EVIDENCE_TYPE = (
+    "edgeenv_orchestrator_producer_lineage"
+)
+
 RUN_CONFIG_TRACEABILITY_EVIDENCE_TYPE = "runtime_history_seed_run_config_traceability"
 
 RUN_CONFIG_MARKER_FIELDS = (
@@ -92,7 +96,12 @@ def build_runtime_intelligence_risk_rows(
                     "Review count is derived from deterministic evidence statuses.",
                 )
             )
-        _append_aiguard_runtime_operation_rows(rows, guard_analysis, warning_items)
+        _append_aiguard_runtime_operation_rows(
+            rows,
+            guard_analysis,
+            warning_items,
+            evidence_items,
+        )
         _append_aiguard_run_config_traceability_row(rows, evidence_items)
 
     return rows
@@ -280,6 +289,7 @@ def _append_aiguard_runtime_operation_rows(
     rows: list[tuple[str, str, str]],
     guard_analysis: dict[str, Any],
     warning_items: list[dict[str, Any]],
+    evidence_items: list[dict[str, Any]],
 ) -> None:
     anomaly_types = sorted(
         {
@@ -328,6 +338,19 @@ def _append_aiguard_runtime_operation_rows(
                 "AIGuard producer lineage handoff",
                 producer_label,
                 "Device-local producer provenance is traceability evidence; Lab still owns the deployment decision.",
+            )
+        )
+
+    guard_alignment_label = _aiguard_guard_alignment_label(
+        edgeenv_metrics,
+        evidence_items,
+    )
+    if guard_alignment_label:
+        rows.append(
+            (
+                "AIGuard producer-lineage guard alignment",
+                guard_alignment_label,
+                "Orchestrator declares the downstream AIGuard evidence type while Lab remains the final decision owner.",
             )
         )
 
@@ -482,6 +505,51 @@ def _aiguard_producer_lineage_label(edgeenv_metrics: dict[str, Any]) -> str:
         parts.append(f"device_local_events={event_count}")
     if role is not None:
         parts.append(f"role={role}")
+    return ", ".join(parts)
+
+
+def _aiguard_guard_alignment_label(
+    edgeenv_metrics: dict[str, Any],
+    evidence_items: list[dict[str, Any]],
+) -> str:
+    evidence_type = edgeenv_metrics.get(
+        "orchestrator_guard_alignment_producer_lineage_evidence_type"
+    )
+    candidates = _string_list(
+        edgeenv_metrics.get(
+            "orchestrator_guard_alignment_operation_evidence_candidates"
+        )
+    )
+    lab_owner = edgeenv_metrics.get(
+        "orchestrator_guard_alignment_lab_is_final_decision_owner"
+    )
+
+    if not evidence_type:
+        lineage_evidence = _find_evidence_item(
+            evidence_items,
+            ORCHESTRATOR_PRODUCER_LINEAGE_EVIDENCE_TYPE,
+        )
+        if isinstance(lineage_evidence, dict):
+            producer_lineage = (lineage_evidence.get("raw_context") or {}).get(
+                "producer_lineage"
+            )
+            if isinstance(producer_lineage, dict):
+                evidence_type = producer_lineage.get(
+                    "candidate_guard_alignment_producer_lineage_evidence_type"
+                )
+                candidates = _string_list(
+                    producer_lineage.get(
+                        "candidate_guard_alignment_operation_evidence_candidates"
+                    )
+                )
+
+    parts: list[str] = []
+    if isinstance(evidence_type, str) and evidence_type:
+        parts.append(f"evidence={evidence_type}")
+    if candidates:
+        parts.append("candidates=" + ",".join(candidates))
+    if lab_owner is not None:
+        parts.append(f"lab_final_owner={str(lab_owner).lower()}")
     return ", ".join(parts)
 
 

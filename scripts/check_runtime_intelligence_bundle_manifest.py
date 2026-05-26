@@ -74,6 +74,12 @@ REQUIRED_ORCHESTRATOR_AIGUARD_EVIDENCE_CANDIDATES = {
     "runtime_queue_overload",
     "runtime_thermal_instability",
 }
+REQUIRED_ORCHESTRATOR_GUARD_ALIGNMENT = {
+    "declared_by": "orchestrator",
+    "producer_lineage_evidence_type": "edgeenv_orchestrator_producer_lineage",
+    "orchestrator_is_final_decision_owner": False,
+    "lab_is_final_decision_owner": True,
+}
 REQUIRED_EDGEENV_HANDOFF_BOUNDARY_FLAGS = {
     "orchestrator_context_is_verdict": False,
     "orchestrator_context_is_comparability_gate": False,
@@ -120,6 +126,7 @@ SUMMARY_CONTRACT_MARKERS = (
     "orchestrator_mapping_hint: coverage_summary_owner=edgeenv",
     "orchestrator_mapping_hint: operation_context_role=supplemental",
     "orchestrator_mapping_hint: aiguard_evidence_candidates=runtime_queue_overload,runtime_thermal_instability",
+    "orchestrator_downstream_guard_alignment: producer_lineage_evidence_type=edgeenv_orchestrator_producer_lineage",
     "orchestrator_device_local_producer_lineage: candidate_context.producer validated",
     "orchestrator_producer_lineage_shape: per-task source/stage/count mappings validated",
     "edgeenv_history_seed_run_config: run_config snapshots validated",
@@ -130,6 +137,8 @@ SUMMARY_CONTRACT_MARKERS = (
     "aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
     "aiguard_raw_context: orchestrator_mapping_hint preserved",
     "aiguard_raw_context: orchestrator_producer_markers preserved",
+    "aiguard_raw_context: downstream_guard_alignment preserved",
+    "aiguard_raw_context: producer_lineage_guard_alignment preserved",
     "aiguard_raw_context: missing_telemetry_orchestrator_context preserved",
     "aiguard_handoff_alignment: external required evidence types satisfied",
 )
@@ -755,6 +764,12 @@ def _validate_orchestrator_mapping_hint(
             f"aiguard_evidence_candidates is missing {missing_candidates}",
         )
 
+    _validate_downstream_guard_alignment(
+        operation_context.get("downstream_guard_alignment"),
+        errors,
+        "orchestrator_operation_context.downstream_guard_alignment",
+    )
+
     candidate_context = operation_context.get("candidate_context")
     _record(
         isinstance(candidate_context, dict),
@@ -770,6 +785,43 @@ def _validate_orchestrator_mapping_hint(
             errors,
             "orchestrator_operation_context.candidate_context is missing "
             f"{missing_context_fields}",
+        )
+
+
+def _validate_downstream_guard_alignment(
+    alignment: Any,
+    errors: list[str],
+    prefix: str,
+) -> None:
+    _record(
+        isinstance(alignment, dict),
+        errors,
+        f"{prefix} must be an object",
+    )
+    if not isinstance(alignment, dict):
+        return
+
+    for key, expected in REQUIRED_ORCHESTRATOR_GUARD_ALIGNMENT.items():
+        _record(
+            alignment.get(key) == expected,
+            errors,
+            f"{prefix}.{key} must be {expected}",
+        )
+
+    candidates = alignment.get("operation_evidence_candidates")
+    _record(
+        isinstance(candidates, list),
+        errors,
+        f"{prefix}.operation_evidence_candidates must be a list",
+    )
+    if isinstance(candidates, list):
+        missing = sorted(
+            REQUIRED_ORCHESTRATOR_AIGUARD_EVIDENCE_CANDIDATES - set(candidates)
+        )
+        _record(
+            not missing,
+            errors,
+            f"{prefix}.operation_evidence_candidates is missing {missing}",
         )
 
 
@@ -1493,11 +1545,89 @@ def _validate_producer_lineage_evidence(
         errors,
         "AIGuard producer lineage candidate_lineage_shape_valid must be true",
     )
+    _validate_downstream_guard_alignment(
+        producer_lineage.get("candidate_guard_alignment"),
+        errors,
+        "AIGuard producer lineage candidate_guard_alignment",
+    )
+    _record(
+        producer_lineage.get("candidate_guard_alignment_valid") is True,
+        errors,
+        "AIGuard producer lineage candidate_guard_alignment_valid must be true",
+    )
+    _record(
+        producer_lineage.get("candidate_guard_alignment_producer_lineage_evidence_type")
+        == REQUIRED_ORCHESTRATOR_GUARD_ALIGNMENT["producer_lineage_evidence_type"],
+        errors,
+        "AIGuard producer lineage "
+        "candidate_guard_alignment_producer_lineage_evidence_type must be "
+        "edgeenv_orchestrator_producer_lineage",
+    )
+    candidate_alignment_candidates = producer_lineage.get(
+        "candidate_guard_alignment_operation_evidence_candidates"
+    )
+    _record(
+        isinstance(candidate_alignment_candidates, list),
+        errors,
+        "AIGuard producer lineage "
+        "candidate_guard_alignment_operation_evidence_candidates must be a list",
+    )
+    if isinstance(candidate_alignment_candidates, list):
+        missing_candidate_alignment = sorted(
+            REQUIRED_ORCHESTRATOR_AIGUARD_EVIDENCE_CANDIDATES
+            - set(candidate_alignment_candidates)
+        )
+        _record(
+            not missing_candidate_alignment,
+            errors,
+            "AIGuard producer lineage "
+            "candidate_guard_alignment_operation_evidence_candidates "
+            f"is missing {missing_candidate_alignment}",
+        )
     _record(
         producer_lineage.get("missing_lineage_shape_valid") is True,
         errors,
         "AIGuard producer lineage missing_lineage_shape_valid must be true",
     )
+    _validate_downstream_guard_alignment(
+        producer_lineage.get("missing_guard_alignment"),
+        errors,
+        "AIGuard producer lineage missing_guard_alignment",
+    )
+    _record(
+        producer_lineage.get("missing_guard_alignment_valid") is True,
+        errors,
+        "AIGuard producer lineage missing_guard_alignment_valid must be true",
+    )
+    _record(
+        producer_lineage.get("missing_guard_alignment_producer_lineage_evidence_type")
+        == REQUIRED_ORCHESTRATOR_GUARD_ALIGNMENT["producer_lineage_evidence_type"],
+        errors,
+        "AIGuard producer lineage "
+        "missing_guard_alignment_producer_lineage_evidence_type must be "
+        "edgeenv_orchestrator_producer_lineage",
+    )
+    missing_alignment_candidates = producer_lineage.get(
+        "missing_guard_alignment_operation_evidence_candidates"
+    )
+    _record(
+        isinstance(missing_alignment_candidates, list),
+        errors,
+        "AIGuard producer lineage "
+        "missing_guard_alignment_operation_evidence_candidates must be a list",
+    )
+    if isinstance(missing_alignment_candidates, list):
+        missing_alignment_missing = sorted(
+            REQUIRED_ORCHESTRATOR_AIGUARD_EVIDENCE_CANDIDATES
+            - set(missing_alignment_candidates)
+        )
+        _record(
+            not missing_alignment_missing,
+            errors,
+            "AIGuard producer lineage "
+            "missing_guard_alignment_operation_evidence_candidates "
+            f"is missing {missing_alignment_missing}",
+        )
     _record(
         producer_lineage.get("missing_context_run_ids")
         == ["edgeenv-smoke-missing"],
@@ -1693,6 +1823,28 @@ def _validate_aiguard_orchestrator_mapping_hint(
         "AIGuard coverage evidence orchestrator_producer_contract must be "
         f"{REQUIRED_PRODUCER_CONTRACTS['orchestrator_feed_schema']}",
     )
+    _validate_downstream_guard_alignment(
+        edgeenv_context.get("orchestrator_downstream_guard_alignment"),
+        errors,
+        "AIGuard coverage evidence orchestrator_downstream_guard_alignment",
+    )
+    _record(
+        edgeenv_context.get("orchestrator_guard_alignment_declared_by")
+        == REQUIRED_ORCHESTRATOR_GUARD_ALIGNMENT["declared_by"],
+        errors,
+        "AIGuard coverage evidence orchestrator_guard_alignment_declared_by "
+        "must be orchestrator",
+    )
+    _record(
+        edgeenv_context.get(
+            "orchestrator_guard_alignment_producer_lineage_evidence_type"
+        )
+        == REQUIRED_ORCHESTRATOR_GUARD_ALIGNMENT["producer_lineage_evidence_type"],
+        errors,
+        "AIGuard coverage evidence "
+        "orchestrator_guard_alignment_producer_lineage_evidence_type must be "
+        "edgeenv_orchestrator_producer_lineage",
+    )
 
     mapping_hint = edgeenv_context.get("orchestrator_edgeenv_mapping_hint")
     _record(
@@ -1801,6 +1953,46 @@ def _validate_aiguard_orchestrator_mapping_hint(
             f"is missing {missing_flattened_candidates}",
         )
 
+    alignment_candidates = edgeenv_context.get(
+        "orchestrator_guard_alignment_operation_evidence_candidates"
+    )
+    _record(
+        isinstance(alignment_candidates, list),
+        errors,
+        "AIGuard coverage evidence "
+        "orchestrator_guard_alignment_operation_evidence_candidates "
+        "must be a list",
+    )
+    if isinstance(alignment_candidates, list):
+        missing_alignment_candidates = sorted(
+            REQUIRED_ORCHESTRATOR_AIGUARD_EVIDENCE_CANDIDATES
+            - set(alignment_candidates)
+        )
+        _record(
+            not missing_alignment_candidates,
+            errors,
+            "AIGuard coverage evidence "
+            "orchestrator_guard_alignment_operation_evidence_candidates "
+            f"is missing {missing_alignment_candidates}",
+        )
+    _record(
+        edgeenv_context.get(
+            "orchestrator_guard_alignment_orchestrator_is_final_decision_owner"
+        )
+        is False,
+        errors,
+        "AIGuard coverage evidence "
+        "orchestrator_guard_alignment_orchestrator_is_final_decision_owner "
+        "must be false",
+    )
+    _record(
+        edgeenv_context.get("orchestrator_guard_alignment_lab_is_final_decision_owner")
+        is True,
+        errors,
+        "AIGuard coverage evidence "
+        "orchestrator_guard_alignment_lab_is_final_decision_owner must be true",
+    )
+
     _record(
         edgeenv_context.get("orchestrator_candidate_context_telemetry_source")
         == "inferedge_orchestrator_operation_summary",
@@ -1856,6 +2048,30 @@ def _validate_aiguard_missing_orchestrator_context(
         "AIGuard coverage evidence history_missing_orchestrator_producer_contract "
         f"must be {REQUIRED_PRODUCER_CONTRACTS['orchestrator_feed_schema']}",
     )
+    _validate_downstream_guard_alignment(
+        edgeenv_context.get("history_missing_orchestrator_downstream_guard_alignment"),
+        errors,
+        "AIGuard coverage evidence "
+        "history_missing_orchestrator_downstream_guard_alignment",
+    )
+    _record(
+        edgeenv_context.get("history_missing_orchestrator_guard_alignment_declared_by")
+        == REQUIRED_ORCHESTRATOR_GUARD_ALIGNMENT["declared_by"],
+        errors,
+        "AIGuard coverage evidence "
+        "history_missing_orchestrator_guard_alignment_declared_by "
+        "must be orchestrator",
+    )
+    _record(
+        edgeenv_context.get(
+            "history_missing_orchestrator_guard_alignment_producer_lineage_evidence_type"
+        )
+        == REQUIRED_ORCHESTRATOR_GUARD_ALIGNMENT["producer_lineage_evidence_type"],
+        errors,
+        "AIGuard coverage evidence "
+        "history_missing_orchestrator_guard_alignment_producer_lineage_evidence_type "
+        "must be edgeenv_orchestrator_producer_lineage",
+    )
     _record(
         edgeenv_context.get(
             "history_missing_orchestrator_candidate_context_telemetry_source"
@@ -1906,6 +2122,48 @@ def _validate_aiguard_missing_orchestrator_context(
             "history_missing_orchestrator_mapping_hint_aiguard_evidence_candidates "
             f"is missing {missing_candidates}",
         )
+    alignment_candidates = edgeenv_context.get(
+        "history_missing_orchestrator_guard_alignment_operation_evidence_candidates"
+    )
+    _record(
+        isinstance(alignment_candidates, list),
+        errors,
+        "AIGuard coverage evidence "
+        "history_missing_orchestrator_guard_alignment_operation_evidence_candidates "
+        "must be a list",
+    )
+    if isinstance(alignment_candidates, list):
+        missing_alignment_candidates = sorted(
+            REQUIRED_ORCHESTRATOR_AIGUARD_EVIDENCE_CANDIDATES
+            - set(alignment_candidates)
+        )
+        _record(
+            not missing_alignment_candidates,
+            errors,
+            "AIGuard coverage evidence "
+            "history_missing_orchestrator_guard_alignment_operation_evidence_candidates "
+            f"is missing {missing_alignment_candidates}",
+        )
+    _record(
+        edgeenv_context.get(
+            "history_missing_orchestrator_guard_alignment_orchestrator_is_final_decision_owner"
+        )
+        is False,
+        errors,
+        "AIGuard coverage evidence "
+        "history_missing_orchestrator_guard_alignment_orchestrator_is_final_decision_owner "
+        "must be false",
+    )
+    _record(
+        edgeenv_context.get(
+            "history_missing_orchestrator_guard_alignment_lab_is_final_decision_owner"
+        )
+        is True,
+        errors,
+        "AIGuard coverage evidence "
+        "history_missing_orchestrator_guard_alignment_lab_is_final_decision_owner "
+        "must be true",
+    )
 
 
 def _write_summary(
