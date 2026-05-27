@@ -65,6 +65,15 @@
       "runtime_thermal_instability",
       "remote_execution_recovered_by_fallback"
     ],
+    "expected_report_markers": [
+      "Runtime Intelligence Risk Summary",
+      "Orchestrator operation feed context",
+      "AIGuard runtime operation anomalies",
+      "AIGuard remote dispatch event summary",
+      "AIGuard remote event summary consistency",
+      "AIGuard producer-lineage guard alignment",
+      "Lab remains the final deployment decision owner."
+    ],
     "source_repositories": {
       "runtime_result": "InferEdge-Runtime",
       "edgeenv_regression_report": "InferEdgeEnv",

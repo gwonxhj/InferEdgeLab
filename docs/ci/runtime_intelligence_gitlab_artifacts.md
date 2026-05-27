@@ -179,6 +179,14 @@ check file-based and does not make AIGuard a deployment decision owner.
 The artifact gate is implemented by `scripts/check_runtime_intelligence_artifact_bundle.py`. It checks the generated Markdown / HTML report for the required Runtime Intelligence rows, including Lab ownership, EdgeEnv comparability, telemetry coverage-gap markers, Orchestrator operation feed context, AIGuard runtime operation anomalies, remote dispatch starter event summary, `edgeenv_orchestrator_producer_lineage`, `runtime_history_seed_run_config_traceability`, `remote_execution_recovered_by_fallback`, and triggered deployment review rules.
 
 The CI artifact gate is implemented by `scripts/check_runtime_intelligence_ci_artifacts.py`. It runs in the deployment-risk stage and verifies that the collected optional GitLab artifacts include the manifest gate summary, AIGuard handoff alignment artifact, report gate summary, Runtime Intelligence Risk Summary report, portfolio demo status, and the validated contract markers from the bundle manifest gate. This keeps the final CI gate file-based and deterministic without turning GitLab into a runtime control plane.
+The same CI artifact gate also checks the copied
+`aiguard_edgeenv_handoff_alignment.json/.md` for Lab report marker context:
+`lab_expected_report_markers` must match the Lab-owned Runtime Intelligence
+report marker set, `report_marker_context_role` must remain
+`lab_report_contract_context`, and
+`aiguard_validates_expected_report_markers` must remain `false`. This keeps
+AIGuard as a deterministic external evidence provider while leaving report
+marker enforcement to Lab's bundle/report gates.
 
 Remote dispatch rows in this artifact chain are starter evidence only. The
 gates require worker-selection, fallback recovery, event-count, consistency,
