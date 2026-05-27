@@ -96,6 +96,7 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
     )
     assert "edgeenv_handoff: lab_bundle_alignment validated" in bundle_summary
     assert "edgeenv_handoff: runtime_telemetry_history validated" in bundle_summary
+    assert "edgeenv_handoff: remote_dispatch_boundary preserved" in bundle_summary
     assert (
         "edgeenv_handoff: external AIGuard evidence requirements declared"
         in bundle_summary
