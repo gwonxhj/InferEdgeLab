@@ -121,6 +121,15 @@ REQUIRED_GUARD_EVIDENCE_FIELDS = {
 }
 VALID_GUARD_EVIDENCE_STATUSES = {"passed", "warning", "failed", "skipped"}
 VALID_GUARD_EVIDENCE_SEVERITIES = {"low", "medium", "high", "critical"}
+REQUIRED_EXPECTED_REPORT_MARKERS = {
+    "Runtime Intelligence Risk Summary",
+    "Orchestrator operation feed context",
+    "AIGuard runtime operation anomalies",
+    "AIGuard remote dispatch event summary",
+    "AIGuard remote event summary consistency",
+    "AIGuard producer-lineage guard alignment",
+    "Lab remains the final deployment decision owner.",
+}
 SUMMARY_CONTRACT_MARKERS = (
     "source_repositories: Runtime, EdgeEnv, Orchestrator, AIGuard, Lab",
     "producer_contracts: EdgeEnv history, Orchestrator feed, AIGuard diagnosis",
@@ -150,6 +159,7 @@ SUMMARY_CONTRACT_MARKERS = (
     "aiguard_raw_context: producer_lineage_guard_alignment preserved",
     "aiguard_raw_context: missing_telemetry_orchestrator_context preserved",
     "aiguard_handoff_alignment: external required evidence types satisfied",
+    "expected_report_markers: Runtime Intelligence report markers declared",
 )
 EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS = (
     "edgeenv_handoff: lab_bundle_alignment validated",
@@ -257,6 +267,30 @@ def _validate_manifest_shape(manifest: dict[str, Any], errors: list[str]) -> Non
                 errors,
                 f"boundaries.{key} must be {expected}",
             )
+
+    expected_report_markers = manifest.get("expected_report_markers")
+    _record(
+        isinstance(expected_report_markers, list),
+        errors,
+        "expected_report_markers must be a list",
+    )
+    if isinstance(expected_report_markers, list):
+        invalid_markers = [
+            marker
+            for marker in expected_report_markers
+            if not isinstance(marker, str) or not marker
+        ]
+        _record(
+            not invalid_markers,
+            errors,
+            "expected_report_markers must contain non-empty strings",
+        )
+        _record(
+            set(expected_report_markers) == REQUIRED_EXPECTED_REPORT_MARKERS,
+            errors,
+            "expected_report_markers must match Lab-required Runtime "
+            "Intelligence report markers",
+        )
 
 
 def _validate_edgeenv_handoff_alignment(
