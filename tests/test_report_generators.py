@@ -506,10 +506,15 @@ def make_remote_runtime_event_guard_analysis() -> dict:
                         "operation_boundary": (
                             "remote dispatch starter evidence only"
                         ),
+                        "production_remote_execution": False,
                         "remote_runtime_event_summary_runtime_event_count": 3,
+                        "remote_runtime_event_summary_evidence_role": (
+                            "remote_dispatch_runtime_event_compact_summary"
+                        ),
                         "remote_runtime_event_summary_operation_boundary": (
                             "remote dispatch starter evidence only"
                         ),
+                        "remote_runtime_event_summary_production_remote_execution": False,
                         "remote_runtime_event_summary_final_status": "succeeded",
                         "remote_runtime_event_summary_fallback_recovered": True,
                         "remote_runtime_event_summary_present": True,
@@ -523,10 +528,15 @@ def make_remote_runtime_event_guard_analysis() -> dict:
                 "execution_status": "failed",
                 "fallback_final_status": "succeeded",
                 "operation_boundary": "remote dispatch starter evidence only",
+                "production_remote_execution": False,
                 "remote_runtime_event_summary_runtime_event_count": 3,
+                "remote_runtime_event_summary_evidence_role": (
+                    "remote_dispatch_runtime_event_compact_summary"
+                ),
                 "remote_runtime_event_summary_operation_boundary": (
                     "remote dispatch starter evidence only"
                 ),
+                "remote_runtime_event_summary_production_remote_execution": False,
                 "remote_runtime_event_summary_final_status": "succeeded",
                 "remote_runtime_event_summary_fallback_recovered": True,
                 "remote_runtime_event_summary_present": True,
@@ -774,7 +784,9 @@ def test_generate_compare_markdown_summarizes_remote_runtime_event_summary():
     assert "| AIGuard remote event summary consistency | consistent |" in text
     assert (
         "| AIGuard remote summary boundary | "
-        "remote dispatch starter evidence only |"
+        "role=remote_dispatch_runtime_event_compact_summary, "
+        "boundary=remote dispatch starter evidence only, "
+        "production_remote_execution=False |"
     ) in text
     assert (
         "| AIGuard remote dispatch evidence | "
@@ -1022,7 +1034,9 @@ def test_generate_compare_html_summarizes_remote_runtime_event_summary():
     assert "AIGuard remote event summary consistency" in html
     assert "consistent" in html
     assert "AIGuard remote summary boundary" in html
+    assert "remote_dispatch_runtime_event_compact_summary" in html
     assert "remote dispatch starter evidence only" in html
+    assert "production_remote_execution=False" in html
     assert "remote_execution_recovered_by_fallback" in html
     assert "Lab remains the final decision owner" in html
 

@@ -567,14 +567,31 @@ def _remote_runtime_event_boundary_label(remote_dispatch: dict[str, Any]) -> str
     if not isinstance(event_summary, dict):
         event_summary = {}
 
+    role = _first_present(
+        remote_dispatch.get("remote_runtime_event_summary_evidence_role"),
+        remote_dispatch.get("evidence_role"),
+        event_summary.get("evidence_role"),
+    )
     boundary = _first_present(
         remote_dispatch.get("remote_runtime_event_summary_operation_boundary"),
         remote_dispatch.get("operation_boundary"),
         event_summary.get("operation_boundary"),
     )
-    if boundary is None:
+    production_remote_execution = _first_present(
+        remote_dispatch.get("remote_runtime_event_summary_production_remote_execution"),
+        remote_dispatch.get("production_remote_execution"),
+        event_summary.get("production_remote_execution"),
+    )
+    parts = []
+    if role is not None:
+        parts.append(f"role={role}")
+    if boundary is not None:
+        parts.append(f"boundary={boundary}")
+    if production_remote_execution is not None:
+        parts.append(f"production_remote_execution={production_remote_execution}")
+    if not parts:
         return ""
-    return str(boundary)
+    return ", ".join(str(part) for part in parts)
 
 
 def _first_present(*values: Any) -> Any:
