@@ -8,6 +8,19 @@
   "guard_analysis_schema_version": "inferedge-aiguard-diagnosis-v1",
   "required_evidence_type_count": 5,
   "guard_evidence_type_count": 5,
+  "lab_expected_report_marker_count": 7,
+  "lab_expected_report_markers": [
+    "Runtime Intelligence Risk Summary",
+    "Orchestrator operation feed context",
+    "AIGuard runtime operation anomalies",
+    "AIGuard remote dispatch event summary",
+    "AIGuard remote event summary consistency",
+    "AIGuard producer-lineage guard alignment",
+    "Lab remains the final deployment decision owner."
+  ],
+  "lab_report_marker_owner": "lab",
+  "report_marker_context_role": "lab_report_contract_context",
+  "aiguard_validates_expected_report_markers": false,
   "required_evidence_types": [
     "runtime_telemetry_context_coverage",
     "edgeenv_orchestrator_producer_lineage",

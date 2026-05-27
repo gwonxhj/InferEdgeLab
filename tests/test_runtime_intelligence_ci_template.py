@@ -68,6 +68,9 @@ def test_runtime_intelligence_gitlab_doc_states_ownership_boundaries():
     assert "does not become a production runtime control plane" in text
     assert "new InferEdge Intelligence repo" in text
     assert "ML or forecasting pipeline" in text
+    assert "lab_expected_report_markers" in text
+    assert "lab_report_contract_context" in text
+    assert "aiguard_validates_expected_report_markers" in text
 
 
 def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_path):
@@ -140,6 +143,7 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
                 "- aiguard_raw_context: producer_lineage_guard_alignment preserved",
                 "- aiguard_raw_context: missing_telemetry_orchestrator_context preserved",
                 "- aiguard_handoff_alignment: external required evidence types satisfied",
+                "- expected_report_markers: Runtime Intelligence report markers declared",
                 "- edgeenv_handoff: lab_bundle_alignment validated",
                 "- edgeenv_handoff: runtime_telemetry_history validated",
                 "- edgeenv_handoff: remote_dispatch_boundary preserved",
@@ -158,6 +162,18 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
     (report_dir / "aiguard_edgeenv_handoff_alignment.json").write_text(
         '{"schema_version":"inferedge-aiguard-edgeenv-handoff-alignment-v1",'
         '"status":"passed","decision_owner":"lab","diagnosis_owner":"aiguard",'
+        '"lab_expected_report_marker_count":7,'
+        '"lab_expected_report_markers":['
+        '"Runtime Intelligence Risk Summary",'
+        '"Orchestrator operation feed context",'
+        '"AIGuard runtime operation anomalies",'
+        '"AIGuard remote dispatch event summary",'
+        '"AIGuard remote event summary consistency",'
+        '"AIGuard producer-lineage guard alignment",'
+        '"Lab remains the final deployment decision owner."],'
+        '"lab_report_marker_owner":"lab",'
+        '"report_marker_context_role":"lab_report_contract_context",'
+        '"aiguard_validates_expected_report_markers":false,'
         '"handoff_producer_lineage_guard_alignment_run_ids":'
         '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
         '"guard_analysis_producer_lineage_guard_alignment_run_ids":'
@@ -171,6 +187,9 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
                 "- status: passed",
                 "- decision_owner: lab",
                 "- diagnosis_owner: aiguard",
+                "- lab_expected_report_markers: Runtime Intelligence Risk Summary, Orchestrator operation feed context, AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, AIGuard remote event summary consistency, AIGuard producer-lineage guard alignment, Lab remains the final deployment decision owner.",
+                "- report_marker_context_role: lab_report_contract_context",
+                "- aiguard_validates_expected_report_markers: False",
                 "- handoff_producer_lineage_guard_alignment_run_ids: edgeenv-smoke-candidate, edgeenv-smoke-missing",
                 "- guard_analysis_producer_lineage_guard_alignment_run_ids: edgeenv-smoke-candidate, edgeenv-smoke-missing",
             ]
@@ -240,6 +259,134 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_risk_summary(
     assert result == 2
     summary = summary_path.read_text(encoding="utf-8")
     assert "runtime report missing marker: ## Runtime Intelligence Risk Summary" in summary
+
+
+def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_lab_marker_context(
+    tmp_path,
+):
+    report_dir = tmp_path / "runtime_intelligence_ci"
+    report_dir.mkdir()
+    for name in (
+        "edgeenv_runtime_regression.md",
+        "edgeenv_runtime_regression.html",
+        "runtime_anomaly_summary.html",
+        "portfolio_demo_check.md",
+    ):
+        (report_dir / name).write_text("placeholder\n", encoding="utf-8")
+    (report_dir / "runtime_anomaly_summary.md").write_text(
+        "\n".join(
+            [
+                "## Runtime Intelligence Risk Summary",
+                "Lab remains the final deployment decision owner.",
+                "AIGuard runtime operation anomalies",
+                "runtime_queue_overload, runtime_thermal_instability",
+                "Runtime telemetry coverage gaps",
+                "AIGuard producer-lineage guard alignment",
+                "edgeenv_orchestrator_producer_lineage",
+                "AIGuard run_config traceability evidence",
+                "runtime_history_seed_run_config_traceability",
+                "AIGuard remote dispatch event summary",
+                "remote_execution_recovered_by_fallback",
+                "runtime_telemetry_field_gap",
+                "Inspect telemetry coverage missing fields",
+                "guard_warning_review",
+                "edgeenv_runtime_regression_review",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (report_dir / "runtime_intelligence_bundle_manifest_gate_summary.md").write_text(
+        "\n".join(
+            [
+                "- Status: passed",
+                "## Validated Contract Markers",
+                "- source_repositories: Runtime, EdgeEnv, Orchestrator, AIGuard, Lab",
+                "- producer_contracts: EdgeEnv history, Orchestrator feed, AIGuard diagnosis",
+                "- orchestrator_producer_markers: "
+                "source_repository=InferEdgeOrchestrator,"
+                "artifact_role=orchestrator-supplemental-operation-context,"
+                "producer_contract=inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
+                "- ownership: regression_owner=edgeenv, deployment_decision_owner=lab",
+                "- orchestrator_mapping_hint: coverage_summary_owner=edgeenv",
+                "- orchestrator_mapping_hint: operation_context_role=supplemental",
+                "- orchestrator_mapping_hint: aiguard_evidence_candidates=runtime_queue_overload,runtime_thermal_instability",
+                "- orchestrator_downstream_guard_alignment: producer_lineage_evidence_type=edgeenv_orchestrator_producer_lineage",
+                "- orchestrator_device_local_producer_lineage: candidate_context.producer validated",
+                "- orchestrator_producer_lineage_shape: per-task source/stage/count mappings validated",
+                "- edgeenv_history_seed_run_config: run_config snapshots validated",
+                "- aiguard_evidence: edgeenv_orchestrator_producer_lineage validated",
+                "- aiguard_evidence: runtime_history_seed_run_config_traceability validated",
+                "- aiguard_evidence: remote_execution_recovered_by_fallback validated",
+                "- aiguard_raw_context: producer_lineage_shape preserved",
+                "- aiguard_raw_context: history_seed_run_config_traceability preserved",
+                "- aiguard_raw_context: remote_runtime_event_summary preserved",
+                "- aiguard_raw_context: remote_runtime_summary_boundary preserved",
+                "- aiguard_raw_context: telemetry_coverage_source=history_telemetry_coverage",
+                "- aiguard_raw_context: orchestrator_mapping_hint preserved",
+                "- aiguard_raw_context: orchestrator_producer_markers preserved",
+                "- aiguard_raw_context: downstream_guard_alignment preserved",
+                "- aiguard_raw_context: producer_lineage_guard_alignment preserved",
+                "- aiguard_raw_context: missing_telemetry_orchestrator_context preserved",
+                "- aiguard_handoff_alignment: external required evidence types satisfied",
+                "- expected_report_markers: Runtime Intelligence report markers declared",
+                "- edgeenv_handoff: lab_bundle_alignment validated",
+                "- edgeenv_handoff: runtime_telemetry_history validated",
+                "- edgeenv_handoff: remote_dispatch_boundary preserved",
+                "- edgeenv_handoff: external AIGuard evidence requirements declared",
+                "- edgeenv_handoff: device_local_producer_lineage validated",
+                "- edgeenv_handoff: producer_lineage_guard_alignment validated",
+                "- edgeenv_handoff: missing_telemetry_orchestrator_context validated",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (report_dir / "runtime_anomaly_gate_summary.md").write_text(
+        "- Status: passed\n",
+        encoding="utf-8",
+    )
+    (report_dir / "aiguard_edgeenv_handoff_alignment.json").write_text(
+        '{"schema_version":"inferedge-aiguard-edgeenv-handoff-alignment-v1",'
+        '"status":"passed","decision_owner":"lab","diagnosis_owner":"aiguard",'
+        '"handoff_producer_lineage_guard_alignment_run_ids":'
+        '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
+        '"guard_analysis_producer_lineage_guard_alignment_run_ids":'
+        '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
+        '"guard_alignment_summary_errors":[],"errors":[]}',
+        encoding="utf-8",
+    )
+    (report_dir / "aiguard_edgeenv_handoff_alignment.md").write_text(
+        "\n".join(
+            [
+                "- status: passed",
+                "- decision_owner: lab",
+                "- diagnosis_owner: aiguard",
+                "- handoff_producer_lineage_guard_alignment_run_ids: edgeenv-smoke-candidate, edgeenv-smoke-missing",
+                "- guard_analysis_producer_lineage_guard_alignment_run_ids: edgeenv-smoke-candidate, edgeenv-smoke-missing",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (report_dir / "portfolio_demo_check.json").write_text(
+        '{"status": "pass"}',
+        encoding="utf-8",
+    )
+    (report_dir / "deployment_risk_summary.json").write_text(
+        '{"status": "pass"}',
+        encoding="utf-8",
+    )
+    summary_path = tmp_path / "ci_artifact_gate_summary.md"
+
+    result = ci_artifact_gate(
+        report_dir=str(report_dir),
+        summary_out=str(summary_path),
+    )
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert (
+        "aiguard_edgeenv_handoff_alignment.json lab_expected_report_markers "
+        "must match Lab report contract"
+    ) in summary
 
 
 def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_contract_marker(
@@ -438,6 +585,7 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_failed_deployment_risk(
                 "- aiguard_raw_context: producer_lineage_guard_alignment preserved",
                 "- aiguard_raw_context: missing_telemetry_orchestrator_context preserved",
                 "- aiguard_handoff_alignment: external required evidence types satisfied",
+                "- expected_report_markers: Runtime Intelligence report markers declared",
                 "- edgeenv_handoff: lab_bundle_alignment validated",
                 "- edgeenv_handoff: runtime_telemetry_history validated",
                 "- edgeenv_handoff: remote_dispatch_boundary preserved",
@@ -456,6 +604,18 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_failed_deployment_risk(
     (report_dir / "aiguard_edgeenv_handoff_alignment.json").write_text(
         '{"schema_version":"inferedge-aiguard-edgeenv-handoff-alignment-v1",'
         '"status":"passed","decision_owner":"lab","diagnosis_owner":"aiguard",'
+        '"lab_expected_report_marker_count":7,'
+        '"lab_expected_report_markers":['
+        '"Runtime Intelligence Risk Summary",'
+        '"Orchestrator operation feed context",'
+        '"AIGuard runtime operation anomalies",'
+        '"AIGuard remote dispatch event summary",'
+        '"AIGuard remote event summary consistency",'
+        '"AIGuard producer-lineage guard alignment",'
+        '"Lab remains the final deployment decision owner."],'
+        '"lab_report_marker_owner":"lab",'
+        '"report_marker_context_role":"lab_report_contract_context",'
+        '"aiguard_validates_expected_report_markers":false,'
         '"handoff_producer_lineage_guard_alignment_run_ids":'
         '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
         '"guard_analysis_producer_lineage_guard_alignment_run_ids":'
@@ -469,6 +629,9 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_failed_deployment_risk(
                 "- status: passed",
                 "- decision_owner: lab",
                 "- diagnosis_owner: aiguard",
+                "- lab_expected_report_markers: Runtime Intelligence Risk Summary, Orchestrator operation feed context, AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, AIGuard remote event summary consistency, AIGuard producer-lineage guard alignment, Lab remains the final deployment decision owner.",
+                "- report_marker_context_role: lab_report_contract_context",
+                "- aiguard_validates_expected_report_markers: False",
                 "- handoff_producer_lineage_guard_alignment_run_ids: edgeenv-smoke-candidate, edgeenv-smoke-missing",
                 "- guard_analysis_producer_lineage_guard_alignment_run_ids: edgeenv-smoke-candidate, edgeenv-smoke-missing",
             ]

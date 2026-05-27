@@ -54,12 +54,22 @@ REQUIRED_BUNDLE_MANIFEST_SUMMARY_MARKERS = (
     "aiguard_raw_context: producer_lineage_guard_alignment preserved",
     "aiguard_raw_context: missing_telemetry_orchestrator_context preserved",
     "aiguard_handoff_alignment: external required evidence types satisfied",
+    "expected_report_markers: Runtime Intelligence report markers declared",
     "edgeenv_handoff: lab_bundle_alignment validated",
     "edgeenv_handoff: runtime_telemetry_history validated",
     "edgeenv_handoff: external AIGuard evidence requirements declared",
     "edgeenv_handoff: device_local_producer_lineage validated",
     "edgeenv_handoff: producer_lineage_guard_alignment validated",
     "edgeenv_handoff: missing_telemetry_orchestrator_context validated",
+)
+REQUIRED_LAB_EXPECTED_REPORT_MARKERS = (
+    "Runtime Intelligence Risk Summary",
+    "Orchestrator operation feed context",
+    "AIGuard runtime operation anomalies",
+    "AIGuard remote dispatch event summary",
+    "AIGuard remote event summary consistency",
+    "AIGuard producer-lineage guard alignment",
+    "Lab remains the final deployment decision owner.",
 )
 REQUIRED_AIGUARD_ALIGNMENT_RUN_IDS = [
     "edgeenv-smoke-candidate",
@@ -198,6 +208,33 @@ def _validate_aiguard_handoff_alignment(
             "aiguard_edgeenv_handoff_alignment.json diagnosis_owner must be aiguard",
         )
         _record(
+            payload.get("lab_report_marker_owner") == "lab",
+            errors,
+            "aiguard_edgeenv_handoff_alignment.json lab_report_marker_owner must be lab",
+        )
+        _record(
+            payload.get("report_marker_context_role") == "lab_report_contract_context",
+            errors,
+            "aiguard_edgeenv_handoff_alignment.json report_marker_context_role must be lab_report_contract_context",
+        )
+        _record(
+            payload.get("aiguard_validates_expected_report_markers") is False,
+            errors,
+            "aiguard_edgeenv_handoff_alignment.json must not claim AIGuard validates Lab report markers",
+        )
+        _record(
+            payload.get("lab_expected_report_marker_count")
+            == len(REQUIRED_LAB_EXPECTED_REPORT_MARKERS),
+            errors,
+            "aiguard_edgeenv_handoff_alignment.json lab_expected_report_marker_count is invalid",
+        )
+        _record(
+            payload.get("lab_expected_report_markers")
+            == list(REQUIRED_LAB_EXPECTED_REPORT_MARKERS),
+            errors,
+            "aiguard_edgeenv_handoff_alignment.json lab_expected_report_markers must match Lab report contract",
+        )
+        _record(
             payload.get("handoff_producer_lineage_guard_alignment_run_ids")
             == REQUIRED_AIGUARD_ALIGNMENT_RUN_IDS,
             errors,
@@ -230,6 +267,14 @@ def _validate_aiguard_handoff_alignment(
             "status: passed",
             "decision_owner: lab",
             "diagnosis_owner: aiguard",
+            "lab_expected_report_markers: "
+            "Runtime Intelligence Risk Summary, Orchestrator operation feed context, "
+            "AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, "
+            "AIGuard remote event summary consistency, "
+            "AIGuard producer-lineage guard alignment, "
+            "Lab remains the final deployment decision owner.",
+            "report_marker_context_role: lab_report_contract_context",
+            "aiguard_validates_expected_report_markers: False",
             "handoff_producer_lineage_guard_alignment_run_ids: "
             "edgeenv-smoke-candidate, edgeenv-smoke-missing",
             "guard_analysis_producer_lineage_guard_alignment_run_ids: "
