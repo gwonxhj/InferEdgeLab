@@ -739,6 +739,8 @@ def remote_dispatch_with_runtime_event_summary() -> dict:
         "final_status": "succeeded",
         "fallback_recovered": True,
         "fallback_event_count": 1,
+        "production_remote_execution": False,
+        "evidence_role": "remote_dispatch_runtime_event_compact_summary",
         "event_type_counts": {
             "remote_dispatch_selected": 1,
             "remote_execution_failed": 1,
@@ -1547,7 +1549,12 @@ def test_agent_runtime_report_surfaces_remote_runtime_event_summary():
     assert "remote_runtime_event_type_counts" in markdown
     assert "remote_runtime_error_category_counts" in markdown
     assert "remote_runtime_status_counts" in markdown
+    assert "remote_runtime_production_remote_execution" in markdown
+    assert "| remote_runtime_production_remote_execution | False |" in markdown
+    assert "remote_runtime_evidence_role" in markdown
+    assert "remote_dispatch_runtime_event_compact_summary" in markdown
     assert "remote_runtime_summary_boundary" in markdown
+    assert "remote dispatch starter evidence only" in markdown
 
 
 def test_agent_runtime_report_command_outputs_json(tmp_path, capsys):
