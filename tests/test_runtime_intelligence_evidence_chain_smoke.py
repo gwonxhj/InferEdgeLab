@@ -344,7 +344,9 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     )
     assert (
         "| AIGuard remote summary boundary | "
-        "remote dispatch starter evidence only |"
+        "role=remote_dispatch_runtime_event_compact_summary, "
+        "boundary=remote dispatch starter evidence only, "
+        "production_remote_execution=False |"
     ) in bundle["markdown"]
     assert "| Orchestrator operation feed context | 2 |" in bundle["markdown"]
     assert "| Runtime telemetry history seed | 2 |" in bundle["markdown"]
