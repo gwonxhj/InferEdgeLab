@@ -80,6 +80,11 @@ REQUIRED_ORCHESTRATOR_GUARD_ALIGNMENT = {
     "orchestrator_is_final_decision_owner": False,
     "lab_is_final_decision_owner": True,
 }
+REQUIRED_REMOTE_RUNTIME_EVENT_SUMMARY = {
+    "evidence_role": "remote_dispatch_runtime_event_compact_summary",
+    "operation_boundary": "remote dispatch starter evidence only",
+    "production_remote_execution": False,
+}
 REQUIRED_EDGEENV_HANDOFF_BOUNDARY_FLAGS = {
     "orchestrator_context_is_verdict": False,
     "orchestrator_context_is_comparability_gate": False,
@@ -150,6 +155,7 @@ EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS = (
     "edgeenv_handoff: lab_bundle_alignment validated",
     "edgeenv_handoff: runtime_telemetry_history validated",
     "edgeenv_handoff: history_seed_run_config validated",
+    "edgeenv_handoff: remote_dispatch_boundary preserved",
     "edgeenv_handoff: device_local_producer_lineage validated",
     "edgeenv_handoff: producer_lineage_guard_alignment validated",
     "edgeenv_handoff: missing_telemetry_orchestrator_context validated",
@@ -1204,11 +1210,37 @@ def _validate_preserved_orchestrator_context(
         f"{prefix}.regression_owner must be edgeenv",
     )
     _validate_orchestrator_mapping_hint(operation_context, errors)
+    _validate_edgeenv_preserved_remote_runtime_event_summary(
+        operation_context,
+        errors,
+        prefix,
+    )
     _validate_orchestrator_device_local_producer_lineage(
         operation_context,
         errors,
         prefix,
     )
+
+
+def _validate_edgeenv_preserved_remote_runtime_event_summary(
+    operation_context: dict[str, Any],
+    errors: list[str],
+    prefix: str,
+) -> None:
+    summary = operation_context.get("remote_runtime_event_summary")
+    _record(
+        isinstance(summary, dict),
+        errors,
+        f"{prefix}.remote_runtime_event_summary must be an object",
+    )
+    if not isinstance(summary, dict):
+        return
+    for key, expected in REQUIRED_REMOTE_RUNTIME_EVENT_SUMMARY.items():
+        _record(
+            summary.get(key) == expected,
+            errors,
+            f"{prefix}.remote_runtime_event_summary.{key} must be {expected}",
+        )
 
 
 def _validate_orchestrator_device_local_producer_lineage(

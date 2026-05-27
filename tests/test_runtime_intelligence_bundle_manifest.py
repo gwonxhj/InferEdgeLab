@@ -130,6 +130,7 @@ def test_runtime_intelligence_bundle_manifest_gate_validates_edgeenv_handoff(
     assert "edgeenv_handoff: lab_bundle_alignment validated" in summary
     assert "edgeenv_handoff: runtime_telemetry_history validated" in summary
     assert "edgeenv_handoff: history_seed_run_config validated" in summary
+    assert "edgeenv_handoff: remote_dispatch_boundary preserved" in summary
     assert "edgeenv_handoff: device_local_producer_lineage validated" in summary
     assert "edgeenv_handoff: producer_lineage_guard_alignment validated" in summary
     assert "edgeenv_handoff: missing_telemetry_orchestrator_context validated" in summary
@@ -174,6 +175,39 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_seed_run_config
         ".runtime_telemetry_history_seed.run_config.runs must be an integer"
         in summary
     )
+
+
+def test_runtime_intelligence_bundle_manifest_gate_fails_without_remote_boundary(
+    tmp_path,
+):
+    handoff = json.loads(EDGEENV_HANDOFF.read_text(encoding="utf-8"))
+    runtime_history_path = (
+        REPO_ROOT
+        / "examples"
+        / "runtime_intelligence_chain"
+        / handoff["files"]["runtime_telemetry_history"]
+    )
+    runtime_history = json.loads(runtime_history_path.read_text(encoding="utf-8"))
+    runtime_history["missing_telemetry"][0]["orchestrator_operation_context"].pop(
+        "remote_runtime_event_summary"
+    )
+
+    runtime_history_copy = tmp_path / "runtime_telemetry_history.json"
+    runtime_history_copy.write_text(json.dumps(runtime_history), encoding="utf-8")
+    handoff["files"]["runtime_telemetry_history"] = str(runtime_history_copy)
+    handoff_path = tmp_path / "edgeenv_lab_handoff_manifest.json"
+    handoff_path.write_text(json.dumps(handoff), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(
+        manifest=str(MANIFEST),
+        edgeenv_handoff=str(handoff_path),
+        summary_out=str(summary_path),
+    )
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "remote_runtime_event_summary must be an object" in summary
 
 
 def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_edgeenv_handoff(
