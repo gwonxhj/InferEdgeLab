@@ -1,0 +1,203 @@
+{
+  "schema_version": "inferedge-remote-dispatch-result-v1",
+  "dispatch_status": "accepted",
+  "selected_worker_id": "primary-http-worker",
+  "decision_reason": "selected online worker matching backend/device requirements",
+  "remote_execution": {
+    "mode": "file_contract_starter",
+    "production_remote_execution": false,
+    "execution_requested": true,
+    "registry_path": "examples/remote_worker_registry_http_local.json",
+    "request_path": "examples/remote_task_request_http_local.json"
+  },
+  "remote_execution_plan": {
+    "schema_version": "inferedge-remote-execution-plan-v1",
+    "mode": "execute_plan",
+    "network_execution_performed": true,
+    "transport": "http",
+    "endpoint_type": "http_request",
+    "selected_worker_id": "primary-http-worker",
+    "task_id": "task_http_fallback_001",
+    "agent_id": "vision_agent"
+  },
+  "remote_execution_result": {
+    "schema_version": "inferedge-remote-execution-result-v1",
+    "execution_requested": true,
+    "execution_performed": false,
+    "production_remote_execution": false,
+    "transport": "http",
+    "selected_worker_id": "primary-http-worker",
+    "task_id": "task_http_fallback_001",
+    "agent_id": "vision_agent",
+    "status": "failed",
+    "error_category": "connection_error",
+    "error_message": "primary starter endpoint refused connection"
+  },
+  "worker_selection": {
+    "schema_version": "inferedge-remote-worker-selection-v1",
+    "selected_worker_id": "primary-http-worker",
+    "candidate_worker_ids": [
+      "primary-http-worker",
+      "fallback-http-worker"
+    ],
+    "fallback_worker_ids": [
+      "fallback-http-worker"
+    ],
+    "evaluations": [
+      {
+        "worker_id": "primary-http-worker",
+        "eligible": true,
+        "status": "online",
+        "health_state": "healthy",
+        "endpoint_type": "http_request",
+        "decision_reason": "eligible"
+      },
+      {
+        "worker_id": "fallback-http-worker",
+        "eligible": true,
+        "status": "online",
+        "health_state": "healthy",
+        "endpoint_type": "http_request",
+        "decision_reason": "eligible"
+      }
+    ]
+  },
+  "retry_fallback_plan": {
+    "schema_version": "inferedge-remote-retry-fallback-plan-v1",
+    "max_attempts": 2,
+    "fallback_on": [
+      "connection_error",
+      "timeout"
+    ],
+    "primary_worker_id": "primary-http-worker",
+    "fallback_worker_ids": [
+      "fallback-http-worker"
+    ],
+    "execution_performed": true,
+    "fallback_execution_performed": true,
+    "fallback_attempted_worker_ids": [
+      "fallback-http-worker"
+    ],
+    "last_execution_status": "succeeded"
+  },
+  "fallback_execution_result": {
+    "schema_version": "inferedge-remote-fallback-execution-v1",
+    "fallback_requested": true,
+    "fallback_reason": "connection_error",
+    "primary_worker_id": "primary-http-worker",
+    "attempted_worker_ids": [
+      "fallback-http-worker"
+    ],
+    "final_status": "succeeded",
+    "production_remote_execution": false,
+    "attempts": [
+      {
+        "schema_version": "inferedge-remote-execution-result-v1",
+        "execution_requested": true,
+        "execution_performed": true,
+        "production_remote_execution": false,
+        "status": "succeeded",
+        "transport": "http",
+        "selected_worker_id": "fallback-http-worker",
+        "task_id": "task_http_fallback_001",
+        "agent_id": "vision_agent",
+        "http_status": 200,
+        "fallback_attempt": 1,
+        "fallback_for_worker_id": "primary-http-worker",
+        "response_json": {
+          "status": "ok"
+        }
+      }
+    ]
+  },
+  "remote_operation_summary": {
+    "schema_version": "inferedge-remote-operation-summary-v1",
+    "dispatch_status": "accepted",
+    "selected_worker_id": "primary-http-worker",
+    "selected_worker_health_state": "healthy",
+    "decision_reason": "selected online worker matching backend/device requirements",
+    "worker_count": 2,
+    "eligible_worker_count": 2,
+    "rejected_worker_count": 0,
+    "health_state_counts": {
+      "healthy": 2
+    },
+    "execution_requested": true,
+    "execution_performed": true,
+    "remote_execution_status": "failed",
+    "remote_error_category": "connection_error",
+    "fallback_requested": true,
+    "fallback_execution_performed": true,
+    "fallback_attempt_count": 1,
+    "fallback_final_status": "succeeded",
+    "fallback_recovered": true,
+    "final_status": "succeeded",
+    "production_remote_execution": false,
+    "evidence_role": "remote_worker_selection_and_starter_execution_evidence"
+  },
+  "remote_runtime_event_summary": {
+    "schema_version": "inferedge-remote-runtime-event-summary-v1",
+    "event_count": 4,
+    "runtime_event_count": 4,
+    "event_type_counts": {
+      "remote_dispatch_selected": 1,
+      "remote_execution_failed": 1,
+      "remote_fallback_execution_completed": 1,
+      "remote_operation_summary_recorded": 1
+    },
+    "status_counts": {
+      "failed": 1,
+      "succeeded": 1
+    },
+    "error_category_counts": {
+      "connection_error": 1
+    },
+    "selected_worker_id": "primary-http-worker",
+    "fallback_worker_ids": [
+      "fallback-http-worker"
+    ],
+    "fallback_event_count": 1,
+    "fallback_recovered": true,
+    "final_status": "succeeded",
+    "production_remote_execution": false,
+    "evidence_role": "remote_dispatch_runtime_event_compact_summary",
+    "operation_boundary": "remote dispatch starter evidence only",
+    "latest_event": "remote_operation_summary_recorded"
+  },
+  "runtime_events": [
+    {
+      "event": "remote_dispatch_selected",
+      "task_id": "task_http_fallback_001",
+      "agent_id": "vision_agent",
+      "selected_worker_id": "primary-http-worker",
+      "reason": "selected online worker matching backend/device requirements"
+    },
+    {
+      "event": "remote_execution_failed",
+      "task_id": "task_http_fallback_001",
+      "agent_id": "vision_agent",
+      "selected_worker_id": "primary-http-worker",
+      "transport": "http",
+      "status": "failed",
+      "error_category": "connection_error"
+    },
+    {
+      "event": "remote_fallback_execution_completed",
+      "task_id": "task_http_fallback_001",
+      "agent_id": "vision_agent",
+      "selected_worker_id": "fallback-http-worker",
+      "primary_worker_id": "primary-http-worker",
+      "transport": "http",
+      "status": "succeeded",
+      "fallback_attempt": 1
+    },
+    {
+      "event": "remote_operation_summary_recorded",
+      "task_id": "task_http_fallback_001",
+      "agent_id": "vision_agent",
+      "selected_worker_id": "primary-http-worker",
+      "final_status": "succeeded",
+      "fallback_final_status": "succeeded"
+    }
+  ]
+}

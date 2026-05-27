@@ -27,6 +27,8 @@ Committed lightweight fixtures:
 
 - `examples/agent_runtime/agent_3_orchestration_summary.json`
 - `examples/agent_runtime/aiguard_runtime_guard_analysis.json`
+- `examples/agent_runtime/remote_dispatch_plan_only.json`
+- `examples/agent_runtime/remote_dispatch_fallback_recovered.json`
 
 Generate a Markdown report:
 
@@ -38,6 +40,18 @@ poetry run inferedgelab agent-runtime-report \
   --format markdown \
   --output reports/agent_runtime_reliability_report.md
 ```
+
+Reproduce the committed remote dispatch starter paths:
+
+```bash
+bash scripts/smoke_agent_runtime_remote_paths.sh \
+  --output-dir reports/agent_runtime_remote_paths
+```
+
+The smoke writes one report for plan-only worker selection and one report for
+fallback-recovered starter execution. Both reports preserve
+`remote_runtime_summary_boundary=remote dispatch starter evidence only`; they
+do not start remote workers or claim production remote execution.
 
 ## Evidence Summary
 
