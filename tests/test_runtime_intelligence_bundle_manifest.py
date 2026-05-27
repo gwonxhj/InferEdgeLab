@@ -111,6 +111,10 @@ def test_runtime_intelligence_bundle_manifest_gate_cli_passes(tmp_path):
     )
     assert "aiguard_raw_context: downstream_guard_alignment preserved" in summary
     assert "aiguard_raw_context: producer_lineage_guard_alignment preserved" in summary
+    assert (
+        "expected_report_markers: Runtime Intelligence report markers declared"
+        in summary
+    )
 
 
 def test_runtime_intelligence_bundle_manifest_gate_validates_edgeenv_handoff(
@@ -302,6 +306,27 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_missing_external_gu
     assert (
         "external_aiguard_required_evidence_types must match Lab-required "
         "AIGuard evidence types"
+    ) in summary
+
+
+def test_runtime_intelligence_bundle_manifest_gate_fails_for_missing_report_marker(
+    tmp_path,
+):
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    manifest["expected_report_markers"].remove(
+        "AIGuard remote dispatch event summary"
+    )
+    manifest_path = tmp_path / "bundle_manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(manifest=str(manifest_path), summary_out=str(summary_path))
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert (
+        "expected_report_markers must match Lab-required Runtime "
+        "Intelligence report markers"
     ) in summary
 
 
