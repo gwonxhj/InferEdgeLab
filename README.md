@@ -190,6 +190,12 @@ Additional report paths:
 - `scripts/smoke_agent_runtime_remote_paths.sh` reproduces both committed remote dispatch starter paths: plan-only worker selection and fallback-recovered starter execution.
 - Remote dispatch remains starter evidence for local-first review; it does not claim production remote execution.
 
+Remote dispatch starter boundary:
+
+- Implemented: file-based worker registry ingestion, selected/rejected worker evidence, bounded fallback recovery context, remote runtime event count aliases, and Lab-owned report rows gated by local smoke tests.
+- Not implemented: production remote execution, long-lived worker processes, secure tunnel operation, production SSH/HTTP dispatch hardening, or cloud orchestration control.
+- Review meaning: Lab treats this as operation evidence for deployment review, while Orchestrator remains the operation context producer and Lab remains the final decision owner.
+
 ![InferEdge Local Studio demo evidence](assets/images/local-studio-demo-evidence.png)
 
 ### What Studio Shows
@@ -490,7 +496,7 @@ When `--with-guard` is used with EdgeEnv evidence, Lab preserves deterministic A
 
 If AIGuard preserves EdgeEnv/Orchestrator `candidate_context.producer` lineage, Lab shows the device-local producer source, task stage, event count, and supplemental role as traceability evidence. Lab also surfaces the Orchestrator-declared downstream guard alignment marker, including `producer_lineage_evidence_type=edgeenv_orchestrator_producer_lineage`, so reviewers can see which deterministic AIGuard evidence type was expected without making Orchestrator or AIGuard the final decision owner. The Runtime Intelligence gates also require `edgeenv_orchestrator_producer_lineage` and `runtime_history_seed_run_config_traceability` so these handoffs cannot disappear silently from the Lab-owned report.
 
-For the remote dispatch starter path, Lab surfaces AIGuard's compact remote runtime event summary, count alias, consistency state, and `operation_boundary=remote dispatch starter evidence only` marker. This keeps fallback recovery visible as operation review evidence without presenting it as production remote execution.
+For the remote dispatch starter path, Lab surfaces AIGuard's compact remote runtime event summary, count alias, consistency state, and `operation_boundary=remote dispatch starter evidence only` marker. This keeps fallback recovery visible as operation review evidence without presenting it as production remote execution, long-lived worker readiness, or cloud orchestration.
 
 Markdown and HTML reports include a Runtime Intelligence Risk Summary that connects:
 

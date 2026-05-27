@@ -53,6 +53,23 @@ fallback-recovered starter execution. Both reports preserve
 `remote_runtime_summary_boundary=remote dispatch starter evidence only`; they
 do not start remote workers or claim production remote execution.
 
+Current starter coverage:
+
+- file-based worker registry and task request ingestion
+- selected/rejected worker evidence and decision reasons
+- plan-only remote execution context for worker-selection review
+- bounded fallback recovery context when starter execution is unavailable
+- Lab report rows for remote runtime event count, consistency state, fallback
+  recovery, and the explicit operation boundary marker
+
+Future hardening, not current completion:
+
+- production SSH/HTTP dispatch execution
+- long-lived remote worker lifecycle management
+- secure tunnel operation
+- production retry/failover orchestration
+- cloud control plane or Kubernetes-style scheduling
+
 ## Evidence Summary
 
 | Evidence | Value |
@@ -131,6 +148,9 @@ Runtime result operation evidence + Orchestrator operation evidence
 Remote dispatch remains a starter contract. It records worker-selection and
 fallback-plan evidence for review, but it does not claim production SSH/HTTP
 execution, secure tunnel operation, or long-lived remote worker readiness.
+Its portfolio value is the explicit operation boundary: Orchestrator produces
+runtime operation evidence, AIGuard can explain deterministic warning context
+when present, and Lab keeps the final deployment decision.
 
 ## Lab Decision Context
 
