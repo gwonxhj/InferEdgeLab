@@ -903,6 +903,8 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             f"| remote_runtime_event_type_counts | {_fmt_mapping(remote_runtime_event_summary.get('event_type_counts'))} |",
             f"| remote_runtime_error_category_counts | {_fmt_mapping(remote_runtime_event_summary.get('error_category_counts'))} |",
             f"| remote_runtime_status_counts | {_fmt_mapping(remote_runtime_event_summary.get('status_counts'))} |",
+            f"| remote_runtime_production_remote_execution | {remote_runtime_event_summary.get('production_remote_execution', '-')} |",
+            f"| remote_runtime_evidence_role | {remote_runtime_event_summary.get('evidence_role') or '-'} |",
             f"| remote_runtime_summary_boundary | {remote_runtime_event_summary.get('operation_boundary') or 'starter evidence only; not production remote execution'} |",
             "",
             "Remote execution starter evidence:",
