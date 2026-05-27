@@ -3,7 +3,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-from scripts.check_runtime_intelligence_bundle_manifest import main as manifest_gate
+from scripts.check_runtime_intelligence_bundle_manifest import (
+    REQUIRED_EXPECTED_REPORT_MARKERS,
+    main as manifest_gate,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -115,6 +118,21 @@ def test_runtime_intelligence_bundle_manifest_gate_cli_passes(tmp_path):
         "expected_report_markers: Runtime Intelligence report markers declared"
         in summary
     )
+
+
+def test_runtime_intelligence_docs_describe_expected_report_markers():
+    handoff_doc = (
+        REPO_ROOT / "docs" / "portfolio" / "edgeenv_runtime_regression_lab_handoff.md"
+    ).read_text(encoding="utf-8")
+    ci_doc = (
+        REPO_ROOT / "docs" / "ci" / "runtime_intelligence_gitlab_artifacts.md"
+    ).read_text(encoding="utf-8")
+
+    for doc in (handoff_doc, ci_doc):
+        assert "expected_report_markers" in doc
+        assert "Lab-owned Runtime Intelligence report contract" in doc
+        for marker in REQUIRED_EXPECTED_REPORT_MARKERS:
+            assert marker in doc
 
 
 def test_runtime_intelligence_bundle_manifest_gate_validates_edgeenv_handoff(

@@ -161,6 +161,13 @@ cross-repo handoff fixture rather than a Lab-only report sample. When an
 EdgeEnv handoff is provided, the gate also checks that
 `external_aiguard_required_evidence_types` is satisfied by the external
 AIGuard artifact.
+The same manifest gate requires `expected_report_markers` to match the
+Lab-owned Runtime Intelligence report contract before optional CI artifact
+packaging runs. That marker set preserves `Runtime Intelligence Risk Summary`,
+`Orchestrator operation feed context`, `AIGuard runtime operation anomalies`,
+`AIGuard remote dispatch event summary`,
+`AIGuard remote event summary consistency`,
+`AIGuard producer-lineage guard alignment`, and `Lab remains the final deployment decision owner.`.
 
 The smoke also includes the precomputed AIGuard
 `aiguard_edgeenv_handoff_alignment` artifact. That artifact verifies that the
