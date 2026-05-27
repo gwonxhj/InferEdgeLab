@@ -173,6 +173,12 @@ The artifact gate is implemented by `scripts/check_runtime_intelligence_artifact
 
 The CI artifact gate is implemented by `scripts/check_runtime_intelligence_ci_artifacts.py`. It runs in the deployment-risk stage and verifies that the collected optional GitLab artifacts include the manifest gate summary, AIGuard handoff alignment artifact, report gate summary, Runtime Intelligence Risk Summary report, portfolio demo status, and the validated contract markers from the bundle manifest gate. This keeps the final CI gate file-based and deterministic without turning GitLab into a runtime control plane.
 
+Remote dispatch rows in this artifact chain are starter evidence only. The
+gates require worker-selection, fallback recovery, event-count, consistency,
+and `remote dispatch starter evidence only` boundary markers so the report can
+prove the handoff without claiming production remote execution, secure tunnel
+operation, long-lived workers, or cloud orchestration.
+
 Future GitLab-specific gates may include latency regression thresholds, anomaly severity thresholds, thermal instability thresholds, and deployment risk thresholds, but only after the corresponding deterministic evidence is already represented in the artifact bundle.
 
 ## Boundary
