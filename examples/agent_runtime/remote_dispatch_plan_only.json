@@ -1,0 +1,131 @@
+{
+  "schema_version": "inferedge-remote-dispatch-result-v1",
+  "dispatch_status": "accepted",
+  "selected_worker_id": "jetson-nano-01",
+  "decision_reason": "selected online worker matching backend/device requirements",
+  "remote_execution": {
+    "mode": "file_contract_starter",
+    "production_remote_execution": false,
+    "execution_requested": false,
+    "registry_path": "examples/remote_worker_registry.json",
+    "request_path": "examples/remote_task_request.json"
+  },
+  "remote_execution_plan": {
+    "schema_version": "inferedge-remote-execution-plan-v1",
+    "mode": "plan_only",
+    "network_execution_performed": false,
+    "transport": "file_contract",
+    "endpoint_type": "file_contract",
+    "selected_worker_id": "jetson-nano-01",
+    "task_id": "task_vision_001",
+    "agent_id": "vision_agent",
+    "note": "Starter plan only; no SSH/HTTP connection or production remote worker is started."
+  },
+  "remote_execution_result": {
+    "schema_version": "inferedge-remote-execution-result-v1",
+    "execution_requested": false,
+    "execution_performed": false,
+    "production_remote_execution": false,
+    "status": "skipped",
+    "transport": "file_contract",
+    "selected_worker_id": "jetson-nano-01",
+    "task_id": "task_vision_001",
+    "agent_id": "vision_agent",
+    "error_category": "execution_not_requested"
+  },
+  "worker_selection": {
+    "schema_version": "inferedge-remote-worker-selection-v1",
+    "selected_worker_id": "jetson-nano-01",
+    "candidate_worker_ids": [
+      "jetson-nano-01"
+    ],
+    "fallback_worker_ids": [],
+    "evaluations": [
+      {
+        "worker_id": "jetson-nano-01",
+        "eligible": true,
+        "status": "online",
+        "health_state": "healthy",
+        "endpoint_type": "file_contract",
+        "decision_reason": "eligible"
+      }
+    ]
+  },
+  "retry_fallback_plan": {
+    "schema_version": "inferedge-remote-retry-fallback-plan-v1",
+    "max_attempts": 1,
+    "fallback_on": [
+      "timeout",
+      "worker_unhealthy",
+      "runtime_error"
+    ],
+    "primary_worker_id": "jetson-nano-01",
+    "fallback_worker_ids": [],
+    "execution_performed": false,
+    "fallback_execution_performed": false,
+    "last_execution_status": "skipped"
+  },
+  "remote_operation_summary": {
+    "schema_version": "inferedge-remote-operation-summary-v1",
+    "dispatch_status": "accepted",
+    "selected_worker_id": "jetson-nano-01",
+    "selected_worker_health_state": "healthy",
+    "decision_reason": "selected online worker matching backend/device requirements",
+    "worker_count": 2,
+    "eligible_worker_count": 1,
+    "rejected_worker_count": 1,
+    "health_state_counts": {
+      "healthy": 1,
+      "constrained": 1
+    },
+    "execution_requested": false,
+    "execution_performed": false,
+    "remote_execution_status": "skipped",
+    "remote_error_category": "execution_not_requested",
+    "fallback_requested": false,
+    "fallback_execution_performed": false,
+    "fallback_attempt_count": 0,
+    "fallback_final_status": "not_attempted",
+    "fallback_recovered": false,
+    "final_status": "skipped",
+    "production_remote_execution": false,
+    "evidence_role": "remote_worker_selection_and_starter_execution_evidence"
+  },
+  "remote_runtime_event_summary": {
+    "schema_version": "inferedge-remote-runtime-event-summary-v1",
+    "event_count": 2,
+    "runtime_event_count": 2,
+    "event_type_counts": {
+      "remote_dispatch_selected": 1,
+      "remote_operation_summary_recorded": 1
+    },
+    "status_counts": {},
+    "error_category_counts": {},
+    "selected_worker_id": "jetson-nano-01",
+    "fallback_worker_ids": [],
+    "fallback_event_count": 0,
+    "fallback_recovered": false,
+    "final_status": "skipped",
+    "production_remote_execution": false,
+    "evidence_role": "remote_dispatch_runtime_event_compact_summary",
+    "operation_boundary": "remote dispatch starter evidence only",
+    "latest_event": "remote_operation_summary_recorded"
+  },
+  "runtime_events": [
+    {
+      "event": "remote_dispatch_selected",
+      "task_id": "task_vision_001",
+      "agent_id": "vision_agent",
+      "selected_worker_id": "jetson-nano-01",
+      "reason": "selected online worker matching backend/device requirements"
+    },
+    {
+      "event": "remote_operation_summary_recorded",
+      "task_id": "task_vision_001",
+      "agent_id": "vision_agent",
+      "selected_worker_id": "jetson-nano-01",
+      "final_status": "skipped",
+      "fallback_final_status": "not_attempted"
+    }
+  ]
+}
