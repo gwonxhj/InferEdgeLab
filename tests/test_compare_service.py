@@ -179,6 +179,33 @@ def write_edgeenv_regression_with_orchestrator_context(tmp_path) -> str:
                 "queue_depth": 7,
                 "deadline_missed_count": 2,
                 "fallback_count": 1,
+                "runtime_task_event_summary": {
+                    "vision_agent": {
+                        "scheduler_delay_event_count": 1,
+                        "deadline_missed_count": 1,
+                        "fallback_decision_count": 0,
+                        "max_scheduler_delay_cycles": 3,
+                        "max_queue_wait_ms": 15.0,
+                        "policy_decision_reason_counts": {},
+                        "drop_reason_counts": {},
+                    },
+                    "voice_command_agent": {
+                        "scheduler_delay_event_count": 0,
+                        "deadline_missed_count": 0,
+                        "fallback_decision_count": 1,
+                        "max_scheduler_delay_cycles": 0,
+                        "max_queue_wait_ms": 0.0,
+                        "policy_decision_reason_counts": {
+                            "queue_backlog_threshold_exceeded": 1,
+                        },
+                        "drop_reason_counts": {
+                            "load_shedding_backlog_threshold_exceeded": 1,
+                        },
+                    },
+                },
+                "tasks_with_deadline_miss": ["vision_agent"],
+                "tasks_with_fallback": ["voice_command_agent"],
+                "tasks_with_scheduler_delay": ["vision_agent"],
             },
             "resource": {
                 "source": "tegrastats_timeline",
@@ -778,6 +805,14 @@ def test_build_compare_bundle_summarizes_orchestrator_context_runtime_anomalies(
     assert "guard_warning_review" in bundle["deployment_decision"]["triggered_rules"]
     assert "| Orchestrator operation feed context | 1 |" in bundle["markdown"]
     assert "| Orchestrator context attached runs | candidate |" in bundle["markdown"]
+    assert "| Orchestrator task event rollup | candidate: " in bundle["markdown"]
+    assert "vision_agent(delay=1,miss=1,max_delay_cycles=3,max_wait_ms=15)" in bundle[
+        "markdown"
+    ]
+    assert (
+        "voice_command_agent(fallback=1,policy=queue_backlog_threshold_exceeded:1,"
+        "drop=load_shedding_backlog_threshold_exceeded:1)"
+    ) in bundle["markdown"]
     assert "runtime_queue_overload, runtime_thermal_instability" in bundle["markdown"]
     assert "| AIGuard Orchestrator context handoff | feeds=1.0, candidate |" in bundle[
         "markdown"

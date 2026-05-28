@@ -8,10 +8,11 @@
   "guard_analysis_schema_version": "inferedge-aiguard-diagnosis-v1",
   "required_evidence_type_count": 5,
   "guard_evidence_type_count": 5,
-  "lab_expected_report_marker_count": 7,
+  "lab_expected_report_marker_count": 8,
   "lab_expected_report_markers": [
     "Runtime Intelligence Risk Summary",
     "Orchestrator operation feed context",
+    "Orchestrator task event rollup",
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
     "AIGuard remote event summary consistency",

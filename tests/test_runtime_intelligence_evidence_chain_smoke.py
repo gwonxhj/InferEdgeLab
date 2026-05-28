@@ -370,6 +370,15 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert "| Runtime telemetry history seed | 2 |" in bundle["markdown"]
     assert "| Runtime history seed run_config | 2 |" in bundle["markdown"]
     assert "| Orchestrator context attached runs | candidate |" in bundle["markdown"]
+    assert "| Orchestrator task event rollup | candidate: " in bundle["markdown"]
+    assert (
+        "vision_agent(delay=1,miss=1,max_delay_cycles=3,max_wait_ms=15,"
+        "policy=queue_backlog_threshold_exceeded:1)"
+    ) in bundle["markdown"]
+    assert (
+        "voice_command_agent(fallback=1,policy=queue_backlog_threshold_exceeded:1,"
+        "drop=load_shedding_backlog_threshold_exceeded:1)"
+    ) in bundle["markdown"]
     assert "runtime_queue_overload, runtime_thermal_instability" in bundle["markdown"]
     assert "| AIGuard Orchestrator context handoff | feeds=2.0, candidate |" in bundle[
         "markdown"
@@ -477,6 +486,11 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     ) in markdown
     assert "Runtime Intelligence Risk Summary" in html
     assert "Orchestrator operation risk summary" in html
+    assert "Orchestrator task event rollup" in html
+    assert (
+        "vision_agent(delay=1,miss=1,max_delay_cycles=3,max_wait_ms=15,"
+        "policy=queue_backlog_threshold_exceeded:1)"
+    ) in html
     assert "queue=queue_backlog_threshold_exceeded" in html
     assert "AIGuard producer lineage handoff" in html
     assert "AIGuard producer-lineage guard alignment" in html
