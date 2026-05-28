@@ -433,6 +433,8 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "queue_depth" in markdown
     assert "AIGuard runtime operation anomalies" in markdown
     assert "Orchestrator context attached runs" in markdown
+    assert "Orchestrator operation risk summary" in markdown
+    assert "queue=queue_backlog_threshold_exceeded" in markdown
     assert "AIGuard producer lineage handoff" in markdown
     assert "AIGuard producer-lineage guard alignment" in markdown
     assert "edgeenv_orchestrator_producer_lineage" in markdown
@@ -452,6 +454,8 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
         "warmup=1, runs=10"
     ) in markdown
     assert "Runtime Intelligence Risk Summary" in html
+    assert "Orchestrator operation risk summary" in html
+    assert "queue=queue_backlog_threshold_exceeded" in html
     assert "AIGuard producer lineage handoff" in html
     assert "AIGuard producer-lineage guard alignment" in html
     assert "edgeenv_orchestrator_producer_lineage" in html

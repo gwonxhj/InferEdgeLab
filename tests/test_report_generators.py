@@ -363,6 +363,19 @@ def make_edgeenv_regression_with_orchestrator_context() -> dict:
                 "throttling_detected": True,
             },
         },
+        "operation_risk_summary": {
+            "schema_version": "inferedge-entrypoint-operation-risk-summary-v1",
+            "evidence_role": "derived_navigation_context",
+            "decision_owner": "lab",
+            "scheduler_owner": "orchestrator",
+            "queue_pressure_reason": "queue_backlog_threshold_exceeded",
+            "max_pressure_task": "vision_agent",
+            "primary_health_reason": "worker_health_degraded",
+            "degraded_worker_ids": ["vision_agent"],
+            "device_local_event_count": 15,
+            "producer_event_count": 7,
+            "not_a_deployment_decision": True,
+        },
     }
     return regression
 
@@ -741,6 +754,12 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
     assert "| Orchestrator operation feed context | 1 |" in text
     assert "| Orchestrator context attached runs | candidate |" in text
     assert (
+        "| Orchestrator operation risk summary | candidate: "
+        "queue=queue_backlog_threshold_exceeded, max_task=vision_agent, "
+        "health=worker_health_degraded, device_local_events=15, "
+        "producer_events=7, degraded_workers=vision_agent |"
+    ) in text
+    assert (
         "| AIGuard runtime operation anomalies | runtime_queue_overload, "
         "runtime_thermal_instability |"
     ) in text
@@ -764,6 +783,22 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
         "jetson_clocks=unknown, warmup=1, runs=10 |"
     ) in text
     assert "AIGuard does not own the final decision" in text
+
+
+def test_generate_compare_html_summarizes_operation_risk_summary():
+    compare_result = make_compare_result()
+    judgement = make_judgement()
+
+    html = generate_compare_html(
+        compare_result,
+        judgement,
+        edgeenv_regression=make_edgeenv_regression_with_orchestrator_context(),
+    )
+
+    assert "Runtime Intelligence Risk Summary" in html
+    assert "Orchestrator operation risk summary" in html
+    assert "queue=queue_backlog_threshold_exceeded" in html
+    assert "Lab still owns the deployment decision" in html
 
 
 def test_generate_compare_markdown_summarizes_remote_runtime_event_summary():
