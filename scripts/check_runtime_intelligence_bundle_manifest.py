@@ -124,6 +124,7 @@ VALID_GUARD_EVIDENCE_SEVERITIES = {"low", "medium", "high", "critical"}
 REQUIRED_EXPECTED_REPORT_MARKERS = {
     "Runtime Intelligence Risk Summary",
     "Orchestrator operation feed context",
+    "Orchestrator task event rollup",
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
     "AIGuard remote event summary consistency",

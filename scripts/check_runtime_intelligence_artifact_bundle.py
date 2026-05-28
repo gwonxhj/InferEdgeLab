@@ -29,6 +29,11 @@ REQUIRED_MARKDOWN_MARKERS = {
         "| Orchestrator operation risk summary | candidate: "
         "queue=queue_backlog_threshold_exceeded"
     ),
+    "orchestrator_task_event_rollup": (
+        "| Orchestrator task event rollup | candidate: "
+        "vision_agent(delay=1,miss=1,max_delay_cycles=3,max_wait_ms=15,"
+        "policy=queue_backlog_threshold_exceeded:1)"
+    ),
     "aiguard_evidence": "| AIGuard deterministic evidence | warning / suspicious |",
     "aiguard_operation_anomalies": (
         "| AIGuard runtime operation anomalies | "
@@ -109,6 +114,7 @@ REQUIRED_HTML_MARKERS = {
     "aiguard_remote_dispatch_evidence": "remote_execution_recovered_by_fallback",
     "aiguard_orchestrator_handoff": "AIGuard Orchestrator context handoff",
     "orchestrator_operation_risk_summary": "Orchestrator operation risk summary",
+    "orchestrator_task_event_rollup": "Orchestrator task event rollup",
     "orchestrator_operation_risk_queue": "queue=queue_backlog_threshold_exceeded",
     "aiguard_producer_lineage_handoff": "AIGuard producer lineage handoff",
     "aiguard_producer_lineage_evidence": "edgeenv_orchestrator_producer_lineage",

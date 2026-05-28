@@ -211,6 +211,16 @@ def _append_telemetry_context_rows(
             )
         )
 
+    task_event_labels = _orchestrator_task_event_rollup_labels(telemetry_context)
+    if task_event_labels:
+        rows.append(
+            (
+                "Orchestrator task event rollup",
+                "; ".join(task_event_labels),
+                "Task-level delay/fallback markers explain operation risk without making Orchestrator the deployment decision owner.",
+            )
+        )
+
 
 def _runtime_telemetry_coverage_labels(context: dict[str, Any]) -> list[str]:
     history_labels = _history_telemetry_coverage_labels(context)
@@ -352,6 +362,77 @@ def _operation_risk_summary_parts(summary: dict[str, Any]) -> list[str]:
             + ",".join(str(item) for item in degraded_workers if item is not None)
         )
     return parts
+
+
+def _orchestrator_task_event_rollup_labels(context: dict[str, Any]) -> list[str]:
+    labels: list[str] = []
+    for run_label in ("baseline", "candidate"):
+        run_context = context.get(run_label)
+        if not isinstance(run_context, dict):
+            continue
+        operation_context = run_context.get("orchestrator_operation_context")
+        if not isinstance(operation_context, dict):
+            continue
+        operation = (
+            (operation_context.get("candidate_context") or {}).get("operation")
+            if isinstance(operation_context.get("candidate_context"), dict)
+            else None
+        )
+        if not isinstance(operation, dict):
+            continue
+        summary = operation.get("runtime_task_event_summary")
+        if not isinstance(summary, dict):
+            continue
+        task_labels = _task_event_summary_labels(summary)
+        if task_labels:
+            labels.append(f"{run_label}: " + ", ".join(task_labels))
+    return labels
+
+
+def _task_event_summary_labels(summary: dict[str, Any]) -> list[str]:
+    labels: list[str] = []
+    for task_name, task_summary in summary.items():
+        if not isinstance(task_name, str) or not isinstance(task_summary, dict):
+            continue
+        parts = _task_event_summary_parts(task_summary)
+        if parts:
+            labels.append(f"{task_name}(" + ",".join(parts) + ")")
+    return labels
+
+
+def _task_event_summary_parts(task_summary: dict[str, Any]) -> list[str]:
+    parts: list[str] = []
+    field_labels = (
+        ("scheduler_delay_event_count", "delay"),
+        ("deadline_missed_count", "miss"),
+        ("fallback_decision_count", "fallback"),
+        ("max_scheduler_delay_cycles", "max_delay_cycles"),
+        ("max_queue_wait_ms", "max_wait_ms"),
+    )
+    for field, label in field_labels:
+        value = task_summary.get(field)
+        if value is None:
+            continue
+        if isinstance(value, (int, float)) and not isinstance(value, bool) and value == 0:
+            continue
+        parts.append(f"{label}={_format_compact_value(value)}")
+
+    reason_counts = task_summary.get("policy_decision_reason_counts")
+    if isinstance(reason_counts, dict) and reason_counts:
+        parts.append("policy=" + _format_reason_count_label(reason_counts))
+    drop_counts = task_summary.get("drop_reason_counts")
+    if isinstance(drop_counts, dict) and drop_counts:
+        parts.append("drop=" + _format_reason_count_label(drop_counts))
+    return parts
+
+
+def _format_reason_count_label(reason_counts: dict[str, Any]) -> str:
+    labels: list[str] = []
+    for reason, count in reason_counts.items():
+        if not isinstance(reason, str) or not reason:
+            continue
+        labels.append(f"{reason}:{_format_compact_value(count)}")
+    return ",".join(labels)
 
 
 def _append_aiguard_runtime_operation_rows(

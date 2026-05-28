@@ -65,6 +65,7 @@ REQUIRED_BUNDLE_MANIFEST_SUMMARY_MARKERS = (
 REQUIRED_LAB_EXPECTED_REPORT_MARKERS = (
     "Runtime Intelligence Risk Summary",
     "Orchestrator operation feed context",
+    "Orchestrator task event rollup",
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
     "AIGuard remote event summary consistency",
@@ -271,6 +272,7 @@ def _validate_aiguard_handoff_alignment(
             "diagnosis_owner: aiguard",
             "lab_expected_report_markers: "
             "Runtime Intelligence Risk Summary, Orchestrator operation feed context, "
+            "Orchestrator task event rollup, "
             "AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, "
             "AIGuard remote event summary consistency, "
             "AIGuard producer-lineage guard alignment, "
