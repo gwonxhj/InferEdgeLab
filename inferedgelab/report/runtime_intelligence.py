@@ -18,6 +18,10 @@ ORCHESTRATOR_OPERATION_RISK_EVIDENCE_TYPE = (
     "edgeenv_orchestrator_operation_risk_summary"
 )
 
+ORCHESTRATOR_TASK_EVENT_ROLLUP_EVIDENCE_TYPE = (
+    "edgeenv_orchestrator_task_event_rollup"
+)
+
 RUN_CONFIG_TRACEABILITY_EVIDENCE_TYPE = "runtime_history_seed_run_config_traceability"
 
 REMOTE_RUNTIME_EVENT_SUMMARY_MISMATCH_EVIDENCE_TYPE = (
@@ -467,6 +471,16 @@ def _append_aiguard_runtime_operation_rows(
             )
         )
 
+    task_event_rollup_label = _aiguard_task_event_rollup_label(evidence_items)
+    if task_event_rollup_label:
+        rows.append(
+            (
+                "AIGuard task event rollup evidence",
+                task_event_rollup_label,
+                "AIGuard preserves task-level scheduler/deadline/fallback evidence as deterministic review context; Lab still owns the deployment decision.",
+            )
+        )
+
     candidate_summary = guard_analysis.get("candidate_summary")
     if not isinstance(candidate_summary, dict):
         return
@@ -606,6 +620,51 @@ def _aiguard_operation_risk_summary_label(
             degraded_workers = _string_list(context.get("degraded_worker_ids"))
             if degraded_workers:
                 parts.append("degraded_workers=" + ",".join(degraded_workers))
+            boundary_valid = context.get("boundary_markers_valid")
+            if boundary_valid is not None:
+                parts.append(f"boundary_valid={boundary_valid}")
+    return ", ".join(parts)
+
+
+def _aiguard_task_event_rollup_label(
+    evidence_items: list[dict[str, Any]],
+) -> str:
+    evidence = _find_evidence_item(
+        evidence_items,
+        ORCHESTRATOR_TASK_EVENT_ROLLUP_EVIDENCE_TYPE,
+    )
+    if evidence is None:
+        return ""
+
+    parts: list[str] = []
+    status = evidence.get("status")
+    if status is not None:
+        parts.append(f"status={status}")
+    observed = evidence.get("observed_value")
+    if observed is not None:
+        parts.append(f"affected={_format_compact_value(observed)}")
+
+    raw_context = evidence.get("raw_context")
+    if isinstance(raw_context, dict):
+        context = raw_context.get("task_event_rollup")
+        if isinstance(context, dict):
+            affected_tasks = _string_list(context.get("affected_tasks"))
+            if affected_tasks:
+                parts.append("tasks=" + ",".join(affected_tasks))
+            deadline_tasks = _string_list(context.get("tasks_with_deadline_miss"))
+            if deadline_tasks:
+                parts.append("deadline=" + ",".join(deadline_tasks))
+            fallback_tasks = _string_list(context.get("tasks_with_fallback"))
+            if fallback_tasks:
+                parts.append("fallback=" + ",".join(fallback_tasks))
+            scheduler_delay_tasks = _string_list(
+                context.get("tasks_with_scheduler_delay")
+            )
+            if scheduler_delay_tasks:
+                parts.append("scheduler_delay=" + ",".join(scheduler_delay_tasks))
+            reason_counts = context.get("reason_counts")
+            if isinstance(reason_counts, dict) and reason_counts:
+                parts.append("reasons=" + _format_reason_count_label(reason_counts))
             boundary_valid = context.get("boundary_markers_valid")
             if boundary_valid is not None:
                 parts.append(f"boundary_valid={boundary_valid}")

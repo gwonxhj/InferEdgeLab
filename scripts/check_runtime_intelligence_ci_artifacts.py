@@ -147,6 +147,8 @@ def _validate_runtime_report(path: Path, errors: list[str]) -> None:
         "runtime_queue_overload, runtime_thermal_instability",
         "AIGuard operation risk summary evidence",
         "edgeenv_orchestrator_operation_risk_summary",
+        "AIGuard task event rollup evidence",
+        "edgeenv_orchestrator_task_event_rollup",
         "Runtime telemetry coverage gaps",
         "AIGuard producer-lineage guard alignment",
         "edgeenv_orchestrator_producer_lineage",
