@@ -34,6 +34,13 @@ REQUIRED_MARKDOWN_MARKERS = {
         "| AIGuard runtime operation anomalies | "
         "runtime_queue_overload, runtime_thermal_instability |"
     ),
+    "aiguard_operation_risk_summary_evidence": (
+        "| AIGuard operation risk summary evidence | "
+        "status=warning, markers=4"
+    ),
+    "aiguard_operation_risk_summary_type": (
+        "edgeenv_orchestrator_operation_risk_summary"
+    ),
     "aiguard_remote_dispatch_summary": (
         "| AIGuard remote dispatch event summary | "
         "events=3, final=succeeded, fallback_recovered=True |"
@@ -82,6 +89,12 @@ REQUIRED_HTML_MARKERS = {
         "Inspect telemetry coverage missing fields"
     ),
     "aiguard_operation_anomalies": "runtime_queue_overload, runtime_thermal_instability",
+    "aiguard_operation_risk_summary_evidence": (
+        "AIGuard operation risk summary evidence"
+    ),
+    "aiguard_operation_risk_summary_type": (
+        "edgeenv_orchestrator_operation_risk_summary"
+    ),
     "aiguard_remote_dispatch_summary": "AIGuard remote dispatch event summary",
     "aiguard_remote_dispatch_label": (
         "events=3, final=succeeded, fallback_recovered=True"

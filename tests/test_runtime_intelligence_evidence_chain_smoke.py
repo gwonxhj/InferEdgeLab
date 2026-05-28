@@ -96,6 +96,7 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     )
     evidence_types = {item["type"] for item in bundle["guard_analysis"]["evidence"]}
     assert "edgeenv_orchestrator_producer_lineage" in evidence_types
+    assert "edgeenv_orchestrator_operation_risk_summary" in evidence_types
     assert "runtime_history_seed_run_config_traceability" in evidence_types
     assert "remote_execution_recovered_by_fallback" in evidence_types
     coverage_evidence = next(
@@ -271,6 +272,23 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
         guard_edgeenv_context["history_missing_orchestrator_artifact_role"]
         == "orchestrator-supplemental-operation-context"
     )
+    operation_risk_evidence = next(
+        item
+        for item in bundle["guard_analysis"]["evidence"]
+        if item["type"] == "edgeenv_orchestrator_operation_risk_summary"
+    )
+    assert operation_risk_evidence["status"] == "warning"
+    assert operation_risk_evidence["observed_value"] == 4
+    operation_risk_context = operation_risk_evidence["raw_context"][
+        "operation_risk_summary"
+    ]
+    assert operation_risk_context["boundary_markers_valid"] is True
+    assert operation_risk_context["queue_pressure_reason"] == (
+        "queue_backlog_threshold_exceeded"
+    )
+    assert operation_risk_context["primary_health_reason"] == "worker_health_degraded"
+    assert operation_risk_context["degraded_worker_ids"] == ["vision_agent"]
+    assert operation_risk_context["device_local_event_count"] == 15.0
     run_config_traceability_evidence = next(
         item
         for item in bundle["guard_analysis"]["evidence"]
@@ -432,6 +450,10 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "coverage_missing_fields" in markdown
     assert "queue_depth" in markdown
     assert "AIGuard runtime operation anomalies" in markdown
+    assert "AIGuard operation risk summary evidence" in markdown
+    assert "edgeenv_orchestrator_operation_risk_summary" in markdown
+    assert "status=warning, markers=4" in markdown
+    assert "health=worker_health_degraded" in markdown
     assert "Orchestrator context attached runs" in markdown
     assert "Orchestrator operation risk summary" in markdown
     assert "queue=queue_backlog_threshold_exceeded" in markdown
@@ -467,6 +489,9 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "AIGuard run_config traceability evidence" in html
     assert "runtime_history_seed_run_config_traceability" in html
     assert "runtime_queue_overload, runtime_thermal_instability" in html
+    assert "AIGuard operation risk summary evidence" in html
+    assert "edgeenv_orchestrator_operation_risk_summary" in html
+    assert "health=worker_health_degraded" in html
     assert "AIGuard remote dispatch event summary" in html
     assert "events=3, final=succeeded, fallback_recovered=True" in html
     assert "AIGuard remote event summary consistency" in html

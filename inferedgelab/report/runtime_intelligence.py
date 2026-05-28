@@ -14,6 +14,10 @@ ORCHESTRATOR_PRODUCER_LINEAGE_EVIDENCE_TYPE = (
     "edgeenv_orchestrator_producer_lineage"
 )
 
+ORCHESTRATOR_OPERATION_RISK_EVIDENCE_TYPE = (
+    "edgeenv_orchestrator_operation_risk_summary"
+)
+
 RUN_CONFIG_TRACEABILITY_EVIDENCE_TYPE = "runtime_history_seed_run_config_traceability"
 
 REMOTE_RUNTIME_EVENT_SUMMARY_MISMATCH_EVIDENCE_TYPE = (
@@ -372,6 +376,16 @@ def _append_aiguard_runtime_operation_rows(
             )
         )
 
+    operation_risk_label = _aiguard_operation_risk_summary_label(evidence_items)
+    if operation_risk_label:
+        rows.append(
+            (
+                "AIGuard operation risk summary evidence",
+                operation_risk_label,
+                "AIGuard explains EdgeEnv-preserved operation risk markers; Lab still owns the deployment decision.",
+            )
+        )
+
     candidate_summary = guard_analysis.get("candidate_summary")
     if not isinstance(candidate_summary, dict):
         return
@@ -474,6 +488,47 @@ def _append_aiguard_run_config_traceability_row(
             "AIGuard confirms Runtime history seed run_config traceability; Lab still owns the deployment decision.",
         )
     )
+
+
+def _aiguard_operation_risk_summary_label(
+    evidence_items: list[dict[str, Any]],
+) -> str:
+    evidence = _find_evidence_item(
+        evidence_items,
+        ORCHESTRATOR_OPERATION_RISK_EVIDENCE_TYPE,
+    )
+    if evidence is None:
+        return ""
+
+    parts: list[str] = []
+    status = evidence.get("status")
+    if status is not None:
+        parts.append(f"status={status}")
+    observed = evidence.get("observed_value")
+    if observed is not None:
+        parts.append(f"markers={_format_compact_value(observed)}")
+
+    raw_context = evidence.get("raw_context")
+    if isinstance(raw_context, dict):
+        context = raw_context.get("operation_risk_summary")
+        if isinstance(context, dict):
+            for field, label in (
+                ("queue_pressure_reason", "queue"),
+                ("max_pressure_task", "max_task"),
+                ("primary_health_reason", "health"),
+                ("device_local_event_count", "device_local_events"),
+                ("producer_event_count", "producer_events"),
+            ):
+                value = context.get(field)
+                if value is not None:
+                    parts.append(f"{label}={_format_compact_value(value)}")
+            degraded_workers = _string_list(context.get("degraded_worker_ids"))
+            if degraded_workers:
+                parts.append("degraded_workers=" + ",".join(degraded_workers))
+            boundary_valid = context.get("boundary_markers_valid")
+            if boundary_valid is not None:
+                parts.append(f"boundary_valid={boundary_valid}")
+    return ", ".join(parts)
 
 
 def _append_aiguard_remote_dispatch_rows(

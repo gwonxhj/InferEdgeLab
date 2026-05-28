@@ -144,6 +144,8 @@ def _validate_runtime_report(path: Path, errors: list[str]) -> None:
         "Lab remains the final deployment decision owner.",
         "AIGuard runtime operation anomalies",
         "runtime_queue_overload, runtime_thermal_instability",
+        "AIGuard operation risk summary evidence",
+        "edgeenv_orchestrator_operation_risk_summary",
         "Runtime telemetry coverage gaps",
         "AIGuard producer-lineage guard alignment",
         "edgeenv_orchestrator_producer_lineage",
