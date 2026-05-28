@@ -474,6 +474,49 @@ def make_runtime_operation_guard_analysis() -> dict:
                     }
                 },
             },
+            {
+                "type": "edgeenv_orchestrator_task_event_rollup",
+                "metric_name": "orchestrator_task_event_affected_task_count",
+                "observed_value": 2,
+                "baseline_value": 0,
+                "threshold": 1,
+                "status": "warning",
+                "severity": "medium",
+                "why_it_matters": (
+                    "Task-level scheduler delay, deadline miss, and fallback "
+                    "context explains which workload produced runtime operation risk."
+                ),
+                "suspected_causes": [
+                    "scheduler_delay_context",
+                    "deadline_miss_context",
+                    "fallback_policy_context",
+                    "queue_pressure_context",
+                ],
+                "recommendation": (
+                    "Review Orchestrator task event rollup, queue policy, "
+                    "deadline budget, and fallback behavior in the Lab report."
+                ),
+                "raw_context": {
+                    "task_event_rollup": {
+                        "tasks_with_deadline_miss": ["vision_agent"],
+                        "tasks_with_fallback": ["voice_command_agent"],
+                        "tasks_with_scheduler_delay": ["vision_agent"],
+                        "affected_tasks": [
+                            "vision_agent",
+                            "voice_command_agent",
+                        ],
+                        "reason_counts": {
+                            "deadline_missed": 1,
+                            "queue_backlog_threshold_exceeded": 2,
+                            "load_shedding_backlog_threshold_exceeded": 1,
+                        },
+                        "boundary_markers_valid": True,
+                        "decision_owner": "lab",
+                        "scheduler_owner": "orchestrator",
+                        "not_a_deployment_decision": True,
+                    }
+                },
+            },
         ],
         "candidate_summary": {
             "edgeenv_regression": {
@@ -814,6 +857,14 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
         "status=passed, count=2/2, markers=baseline/candidate=shape=1x640x640, "
         "input_mode=dummy, input_preprocess=none, power_mode=unknown, "
         "jetson_clocks=unknown, warmup=1, runs=10 |"
+    ) in text
+    assert (
+        "| AIGuard task event rollup evidence | "
+        "status=warning, affected=2, tasks=vision_agent,voice_command_agent, "
+        "deadline=vision_agent, fallback=voice_command_agent, "
+        "scheduler_delay=vision_agent, reasons=deadline_missed:1,"
+        "queue_backlog_threshold_exceeded:2,"
+        "load_shedding_backlog_threshold_exceeded:1, boundary_valid=True |"
     ) in text
     assert "AIGuard does not own the final decision" in text
 

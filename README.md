@@ -502,6 +502,8 @@ If the Orchestrator feed includes `runtime_task_event_summary`, Lab also renders
 
 If AIGuard also emits `edgeenv_orchestrator_operation_risk_summary`, Lab renders that deterministic evidence as a separate operation-risk summary row. This keeps the AIGuard warning explanation visible while preserving Lab as the final deployment decision owner.
 
+If AIGuard emits `edgeenv_orchestrator_task_event_rollup`, Lab renders a separate task-event evidence row for affected tasks, deadline misses, fallback decisions, scheduler delay, and queue/drop reasons. This is deterministic review context only; it does not override EdgeEnv comparability or Lab deployment policy.
+
 For the remote dispatch starter path, Lab surfaces AIGuard's compact remote runtime event summary, count alias, consistency state, `evidence_role=remote_dispatch_runtime_event_compact_summary`, `operation_boundary=remote dispatch starter evidence only`, and `production_remote_execution=false` markers. These values remain Lab-owned deployment review context: Lab can require review from the evidence, but it does not treat Orchestrator, EdgeEnv, or AIGuard as the final decision owner and does not present the path as production remote execution, long-lived worker readiness, or cloud orchestration.
 
 Markdown and HTML reports include a Runtime Intelligence Risk Summary that connects:

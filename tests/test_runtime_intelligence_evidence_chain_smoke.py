@@ -97,6 +97,7 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     evidence_types = {item["type"] for item in bundle["guard_analysis"]["evidence"]}
     assert "edgeenv_orchestrator_producer_lineage" in evidence_types
     assert "edgeenv_orchestrator_operation_risk_summary" in evidence_types
+    assert "edgeenv_orchestrator_task_event_rollup" in evidence_types
     assert "runtime_history_seed_run_config_traceability" in evidence_types
     assert "remote_execution_recovered_by_fallback" in evidence_types
     coverage_evidence = next(
@@ -288,6 +289,16 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     )
     assert operation_risk_context["primary_health_reason"] == "worker_health_degraded"
     assert operation_risk_context["degraded_worker_ids"] == ["vision_agent"]
+    task_event_rollup_evidence = next(
+        item
+        for item in bundle["guard_analysis"]["evidence"]
+        if item["type"] == "edgeenv_orchestrator_task_event_rollup"
+    )
+    assert task_event_rollup_evidence["status"] == "warning"
+    assert task_event_rollup_evidence["observed_value"] == 2
+    assert task_event_rollup_evidence["raw_context"]["task_event_rollup"][
+        "affected_tasks"
+    ] == ["vision_agent", "voice_command_agent"]
     assert operation_risk_context["device_local_event_count"] == 15.0
     run_config_traceability_evidence = next(
         item
@@ -461,6 +472,9 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "AIGuard runtime operation anomalies" in markdown
     assert "AIGuard operation risk summary evidence" in markdown
     assert "edgeenv_orchestrator_operation_risk_summary" in markdown
+    assert "AIGuard task event rollup evidence" in markdown
+    assert "edgeenv_orchestrator_task_event_rollup" in markdown
+    assert "tasks=vision_agent,voice_command_agent" in markdown
     assert "status=warning, markers=4" in markdown
     assert "health=worker_health_degraded" in markdown
     assert "Orchestrator context attached runs" in markdown
@@ -505,6 +519,9 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "runtime_queue_overload, runtime_thermal_instability" in html
     assert "AIGuard operation risk summary evidence" in html
     assert "edgeenv_orchestrator_operation_risk_summary" in html
+    assert "AIGuard task event rollup evidence" in html
+    assert "edgeenv_orchestrator_task_event_rollup" in html
+    assert "tasks=vision_agent,voice_command_agent" in html
     assert "health=worker_health_degraded" in html
     assert "AIGuard remote dispatch event summary" in html
     assert "events=3, final=succeeded, fallback_recovered=True" in html
