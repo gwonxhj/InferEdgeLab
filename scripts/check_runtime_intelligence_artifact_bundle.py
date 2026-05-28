@@ -25,6 +25,10 @@ REQUIRED_MARKDOWN_MARKERS = {
     "runtime_history_seed": "| Runtime telemetry history seed | 2 |",
     "runtime_history_seed_run_config": "| Runtime history seed run_config | 2 |",
     "orchestrator_attached_run": "| Orchestrator context attached runs | candidate |",
+    "orchestrator_operation_risk_summary": (
+        "| Orchestrator operation risk summary | candidate: "
+        "queue=queue_backlog_threshold_exceeded"
+    ),
     "aiguard_evidence": "| AIGuard deterministic evidence | warning / suspicious |",
     "aiguard_operation_anomalies": (
         "| AIGuard runtime operation anomalies | "
@@ -91,6 +95,8 @@ REQUIRED_HTML_MARKERS = {
     ),
     "aiguard_remote_dispatch_evidence": "remote_execution_recovered_by_fallback",
     "aiguard_orchestrator_handoff": "AIGuard Orchestrator context handoff",
+    "orchestrator_operation_risk_summary": "Orchestrator operation risk summary",
+    "orchestrator_operation_risk_queue": "queue=queue_backlog_threshold_exceeded",
     "aiguard_producer_lineage_handoff": "AIGuard producer lineage handoff",
     "aiguard_producer_lineage_evidence": "edgeenv_orchestrator_producer_lineage",
     "aiguard_producer_lineage_recommendation": (

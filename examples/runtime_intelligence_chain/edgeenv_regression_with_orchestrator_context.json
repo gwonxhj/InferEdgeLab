@@ -230,6 +230,21 @@
           "production_remote_execution": false,
           "evidence_role": "remote_dispatch_runtime_event_compact_summary",
           "operation_boundary": "remote dispatch starter evidence only"
+        },
+        "operation_risk_summary": {
+          "schema_version": "inferedge-entrypoint-operation-risk-summary-v1",
+          "evidence_role": "derived_navigation_context",
+          "decision_owner": "lab",
+          "scheduler_owner": "orchestrator",
+          "queue_pressure_reason": "queue_backlog_threshold_exceeded",
+          "max_pressure_task": "vision_agent",
+          "primary_health_reason": "worker_health_degraded",
+          "degraded_worker_ids": [
+            "vision_agent"
+          ],
+          "device_local_event_count": 15,
+          "producer_event_count": 7,
+          "not_a_deployment_decision": true
         }
       }
     },

@@ -496,6 +496,8 @@ When `--with-guard` is used with EdgeEnv evidence, Lab preserves deterministic A
 
 If AIGuard preserves EdgeEnv/Orchestrator `candidate_context.producer` lineage, Lab shows the device-local producer source, task stage, event count, and supplemental role as traceability evidence. Lab also surfaces the Orchestrator-declared downstream guard alignment marker, including `producer_lineage_evidence_type=edgeenv_orchestrator_producer_lineage`, so reviewers can see which deterministic AIGuard evidence type was expected without making Orchestrator or AIGuard the final decision owner. The Runtime Intelligence gates also require `edgeenv_orchestrator_producer_lineage` and `runtime_history_seed_run_config_traceability` so these handoffs cannot disappear silently from the Lab-owned report.
 
+If EdgeEnv preserves an Orchestrator `operation_risk_summary`, Lab shows the compact queue-pressure, max-pressure task, worker-health, and producer/device-local event markers as navigation context in the Runtime Intelligence Risk Summary. These markers help reviewers find the relevant operation evidence, but they do not become EdgeEnv regression deltas, comparability fields, or a deployment decision override.
+
 For the remote dispatch starter path, Lab surfaces AIGuard's compact remote runtime event summary, count alias, consistency state, `evidence_role=remote_dispatch_runtime_event_compact_summary`, `operation_boundary=remote dispatch starter evidence only`, and `production_remote_execution=false` markers. These values remain Lab-owned deployment review context: Lab can require review from the evidence, but it does not treat Orchestrator, EdgeEnv, or AIGuard as the final decision owner and does not present the path as production remote execution, long-lived worker readiness, or cloud orchestration.
 
 Markdown and HTML reports include a Runtime Intelligence Risk Summary that connects:
@@ -503,6 +505,7 @@ Markdown and HTML reports include a Runtime Intelligence Risk Summary that conne
 - EdgeEnv comparability and regression evidence
 - telemetry replay gaps
 - Runtime history seed and run_config traceability
+- Orchestrator operation risk summary markers
 - device-local producer lineage handoff
 - Orchestrator-declared downstream guard alignment
 - remote dispatch starter boundary evidence

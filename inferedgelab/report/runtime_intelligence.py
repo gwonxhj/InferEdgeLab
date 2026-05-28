@@ -197,6 +197,16 @@ def _append_telemetry_context_rows(
             )
         )
 
+    operation_risk_labels = _orchestrator_operation_risk_labels(telemetry_context)
+    if operation_risk_labels:
+        rows.append(
+            (
+                "Orchestrator operation risk summary",
+                "; ".join(operation_risk_labels),
+                "Operation risk markers are EdgeEnv-preserved navigation context; Lab still owns the deployment decision.",
+            )
+        )
+
 
 def _runtime_telemetry_coverage_labels(context: dict[str, Any]) -> list[str]:
     history_labels = _history_telemetry_coverage_labels(context)
@@ -297,6 +307,47 @@ def _coverage_payload(run_context: dict[str, Any]) -> dict[str, Any] | None:
     if isinstance(coverage, dict):
         return coverage
     return None
+
+
+def _orchestrator_operation_risk_labels(context: dict[str, Any]) -> list[str]:
+    labels: list[str] = []
+    for run_label in ("baseline", "candidate"):
+        run_context = context.get(run_label)
+        if not isinstance(run_context, dict):
+            continue
+        operation_context = run_context.get("orchestrator_operation_context")
+        if not isinstance(operation_context, dict):
+            continue
+        summary = operation_context.get("operation_risk_summary")
+        if not isinstance(summary, dict):
+            continue
+        parts = _operation_risk_summary_parts(summary)
+        if parts:
+            labels.append(f"{run_label}: " + ", ".join(parts))
+    return labels
+
+
+def _operation_risk_summary_parts(summary: dict[str, Any]) -> list[str]:
+    parts: list[str] = []
+    field_labels = (
+        ("queue_pressure_reason", "queue"),
+        ("max_pressure_task", "max_task"),
+        ("primary_health_reason", "health"),
+        ("device_local_event_count", "device_local_events"),
+        ("producer_event_count", "producer_events"),
+    )
+    for field, label in field_labels:
+        value = summary.get(field)
+        if value is None:
+            continue
+        parts.append(f"{label}={value}")
+    degraded_workers = summary.get("degraded_worker_ids")
+    if isinstance(degraded_workers, list) and degraded_workers:
+        parts.append(
+            "degraded_workers="
+            + ",".join(str(item) for item in degraded_workers if item is not None)
+        )
+    return parts
 
 
 def _append_aiguard_runtime_operation_rows(
