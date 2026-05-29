@@ -1514,11 +1514,20 @@ def test_agent_runtime_report_loads_committed_fixtures():
     report = load_agent_runtime_reliability_bundle(
         orchestration_summary_path="examples/agent_runtime/agent_3_orchestration_summary.json",
         guard_analysis_path="examples/agent_runtime/aiguard_runtime_guard_analysis.json",
+        edgeenv_run_show_path=(
+            "examples/agent_runtime/edgeenv_run_show_runtime_operation.json"
+        ),
     )
 
     assert report["agent_deployment_decision"]["decision"] == "blocked"
     assert report["agent_runtime_summary"]["metrics"]["drop_rate"] == pytest.approx(14 / 24)
     assert len(report["agent_runtime_summary"]["agents"]) == 3
+    context = report["agent_runtime_summary"]["edgeenv_preservation_context"]
+    assert context["run_id"] == "run-fixture-edgeenv-operation-0001"
+    assert context["runtime_operation_schema_version"] == (
+        "inferedge-runtime-operation-summary-v1"
+    )
+    assert context["comparability_role"] == "supplemental_evidence_not_gate"
 
 
 def test_agent_runtime_report_surfaces_remote_execution_failure():

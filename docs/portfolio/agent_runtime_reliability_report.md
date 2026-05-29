@@ -29,6 +29,7 @@ Committed lightweight fixtures:
 - `examples/agent_runtime/aiguard_runtime_guard_analysis.json`
 - `examples/agent_runtime/remote_dispatch_plan_only.json`
 - `examples/agent_runtime/remote_dispatch_fallback_recovered.json`
+- `examples/agent_runtime/edgeenv_run_show_runtime_operation.json`
 
 Generate a Markdown report:
 
@@ -52,6 +53,20 @@ The smoke writes one report for plan-only worker selection and one report for
 fallback-recovered starter execution. Both reports preserve
 `remote_runtime_summary_boundary=remote dispatch starter evidence only`; they
 do not start remote workers or claim production remote execution.
+
+Reproduce the committed EdgeEnv run preservation report path:
+
+```bash
+bash scripts/smoke_agent_runtime_edgeenv_preservation.sh \
+  --output-dir reports/agent_runtime_edgeenv_preservation
+```
+
+The smoke verifies that the Lab-owned Markdown/JSON report keeps the
+`Runtime Intelligence EdgeEnv Preservation` section, EdgeEnv run ID, Runtime
+operation summary schema, and `comparability_role=supplemental_evidence_not_gate`
+visible from a lightweight `runs show` fixture. This is local registry
+preservation evidence, not a production telemetry database or deployment
+decision override.
 
 Current starter coverage:
 

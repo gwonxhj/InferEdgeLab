@@ -173,6 +173,7 @@ poetry run inferedgelab agent-runtime-report \
   --orchestration-summary examples/agent_runtime/agent_3_orchestration_summary.json \
   --guard-analysis examples/agent_runtime/aiguard_runtime_guard_analysis.json
 bash scripts/smoke_agent_runtime_remote_paths.sh --output-dir reports/agent_runtime_remote_paths
+bash scripts/smoke_agent_runtime_edgeenv_preservation.sh --output-dir reports/agent_runtime_edgeenv_preservation
 poetry run inferedgelab export-demo-evidence --output reports/studio_demo_evidence.md
 ```
 
@@ -188,7 +189,9 @@ Additional report paths:
 - The bundled agent evidence is a synthetic sustained high-load 3-agent scenario for local review.
 - Optional `--runtime-result <path>` input adds Runtime-side `runtime_health_snapshot`, `runtime_events`, and `runtime_operation_summary` context to the same Lab report.
 - Optional `--remote-dispatch <path>` input adds file-based worker selection, retry/fallback plan, and remote execution starter context when an Orchestrator `inferedge-remote-dispatch-result-v1` JSON is available.
+- Optional `--edgeenv-run-show <path>` input adds EdgeEnv local run preservation context when an EdgeEnv `runs show` JSON is available.
 - `scripts/smoke_agent_runtime_remote_paths.sh` reproduces both committed remote dispatch starter paths: plan-only worker selection and fallback-recovered starter execution.
+- `scripts/smoke_agent_runtime_edgeenv_preservation.sh` gates the committed EdgeEnv run-show fixture so the `Runtime Intelligence EdgeEnv Preservation` report section cannot disappear silently.
 - Remote dispatch remains starter evidence for local-first review; it does not claim production remote execution.
 
 Remote dispatch starter boundary:

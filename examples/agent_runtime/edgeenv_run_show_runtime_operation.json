@@ -1,0 +1,69 @@
+{
+  "created_at": "2026-05-29T09:47:14.594755Z",
+  "metrics": {
+    "latency_mean_ms": 28.0,
+    "latency_p50_ms": 28.0,
+    "latency_p95_ms": 36.0,
+    "latency_p99_ms": 36.0,
+    "throughput_fps": 30.0
+  },
+  "model": {
+    "model_format": "runtime-result-json",
+    "model_hash": "acb5f50c195d2feef052cb483fb8b3746ea8cd64a28aa8a44e9dfe2358b3c487",
+    "model_name": "entrypoint-runtime-operation-result",
+    "model_path": "examples/agent_runtime/runtime_operation_result.json",
+    "model_version": "v1"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "include_postprocess": false,
+    "include_preprocess": false,
+    "input_dtype": "json",
+    "input_shape": [
+      1
+    ],
+    "precision": "evidence",
+    "repeat_runs": 1,
+    "task": "runtime-operation-evidence",
+    "warmup_runs": 0
+  },
+  "result_path": "examples/agent_runtime/.edgeenv/runs/run-fixture-edgeenv-operation-0001/result.json",
+  "run_id": "run-fixture-edgeenv-operation-0001",
+  "runtime": {
+    "execution_provider": "local-python",
+    "runtime": "entrypoint-smoke"
+  },
+  "runtime_operation_summary": {
+    "deadline_missed": false,
+    "decision_owner": "lab",
+    "error_category": "runtime_timeout_observed",
+    "evidence_gaps": [
+      "thermal_memory_evidence_missing"
+    ],
+    "health_reason": "timeout_threshold_exceeded",
+    "health_status": "degraded",
+    "latency_budget_exceeded": true,
+    "observation_scope": "single_runtime_result",
+    "production_cancellation": false,
+    "recommended_action": "review_latency_budget_or_degrade",
+    "retryable": true,
+    "risk_labels": [
+      "runtime_timeout_observed",
+      "latency_budget_exceeded"
+    ],
+    "scheduler_owner": "orchestrator",
+    "schema_version": "inferedge-runtime-operation-summary-v1",
+    "thermal_memory_evidence_available": false,
+    "timeout_observed": true
+  },
+  "target": {
+    "board_name": "fixture-local-dev-machine",
+    "os": "local",
+    "runtime_tags": [
+      "entrypoint",
+      "runtime-operation-evidence"
+    ],
+    "target_name": "entrypoint-local-fixture",
+    "target_type": "local"
+  }
+}
