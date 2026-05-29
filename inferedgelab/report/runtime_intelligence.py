@@ -224,6 +224,13 @@ def _append_telemetry_context_rows(
                 "Device-local or Jetson starter evidence is preserved through EdgeEnv for Lab review; Lab remains the final decision owner.",
             )
         )
+        rows.append(
+            (
+                "Lab EdgeEnv preservation context",
+                "lab_report_preservation_context_present=True; lab_preservation=present; lab_context=present",
+                "Lab-owned Runtime Intelligence gates use the same EdgeEnv preservation marker vocabulary as entrypoint evidence indexes.",
+            )
+        )
 
     task_event_labels = _orchestrator_task_event_rollup_labels(telemetry_context)
     if task_event_labels:

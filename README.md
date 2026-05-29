@@ -502,6 +502,12 @@ If AIGuard preserves EdgeEnv/Orchestrator `candidate_context.producer` lineage, 
 
 If EdgeEnv preserves an Orchestrator `operation_risk_summary`, Lab shows the compact queue-pressure, max-pressure task, worker-health, and producer/device-local event markers as navigation context in the Runtime Intelligence Risk Summary. These markers help reviewers find the relevant operation evidence, but they do not become EdgeEnv regression deltas, comparability fields, or a deployment decision override.
 
+When the EdgeEnv preservation path is present, Lab also renders a `Lab EdgeEnv
+preservation context` row with `lab_report_preservation_context_present=True`,
+`lab_preservation=present`, and `lab_context=present`. This keeps Lab's
+Runtime Intelligence artifact gate aligned with the entrypoint evidence index
+without making EdgeEnv the deployment decision owner.
+
 If the Orchestrator feed includes `runtime_task_event_summary`, Lab also renders a task-level event rollup showing which workload had scheduler delay, deadline misses, fallback decisions, or drop/policy reasons. This is report navigation context only; Lab still owns the deployment decision.
 
 If AIGuard also emits `edgeenv_orchestrator_operation_risk_summary`, Lab renders that deterministic evidence as a separate operation-risk summary row. This keeps the AIGuard warning explanation visible while preserving Lab as the final deployment decision owner.
@@ -516,6 +522,7 @@ Markdown and HTML reports include a Runtime Intelligence Risk Summary that conne
 - telemetry replay gaps
 - Runtime history seed and run_config traceability
 - Orchestrator operation risk summary markers
+- Lab EdgeEnv preservation context markers
 - device-local producer lineage handoff
 - Orchestrator-declared downstream guard alignment
 - remote dispatch starter boundary evidence

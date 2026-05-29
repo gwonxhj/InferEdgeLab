@@ -69,6 +69,7 @@ REQUIRED_LAB_EXPECTED_REPORT_MARKERS = (
     "Runtime Intelligence Risk Summary",
     "Orchestrator operation feed context",
     "Orchestrator task event rollup",
+    "Lab EdgeEnv preservation context",
     "AIGuard task event rollup evidence",
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
@@ -152,6 +153,9 @@ def _validate_runtime_report(path: Path, errors: list[str]) -> None:
         "AIGuard operation risk summary evidence",
         "edgeenv_orchestrator_operation_risk_summary",
         "AIGuard task event rollup evidence",
+        "Lab EdgeEnv preservation context",
+        "lab_report_preservation_context_present=True",
+        "lab_preservation=present",
         "edgeenv_orchestrator_task_event_rollup",
         "Runtime telemetry coverage gaps",
         "AIGuard producer-lineage guard alignment",
@@ -279,6 +283,7 @@ def _validate_aiguard_handoff_alignment(
             "lab_expected_report_markers: "
             "Runtime Intelligence Risk Summary, Orchestrator operation feed context, "
             "Orchestrator task event rollup, "
+            "Lab EdgeEnv preservation context, "
             "AIGuard task event rollup evidence, "
             "AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, "
             "AIGuard remote event summary consistency, "

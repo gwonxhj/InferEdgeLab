@@ -227,6 +227,7 @@ Runtime Intelligence report에서 읽어야 할 핵심 row:
 - telemetry replay gap
 - Runtime history seed `run_config` traceability
 - Orchestrator device-local producer lineage
+- Lab EdgeEnv preservation context marker
 - AIGuard deterministic anomaly evidence
 - Lab-owned deployment decision
 

@@ -486,6 +486,9 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "Orchestrator context attached runs" in markdown
     assert "Orchestrator operation risk summary" in markdown
     assert "Jetson/device-local EdgeEnv preservation run" in markdown
+    assert "Lab EdgeEnv preservation context" in markdown
+    assert "lab_report_preservation_context_present=True" in markdown
+    assert "lab_preservation=present" in markdown
     assert (
         "run=edgeenv-smoke-candidate, sources=device_local_cli_override, "
         "stages=vision_agent:device_local_starter, device_local_events=2, "
@@ -513,6 +516,9 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "Runtime Intelligence Risk Summary" in html
     assert "Orchestrator operation risk summary" in html
     assert "Jetson/device-local EdgeEnv preservation run" in html
+    assert "Lab EdgeEnv preservation context" in html
+    assert "lab_report_preservation_context_present=True" in html
+    assert "lab_preservation=present" in html
     assert "run=edgeenv-smoke-candidate" in html
     assert "Orchestrator task event rollup" in html
     assert (
