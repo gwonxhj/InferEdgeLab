@@ -29,6 +29,11 @@ REQUIRED_MARKDOWN_MARKERS = {
         "| Orchestrator operation risk summary | candidate: "
         "queue=queue_backlog_threshold_exceeded"
     ),
+    "jetson_edgeenv_preservation_identity": (
+        "| Jetson/device-local EdgeEnv preservation run | candidate: "
+        "identity=jetson_device_local_preservation, path=device_local_starter, "
+        "run=edgeenv-smoke-candidate"
+    ),
     "orchestrator_task_event_rollup": (
         "| Orchestrator task event rollup | candidate: "
         "vision_agent(delay=1,miss=1,max_delay_cycles=3,max_wait_ms=15,"
@@ -147,6 +152,10 @@ REQUIRED_HTML_MARKERS = {
     ),
     "aiguard_guard_alignment": "AIGuard producer-lineage guard alignment",
     "aiguard_device_local_producer_source": "device_local_cli_override",
+    "jetson_edgeenv_preservation_identity": (
+        "identity=jetson_device_local_preservation, path=device_local_starter, "
+        "run=edgeenv-smoke-candidate"
+    ),
     "runtime_history_seed": "Runtime telemetry history seed",
     "runtime_history_seed_run_config": "Runtime history seed run_config",
     "aiguard_history_seed_handoff": "AIGuard history seed handoff",

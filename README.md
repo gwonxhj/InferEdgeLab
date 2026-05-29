@@ -507,6 +507,10 @@ preservation context` row with `lab_report_preservation_context_present=True`,
 `lab_preservation=present`, and `lab_context=present`. This keeps Lab's
 Runtime Intelligence artifact gate aligned with the entrypoint evidence index
 without making EdgeEnv the deployment decision owner.
+The companion `Jetson/device-local EdgeEnv preservation run` row starts with
+`identity=jetson_device_local_preservation` and, when available,
+`path=device_local_starter`, so reviewers can spot the preserved Jetson or
+device-local run before reading queue, resource, and producer details.
 
 If the Orchestrator feed includes `runtime_task_event_summary`, Lab also renders a task-level event rollup showing which workload had scheduler delay, deadline misses, fallback decisions, or drop/policy reasons. This is report navigation context only; Lab still owns the deployment decision.
 

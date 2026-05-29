@@ -228,6 +228,8 @@ Runtime Intelligence report에서 읽어야 할 핵심 row:
 - Runtime history seed `run_config` traceability
 - Orchestrator device-local producer lineage
 - Lab EdgeEnv preservation context marker
+- Jetson/device-local preservation row의 `identity=jetson_device_local_preservation`
+  및 `path=device_local_starter` 식별 label
 - AIGuard deterministic anomaly evidence
 - Lab-owned deployment decision
 
