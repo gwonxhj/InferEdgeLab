@@ -123,6 +123,10 @@ def test_runtime_intelligence_bundle_manifest_gate_cli_passes(tmp_path):
         "expected_report_markers: Runtime Intelligence report markers declared"
         in summary
     )
+    assert (
+        "expected_report_markers: remote fallback Lab context row declared"
+        in summary
+    )
 
 
 def test_runtime_intelligence_docs_describe_expected_report_markers():
@@ -288,6 +292,31 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_edgeenv_handoff
     assert (
         "lab_bundle_alignment.artifact_roles.aiguard_guard_analysis "
         "must be aiguard-deterministic-runtime-anomaly-evidence"
+    ) in summary
+
+
+def test_runtime_intelligence_bundle_manifest_gate_fails_for_handoff_missing_report_marker(
+    tmp_path,
+):
+    handoff = json.loads(EDGEENV_HANDOFF.read_text(encoding="utf-8"))
+    handoff["lab_bundle_alignment"]["expected_report_markers"].remove(
+        "lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback"
+    )
+    handoff_path = tmp_path / "edgeenv_lab_handoff_manifest.json"
+    handoff_path.write_text(json.dumps(handoff), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(
+        manifest=str(MANIFEST),
+        edgeenv_handoff=str(handoff_path),
+        summary_out=str(summary_path),
+    )
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert (
+        "lab_bundle_alignment.expected_report_markers must match "
+        "Lab-required Runtime Intelligence report markers"
     ) in summary
 
 

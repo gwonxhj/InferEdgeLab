@@ -57,6 +57,7 @@ REQUIRED_BUNDLE_MANIFEST_SUMMARY_MARKERS = (
     "aiguard_raw_context: missing_telemetry_orchestrator_context preserved",
     "aiguard_handoff_alignment: external required evidence types satisfied",
     "expected_report_markers: Runtime Intelligence report markers declared",
+    "expected_report_markers: remote fallback Lab context row declared",
     "edgeenv_handoff: lab_bundle_alignment validated",
     "edgeenv_handoff: runtime_telemetry_history validated",
     "edgeenv_handoff: external AIGuard evidence requirements declared",
@@ -75,6 +76,7 @@ REQUIRED_LAB_EXPECTED_REPORT_MARKERS = (
     "AIGuard remote dispatch event summary",
     "AIGuard remote event summary consistency",
     "Remote fallback starter evidence",
+    "lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback",
     "AIGuard producer-lineage guard alignment",
     "Lab remains the final deployment decision owner.",
 )
@@ -291,6 +293,8 @@ def _validate_aiguard_handoff_alignment(
             "AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, "
             "AIGuard remote event summary consistency, "
             "Remote fallback starter evidence, "
+            "lab=Remote fallback starter evidence; "
+            "evidence=remote_execution_recovered_by_fallback, "
             "AIGuard producer-lineage guard alignment, "
             "Lab remains the final deployment decision owner.",
             "report_marker_context_role: lab_report_contract_context",

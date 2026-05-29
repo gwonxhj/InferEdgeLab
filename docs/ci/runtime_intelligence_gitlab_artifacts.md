@@ -172,7 +172,11 @@ packaging runs. That marker set preserves `Runtime Intelligence Risk Summary`,
 `AIGuard remote dispatch event summary`,
 `AIGuard remote event summary consistency`,
 `Remote fallback starter evidence`,
+`lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback`,
 `AIGuard producer-lineage guard alignment`, and `Lab remains the final deployment decision owner.`.
+The gate summary also emits
+`expected_report_markers: remote fallback Lab context row declared` so CI can
+verify the row-value marker declaration from the bundle summary artifact.
 
 The smoke also includes the precomputed AIGuard
 `aiguard_edgeenv_handoff_alignment` artifact. That artifact verifies that the
@@ -187,7 +191,9 @@ The CI artifact gate is implemented by `scripts/check_runtime_intelligence_ci_ar
 The same CI artifact gate also checks the copied
 `aiguard_edgeenv_handoff_alignment.json/.md` for Lab report marker context:
 `lab_expected_report_markers` must match the Lab-owned Runtime Intelligence
-report marker set, `report_marker_context_role` must remain
+report marker set, including the remote fallback row value marker
+`lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback`,
+`report_marker_context_role` must remain
 `lab_report_contract_context`, and
 `aiguard_validates_expected_report_markers` must remain `false`. This keeps
 AIGuard as a deterministic external evidence provider while leaving report

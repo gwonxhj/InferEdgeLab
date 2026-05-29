@@ -132,6 +132,7 @@ REQUIRED_EXPECTED_REPORT_MARKERS = {
     "AIGuard remote dispatch event summary",
     "AIGuard remote event summary consistency",
     "Remote fallback starter evidence",
+    "lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback",
     "AIGuard producer-lineage guard alignment",
     "Lab remains the final deployment decision owner.",
 }
@@ -167,6 +168,7 @@ SUMMARY_CONTRACT_MARKERS = (
     "aiguard_raw_context: missing_telemetry_orchestrator_context preserved",
     "aiguard_handoff_alignment: external required evidence types satisfied",
     "expected_report_markers: Runtime Intelligence report markers declared",
+    "expected_report_markers: remote fallback Lab context row declared",
 )
 EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS = (
     "edgeenv_handoff: lab_bundle_alignment validated",
@@ -421,6 +423,32 @@ def _validate_edgeenv_handoff_alignment(
             "EdgeEnv handoff lab_bundle_alignment."
             "external_aiguard_required_evidence_types must match Lab-required "
             "AIGuard evidence types",
+        )
+
+    expected_report_markers = alignment.get("expected_report_markers")
+    _record(
+        isinstance(expected_report_markers, list),
+        errors,
+        "EdgeEnv handoff lab_bundle_alignment.expected_report_markers "
+        "must be a list",
+    )
+    if isinstance(expected_report_markers, list):
+        invalid_markers = [
+            marker
+            for marker in expected_report_markers
+            if not isinstance(marker, str) or not marker
+        ]
+        _record(
+            not invalid_markers,
+            errors,
+            "EdgeEnv handoff lab_bundle_alignment.expected_report_markers "
+            "must contain non-empty strings",
+        )
+        _record(
+            set(expected_report_markers) == REQUIRED_EXPECTED_REPORT_MARKERS,
+            errors,
+            "EdgeEnv handoff lab_bundle_alignment.expected_report_markers "
+            "must match Lab-required Runtime Intelligence report markers",
         )
 
     source_repositories = alignment.get("source_repositories")
