@@ -923,6 +923,11 @@ def test_generate_compare_markdown_summarizes_remote_runtime_event_summary():
         "| AIGuard remote dispatch evidence | "
         "remote_execution_recovered_by_fallback |"
     ) in text
+    assert (
+        "| Remote fallback starter evidence | "
+        "lab=Remote fallback starter evidence; "
+        "evidence=remote_execution_recovered_by_fallback |"
+    ) in text
     assert "Lab remains the final decision owner" in text
 
 
@@ -1177,6 +1182,8 @@ def test_generate_compare_html_summarizes_remote_runtime_event_summary():
     assert "remote dispatch starter evidence only" in html
     assert "production_remote_execution=False" in html
     assert "remote_execution_recovered_by_fallback" in html
+    assert "Remote fallback starter evidence" in html
+    assert "lab=Remote fallback starter evidence" in html
     assert "Lab remains the final decision owner" in html
 
 

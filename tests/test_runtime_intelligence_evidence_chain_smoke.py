@@ -435,6 +435,11 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
         "| AIGuard remote dispatch evidence | "
         "remote_execution_recovered_by_fallback |"
     ) in bundle["markdown"]
+    assert (
+        "| Remote fallback starter evidence | "
+        "lab=Remote fallback starter evidence; "
+        "evidence=remote_execution_recovered_by_fallback |"
+    ) in bundle["markdown"]
     assert "Lab remains the final deployment decision owner" in bundle["markdown"]
     assert all(
         "raw_context" in item
@@ -508,6 +513,8 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "events=3, final=succeeded, fallback_recovered=True" in markdown
     assert "AIGuard remote event summary consistency" in markdown
     assert "remote_execution_recovered_by_fallback" in markdown
+    assert "Remote fallback starter evidence" in markdown
+    assert "lab=Remote fallback starter evidence" in markdown
     assert (
         "baseline/candidate=shape=1x640x640, input_mode=dummy, "
         "input_preprocess=none, power_mode=unknown, jetson_clocks=unknown, "
@@ -547,3 +554,5 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "events=3, final=succeeded, fallback_recovered=True" in html
     assert "AIGuard remote event summary consistency" in html
     assert "remote_execution_recovered_by_fallback" in html
+    assert "Remote fallback starter evidence" in html
+    assert "lab=Remote fallback starter evidence" in html

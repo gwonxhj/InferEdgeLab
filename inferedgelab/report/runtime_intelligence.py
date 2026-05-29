@@ -36,6 +36,7 @@ REMOTE_DISPATCH_EVIDENCE_TYPES = {
     "remote_execution_starter_success",
     REMOTE_RUNTIME_EVENT_SUMMARY_MISMATCH_EVIDENCE_TYPE,
 }
+REMOTE_FALLBACK_LAB_CONTEXT_LABEL = "Remote fallback starter evidence"
 
 RUN_CONFIG_MARKER_FIELDS = (
     "input_mode",
@@ -825,6 +826,19 @@ def _append_aiguard_remote_dispatch_rows(
                 )
             )
 
+        fallback_context_label = _remote_fallback_lab_context_label(
+            remote_dispatch,
+            evidence_items,
+        )
+        if fallback_context_label:
+            rows.append(
+                (
+                    REMOTE_FALLBACK_LAB_CONTEXT_LABEL,
+                    fallback_context_label,
+                    "Lab-facing remote fallback label matches the entrypoint registry while remaining starter-only review context.",
+                )
+            )
+
     evidence_types = sorted(
         {
             str(item.get("type"))
@@ -952,6 +966,38 @@ def _remote_runtime_event_boundary_label(remote_dispatch: dict[str, Any]) -> str
     if not parts:
         return ""
     return ", ".join(str(part) for part in parts)
+
+
+def _remote_fallback_lab_context_label(
+    remote_dispatch: dict[str, Any],
+    evidence_items: list[dict[str, Any]],
+) -> str:
+    evidence_type = "remote_execution_recovered_by_fallback"
+    evidence_types = {
+        str(item.get("type"))
+        for item in evidence_items
+        if item.get("type") in REMOTE_DISPATCH_EVIDENCE_TYPES
+    }
+    event_summary = remote_dispatch.get("remote_runtime_event_summary")
+    if not isinstance(event_summary, dict):
+        event_summary = {}
+
+    fallback_recovered = _first_present(
+        remote_dispatch.get("remote_runtime_event_summary_fallback_recovered"),
+        event_summary.get("fallback_recovered"),
+        remote_dispatch.get("fallback_recovered"),
+    )
+    fallback_final_status = _first_present(
+        remote_dispatch.get("fallback_final_status"),
+        event_summary.get("final_status"),
+    )
+    if (
+        evidence_type in evidence_types
+        or fallback_recovered is True
+        or str(fallback_final_status).lower() == "succeeded"
+    ):
+        return f"lab={REMOTE_FALLBACK_LAB_CONTEXT_LABEL}; evidence={evidence_type}"
+    return ""
 
 
 def _first_present(*values: Any) -> Any:

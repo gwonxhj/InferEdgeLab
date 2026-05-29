@@ -131,6 +131,7 @@ REQUIRED_EXPECTED_REPORT_MARKERS = {
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
     "AIGuard remote event summary consistency",
+    "Remote fallback starter evidence",
     "AIGuard producer-lineage guard alignment",
     "Lab remains the final deployment decision owner.",
 }
