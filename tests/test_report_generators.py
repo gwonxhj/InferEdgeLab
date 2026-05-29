@@ -831,7 +831,10 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
     ) in text
     assert (
         "| Jetson/device-local EdgeEnv preservation run | candidate: "
-        "identity=jetson_device_local_preservation, run=candidate, "
+        "identity=jetson_device_local_preservation, run=candidate |"
+    ) in text
+    assert (
+        "| Jetson/device-local EdgeEnv preservation details | candidate: "
         "device_local_events=15, resource=tegrastats_timeline, "
         "queue=queue_backlog_threshold_exceeded |"
     ) in text
@@ -1143,12 +1146,15 @@ def test_generate_compare_html_summarizes_orchestrator_context_risk():
     assert "Orchestrator operation feed context" in html
     assert "Orchestrator context attached runs" in html
     assert "Jetson/device-local EdgeEnv preservation run" in html
+    assert "Jetson/device-local EdgeEnv preservation details" in html
     assert "Lab EdgeEnv preservation context" in html
     assert "lab_report_preservation_context_present=True" in html
     assert "lab_preservation=present" in html
     assert (
-        "candidate: identity=jetson_device_local_preservation, run=candidate, "
-        "device_local_events=15, resource=tegrastats_timeline, "
+        "candidate: identity=jetson_device_local_preservation, run=candidate"
+    ) in html
+    assert (
+        "candidate: device_local_events=15, resource=tegrastats_timeline, "
         "queue=queue_backlog_threshold_exceeded"
     ) in html
     assert "runtime_queue_overload, runtime_thermal_instability" in html

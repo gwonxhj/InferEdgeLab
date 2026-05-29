@@ -218,13 +218,24 @@ def _append_telemetry_context_rows(
 
     preservation_labels = _edgeenv_preservation_run_labels(telemetry_context)
     if preservation_labels:
+        preservation_detail_labels = _edgeenv_preservation_detail_labels(
+            telemetry_context
+        )
         rows.append(
             (
                 "Jetson/device-local EdgeEnv preservation run",
                 "; ".join(preservation_labels),
-                "Device-local or Jetson starter evidence is preserved through EdgeEnv for Lab review; Lab remains the final decision owner.",
+                "Device-local or Jetson starter evidence identity is preserved through EdgeEnv for Lab review; Lab remains the final decision owner.",
             )
         )
+        if preservation_detail_labels:
+            rows.append(
+                (
+                    "Jetson/device-local EdgeEnv preservation details",
+                    "; ".join(preservation_detail_labels),
+                    "Producer, stage, resource, and queue markers stay as navigation context rather than deployment decision policy.",
+                )
+            )
         rows.append(
             (
                 "Lab EdgeEnv preservation context",
@@ -395,16 +406,37 @@ def _edgeenv_preservation_run_labels(context: dict[str, Any]) -> list[str]:
         operation_context = run_context.get("orchestrator_operation_context")
         if not isinstance(operation_context, dict):
             continue
-        label = _edgeenv_preservation_run_label(run_label, operation_context)
+        label, _ = _edgeenv_preservation_run_label_pair(
+            run_label,
+            operation_context,
+        )
         if label:
             labels.append(label)
     return labels
 
 
-def _edgeenv_preservation_run_label(
+def _edgeenv_preservation_detail_labels(context: dict[str, Any]) -> list[str]:
+    labels: list[str] = []
+    for run_label in ("baseline", "candidate"):
+        run_context = context.get(run_label)
+        if not isinstance(run_context, dict):
+            continue
+        operation_context = run_context.get("orchestrator_operation_context")
+        if not isinstance(operation_context, dict):
+            continue
+        _, detail_label = _edgeenv_preservation_run_label_pair(
+            run_label,
+            operation_context,
+        )
+        if detail_label:
+            labels.append(detail_label)
+    return labels
+
+
+def _edgeenv_preservation_run_label_pair(
     run_label: str,
     operation_context: dict[str, Any],
-) -> str:
+) -> tuple[str, str]:
     candidate_context = operation_context.get("candidate_context")
     if not isinstance(candidate_context, dict):
         candidate_context = {}
@@ -438,32 +470,39 @@ def _edgeenv_preservation_run_label(
         or resource.get("source") == "tegrastats_timeline"
     )
     if not has_preservation_marker:
-        return ""
+        return "", ""
 
-    parts: list[str] = ["identity=jetson_device_local_preservation"]
+    identity_parts: list[str] = ["identity=jetson_device_local_preservation"]
     stage_paths = _producer_stage_paths(stage_labels)
     if stage_paths:
-        parts.append("path=" + ",".join(stage_paths))
+        identity_parts.append("path=" + ",".join(stage_paths))
     run_id = _first_present(
         operation_context.get("run_id"),
         candidate_context.get("run_id"),
     )
     if run_id is not None:
-        parts.append(f"run={run_id}")
+        identity_parts.append(f"run={run_id}")
+
+    detail_parts: list[str] = []
     if sources:
-        parts.append("sources=" + ",".join(sources))
+        detail_parts.append("sources=" + ",".join(sources))
     if stage_labels:
-        parts.append("stages=" + ",".join(stage_labels))
+        detail_parts.append("stages=" + ",".join(stage_labels))
     if device_local_count is not None:
-        parts.append(f"device_local_events={_format_compact_value(device_local_count)}")
+        detail_parts.append(
+            f"device_local_events={_format_compact_value(device_local_count)}"
+        )
 
     resource_source = resource.get("source")
     if resource_source is not None:
-        parts.append(f"resource={resource_source}")
+        detail_parts.append(f"resource={resource_source}")
     queue_pressure = operation_summary.get("queue_pressure_reason")
     if queue_pressure is not None:
-        parts.append(f"queue={queue_pressure}")
-    return f"{run_label}: " + ", ".join(parts)
+        detail_parts.append(f"queue={queue_pressure}")
+
+    identity_label = f"{run_label}: " + ", ".join(identity_parts)
+    detail_label = f"{run_label}: " + ", ".join(detail_parts) if detail_parts else ""
+    return identity_label, detail_label
 
 
 def _producer_stage_labels(stage_by_task: Any) -> list[str]:
