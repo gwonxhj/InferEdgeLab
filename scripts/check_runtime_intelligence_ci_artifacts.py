@@ -41,9 +41,11 @@ REQUIRED_BUNDLE_MANIFEST_SUMMARY_MARKERS = (
     "orchestrator_producer_lineage_shape: per-task source/stage/count mappings validated",
     "edgeenv_history_seed_run_config: run_config snapshots validated",
     "aiguard_evidence: edgeenv_orchestrator_producer_lineage validated",
+    "aiguard_evidence: edgeenv_orchestrator_task_event_rollup validated",
     "aiguard_evidence: runtime_history_seed_run_config_traceability validated",
     "aiguard_evidence: remote_execution_recovered_by_fallback validated",
     "aiguard_raw_context: producer_lineage_shape preserved",
+    "aiguard_raw_context: task_event_rollup preserved",
     "aiguard_raw_context: history_seed_run_config_traceability preserved",
     "aiguard_raw_context: remote_runtime_event_summary preserved",
     "aiguard_raw_context: remote_runtime_summary_boundary preserved",
@@ -60,12 +62,14 @@ REQUIRED_BUNDLE_MANIFEST_SUMMARY_MARKERS = (
     "edgeenv_handoff: external AIGuard evidence requirements declared",
     "edgeenv_handoff: device_local_producer_lineage validated",
     "edgeenv_handoff: producer_lineage_guard_alignment validated",
+    "edgeenv_handoff: orchestrator_task_event_rollup validated",
     "edgeenv_handoff: missing_telemetry_orchestrator_context validated",
 )
 REQUIRED_LAB_EXPECTED_REPORT_MARKERS = (
     "Runtime Intelligence Risk Summary",
     "Orchestrator operation feed context",
     "Orchestrator task event rollup",
+    "AIGuard task event rollup evidence",
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
     "AIGuard remote event summary consistency",
@@ -275,6 +279,7 @@ def _validate_aiguard_handoff_alignment(
             "lab_expected_report_markers: "
             "Runtime Intelligence Risk Summary, Orchestrator operation feed context, "
             "Orchestrator task event rollup, "
+            "AIGuard task event rollup evidence, "
             "AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, "
             "AIGuard remote event summary consistency, "
             "AIGuard producer-lineage guard alignment, "

@@ -155,7 +155,8 @@ The same gate now also checks `source_repositories`, `artifact_roles`,
 producer-lineage source/stage/count shape. It also requires the Orchestrator
 downstream guard-alignment marker for `edgeenv_orchestrator_producer_lineage`
 to remain present in EdgeEnv/AIGuard handoff context. It also requires AIGuard
-`runtime_history_seed_run_config_traceability` and
+`edgeenv_orchestrator_task_event_rollup`,
+`runtime_history_seed_run_config_traceability`, and
 `remote_execution_recovered_by_fallback` evidence so the smoke remains a
 cross-repo handoff fixture rather than a Lab-only report sample. When an
 EdgeEnv handoff is provided, the gate also checks that
@@ -165,6 +166,7 @@ The same manifest gate requires `expected_report_markers` to match the
 Lab-owned Runtime Intelligence report contract before optional CI artifact
 packaging runs. That marker set preserves `Runtime Intelligence Risk Summary`,
 `Orchestrator operation feed context`, `Orchestrator task event rollup`,
+`AIGuard task event rollup evidence`,
 `AIGuard runtime operation anomalies`,
 `AIGuard remote dispatch event summary`,
 `AIGuard remote event summary consistency`,

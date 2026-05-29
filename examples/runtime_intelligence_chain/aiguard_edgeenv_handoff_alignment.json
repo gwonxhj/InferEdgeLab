@@ -6,13 +6,14 @@
   "diagnosis_owner": "aiguard",
   "handoff_schema_version": "edgeenv.runtime-intelligence-lab-handoff.v1",
   "guard_analysis_schema_version": "inferedge-aiguard-diagnosis-v1",
-  "required_evidence_type_count": 5,
-  "guard_evidence_type_count": 5,
-  "lab_expected_report_marker_count": 8,
+  "required_evidence_type_count": 7,
+  "guard_evidence_type_count": 8,
+  "lab_expected_report_marker_count": 9,
   "lab_expected_report_markers": [
     "Runtime Intelligence Risk Summary",
     "Orchestrator operation feed context",
     "Orchestrator task event rollup",
+    "AIGuard task event rollup evidence",
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
     "AIGuard remote event summary consistency",
@@ -25,19 +26,26 @@
   "required_evidence_types": [
     "runtime_telemetry_context_coverage",
     "edgeenv_orchestrator_producer_lineage",
+    "edgeenv_orchestrator_task_event_rollup",
     "runtime_history_seed_run_config_traceability",
     "runtime_queue_overload",
-    "runtime_thermal_instability"
+    "runtime_thermal_instability",
+    "remote_execution_recovered_by_fallback"
   ],
   "guard_analysis_evidence_types": [
     "runtime_telemetry_context_coverage",
     "edgeenv_orchestrator_producer_lineage",
+    "edgeenv_orchestrator_operation_risk_summary",
+    "edgeenv_orchestrator_task_event_rollup",
     "runtime_history_seed_run_config_traceability",
     "runtime_thermal_instability",
-    "runtime_queue_overload"
+    "runtime_queue_overload",
+    "remote_execution_recovered_by_fallback"
   ],
   "missing_required_evidence_types": [],
-  "supplemental_guard_evidence_types": [],
+  "supplemental_guard_evidence_types": [
+    "edgeenv_orchestrator_operation_risk_summary"
+  ],
   "invalid_required_evidence_types": [],
   "invalid_guard_evidence_items": [],
   "boundary_flags": {

@@ -60,6 +60,7 @@
     "external_aiguard_required_evidence_types": [
       "runtime_telemetry_context_coverage",
       "edgeenv_orchestrator_producer_lineage",
+      "edgeenv_orchestrator_task_event_rollup",
       "runtime_history_seed_run_config_traceability",
       "runtime_queue_overload",
       "runtime_thermal_instability",
@@ -69,6 +70,7 @@
       "Runtime Intelligence Risk Summary",
       "Orchestrator operation feed context",
       "Orchestrator task event rollup",
+      "AIGuard task event rollup evidence",
       "AIGuard runtime operation anomalies",
       "AIGuard remote dispatch event summary",
       "AIGuard remote event summary consistency",
@@ -128,6 +130,10 @@
     "producer_lineage_guard_alignment_run_ids": [
       "edgeenv-smoke-candidate",
       "edgeenv-smoke-missing"
+    ],
+    "orchestrator_task_event_rollup_present": true,
+    "orchestrator_task_event_rollup_run_ids": [
+      "edgeenv-smoke-candidate"
     ]
   },
   "notes": [
