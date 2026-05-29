@@ -83,6 +83,10 @@ def test_runtime_intelligence_bundle_manifest_gate_cli_passes(tmp_path):
     )
     assert "edgeenv_history_seed_run_config: run_config snapshots validated" in summary
     assert (
+        "aiguard_evidence: edgeenv_orchestrator_task_event_rollup validated"
+        in summary
+    )
+    assert (
         "aiguard_evidence: runtime_history_seed_run_config_traceability validated"
         in summary
     )
@@ -95,6 +99,7 @@ def test_runtime_intelligence_bundle_manifest_gate_cli_passes(tmp_path):
         in summary
     )
     assert "aiguard_raw_context: producer_lineage_shape preserved" in summary
+    assert "aiguard_raw_context: task_event_rollup preserved" in summary
     assert (
         "aiguard_raw_context: history_seed_run_config_traceability preserved"
         in summary
@@ -155,6 +160,7 @@ def test_runtime_intelligence_bundle_manifest_gate_validates_edgeenv_handoff(
     assert "edgeenv_handoff: remote_dispatch_boundary preserved" in summary
     assert "edgeenv_handoff: device_local_producer_lineage validated" in summary
     assert "edgeenv_handoff: producer_lineage_guard_alignment validated" in summary
+    assert "edgeenv_handoff: orchestrator_task_event_rollup validated" in summary
     assert "edgeenv_handoff: missing_telemetry_orchestrator_context validated" in summary
     assert (
         "edgeenv_handoff: external AIGuard evidence requirements declared"
@@ -298,6 +304,50 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_edgeenv_summary
     assert (
         "edgeenv_report_summary.producer_lineage_guard_alignment_run_ids "
         "must match preserved downstream guard alignment run IDs"
+    ) in summary
+
+
+def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_edgeenv_summary_task_event_rollup(
+    tmp_path,
+):
+    handoff = json.loads(EDGEENV_HANDOFF.read_text(encoding="utf-8"))
+    handoff["files"]["edgeenv_regression_report"] = str(
+        REPO_ROOT
+        / "examples"
+        / "runtime_intelligence_chain"
+        / "edgeenv_regression_with_orchestrator_context.json"
+    )
+    handoff["files"]["runtime_telemetry_history"] = str(
+        REPO_ROOT
+        / "examples"
+        / "runtime_intelligence_chain"
+        / "runtime_telemetry_history.json"
+    )
+    handoff["edgeenv_report_summary"][
+        "orchestrator_task_event_rollup_present"
+    ] = False
+    handoff["edgeenv_report_summary"][
+        "orchestrator_task_event_rollup_run_ids"
+    ] = []
+    handoff_path = tmp_path / "edgeenv_lab_handoff_manifest.json"
+    handoff_path.write_text(json.dumps(handoff), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(
+        manifest=str(MANIFEST),
+        edgeenv_handoff=str(handoff_path),
+        summary_out=str(summary_path),
+    )
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert (
+        "edgeenv_report_summary.orchestrator_task_event_rollup_present "
+        "must match preserved Orchestrator task event rollup context"
+    ) in summary
+    assert (
+        "edgeenv_report_summary.orchestrator_task_event_rollup_run_ids "
+        "must match preserved Orchestrator task event rollup run IDs"
     ) in summary
 
 
@@ -1118,6 +1168,53 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_guard_lineage_e
         "['device_local_cli_override']"
     ) in summary
     assert "candidate_lineage_shape_valid must be true" in summary
+
+
+def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_guard_task_event_rollup(
+    tmp_path,
+):
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    guard_path = (
+        REPO_ROOT
+        / "examples"
+        / "runtime_intelligence_chain"
+        / manifest["files"]["aiguard_guard_analysis"]
+    )
+    guard_analysis = json.loads(guard_path.read_text(encoding="utf-8"))
+    task_event_evidence = next(
+        item
+        for item in guard_analysis["evidence"]
+        if item.get("type") == "edgeenv_orchestrator_task_event_rollup"
+    )
+    task_event_evidence["observed_value"] = 1
+    task_event_evidence["raw_context"]["task_event_rollup"][
+        "review_markers"
+    ] = ["deadline_miss"]
+    task_event_evidence["raw_context"]["task_event_rollup"][
+        "decision_owner"
+    ] = "aiguard"
+    task_event_evidence["raw_context"]["task_event_rollup"][
+        "boundary_markers_valid"
+    ] = False
+
+    guard_copy = tmp_path / "aiguard_guard_analysis.json"
+    guard_copy.write_text(json.dumps(guard_analysis), encoding="utf-8")
+    manifest["files"]["aiguard_guard_analysis"] = str(guard_copy)
+    manifest_path = tmp_path / "bundle_manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(manifest=str(manifest_path), summary_out=str(summary_path))
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "task event rollup observed_value must be 2" in summary
+    assert (
+        "task_event_rollup.review_markers is missing "
+        "['fallback', 'queue_pressure_reason', 'scheduler_delay']"
+    ) in summary
+    assert "task_event_rollup.decision_owner must be lab" in summary
+    assert "task_event_rollup.boundary_markers_valid must be true" in summary
 
 
 def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_guard_missing_context(

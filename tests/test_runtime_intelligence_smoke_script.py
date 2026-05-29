@@ -87,6 +87,11 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
         in bundle_summary
     )
     assert (
+        "aiguard_evidence: edgeenv_orchestrator_task_event_rollup validated"
+        in bundle_summary
+    )
+    assert "aiguard_raw_context: task_event_rollup preserved" in bundle_summary
+    assert (
         "aiguard_raw_context: missing_telemetry_orchestrator_context preserved"
         in bundle_summary
     )
@@ -104,6 +109,10 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
     assert "edgeenv_handoff: device_local_producer_lineage validated" in bundle_summary
     assert (
         "edgeenv_handoff: producer_lineage_guard_alignment validated"
+        in bundle_summary
+    )
+    assert (
+        "edgeenv_handoff: orchestrator_task_event_rollup validated"
         in bundle_summary
     )
     assert (

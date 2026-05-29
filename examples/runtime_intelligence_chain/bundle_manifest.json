@@ -49,6 +49,7 @@
     "Runtime Intelligence Risk Summary",
     "Orchestrator operation feed context",
     "Orchestrator task event rollup",
+    "AIGuard task event rollup evidence",
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
     "AIGuard remote event summary consistency",
