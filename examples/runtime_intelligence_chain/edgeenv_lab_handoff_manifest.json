@@ -76,6 +76,7 @@
       "AIGuard remote dispatch event summary",
       "AIGuard remote event summary consistency",
       "Remote fallback starter evidence",
+      "lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback",
       "AIGuard producer-lineage guard alignment",
       "Lab remains the final deployment decision owner."
     ],
