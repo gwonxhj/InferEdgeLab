@@ -215,6 +215,16 @@ def _append_telemetry_context_rows(
             )
         )
 
+    preservation_labels = _edgeenv_preservation_run_labels(telemetry_context)
+    if preservation_labels:
+        rows.append(
+            (
+                "Jetson/device-local EdgeEnv preservation run",
+                "; ".join(preservation_labels),
+                "Device-local or Jetson starter evidence is preserved through EdgeEnv for Lab review; Lab remains the final decision owner.",
+            )
+        )
+
     task_event_labels = _orchestrator_task_event_rollup_labels(telemetry_context)
     if task_event_labels:
         rows.append(
@@ -366,6 +376,103 @@ def _operation_risk_summary_parts(summary: dict[str, Any]) -> list[str]:
             + ",".join(str(item) for item in degraded_workers if item is not None)
         )
     return parts
+
+
+def _edgeenv_preservation_run_labels(context: dict[str, Any]) -> list[str]:
+    labels: list[str] = []
+    for run_label in ("baseline", "candidate"):
+        run_context = context.get(run_label)
+        if not isinstance(run_context, dict):
+            continue
+        operation_context = run_context.get("orchestrator_operation_context")
+        if not isinstance(operation_context, dict):
+            continue
+        label = _edgeenv_preservation_run_label(run_label, operation_context)
+        if label:
+            labels.append(label)
+    return labels
+
+
+def _edgeenv_preservation_run_label(
+    run_label: str,
+    operation_context: dict[str, Any],
+) -> str:
+    candidate_context = operation_context.get("candidate_context")
+    if not isinstance(candidate_context, dict):
+        candidate_context = {}
+    producer = candidate_context.get("producer")
+    if not isinstance(producer, dict):
+        producer = {}
+
+    sources = _string_list(producer.get("device_local_producer_sources"))
+    if not sources:
+        sources = [
+            source
+            for source in _string_list(producer.get("producer_sources"))
+            if _is_device_local_preservation_marker(source)
+        ]
+    stage_labels = _producer_stage_labels(producer.get("producer_stage_by_task"))
+    resource = candidate_context.get("resource")
+    if not isinstance(resource, dict):
+        resource = {}
+    operation_summary = operation_context.get("operation_risk_summary")
+    if not isinstance(operation_summary, dict):
+        operation_summary = {}
+
+    device_local_count = _first_present(
+        producer.get("device_local_event_count"),
+        operation_summary.get("device_local_event_count"),
+    )
+    has_preservation_marker = (
+        bool(sources)
+        or any(_is_device_local_preservation_marker(label) for label in stage_labels)
+        or device_local_count is not None
+        or resource.get("source") == "tegrastats_timeline"
+    )
+    if not has_preservation_marker:
+        return ""
+
+    parts: list[str] = []
+    run_id = _first_present(
+        operation_context.get("run_id"),
+        candidate_context.get("run_id"),
+    )
+    if run_id is not None:
+        parts.append(f"run={run_id}")
+    if sources:
+        parts.append("sources=" + ",".join(sources))
+    if stage_labels:
+        parts.append("stages=" + ",".join(stage_labels))
+    if device_local_count is not None:
+        parts.append(f"device_local_events={_format_compact_value(device_local_count)}")
+
+    resource_source = resource.get("source")
+    if resource_source is not None:
+        parts.append(f"resource={resource_source}")
+    queue_pressure = operation_summary.get("queue_pressure_reason")
+    if queue_pressure is not None:
+        parts.append(f"queue={queue_pressure}")
+    return f"{run_label}: " + ", ".join(parts)
+
+
+def _producer_stage_labels(stage_by_task: Any) -> list[str]:
+    if not isinstance(stage_by_task, dict):
+        return []
+    labels: list[str] = []
+    for task_name, stage in stage_by_task.items():
+        if (
+            isinstance(task_name, str)
+            and task_name
+            and isinstance(stage, str)
+            and stage
+        ):
+            labels.append(f"{task_name}:{stage}")
+    return labels
+
+
+def _is_device_local_preservation_marker(value: str) -> bool:
+    normalized = value.lower()
+    return "device_local" in normalized or "jetson" in normalized
 
 
 def _orchestrator_task_event_rollup_labels(context: dict[str, Any]) -> list[str]:

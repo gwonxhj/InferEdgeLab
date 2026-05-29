@@ -829,6 +829,11 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
         "health=worker_health_degraded, device_local_events=15, "
         "producer_events=7, degraded_workers=vision_agent |"
     ) in text
+    assert (
+        "| Jetson/device-local EdgeEnv preservation run | candidate: "
+        "run=candidate, device_local_events=15, resource=tegrastats_timeline, "
+        "queue=queue_backlog_threshold_exceeded |"
+    ) in text
     assert "| Orchestrator task event rollup | candidate: " in text
     assert "vision_agent(delay=1,miss=1,max_delay_cycles=3,max_wait_ms=15)" in text
     assert (
@@ -1126,6 +1131,11 @@ def test_generate_compare_html_summarizes_orchestrator_context_risk():
     assert "Runtime Intelligence Risk Summary" in html
     assert "Orchestrator operation feed context" in html
     assert "Orchestrator context attached runs" in html
+    assert "Jetson/device-local EdgeEnv preservation run" in html
+    assert (
+        "candidate: run=candidate, device_local_events=15, "
+        "resource=tegrastats_timeline, queue=queue_backlog_threshold_exceeded"
+    ) in html
     assert "runtime_queue_overload, runtime_thermal_instability" in html
     assert "AIGuard Orchestrator context handoff" in html
     assert "AIGuard history seed run_config markers" in html
