@@ -70,6 +70,11 @@ REQUIRED_MARKDOWN_MARKERS = {
         "production_remote_execution=False |"
     ),
     "aiguard_remote_dispatch_evidence": "remote_execution_recovered_by_fallback",
+    "remote_fallback_lab_context": (
+        "| Remote fallback starter evidence | "
+        "lab=Remote fallback starter evidence; "
+        "evidence=remote_execution_recovered_by_fallback |"
+    ),
     "aiguard_orchestrator_handoff": (
         "| AIGuard Orchestrator context handoff | feeds=2.0, candidate |"
     ),
@@ -124,6 +129,8 @@ REQUIRED_HTML_MARKERS = {
         "production_remote_execution=False"
     ),
     "aiguard_remote_dispatch_evidence": "remote_execution_recovered_by_fallback",
+    "remote_fallback_lab_context": "Remote fallback starter evidence",
+    "remote_fallback_lab_context_marker": "lab=Remote fallback starter evidence",
     "aiguard_orchestrator_handoff": "AIGuard Orchestrator context handoff",
     "orchestrator_operation_risk_summary": "Orchestrator operation risk summary",
     "orchestrator_task_event_rollup": "Orchestrator task event rollup",

@@ -74,6 +74,7 @@ REQUIRED_LAB_EXPECTED_REPORT_MARKERS = (
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
     "AIGuard remote event summary consistency",
+    "Remote fallback starter evidence",
     "AIGuard producer-lineage guard alignment",
     "Lab remains the final deployment decision owner.",
 )
@@ -164,6 +165,8 @@ def _validate_runtime_report(path: Path, errors: list[str]) -> None:
         "runtime_history_seed_run_config_traceability",
         "AIGuard remote dispatch event summary",
         "remote_execution_recovered_by_fallback",
+        "Remote fallback starter evidence",
+        "lab=Remote fallback starter evidence",
         "runtime_telemetry_field_gap",
         "Inspect telemetry coverage missing fields",
         "guard_warning_review",
@@ -287,6 +290,7 @@ def _validate_aiguard_handoff_alignment(
             "AIGuard task event rollup evidence, "
             "AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, "
             "AIGuard remote event summary consistency, "
+            "Remote fallback starter evidence, "
             "AIGuard producer-lineage guard alignment, "
             "Lab remains the final deployment decision owner.",
             "report_marker_context_role: lab_report_contract_context",
