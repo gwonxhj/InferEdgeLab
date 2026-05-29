@@ -440,7 +440,10 @@ def _edgeenv_preservation_run_label(
     if not has_preservation_marker:
         return ""
 
-    parts: list[str] = []
+    parts: list[str] = ["identity=jetson_device_local_preservation"]
+    stage_paths = _producer_stage_paths(stage_labels)
+    if stage_paths:
+        parts.append("path=" + ",".join(stage_paths))
     run_id = _first_present(
         operation_context.get("run_id"),
         candidate_context.get("run_id"),
@@ -476,6 +479,15 @@ def _producer_stage_labels(stage_by_task: Any) -> list[str]:
         ):
             labels.append(f"{task_name}:{stage}")
     return labels
+
+
+def _producer_stage_paths(stage_labels: list[str]) -> list[str]:
+    paths: list[str] = []
+    for label in stage_labels:
+        stage = label.split(":", 1)[1] if ":" in label else label
+        if _is_device_local_preservation_marker(stage) and stage not in paths:
+            paths.append(stage)
+    return paths
 
 
 def _is_device_local_preservation_marker(value: str) -> bool:

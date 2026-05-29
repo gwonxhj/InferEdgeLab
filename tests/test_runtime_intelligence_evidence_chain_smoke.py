@@ -383,6 +383,7 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert "| Orchestrator context attached runs | candidate |" in bundle["markdown"]
     assert (
         "| Jetson/device-local EdgeEnv preservation run | candidate: "
+        "identity=jetson_device_local_preservation, path=device_local_starter, "
         "run=edgeenv-smoke-candidate, sources=device_local_cli_override, "
         "stages=vision_agent:device_local_starter, device_local_events=2, "
         "resource=tegrastats_timeline, queue=queue_backlog_threshold_exceeded |"
@@ -495,6 +496,7 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "lab_report_preservation_context_present=True" in markdown
     assert "lab_preservation=present" in markdown
     assert (
+        "identity=jetson_device_local_preservation, path=device_local_starter, "
         "run=edgeenv-smoke-candidate, sources=device_local_cli_override, "
         "stages=vision_agent:device_local_starter, device_local_events=2, "
         "resource=tegrastats_timeline, queue=queue_backlog_threshold_exceeded"
@@ -526,6 +528,8 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "Lab EdgeEnv preservation context" in html
     assert "lab_report_preservation_context_present=True" in html
     assert "lab_preservation=present" in html
+    assert "identity=jetson_device_local_preservation" in html
+    assert "path=device_local_starter" in html
     assert "run=edgeenv-smoke-candidate" in html
     assert "Orchestrator task event rollup" in html
     assert (
