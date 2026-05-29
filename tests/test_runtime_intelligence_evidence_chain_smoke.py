@@ -381,6 +381,12 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert "| Runtime telemetry history seed | 2 |" in bundle["markdown"]
     assert "| Runtime history seed run_config | 2 |" in bundle["markdown"]
     assert "| Orchestrator context attached runs | candidate |" in bundle["markdown"]
+    assert (
+        "| Jetson/device-local EdgeEnv preservation run | candidate: "
+        "run=edgeenv-smoke-candidate, sources=device_local_cli_override, "
+        "stages=vision_agent:device_local_starter, device_local_events=2, "
+        "resource=tegrastats_timeline, queue=queue_backlog_threshold_exceeded |"
+    ) in bundle["markdown"]
     assert "| Orchestrator task event rollup | candidate: " in bundle["markdown"]
     assert (
         "vision_agent(delay=1,miss=1,max_delay_cycles=3,max_wait_ms=15,"
@@ -479,6 +485,12 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "health=worker_health_degraded" in markdown
     assert "Orchestrator context attached runs" in markdown
     assert "Orchestrator operation risk summary" in markdown
+    assert "Jetson/device-local EdgeEnv preservation run" in markdown
+    assert (
+        "run=edgeenv-smoke-candidate, sources=device_local_cli_override, "
+        "stages=vision_agent:device_local_starter, device_local_events=2, "
+        "resource=tegrastats_timeline, queue=queue_backlog_threshold_exceeded"
+    ) in markdown
     assert "queue=queue_backlog_threshold_exceeded" in markdown
     assert "AIGuard producer lineage handoff" in markdown
     assert "AIGuard producer-lineage guard alignment" in markdown
@@ -500,6 +512,8 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     ) in markdown
     assert "Runtime Intelligence Risk Summary" in html
     assert "Orchestrator operation risk summary" in html
+    assert "Jetson/device-local EdgeEnv preservation run" in html
+    assert "run=edgeenv-smoke-candidate" in html
     assert "Orchestrator task event rollup" in html
     assert (
         "vision_agent(delay=1,miss=1,max_delay_cycles=3,max_wait_ms=15,"
