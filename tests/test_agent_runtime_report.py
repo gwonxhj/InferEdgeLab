@@ -579,6 +579,46 @@ def runtime_result_with_operation_evidence() -> dict:
     }
 
 
+def edgeenv_run_show_with_runtime_operation() -> dict:
+    return {
+        "created_at": "2026-05-29T09:47:14.594755Z",
+        "run_id": "run-20260529-094714-0955a027",
+        "result_path": (
+            "/tmp/inferedge_agent_runtime_jetson_edgeenv_risk_row/"
+            "08_edgeenv/.edgeenv/runs/run-20260529-094714-0955a027/result.json"
+        ),
+        "metrics": {
+            "latency_mean_ms": 28.0,
+            "latency_p95_ms": 36.0,
+            "latency_p99_ms": 36.0,
+            "throughput_fps": 30.0,
+        },
+        "model": {
+            "model_hash": (
+                "acb5f50c195d2feef052cb483fb8b3746ea8cd64a28aa8a44e9dfe2358b3c487"
+            ),
+        },
+        "protocol": {
+            "task": "runtime-operation-evidence",
+            "precision": "evidence",
+        },
+        "runtime_operation_summary": {
+            "schema_version": "inferedge-runtime-operation-summary-v1",
+            "decision_owner": "lab",
+            "scheduler_owner": "orchestrator",
+            "health_status": "degraded",
+            "health_reason": "timeout_threshold_exceeded",
+            "error_category": "runtime_timeout_observed",
+            "recommended_action": "review_latency_budget_or_degrade",
+            "risk_labels": [
+                "runtime_timeout_observed",
+                "latency_budget_exceeded",
+            ],
+            "evidence_gaps": ["thermal_memory_evidence_missing"],
+        },
+    }
+
+
 def remote_dispatch_result() -> dict:
     return {
         "schema_version": "inferedge-remote-dispatch-result-v1",
@@ -1232,6 +1272,40 @@ def test_agent_runtime_report_blocks_when_guard_blocks():
     assert remote_context["worker_evaluations"][0]["worker_id"] == "jetson-nano-01"
 
 
+def test_agent_runtime_report_surfaces_edgeenv_run_show_preservation():
+    report = build_agent_runtime_reliability_report(
+        orchestration_summary=orchestration_summary(),
+        guard_analysis=runtime_operation_guard_analysis(),
+        runtime_result=runtime_result_with_operation_evidence(),
+        edgeenv_run_show=edgeenv_run_show_with_runtime_operation(),
+    )
+
+    assert report["contracts"]["edgeenv_runtime_operation"] == (
+        "inferedge-runtime-operation-summary-v1"
+    )
+    context = report["agent_runtime_summary"]["edgeenv_preservation_context"]
+    assert context["run_id"] == "run-20260529-094714-0955a027"
+    assert context["runtime_operation_health_reason"] == (
+        "timeout_threshold_exceeded"
+    )
+    assert context["runtime_operation_recommended_action"] == (
+        "review_latency_budget_or_degrade"
+    )
+    assert context["runtime_operation_risk_labels"] == [
+        "runtime_timeout_observed",
+        "latency_budget_exceeded",
+    ]
+    assert context["comparability_role"] == "supplemental_evidence_not_gate"
+
+    markdown = build_agent_runtime_reliability_markdown(report)
+    assert "Runtime Intelligence EdgeEnv Preservation" in markdown
+    assert "| edgeenv_run_id | run-20260529-094714-0955a027 |" in markdown
+    assert "| runtime_operation_health_reason | timeout_threshold_exceeded |" in markdown
+    assert "| runtime_operation_recommended_action | review_latency_budget_or_degrade |" in markdown
+    assert "| comparability_role | supplemental_evidence_not_gate |" in markdown
+    assert "Lab remains the final deployment decision owner" in markdown
+
+
 def test_agent_runtime_report_summarizes_orchestrator_operation_guard_evidence():
     report = build_agent_runtime_reliability_report(
         orchestration_summary=orchestration_summary(),
@@ -1564,12 +1638,16 @@ def test_agent_runtime_report_command_outputs_json(tmp_path, capsys):
     remote_dispatch_path = tmp_path / "remote_dispatch_result.json"
     with remote_dispatch_path.open("w", encoding="utf-8") as file:
         json.dump(remote_dispatch_result(), file)
+    edgeenv_run_show_path = tmp_path / "edgeenv_run_show.json"
+    with edgeenv_run_show_path.open("w", encoding="utf-8") as file:
+        json.dump(edgeenv_run_show_with_runtime_operation(), file)
 
     agent_runtime_report_cmd(
         orchestration_summary="examples/agent_runtime/agent_3_orchestration_summary.json",
         guard_analysis="examples/agent_runtime/aiguard_runtime_guard_analysis.json",
         runtime_result=str(runtime_result_path),
         remote_dispatch=str(remote_dispatch_path),
+        edgeenv_run_show=str(edgeenv_run_show_path),
         format="json",
         output="",
     )
@@ -1585,3 +1663,5 @@ def test_agent_runtime_report_command_outputs_json(tmp_path, capsys):
     assert remote_context["worker_selection"]["candidate_worker_ids"] == [
         "jetson-nano-01"
     ]
+    edgeenv_context = report["agent_runtime_summary"]["edgeenv_preservation_context"]
+    assert edgeenv_context["run_id"] == "run-20260529-094714-0955a027"

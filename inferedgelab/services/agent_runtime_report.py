@@ -126,6 +126,7 @@ def build_agent_runtime_reliability_report(
     guard_analysis: dict[str, Any] | None = None,
     runtime_result: dict[str, Any] | None = None,
     remote_dispatch: dict[str, Any] | None = None,
+    edgeenv_run_show: dict[str, Any] | None = None,
     source: dict[str, Any] | None = None,
     thresholds: dict[str, float] | None = None,
 ) -> dict[str, Any]:
@@ -136,6 +137,7 @@ def build_agent_runtime_reliability_report(
     runtime_summary = _agent_runtime_summary(orchestration_summary)
     runtime_result_context = _runtime_result_operation_context(runtime_result)
     remote_dispatch_context = _remote_dispatch_context(remote_dispatch)
+    edgeenv_preservation_context = _edgeenv_preservation_context(edgeenv_run_show)
     runtime_operation_guard_summary = _runtime_operation_guard_summary(guard_analysis)
     orchestrator_operation_guard_summary = _orchestrator_operation_guard_summary(
         guard_analysis,
@@ -174,6 +176,13 @@ def build_agent_runtime_reliability_report(
                 if isinstance(remote_dispatch, dict)
                 else None
             ),
+            "edgeenv_runtime_operation": (
+                edgeenv_preservation_context.get(
+                    "runtime_operation_schema_version"
+                )
+                if edgeenv_preservation_context
+                else None
+            ),
             "source_contracts": runtime_summary.get("source_contracts", {}),
         },
         "agent_runtime_summary": {
@@ -184,6 +193,7 @@ def build_agent_runtime_reliability_report(
             "operation_context": _operation_context(orchestration_summary, metrics),
             "runtime_result_context": runtime_result_context,
             "remote_dispatch_context": remote_dispatch_context,
+            "edgeenv_preservation_context": edgeenv_preservation_context,
             "policy_decision_reasons": metrics["policy_decision_reasons"],
             "policy_decision_log_count": len(_policy_log(orchestration_summary)),
         },
@@ -465,6 +475,7 @@ def load_agent_runtime_reliability_bundle(
     guard_analysis_path: str | Path | None = None,
     runtime_result_path: str | Path | None = None,
     remote_dispatch_path: str | Path | None = None,
+    edgeenv_run_show_path: str | Path | None = None,
 ) -> dict[str, Any]:
     orchestration_summary = _load_json_dict(orchestration_summary_path)
     guard_analysis = _load_json_dict(guard_analysis_path) if guard_analysis_path else None
@@ -472,11 +483,15 @@ def load_agent_runtime_reliability_bundle(
     remote_dispatch = (
         _load_json_dict(remote_dispatch_path) if remote_dispatch_path else None
     )
+    edgeenv_run_show = (
+        _load_json_dict(edgeenv_run_show_path) if edgeenv_run_show_path else None
+    )
     return build_agent_runtime_reliability_report(
         orchestration_summary=orchestration_summary,
         guard_analysis=guard_analysis,
         runtime_result=runtime_result,
         remote_dispatch=remote_dispatch,
+        edgeenv_run_show=edgeenv_run_show,
         source={
             "orchestration_summary_path": str(orchestration_summary_path),
             "guard_analysis_path": str(guard_analysis_path)
@@ -487,6 +502,9 @@ def load_agent_runtime_reliability_bundle(
             else None,
             "remote_dispatch_path": str(remote_dispatch_path)
             if remote_dispatch_path
+            else None,
+            "edgeenv_run_show_path": str(edgeenv_run_show_path)
+            if edgeenv_run_show_path
             else None,
         },
     )
@@ -521,6 +539,7 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
     remote_runtime_event_summary = (
         remote_dispatch_context.get("remote_runtime_event_summary") or {}
     )
+    edgeenv_preservation_context = runtime.get("edgeenv_preservation_context") or {}
     retry_fallback_plan = remote_dispatch_context.get("retry_fallback_plan") or {}
     worker_selection = remote_dispatch_context.get("worker_selection") or {}
 
@@ -798,6 +817,7 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             f"| operation_summary_decision_owner | {runtime_operation_summary.get('decision_owner') or '-'} |",
             f"| operation_summary_scheduler_owner | {runtime_operation_summary.get('scheduler_owner') or '-'} |",
             "",
+            *_edgeenv_preservation_markdown_lines(edgeenv_preservation_context),
             "## AIGuard Runtime Operation Evidence",
             "",
             "| Field | Value |",
@@ -989,6 +1009,91 @@ def write_agent_runtime_reliability_markdown(
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(build_agent_runtime_reliability_markdown(report), encoding="utf-8")
     return path
+
+
+def _edgeenv_preservation_context(
+    edgeenv_run_show: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if not isinstance(edgeenv_run_show, dict):
+        return {}
+
+    runtime_operation = edgeenv_run_show.get("runtime_operation_summary")
+    if not isinstance(runtime_operation, dict):
+        runtime_operation = {}
+    metrics = edgeenv_run_show.get("metrics")
+    if not isinstance(metrics, dict):
+        metrics = {}
+    model = edgeenv_run_show.get("model")
+    if not isinstance(model, dict):
+        model = {}
+    protocol = edgeenv_run_show.get("protocol")
+    if not isinstance(protocol, dict):
+        protocol = {}
+
+    return {
+        "run_id": edgeenv_run_show.get("run_id"),
+        "created_at": edgeenv_run_show.get("created_at"),
+        "result_path": edgeenv_run_show.get("result_path"),
+        "has_runtime_operation_summary": bool(runtime_operation),
+        "runtime_operation_schema_version": runtime_operation.get("schema_version"),
+        "runtime_operation_health_status": runtime_operation.get("health_status"),
+        "runtime_operation_health_reason": runtime_operation.get("health_reason"),
+        "runtime_operation_error_category": runtime_operation.get("error_category"),
+        "runtime_operation_recommended_action": runtime_operation.get(
+            "recommended_action"
+        ),
+        "runtime_operation_risk_labels": _string_list(
+            runtime_operation.get("risk_labels")
+        ),
+        "runtime_operation_evidence_gaps": _string_list(
+            runtime_operation.get("evidence_gaps")
+        ),
+        "runtime_operation_decision_owner": runtime_operation.get("decision_owner"),
+        "runtime_operation_scheduler_owner": runtime_operation.get("scheduler_owner"),
+        "latency_mean_ms": metrics.get("latency_mean_ms"),
+        "latency_p95_ms": metrics.get("latency_p95_ms"),
+        "latency_p99_ms": metrics.get("latency_p99_ms"),
+        "throughput_fps": metrics.get("throughput_fps"),
+        "model_hash": model.get("model_hash"),
+        "protocol_task": protocol.get("task"),
+        "protocol_precision": protocol.get("precision"),
+        "comparability_role": "supplemental_evidence_not_gate",
+    }
+
+
+def _edgeenv_preservation_markdown_lines(context: dict[str, Any]) -> list[str]:
+    if not context:
+        return []
+    return [
+        "## Runtime Intelligence EdgeEnv Preservation",
+        "",
+        "| Field | Value |",
+        "|---|---|",
+        f"| edgeenv_run_id | {context.get('run_id') or '-'} |",
+        f"| created_at | {context.get('created_at') or '-'} |",
+        f"| runtime_operation_schema | {context.get('runtime_operation_schema_version') or '-'} |",
+        f"| runtime_operation_health_status | {context.get('runtime_operation_health_status') or '-'} |",
+        f"| runtime_operation_health_reason | {context.get('runtime_operation_health_reason') or '-'} |",
+        f"| runtime_operation_error_category | {context.get('runtime_operation_error_category') or '-'} |",
+        f"| runtime_operation_recommended_action | {context.get('runtime_operation_recommended_action') or '-'} |",
+        f"| runtime_operation_risk_labels | {_fmt_list(context.get('runtime_operation_risk_labels'))} |",
+        f"| runtime_operation_evidence_gaps | {_fmt_list(context.get('runtime_operation_evidence_gaps'))} |",
+        f"| latency_mean_ms | {_fmt_number(context.get('latency_mean_ms'))} |",
+        f"| latency_p95_ms | {_fmt_number(context.get('latency_p95_ms'))} |",
+        f"| throughput_fps | {_fmt_number(context.get('throughput_fps'))} |",
+        f"| model_hash | {context.get('model_hash') or '-'} |",
+        f"| protocol_task | {context.get('protocol_task') or '-'} |",
+        f"| protocol_precision | {context.get('protocol_precision') or '-'} |",
+        f"| comparability_role | {context.get('comparability_role') or '-'} |",
+        f"| decision_owner | {context.get('runtime_operation_decision_owner') or '-'} |",
+        f"| scheduler_owner | {context.get('runtime_operation_scheduler_owner') or '-'} |",
+        "",
+        (
+            "EdgeEnv preserves this runtime operation evidence as local registry "
+            "context; Lab remains the final deployment decision owner."
+        ),
+        "",
+    ]
 
 
 def _agent_runtime_summary(orchestration_summary: dict[str, Any]) -> dict[str, Any]:

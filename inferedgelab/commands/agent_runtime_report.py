@@ -33,6 +33,11 @@ def agent_runtime_report_cmd(
         "--remote-dispatch",
         help="Optional InferEdgeOrchestrator remote dispatch result JSON",
     ),
+    edgeenv_run_show: str = typer.Option(
+        "",
+        "--edgeenv-run-show",
+        help="Optional InferEdgeEnv runs show JSON with preserved runtime operation evidence",
+    ),
     format: str = typer.Option("text", "--format", "-f", help="text/json/markdown"),
     output: str = typer.Option("", "--output", "-o", help="Optional output path"),
 ) -> None:
@@ -41,6 +46,7 @@ def agent_runtime_report_cmd(
         guard_analysis_path=guard_analysis or None,
         runtime_result_path=runtime_result or None,
         remote_dispatch_path=remote_dispatch or None,
+        edgeenv_run_show_path=edgeenv_run_show or None,
     )
     normalized_format = format.strip().lower()
     if normalized_format == "json":
@@ -73,6 +79,9 @@ def _text_summary(report: dict) -> str:
     remote_runtime_event_summary = (
         remote_context.get("remote_runtime_event_summary") or {}
     )
+    edgeenv_context = (
+        report["agent_runtime_summary"].get("edgeenv_preservation_context") or {}
+    )
     health = runtime_context.get("runtime_health_snapshot") or {}
     error = runtime_context.get("runtime_error_classification") or {}
     operation_summary = runtime_context.get("runtime_operation_summary") or {}
@@ -104,6 +113,9 @@ def _text_summary(report: dict) -> str:
         f"remote_runtime_event_count: {remote_runtime_event_summary.get('runtime_event_count')}",
         f"remote_runtime_event_final_status: {remote_runtime_event_summary.get('final_status')}",
         f"remote_runtime_summary_boundary: {remote_runtime_event_summary.get('operation_boundary')}",
+        f"edgeenv_run_id: {edgeenv_context.get('run_id')}",
+        f"edgeenv_runtime_operation_health: {edgeenv_context.get('runtime_operation_health_reason')}",
+        f"edgeenv_runtime_operation_action: {edgeenv_context.get('runtime_operation_recommended_action')}",
         "triggered_rules:",
     ]
     lines.extend(f"- {rule}" for rule in decision["triggered_rules"])
