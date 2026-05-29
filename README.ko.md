@@ -230,6 +230,8 @@ Runtime Intelligence report에서 읽어야 할 핵심 row:
 - Lab EdgeEnv preservation context marker
 - Jetson/device-local preservation row의 `identity=jetson_device_local_preservation`
   및 `path=device_local_starter` 식별 label
+- Jetson/device-local preservation detail row의 producer/source/stage/resource
+  navigation context
 - AIGuard deterministic anomaly evidence
 - Lab-owned deployment decision
 

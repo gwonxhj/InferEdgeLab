@@ -34,6 +34,11 @@ REQUIRED_MARKDOWN_MARKERS = {
         "identity=jetson_device_local_preservation, path=device_local_starter, "
         "run=edgeenv-smoke-candidate"
     ),
+    "jetson_edgeenv_preservation_details": (
+        "| Jetson/device-local EdgeEnv preservation details | candidate: "
+        "sources=device_local_cli_override, "
+        "stages=vision_agent:device_local_starter"
+    ),
     "orchestrator_task_event_rollup": (
         "| Orchestrator task event rollup | candidate: "
         "vision_agent(delay=1,miss=1,max_delay_cycles=3,max_wait_ms=15,"
@@ -155,6 +160,13 @@ REQUIRED_HTML_MARKERS = {
     "jetson_edgeenv_preservation_identity": (
         "identity=jetson_device_local_preservation, path=device_local_starter, "
         "run=edgeenv-smoke-candidate"
+    ),
+    "jetson_edgeenv_preservation_details": (
+        "Jetson/device-local EdgeEnv preservation details"
+    ),
+    "jetson_edgeenv_preservation_detail_source": (
+        "sources=device_local_cli_override, "
+        "stages=vision_agent:device_local_starter"
     ),
     "runtime_history_seed": "Runtime telemetry history seed",
     "runtime_history_seed_run_config": "Runtime history seed run_config",
