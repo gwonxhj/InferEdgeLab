@@ -213,6 +213,7 @@ Runtime Intelligence smoke:
 - Orchestrator operation feed를 supplemental context로 보존
 - EdgeEnv telemetry history/regression evidence를 Lab report에 연결
 - Runtime history seed `run_config` snapshot을 replay/comparability traceability로 표시
+- Jetson EdgeEnv preservation smoke는 entrypoint가 device-local ONNX Runtime probe evidence, live `tegrastats`, Runtime operation summary를 EdgeEnv run evidence로 보존한 뒤 Lab deployment risk report까지 연결할 수 있음을 확인합니다.
 - 사용 가능한 경우 AIGuard deterministic runtime evidence 보존
 - AIGuard `runtime_history_seed_run_config_traceability` evidence를 gate에서 필수 traceability evidence로 검증
 - AIGuard raw context의 device-local producer lineage를 traceability evidence로 표시
@@ -228,6 +229,25 @@ Runtime Intelligence report에서 읽어야 할 핵심 row:
 - Orchestrator device-local producer lineage
 - AIGuard deterministic anomaly evidence
 - Lab-owned deployment decision
+
+최신 Jetson EdgeEnv preservation smoke:
+
+| Evidence | Value |
+|---|---:|
+| Operation path | `device_local_starter` |
+| Frames | 32 |
+| Max queue depth | 6 |
+| Dropped / fallback count | 29 / 29 |
+| Deadline missed count | 18 |
+| Parsed `tegrastats` samples | 4 |
+| Max temperature / RAM | 42.843 C / 999 MB |
+| Vision mean / p95 latency | 166.941 ms / 423.192 ms |
+| EdgeEnv run ID | `run-20260529-034704-fbf753f0` |
+| EdgeEnv summary | `runtime_operation_summary` stored |
+| AIGuard verdict | `blocked` / `high` |
+| Lab decision | `blocked` |
+
+이 기록은 Runtime Intelligence handoff를 위한 device-local starter smoke입니다. EdgeEnv는 local run evidence와 supplemental operation context를 보존하고, Lab은 final deployment decision owner로 남습니다. decoded YOLO accuracy validation, live camera operation, production remote execution, thermal endurance validation으로 해석하지 않습니다.
 
 재현 smoke:
 

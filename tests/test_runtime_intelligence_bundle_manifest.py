@@ -140,6 +140,27 @@ def test_runtime_intelligence_docs_describe_expected_report_markers():
             assert marker in doc
 
 
+def test_runtime_intelligence_docs_record_jetson_edgeenv_preservation_boundary():
+    docs = [
+        REPO_ROOT / "README.md",
+        REPO_ROOT / "README.ko.md",
+        REPO_ROOT / "docs" / "portfolio" / "edgeenv_runtime_regression_lab_handoff.md",
+        REPO_ROOT / "docs" / "portfolio" / "inferedge_portfolio_submission.md",
+    ]
+
+    for path in docs:
+        text = path.read_text(encoding="utf-8")
+        assert "Jetson EdgeEnv preservation smoke" in text
+        assert "device_local_starter" in text
+        assert "run-20260529-034704-fbf753f0" in text
+        assert "runtime_operation_summary" in text
+        assert "29 / 29" in text
+        assert "42.843 C / 999 MB" in text
+        assert "Lab" in text and "decision owner" in text
+        assert "production remote execution" in text
+        assert "thermal endurance validation" in text
+
+
 def test_runtime_intelligence_bundle_manifest_gate_validates_edgeenv_handoff(
     tmp_path,
 ):

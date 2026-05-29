@@ -38,6 +38,44 @@ Expected ownership:
 
 This makes the portfolio chain stronger without turning Lab into a production observability dashboard or making Orchestrator/AIGuard final decision owners.
 
+## Jetson EdgeEnv preservation smoke
+
+The entrypoint path was replayed on Jetson with `--device-local`,
+`--capture-tegrastats`, and `--edgeenv-run-evidence` so the Lab-facing Runtime
+Intelligence chain can be traced from real device-local operation evidence into
+EdgeEnv's local run registry before the Lab deployment risk report is rendered.
+
+```text
+InferEdge entrypoint device-local run
+-> Orchestrator operation evidence
+-> EdgeEnv local run evidence registry
+-> AIGuard deterministic runtime warning evidence
+-> Lab-owned agent runtime deployment risk report
+```
+
+Observed Jetson smoke values:
+
+| Evidence | Value |
+|---|---:|
+| Operation path | `device_local_starter` |
+| Frames | 32 |
+| Max queue depth | 6 |
+| Dropped / fallback count | 29 / 29 |
+| Deadline missed count | 18 |
+| Parsed `tegrastats` samples | 4 |
+| Max temperature / RAM | 42.843 C / 999 MB |
+| Vision mean / p95 latency | 166.941 ms / 423.192 ms |
+| EdgeEnv run ID | `run-20260529-034704-fbf753f0` |
+| EdgeEnv summary | `runtime_operation_summary` stored |
+| AIGuard verdict | `blocked` / `high` |
+| Lab decision | `blocked` |
+
+This is device-local starter smoke evidence. EdgeEnv remains the local-first
+run evidence registry and supplemental operation-context preservation layer.
+Lab remains the final deployment decision owner. This record is not decoded
+YOLO accuracy validation, live camera operation, production remote execution,
+or thermal endurance validation.
+
 ## Fixture
 
 Committed lightweight fixtures:

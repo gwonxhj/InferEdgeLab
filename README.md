@@ -112,6 +112,7 @@ Runtime Intelligence smoke:
 - Orchestrator operation feed preserved as supplemental context
 - EdgeEnv telemetry history/regression evidence ingested by Lab
 - EdgeEnv handoff gate checks device-local producer lineage in preserved Orchestrator context
+- Jetson EdgeEnv preservation smoke confirms the entrypoint can carry device-local ONNX Runtime probe evidence, live `tegrastats`, and Runtime operation summary into EdgeEnv run evidence before Lab renders the deployment risk report
 - AIGuard deterministic runtime evidence preserved when available
 - Lab-owned Runtime Intelligence Risk Summary generated without changing existing JSON contracts
 
@@ -517,6 +518,29 @@ Markdown and HTML reports include a Runtime Intelligence Risk Summary that conne
 - remote dispatch starter boundary evidence
 - AIGuard deterministic evidence
 - the Lab-owned deployment decision
+
+Latest Jetson EdgeEnv preservation smoke:
+
+| Evidence | Value |
+|---|---:|
+| Operation path | `device_local_starter` |
+| Frames | 32 |
+| Max queue depth | 6 |
+| Dropped / fallback count | 29 / 29 |
+| Deadline missed count | 18 |
+| Parsed `tegrastats` samples | 4 |
+| Max temperature / RAM | 42.843 C / 999 MB |
+| Vision mean / p95 latency | 166.941 ms / 423.192 ms |
+| EdgeEnv run ID | `run-20260529-034704-fbf753f0` |
+| EdgeEnv summary | `runtime_operation_summary` stored |
+| AIGuard verdict | `blocked` / `high` |
+| Lab decision | `blocked` |
+
+This is device-local starter smoke evidence for the Runtime Intelligence
+handoff. EdgeEnv preserves local run evidence and supplemental operation
+context; Lab remains the final deployment decision owner. It is not decoded
+YOLO accuracy validation, live camera operation, production remote execution, or
+thermal endurance validation.
 
 This does not change existing JSON contracts. Lab fixtures for these cases live under `tests/fixtures/edgeenv_regression/`.
 
