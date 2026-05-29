@@ -834,6 +834,11 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
         "run=candidate, device_local_events=15, resource=tegrastats_timeline, "
         "queue=queue_backlog_threshold_exceeded |"
     ) in text
+    assert (
+        "| Lab EdgeEnv preservation context | "
+        "lab_report_preservation_context_present=True; "
+        "lab_preservation=present; lab_context=present |"
+    ) in text
     assert "| Orchestrator task event rollup | candidate: " in text
     assert "vision_agent(delay=1,miss=1,max_delay_cycles=3,max_wait_ms=15)" in text
     assert (
@@ -1132,6 +1137,9 @@ def test_generate_compare_html_summarizes_orchestrator_context_risk():
     assert "Orchestrator operation feed context" in html
     assert "Orchestrator context attached runs" in html
     assert "Jetson/device-local EdgeEnv preservation run" in html
+    assert "Lab EdgeEnv preservation context" in html
+    assert "lab_report_preservation_context_present=True" in html
+    assert "lab_preservation=present" in html
     assert (
         "candidate: run=candidate, device_local_events=15, "
         "resource=tegrastats_timeline, queue=queue_backlog_threshold_exceeded"

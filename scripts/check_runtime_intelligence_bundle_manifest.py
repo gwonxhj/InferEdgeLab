@@ -126,6 +126,7 @@ REQUIRED_EXPECTED_REPORT_MARKERS = {
     "Runtime Intelligence Risk Summary",
     "Orchestrator operation feed context",
     "Orchestrator task event rollup",
+    "Lab EdgeEnv preservation context",
     "AIGuard task event rollup evidence",
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
