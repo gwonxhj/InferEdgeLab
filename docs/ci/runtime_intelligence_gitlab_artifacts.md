@@ -195,6 +195,14 @@ When that report gate passes, its summary now emits a
 context for the Lab-owned report, not an AIGuard-owned marker decision.
 
 The CI artifact gate is implemented by `scripts/check_runtime_intelligence_ci_artifacts.py`. It runs in the deployment-risk stage and verifies that the collected optional GitLab artifacts include the manifest gate summary, AIGuard handoff alignment artifact, report gate summary, Runtime Intelligence Risk Summary report, portfolio demo status, and the validated contract markers from the bundle manifest gate. This keeps the final CI gate file-based and deterministic without turning GitLab into a runtime control plane.
+The final `runtime_intelligence_ci_artifact_gate_summary.md` also preserves the
+report gate's `Validated Duration Traceability` section. It repeats
+`duration_handoff_alignment`,
+`duration_source: source=entrypoint_requested_frames`,
+`duration_scope_label: scope_label=source=entrypoint_requested_frames`, and the
+`short 96-frame-class replay (96 frames)` label so CI reviewers can confirm
+duration handoff/source/scope alignment from the compact deployment-risk
+summary before opening the full Lab report.
 The same CI artifact gate also checks the copied
 `aiguard_edgeenv_handoff_alignment.json/.md` for Lab report marker context:
 `lab_expected_report_markers` must match the Lab-owned Runtime Intelligence
