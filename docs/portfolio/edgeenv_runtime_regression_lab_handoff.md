@@ -189,6 +189,12 @@ Expected Lab behavior:
 - Markdown/HTML reports include a `Runtime Intelligence Risk Summary` that summarizes EdgeEnv comparability/regression, telemetry replay gaps, Runtime history seed/run_config traceability, AIGuard deterministic evidence, and the Lab-owned deployment decision in one reviewer-facing table.
 - When EdgeEnv includes preserved Orchestrator feed context, the `Runtime Intelligence Risk Summary` surfaces queue, thermal, throttling, memory, fallback context, and compact `operation_risk_summary` markers as supplemental runtime evidence.
 - When EdgeEnv includes replay duration metadata, the same Risk Summary surfaces `Runtime replay duration scope` with `duration_label`, `duration_class`, frame count, and optional `duration_source` / `duration_scope_label` traceability as reviewer navigation context. This does not change EdgeEnv comparability or Lab deployment policy.
+- The report artifact gate summary also emits a `Validated Duration Traceability`
+  section so reviewers can see `duration_handoff_alignment`,
+  `source=entrypoint_requested_frames`,
+  `scope_label=source=entrypoint_requested_frames`, and the
+  `short 96-frame-class replay (96 frames)` label without opening the full
+  Markdown/HTML report.
 - The Jetson/device-local preservation row starts with `identity=jetson_device_local_preservation` and the device-local path marker such as `path=device_local_starter` when available, making the preserved Jetson EdgeEnv run easier to identify before reviewers inspect detailed queue/resource context.
 - The detailed producer/source/stage/resource markers are rendered in a separate `Jetson/device-local EdgeEnv preservation details` row so the identity row stays short while preserving the same navigation context.
 - Agent Runtime Reliability reports now mirror the same reviewer-facing split inside `Runtime Intelligence EdgeEnv Preservation`: `preservation_identity` keeps the run/path identity short, while `preservation_details` carries source, stage, device-local event, resource, and queue markers as navigation context.

@@ -52,6 +52,17 @@ def test_runtime_intelligence_artifact_gate_passes_for_chain_report(tmp_path):
     assert "- Status: passed" in summary
     assert "- Missing Markdown markers: 0" in summary
     assert "- Missing HTML markers: 0" in summary
+    assert "## Validated Duration Traceability" in summary
+    assert (
+        "duration_handoff_alignment: EdgeEnv/AIGuard report context preserved"
+        in summary
+    )
+    assert "duration_source: source=entrypoint_requested_frames" in summary
+    assert (
+        "duration_scope_label: scope_label=source=entrypoint_requested_frames"
+        in summary
+    )
+    assert "duration_label: short 96-frame-class replay (96 frames)" in summary
     markdown = markdown_path.read_text(encoding="utf-8")
     assert "Runtime replay duration scope" in markdown
     assert "short 96-frame-class replay (96 frames)" in markdown
@@ -82,7 +93,26 @@ def test_runtime_intelligence_artifact_gate_cli_passes_for_chain_report(tmp_path
 
     assert result.returncode == 0
     assert "Runtime Intelligence artifact bundle gate passed." in result.stdout
-    assert "- Status: passed" in summary_path.read_text(encoding="utf-8")
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "- Status: passed" in summary
+    assert "duration_handoff_alignment" in summary
+
+
+def test_runtime_intelligence_docs_describe_duration_traceability_gate_summary():
+    docs = [
+        REPO_ROOT / "docs" / "ci" / "runtime_intelligence_gitlab_artifacts.md",
+        REPO_ROOT
+        / "docs"
+        / "portfolio"
+        / "edgeenv_runtime_regression_lab_handoff.md",
+    ]
+
+    for path in docs:
+        text = path.read_text(encoding="utf-8")
+        assert "Validated Duration Traceability" in text
+        assert "duration_handoff_alignment" in text
+        assert "source=entrypoint_requested_frames" in text
+        assert "scope_label=source=entrypoint_requested_frames" in text
 
 
 def test_runtime_intelligence_artifact_gate_fails_when_owner_row_is_missing(
