@@ -485,6 +485,8 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "Runtime replay duration scope" in markdown
     assert "short 96-frame-class replay (96 frames)" in markdown
     assert "class=short_96_frame_class, frames=96" in markdown
+    assert "source=entrypoint_requested_frames" in markdown
+    assert "scope_label=source=entrypoint_requested_frames" in markdown
     assert "runtime_telemetry_field_gap" in markdown
     assert "coverage_missing_fields" in markdown
     assert "queue_depth" in markdown
@@ -558,6 +560,8 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "Runtime history seed run_config" in html
     assert "Runtime replay duration scope" in html
     assert "short 96-frame-class replay (96 frames)" in html
+    assert "source=entrypoint_requested_frames" in html
+    assert "scope_label=source=entrypoint_requested_frames" in html
     assert "AIGuard history seed run_config markers" in html
     assert "AIGuard run_config traceability evidence" in html
     assert "runtime_history_seed_run_config_traceability" in html

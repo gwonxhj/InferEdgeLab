@@ -442,6 +442,8 @@ def _runtime_replay_scope_label(run_label: str, run_context: dict[str, Any]) -> 
     ]
     duration_label = _first_payload_value(payloads, "duration_label")
     duration_class = _first_payload_value(payloads, "duration_class")
+    duration_source = _first_payload_value(payloads, "duration_source")
+    duration_scope_label = _first_payload_value(payloads, "duration_scope_label")
     frames = _first_payload_value(payloads, "frames")
     if frames is None:
         frames = _first_payload_value(payloads, "requested_frames")
@@ -449,12 +451,21 @@ def _runtime_replay_scope_label(run_label: str, run_context: dict[str, Any]) -> 
         frames = _first_payload_value(payloads, "frame_count")
 
     parts: list[str] = []
-    if duration_label is not None:
+    if duration_scope_label is not None:
+        parts.append(f"scope_label={duration_scope_label}")
+    elif duration_label is not None:
         parts.append(f"label={duration_label}")
-    if duration_class is not None:
-        parts.append(f"class={duration_class}")
-    if frames is not None:
-        parts.append(f"frames={_format_compact_value(frames)}")
+        if duration_class is not None:
+            parts.append(f"class={duration_class}")
+        if frames is not None:
+            parts.append(f"frames={_format_compact_value(frames)}")
+    else:
+        if duration_class is not None:
+            parts.append(f"class={duration_class}")
+        if frames is not None:
+            parts.append(f"frames={_format_compact_value(frames)}")
+    if duration_source is not None and str(duration_source) not in ",".join(parts):
+        parts.append(f"source={duration_source}")
     if not parts:
         return ""
     return f"{run_label}: " + ", ".join(parts)

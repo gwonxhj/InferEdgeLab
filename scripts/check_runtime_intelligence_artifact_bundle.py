@@ -31,8 +31,10 @@ REQUIRED_MARKDOWN_MARKERS = {
     ),
     "runtime_replay_duration_scope": (
         "| Runtime replay duration scope | candidate: "
-        "label=short 96-frame-class replay (96 frames), "
-        "class=short_96_frame_class, frames=96 |"
+        "scope_label=source=entrypoint_requested_frames"
+    ),
+    "runtime_replay_duration_scope_label": (
+        "scope_label=source=entrypoint_requested_frames"
     ),
     "jetson_edgeenv_preservation_identity": (
         "| Jetson/device-local EdgeEnv preservation run | candidate: "
@@ -150,6 +152,10 @@ REQUIRED_HTML_MARKERS = {
     "orchestrator_operation_risk_summary": "Orchestrator operation risk summary",
     "runtime_replay_duration_scope": "Runtime replay duration scope",
     "runtime_replay_duration_label": "short 96-frame-class replay (96 frames)",
+    "runtime_replay_duration_source": "source=entrypoint_requested_frames",
+    "runtime_replay_duration_scope_label": (
+        "scope_label=source=entrypoint_requested_frames"
+    ),
     "orchestrator_task_event_rollup": "Orchestrator task event rollup",
     "lab_edgeenv_preservation_context": "Lab EdgeEnv preservation context",
     "lab_edgeenv_preservation_context_marker": (

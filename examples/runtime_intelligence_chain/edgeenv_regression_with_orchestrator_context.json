@@ -126,6 +126,8 @@
       "frames": 96,
       "duration_class": "short_96_frame_class",
       "duration_label": "short 96-frame-class replay (96 frames)",
+      "duration_source": "entrypoint_requested_frames",
+      "duration_scope_label": "source=entrypoint_requested_frames, label=short 96-frame-class replay (96 frames), class=short_96_frame_class, frames=96",
       "telemetry_coverage": {
         "schema_version": "inferedge-runtime-telemetry-coverage-v1",
         "expected_fields": [
@@ -239,6 +241,8 @@
             "frames": 96,
             "duration_class": "short_96_frame_class",
             "duration_label": "short 96-frame-class replay (96 frames)",
+            "duration_source": "entrypoint_requested_frames",
+            "duration_scope_label": "source=entrypoint_requested_frames, label=short 96-frame-class replay (96 frames), class=short_96_frame_class, frames=96",
             "producer_sources": [
               "device_local_cli_override",
               "orchestration_summary"

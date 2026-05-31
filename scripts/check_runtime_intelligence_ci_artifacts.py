@@ -153,6 +153,8 @@ def _validate_runtime_report(path: Path, errors: list[str]) -> None:
         "## Runtime Intelligence Risk Summary",
         "Runtime replay duration scope",
         "short 96-frame-class replay (96 frames)",
+        "source=entrypoint_requested_frames",
+        "scope_label=source=entrypoint_requested_frames",
         "Lab remains the final deployment decision owner.",
         "AIGuard runtime operation anomalies",
         "runtime_queue_overload, runtime_thermal_instability",

@@ -504,10 +504,11 @@ If EdgeEnv preserves an Orchestrator `operation_risk_summary`, Lab shows the com
 
 When EdgeEnv/Orchestrator context includes reviewer-facing duration metadata,
 Lab renders a `Runtime replay duration scope` row with `duration_label`,
-`duration_class`, and frame count. This helps reviewers distinguish short
-96-frame replay, 5-minute-class sustained replay, and quick starter smoke
-without changing Lab deployment policy or treating replay duration as a
-production readiness claim.
+`duration_class`, frame count, and optional `duration_source` /
+`duration_scope_label` traceability such as `source=entrypoint_requested_frames`.
+This helps reviewers distinguish short 96-frame replay, 5-minute-class
+sustained replay, and quick starter smoke without changing Lab deployment
+policy or treating replay duration as a production readiness claim.
 
 When the EdgeEnv preservation path is present, Lab also renders a `Lab EdgeEnv
 preservation context` row with `lab_report_preservation_context_present=True`,

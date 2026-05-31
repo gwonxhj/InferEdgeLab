@@ -55,6 +55,8 @@ def test_runtime_intelligence_artifact_gate_passes_for_chain_report(tmp_path):
     markdown = markdown_path.read_text(encoding="utf-8")
     assert "Runtime replay duration scope" in markdown
     assert "short 96-frame-class replay (96 frames)" in markdown
+    assert "source=entrypoint_requested_frames" in markdown
+    assert "scope_label=source=entrypoint_requested_frames" in markdown
 
 
 def test_runtime_intelligence_artifact_gate_cli_passes_for_chain_report(tmp_path):
