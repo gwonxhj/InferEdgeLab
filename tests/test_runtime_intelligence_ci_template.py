@@ -6,6 +6,16 @@ from scripts.check_runtime_intelligence_ci_artifacts import main as ci_artifact_
 REPO_ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE = REPO_ROOT / "ci" / "gitlab" / "runtime-intelligence-artifacts.yml"
 DOC = REPO_ROOT / "docs" / "ci" / "runtime_intelligence_gitlab_artifacts.md"
+DURATION_TRACEABILITY_SUMMARY = "\n".join(
+    [
+        "- Status: passed",
+        "## Validated Duration Traceability",
+        "- duration_handoff_alignment: EdgeEnv/AIGuard report context preserved",
+        "- duration_source: source=entrypoint_requested_frames",
+        "- duration_scope_label: scope_label=source=entrypoint_requested_frames",
+        "- duration_label: short 96-frame-class replay (96 frames)",
+    ]
+) + "\n"
 
 
 def test_runtime_intelligence_gitlab_template_preserves_roadmap_stages():
@@ -71,6 +81,9 @@ def test_runtime_intelligence_gitlab_doc_states_ownership_boundaries():
     assert "lab_expected_report_markers" in text
     assert "lab_report_contract_context" in text
     assert "aiguard_validates_expected_report_markers" in text
+    assert "Validated Duration Traceability" in text
+    assert "duration_handoff_alignment" in text
+    assert "runtime_intelligence_ci_artifact_gate_summary.md" in text
 
 
 def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_path):
@@ -173,7 +186,7 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         encoding="utf-8",
     )
     (report_dir / "runtime_anomaly_gate_summary.md").write_text(
-        "- Status: passed\n",
+        DURATION_TRACEABILITY_SUMMARY,
         encoding="utf-8",
     )
     (report_dir / "aiguard_edgeenv_handoff_alignment.json").write_text(
@@ -241,6 +254,35 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
     assert result == 0
     summary = summary_path.read_text(encoding="utf-8")
     assert "- Status: passed" in summary
+    assert "## Validated Duration Traceability" in summary
+    assert (
+        "duration_handoff_alignment: EdgeEnv/AIGuard report context preserved"
+        in summary
+    )
+    assert "duration_source: source=entrypoint_requested_frames" in summary
+    assert (
+        "duration_scope_label: scope_label=source=entrypoint_requested_frames"
+        in summary
+    )
+    assert "duration_label: short 96-frame-class replay (96 frames)" in summary
+
+    (report_dir / "runtime_anomaly_gate_summary.md").write_text(
+        "- Status: passed\n",
+        encoding="utf-8",
+    )
+    missing_duration_summary = tmp_path / "ci_artifact_gate_missing_duration.md"
+
+    result = ci_artifact_gate(
+        report_dir=str(report_dir),
+        summary_out=str(missing_duration_summary),
+    )
+
+    assert result == 2
+    missing_summary = missing_duration_summary.read_text(encoding="utf-8")
+    assert (
+        "Runtime Intelligence artifact gate summary missing duration "
+        "traceability marker: ## Validated Duration Traceability"
+    ) in missing_summary
 
 
 def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_risk_summary(

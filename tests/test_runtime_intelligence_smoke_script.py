@@ -148,3 +148,14 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
         output_dir / "runtime_intelligence_ci_artifact_gate_summary.md"
     ).read_text(encoding="utf-8")
     assert "- Status: passed" in ci_summary
+    assert "## Validated Duration Traceability" in ci_summary
+    assert (
+        "duration_handoff_alignment: EdgeEnv/AIGuard report context preserved"
+        in ci_summary
+    )
+    assert "duration_source: source=entrypoint_requested_frames" in ci_summary
+    assert (
+        "duration_scope_label: scope_label=source=entrypoint_requested_frames"
+        in ci_summary
+    )
+    assert "duration_label: short 96-frame-class replay (96 frames)" in ci_summary

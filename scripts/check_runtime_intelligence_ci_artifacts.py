@@ -85,6 +85,13 @@ REQUIRED_AIGUARD_ALIGNMENT_RUN_IDS = [
     "edgeenv-smoke-candidate",
     "edgeenv-smoke-missing",
 ]
+REQUIRED_DURATION_TRACEABILITY_SUMMARY_MARKERS = (
+    "## Validated Duration Traceability",
+    "duration_handoff_alignment: EdgeEnv/AIGuard report context preserved",
+    "duration_source: source=entrypoint_requested_frames",
+    "duration_scope_label: scope_label=source=entrypoint_requested_frames",
+    "duration_label: short 96-frame-class replay (96 frames)",
+)
 
 
 def _record(condition: bool, errors: list[str], message: str) -> None:
@@ -125,10 +132,18 @@ def _validate_required_files(report_dir: Path, errors: list[str]) -> None:
         _record((report_dir / name).is_file(), errors, f"missing artifact: {name}")
 
 
-def _validate_gate_summary(path: Path, errors: list[str], label: str) -> None:
+def _validate_runtime_artifact_gate_summary(path: Path, errors: list[str]) -> None:
+    label = "Runtime Intelligence artifact gate summary"
     text = _read_text(path, errors, label)
-    if text:
-        _record("- Status: passed" in text, errors, f"{label} must have passed status")
+    if not text:
+        return
+    _record("- Status: passed" in text, errors, f"{label} must have passed status")
+    for marker in REQUIRED_DURATION_TRACEABILITY_SUMMARY_MARKERS:
+        _record(
+            marker in text,
+            errors,
+            f"{label} missing duration traceability marker: {marker}",
+        )
 
 
 def _validate_bundle_manifest_gate_summary(path: Path, errors: list[str]) -> None:
@@ -331,6 +346,15 @@ def _write_summary(path: Path, report_dir: Path, errors: list[str]) -> None:
         lines.append("")
         lines.extend(f"- {error}" for error in errors)
         lines.append("")
+    else:
+        lines.append("## Validated Duration Traceability")
+        lines.append("")
+        lines.extend(
+            f"- {marker}"
+            for marker in REQUIRED_DURATION_TRACEABILITY_SUMMARY_MARKERS
+            if not marker.startswith("## ")
+        )
+        lines.append("")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines), encoding="utf-8")
 
@@ -345,10 +369,9 @@ def main(report_dir: str, summary_out: str = "") -> int:
             report_path / "runtime_intelligence_bundle_manifest_gate_summary.md",
             errors,
         )
-        _validate_gate_summary(
+        _validate_runtime_artifact_gate_summary(
             report_path / "runtime_anomaly_gate_summary.md",
             errors,
-            "Runtime Intelligence artifact gate summary",
         )
         _validate_aiguard_handoff_alignment(
             report_path / "aiguard_edgeenv_handoff_alignment.json",
