@@ -343,6 +343,12 @@ def make_edgeenv_regression_with_orchestrator_context() -> dict:
     context["candidate"]["frames"] = 96
     context["candidate"]["duration_class"] = "short_96_frame_class"
     context["candidate"]["duration_label"] = "short 96-frame-class replay (96 frames)"
+    context["candidate"]["duration_source"] = "entrypoint_requested_frames"
+    context["candidate"]["duration_scope_label"] = (
+        "source=entrypoint_requested_frames, "
+        "label=short 96-frame-class replay (96 frames), "
+        "class=short_96_frame_class, frames=96"
+    )
     context["candidate"]["orchestrator_operation_context"] = {
         "schema_version": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
         "role": "orchestrator_operation_context_for_edgeenv",
@@ -355,6 +361,15 @@ def make_edgeenv_regression_with_orchestrator_context() -> dict:
         "candidate_context": {
             "run_id": "candidate",
             "queue_depth": 7,
+            "frames": 96,
+            "duration_class": "short_96_frame_class",
+            "duration_label": "short 96-frame-class replay (96 frames)",
+            "duration_source": "entrypoint_requested_frames",
+            "duration_scope_label": (
+                "source=entrypoint_requested_frames, "
+                "label=short 96-frame-class replay (96 frames), "
+                "class=short_96_frame_class, frames=96"
+            ),
             "operation": {
                 "queue_depth": 7,
                 "deadline_missed_count": 2,
@@ -834,6 +849,7 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
     ) in text
     assert (
         "| Runtime replay duration scope | candidate: "
+        "scope_label=source=entrypoint_requested_frames, "
         "label=short 96-frame-class replay (96 frames), "
         "class=short_96_frame_class, frames=96 |"
     ) in text
@@ -904,6 +920,8 @@ def test_generate_compare_html_summarizes_operation_risk_summary():
     assert "Runtime Intelligence Risk Summary" in html
     assert "Runtime replay duration scope" in html
     assert "short 96-frame-class replay (96 frames)" in html
+    assert "entrypoint_requested_frames" in html
+    assert "scope_label=source=entrypoint_requested_frames" in html
     assert "Orchestrator operation risk summary" in html
     assert "Orchestrator task event rollup" in html
     assert "vision_agent(delay=1,miss=1,max_delay_cycles=3,max_wait_ms=15)" in html

@@ -126,6 +126,8 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
     assert "Runtime replay duration scope" in runtime_summary
     assert "short 96-frame-class replay (96 frames)" in runtime_summary
     assert "class=short_96_frame_class, frames=96" in runtime_summary
+    assert "source=entrypoint_requested_frames" in runtime_summary
+    assert "scope_label=source=entrypoint_requested_frames" in runtime_summary
 
     alignment_summary = (
         output_dir / "aiguard_edgeenv_handoff_alignment.md"
