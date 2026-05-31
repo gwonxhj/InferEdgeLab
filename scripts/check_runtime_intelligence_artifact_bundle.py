@@ -190,6 +190,13 @@ REQUIRED_HTML_MARKERS = {
     ),
 }
 
+DURATION_TRACEABILITY_SUMMARY_MARKERS = (
+    "duration_handoff_alignment: EdgeEnv/AIGuard report context preserved",
+    "duration_source: source=entrypoint_requested_frames",
+    "duration_scope_label: scope_label=source=entrypoint_requested_frames",
+    "duration_label: short 96-frame-class replay (96 frames)",
+)
+
 
 def _read_text(path: str, label: str) -> str:
     try:
@@ -227,6 +234,11 @@ def _write_summary(
         lines.append("## Missing HTML Markers")
         lines.append("")
         lines.extend(f"- `{name}`" for name in missing_html)
+        lines.append("")
+    if not missing_markdown and not missing_html:
+        lines.append("## Validated Duration Traceability")
+        lines.append("")
+        lines.extend(f"- {marker}" for marker in DURATION_TRACEABILITY_SUMMARY_MARKERS)
         lines.append("")
 
     out_path = Path(path)
