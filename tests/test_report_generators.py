@@ -340,6 +340,9 @@ def make_edgeenv_regression_with_orchestrator_context() -> dict:
     context = regression["runtime_telemetry_context"]
     context["history"]["summary"]["orchestrator_feed_runs"] = 1
     context["candidate"]["orchestrator_context_present"] = True
+    context["candidate"]["frames"] = 96
+    context["candidate"]["duration_class"] = "short_96_frame_class"
+    context["candidate"]["duration_label"] = "short 96-frame-class replay (96 frames)"
     context["candidate"]["orchestrator_operation_context"] = {
         "schema_version": "inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1",
         "role": "orchestrator_operation_context_for_edgeenv",
@@ -830,6 +833,11 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
         "producer_events=7, degraded_workers=vision_agent |"
     ) in text
     assert (
+        "| Runtime replay duration scope | candidate: "
+        "label=short 96-frame-class replay (96 frames), "
+        "class=short_96_frame_class, frames=96 |"
+    ) in text
+    assert (
         "| Jetson/device-local EdgeEnv preservation run | candidate: "
         "identity=jetson_device_local_preservation, run=candidate |"
     ) in text
@@ -894,6 +902,8 @@ def test_generate_compare_html_summarizes_operation_risk_summary():
     )
 
     assert "Runtime Intelligence Risk Summary" in html
+    assert "Runtime replay duration scope" in html
+    assert "short 96-frame-class replay (96 frames)" in html
     assert "Orchestrator operation risk summary" in html
     assert "Orchestrator task event rollup" in html
     assert "vision_agent(delay=1,miss=1,max_delay_cycles=3,max_wait_ms=15)" in html

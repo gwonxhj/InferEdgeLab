@@ -186,6 +186,16 @@ def _append_telemetry_context_rows(
             )
         )
 
+    replay_scope_labels = _runtime_replay_scope_labels(telemetry_context)
+    if replay_scope_labels:
+        rows.append(
+            (
+                "Runtime replay duration scope",
+                "; ".join(replay_scope_labels),
+                "Duration metadata helps reviewers choose the right replay bundle; it is navigation context and does not change Lab deployment policy.",
+            )
+        )
+
     coverage_labels = _runtime_telemetry_coverage_labels(telemetry_context)
     if coverage_labels:
         rows.append(
@@ -395,6 +405,72 @@ def _operation_risk_summary_parts(summary: dict[str, Any]) -> list[str]:
             + ",".join(str(item) for item in degraded_workers if item is not None)
         )
     return parts
+
+
+def _runtime_replay_scope_labels(context: dict[str, Any]) -> list[str]:
+    labels: list[str] = []
+    for run_label in ("baseline", "candidate"):
+        run_context = context.get(run_label)
+        if not isinstance(run_context, dict):
+            continue
+        label = _runtime_replay_scope_label(run_label, run_context)
+        if label:
+            labels.append(label)
+    return labels
+
+
+def _runtime_replay_scope_label(run_label: str, run_context: dict[str, Any]) -> str:
+    operation_context = run_context.get("orchestrator_operation_context")
+    if not isinstance(operation_context, dict):
+        operation_context = {}
+    candidate_context = operation_context.get("candidate_context")
+    if not isinstance(candidate_context, dict):
+        candidate_context = {}
+    producer = candidate_context.get("producer")
+    if not isinstance(producer, dict):
+        producer = {}
+    operation_summary = operation_context.get("operation_risk_summary")
+    if not isinstance(operation_summary, dict):
+        operation_summary = {}
+
+    payloads = [
+        run_context,
+        operation_context,
+        candidate_context,
+        producer,
+        operation_summary,
+    ]
+    duration_label = _first_payload_value(payloads, "duration_label")
+    duration_class = _first_payload_value(payloads, "duration_class")
+    frames = _first_payload_value(payloads, "frames")
+    if frames is None:
+        frames = _first_payload_value(payloads, "requested_frames")
+    if frames is None:
+        frames = _first_payload_value(payloads, "frame_count")
+
+    parts: list[str] = []
+    if duration_label is not None:
+        parts.append(f"label={duration_label}")
+    if duration_class is not None:
+        parts.append(f"class={duration_class}")
+    if frames is not None:
+        parts.append(f"frames={_format_compact_value(frames)}")
+    if not parts:
+        return ""
+    return f"{run_label}: " + ", ".join(parts)
+
+
+def _first_payload_value(payloads: list[dict[str, Any]], field: str) -> Any:
+    for payload in payloads:
+        value = payload.get(field)
+        if value not in (None, ""):
+            return value
+        run_summary = payload.get("run_summary")
+        if isinstance(run_summary, dict):
+            value = run_summary.get(field)
+            if value not in (None, ""):
+                return value
+    return None
 
 
 def _edgeenv_preservation_run_labels(context: dict[str, Any]) -> list[str]:
