@@ -502,6 +502,13 @@ If AIGuard preserves EdgeEnv/Orchestrator `candidate_context.producer` lineage, 
 
 If EdgeEnv preserves an Orchestrator `operation_risk_summary`, Lab shows the compact queue-pressure, max-pressure task, worker-health, and producer/device-local event markers as navigation context in the Runtime Intelligence Risk Summary. These markers help reviewers find the relevant operation evidence, but they do not become EdgeEnv regression deltas, comparability fields, or a deployment decision override.
 
+When EdgeEnv/Orchestrator context includes reviewer-facing duration metadata,
+Lab renders a `Runtime replay duration scope` row with `duration_label`,
+`duration_class`, and frame count. This helps reviewers distinguish short
+96-frame replay, 5-minute-class sustained replay, and quick starter smoke
+without changing Lab deployment policy or treating replay duration as a
+production readiness claim.
+
 When the EdgeEnv preservation path is present, Lab also renders a `Lab EdgeEnv
 preservation context` row with `lab_report_preservation_context_present=True`,
 `lab_preservation=present`, and `lab_context=present`. This keeps Lab's
