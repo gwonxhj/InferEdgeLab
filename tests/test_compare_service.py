@@ -805,6 +805,10 @@ def test_build_compare_bundle_summarizes_orchestrator_context_runtime_anomalies(
     assert "guard_warning_review" in bundle["deployment_decision"]["triggered_rules"]
     assert "| Orchestrator operation feed context | 1 |" in bundle["markdown"]
     assert "| Orchestrator context attached runs | candidate |" in bundle["markdown"]
+    assert (
+        "| Orchestrator queue/deadline/fallback markers | candidate: "
+        "queue_depth=7, deadline_missed_count=2, fallback_count=1 |"
+    ) in bundle["markdown"]
     assert "| Orchestrator task event rollup | candidate: " in bundle["markdown"]
     assert "vision_agent(delay=1,miss=1,max_delay_cycles=3,max_wait_ms=15)" in bundle[
         "markdown"

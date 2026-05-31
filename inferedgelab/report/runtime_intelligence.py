@@ -226,6 +226,18 @@ def _append_telemetry_context_rows(
             )
         )
 
+    operation_marker_labels = _orchestrator_queue_deadline_fallback_labels(
+        telemetry_context
+    )
+    if operation_marker_labels:
+        rows.append(
+            (
+                "Orchestrator queue/deadline/fallback markers",
+                "; ".join(operation_marker_labels),
+                "Compact queue, deadline, and fallback markers point reviewers to operation evidence without changing Lab deployment policy.",
+            )
+        )
+
     preservation_labels = _edgeenv_preservation_run_labels(telemetry_context)
     if preservation_labels:
         preservation_detail_labels = _edgeenv_preservation_detail_labels(
@@ -405,6 +417,91 @@ def _operation_risk_summary_parts(summary: dict[str, Any]) -> list[str]:
             + ",".join(str(item) for item in degraded_workers if item is not None)
         )
     return parts
+
+
+def _orchestrator_queue_deadline_fallback_labels(
+    context: dict[str, Any],
+) -> list[str]:
+    labels: list[str] = []
+    for run_label in ("baseline", "candidate"):
+        run_context = context.get(run_label)
+        if not isinstance(run_context, dict):
+            continue
+        operation_context = run_context.get("orchestrator_operation_context")
+        if not isinstance(operation_context, dict):
+            continue
+
+        candidate_context = operation_context.get("candidate_context")
+        if not isinstance(candidate_context, dict):
+            candidate_context = {}
+        operation = candidate_context.get("operation")
+        if not isinstance(operation, dict):
+            operation = {}
+        operation_summary = operation_context.get("operation_risk_summary")
+        if not isinstance(operation_summary, dict):
+            operation_summary = {}
+        queue_state = operation_context.get("queue_state_summary")
+        if not isinstance(queue_state, dict):
+            queue_state = {}
+        runtime_event_summary = operation_context.get("runtime_event_summary")
+        if not isinstance(runtime_event_summary, dict):
+            runtime_event_summary = {}
+
+        parts: list[str] = []
+        queue_pressure = _first_present(
+            operation_summary.get("queue_pressure_reason"),
+            queue_state.get("queue_pressure_reason"),
+            operation.get("queue_pressure_reason"),
+            candidate_context.get("queue_pressure_reason"),
+        )
+        if queue_pressure is not None:
+            parts.append(f"queue_pressure_reason={queue_pressure}")
+
+        max_total_queue_depth = _first_present(
+            operation_summary.get("max_total_queue_depth"),
+            queue_state.get("max_total_queue_depth"),
+            operation.get("max_total_queue_depth"),
+            candidate_context.get("max_total_queue_depth"),
+        )
+        if max_total_queue_depth is not None:
+            parts.append(
+                "max_total_queue_depth="
+                f"{_format_compact_value(max_total_queue_depth)}"
+            )
+        else:
+            queue_depth = _first_present(
+                operation.get("queue_depth"),
+                candidate_context.get("queue_depth"),
+                run_context.get("queue_depth"),
+            )
+            if queue_depth is not None:
+                parts.append(f"queue_depth={_format_compact_value(queue_depth)}")
+
+        deadline_missed_count = _first_present(
+            operation_summary.get("deadline_missed_count"),
+            operation.get("deadline_missed_count"),
+            runtime_event_summary.get("deadline_missed_count"),
+            candidate_context.get("deadline_missed_count"),
+        )
+        if deadline_missed_count is not None:
+            parts.append(
+                "deadline_missed_count="
+                f"{_format_compact_value(deadline_missed_count)}"
+            )
+
+        fallback_count = _first_present(
+            operation_summary.get("fallback_count"),
+            operation.get("fallback_count"),
+            runtime_event_summary.get("fallback_count"),
+            runtime_event_summary.get("fallback_decision_count"),
+            candidate_context.get("fallback_count"),
+        )
+        if fallback_count is not None:
+            parts.append(f"fallback_count={_format_compact_value(fallback_count)}")
+
+        if parts:
+            labels.append(f"{run_label}: " + ", ".join(parts))
+    return labels
 
 
 def _runtime_replay_scope_labels(context: dict[str, Any]) -> list[str]:
