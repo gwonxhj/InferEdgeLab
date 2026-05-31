@@ -52,6 +52,9 @@ def test_runtime_intelligence_artifact_gate_passes_for_chain_report(tmp_path):
     assert "- Status: passed" in summary
     assert "- Missing Markdown markers: 0" in summary
     assert "- Missing HTML markers: 0" in summary
+    markdown = markdown_path.read_text(encoding="utf-8")
+    assert "Runtime replay duration scope" in markdown
+    assert "short 96-frame-class replay (96 frames)" in markdown
 
 
 def test_runtime_intelligence_artifact_gate_cli_passes_for_chain_report(tmp_path):

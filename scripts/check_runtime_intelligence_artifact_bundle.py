@@ -29,6 +29,11 @@ REQUIRED_MARKDOWN_MARKERS = {
         "| Orchestrator operation risk summary | candidate: "
         "queue=queue_backlog_threshold_exceeded"
     ),
+    "runtime_replay_duration_scope": (
+        "| Runtime replay duration scope | candidate: "
+        "label=short 96-frame-class replay (96 frames), "
+        "class=short_96_frame_class, frames=96 |"
+    ),
     "jetson_edgeenv_preservation_identity": (
         "| Jetson/device-local EdgeEnv preservation run | candidate: "
         "identity=jetson_device_local_preservation, path=device_local_starter, "
@@ -143,6 +148,8 @@ REQUIRED_HTML_MARKERS = {
     "remote_fallback_lab_context_marker": "lab=Remote fallback starter evidence",
     "aiguard_orchestrator_handoff": "AIGuard Orchestrator context handoff",
     "orchestrator_operation_risk_summary": "Orchestrator operation risk summary",
+    "runtime_replay_duration_scope": "Runtime replay duration scope",
+    "runtime_replay_duration_label": "short 96-frame-class replay (96 frames)",
     "orchestrator_task_event_rollup": "Orchestrator task event rollup",
     "lab_edgeenv_preservation_context": "Lab EdgeEnv preservation context",
     "lab_edgeenv_preservation_context_marker": (

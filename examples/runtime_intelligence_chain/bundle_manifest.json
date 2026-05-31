@@ -47,6 +47,7 @@
   },
   "expected_report_markers": [
     "Runtime Intelligence Risk Summary",
+    "Runtime replay duration scope",
     "Orchestrator operation feed context",
     "Orchestrator task event rollup",
     "Lab EdgeEnv preservation context",

@@ -124,6 +124,7 @@ VALID_GUARD_EVIDENCE_STATUSES = {"passed", "warning", "failed", "skipped"}
 VALID_GUARD_EVIDENCE_SEVERITIES = {"low", "medium", "high", "critical"}
 REQUIRED_EXPECTED_REPORT_MARKERS = {
     "Runtime Intelligence Risk Summary",
+    "Runtime replay duration scope",
     "Orchestrator operation feed context",
     "Orchestrator task event rollup",
     "Lab EdgeEnv preservation context",
