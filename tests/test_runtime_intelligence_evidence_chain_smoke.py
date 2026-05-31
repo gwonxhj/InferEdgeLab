@@ -382,6 +382,10 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert "| Runtime history seed run_config | 2 |" in bundle["markdown"]
     assert "| Orchestrator context attached runs | candidate |" in bundle["markdown"]
     assert (
+        "| Orchestrator queue/deadline/fallback markers | candidate: "
+        "queue_pressure_reason=queue_backlog_threshold_exceeded"
+    ) in bundle["markdown"]
+    assert (
         "| Jetson/device-local EdgeEnv preservation run | candidate: "
         "identity=jetson_device_local_preservation, path=device_local_starter, "
         "run=edgeenv-smoke-candidate |"
@@ -537,6 +541,8 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     ) in markdown
     assert "Runtime Intelligence Risk Summary" in html
     assert "Orchestrator operation risk summary" in html
+    assert "Orchestrator queue/deadline/fallback markers" in html
+    assert "queue_pressure_reason=queue_backlog_threshold_exceeded" in html
     assert "Jetson/device-local EdgeEnv preservation run" in html
     assert "Jetson/device-local EdgeEnv preservation details" in html
     assert "Lab EdgeEnv preservation context" in html

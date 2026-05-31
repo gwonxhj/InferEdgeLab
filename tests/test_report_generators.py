@@ -848,6 +848,11 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
         "producer_events=7, degraded_workers=vision_agent |"
     ) in text
     assert (
+        "| Orchestrator queue/deadline/fallback markers | candidate: "
+        "queue_pressure_reason=queue_backlog_threshold_exceeded, "
+        "queue_depth=7, deadline_missed_count=2, fallback_count=1 |"
+    ) in text
+    assert (
         "| Runtime replay duration scope | candidate: "
         "scope_label=source=entrypoint_requested_frames, "
         "label=short 96-frame-class replay (96 frames), "
@@ -923,6 +928,11 @@ def test_generate_compare_html_summarizes_operation_risk_summary():
     assert "entrypoint_requested_frames" in html
     assert "scope_label=source=entrypoint_requested_frames" in html
     assert "Orchestrator operation risk summary" in html
+    assert "Orchestrator queue/deadline/fallback markers" in html
+    assert (
+        "queue_pressure_reason=queue_backlog_threshold_exceeded, "
+        "queue_depth=7, deadline_missed_count=2, fallback_count=1"
+    ) in html
     assert "Orchestrator task event rollup" in html
     assert "vision_agent(delay=1,miss=1,max_delay_cycles=3,max_wait_ms=15)" in html
     assert "queue=queue_backlog_threshold_exceeded" in html

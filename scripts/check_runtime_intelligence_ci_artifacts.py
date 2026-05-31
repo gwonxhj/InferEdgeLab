@@ -181,6 +181,8 @@ def _validate_runtime_report(path: Path, errors: list[str]) -> None:
         "lab_preservation=present",
         "edgeenv_orchestrator_task_event_rollup",
         "Runtime telemetry coverage gaps",
+        "Orchestrator queue/deadline/fallback markers",
+        "queue_pressure_reason=queue_backlog_threshold_exceeded",
         "AIGuard producer-lineage guard alignment",
         "edgeenv_orchestrator_producer_lineage",
         "AIGuard run_config traceability evidence",

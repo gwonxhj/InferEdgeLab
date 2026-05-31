@@ -29,6 +29,10 @@ REQUIRED_MARKDOWN_MARKERS = {
         "| Orchestrator operation risk summary | candidate: "
         "queue=queue_backlog_threshold_exceeded"
     ),
+    "orchestrator_queue_deadline_fallback_markers": (
+        "| Orchestrator queue/deadline/fallback markers | candidate: "
+        "queue_pressure_reason=queue_backlog_threshold_exceeded"
+    ),
     "runtime_replay_duration_scope": (
         "| Runtime replay duration scope | candidate: "
         "scope_label=source=entrypoint_requested_frames"
@@ -150,6 +154,12 @@ REQUIRED_HTML_MARKERS = {
     "remote_fallback_lab_context_marker": "lab=Remote fallback starter evidence",
     "aiguard_orchestrator_handoff": "AIGuard Orchestrator context handoff",
     "orchestrator_operation_risk_summary": "Orchestrator operation risk summary",
+    "orchestrator_queue_deadline_fallback_markers": (
+        "Orchestrator queue/deadline/fallback markers"
+    ),
+    "orchestrator_queue_deadline_fallback_values": (
+        "queue_pressure_reason=queue_backlog_threshold_exceeded"
+    ),
     "runtime_replay_duration_scope": "Runtime replay duration scope",
     "runtime_replay_duration_label": "short 96-frame-class replay (96 frames)",
     "runtime_replay_duration_source": "source=entrypoint_requested_frames",
