@@ -191,7 +191,7 @@ Additional report paths:
 - Optional `--remote-dispatch <path>` input adds file-based worker selection, retry/fallback plan, and remote execution starter context when an Orchestrator `inferedge-remote-dispatch-result-v1` JSON is available.
 - Optional `--edgeenv-run-show <path>` input adds EdgeEnv local run preservation context when an EdgeEnv `runs show` JSON is available.
 - `scripts/smoke_agent_runtime_remote_paths.sh` reproduces both committed remote dispatch starter paths: plan-only worker selection and fallback-recovered starter execution.
-- `scripts/smoke_agent_runtime_edgeenv_preservation.sh` gates the committed EdgeEnv run-show fixture so the `Runtime Intelligence EdgeEnv Preservation` report section cannot disappear silently.
+- `scripts/smoke_agent_runtime_edgeenv_preservation.sh` gates the committed EdgeEnv run-show fixture so the `Runtime Intelligence EdgeEnv Preservation` report section, preservation identity label, and preservation details label cannot disappear silently.
 - Remote dispatch remains starter evidence for local-first review; it does not claim production remote execution.
 
 Remote dispatch starter boundary:

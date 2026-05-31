@@ -64,7 +64,10 @@ bash scripts/smoke_agent_runtime_edgeenv_preservation.sh \
 The smoke verifies that the Lab-owned Markdown/JSON report keeps the
 `Runtime Intelligence EdgeEnv Preservation` section, EdgeEnv run ID, Runtime
 operation summary schema, and `comparability_role=supplemental_evidence_not_gate`
-visible from a lightweight `runs show` fixture. This is local registry
+visible from a lightweight `runs show` fixture. The same section now exposes a
+short preservation identity label and a companion preservation details label so
+device-local preservation evidence stays easy to scan without mixing producer,
+queue, and resource markers into the identity row. This is local registry
 preservation evidence, not a production telemetry database or deployment
 decision override.
 

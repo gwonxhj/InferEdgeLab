@@ -137,7 +137,14 @@ def build_agent_runtime_reliability_report(
     runtime_summary = _agent_runtime_summary(orchestration_summary)
     runtime_result_context = _runtime_result_operation_context(runtime_result)
     remote_dispatch_context = _remote_dispatch_context(remote_dispatch)
+    operation_context = _operation_context(orchestration_summary, metrics)
     edgeenv_preservation_context = _edgeenv_preservation_context(edgeenv_run_show)
+    if edgeenv_preservation_context:
+        edgeenv_preservation_context = _with_edgeenv_preservation_report_labels(
+            edgeenv_preservation_context,
+            metrics=metrics,
+            operation_context=operation_context,
+        )
     runtime_operation_guard_summary = _runtime_operation_guard_summary(guard_analysis)
     orchestrator_operation_guard_summary = _orchestrator_operation_guard_summary(
         guard_analysis,
@@ -190,7 +197,7 @@ def build_agent_runtime_reliability_report(
             "totals": _totals(runtime_summary),
             "metrics": metrics,
             "timeline_summary": _timeline_summary(orchestration_summary, metrics),
-            "operation_context": _operation_context(orchestration_summary, metrics),
+            "operation_context": operation_context,
             "runtime_result_context": runtime_result_context,
             "remote_dispatch_context": remote_dispatch_context,
             "edgeenv_preservation_context": edgeenv_preservation_context,
@@ -1061,6 +1068,106 @@ def _edgeenv_preservation_context(
     }
 
 
+def _with_edgeenv_preservation_report_labels(
+    context: dict[str, Any],
+    *,
+    metrics: dict[str, Any],
+    operation_context: dict[str, Any],
+) -> dict[str, Any]:
+    enriched = dict(context)
+    identity_label = _edgeenv_preservation_identity_label(context, metrics)
+    details_label = _edgeenv_preservation_details_label(metrics, operation_context)
+    enriched["preservation_identity_label"] = identity_label
+    enriched["preservation_details_label"] = details_label
+    return enriched
+
+
+def _edgeenv_preservation_identity_label(
+    context: dict[str, Any],
+    metrics: dict[str, Any],
+) -> str:
+    path = _edgeenv_preservation_path(metrics)
+    identity = (
+        "jetson_device_local_preservation"
+        if path == "device_local_starter"
+        else "edgeenv_runtime_operation_preservation"
+    )
+    parts = [f"identity={identity}"]
+    if path:
+        parts.append(f"path={path}")
+    run_id = context.get("run_id")
+    if run_id:
+        parts.append(f"run={run_id}")
+    return ", ".join(parts)
+
+
+def _edgeenv_preservation_path(metrics: dict[str, Any]) -> str:
+    scenario_mode = str(metrics.get("scenario_mode") or "")
+    device_local_count = _non_negative_number(metrics.get("device_local_event_count"))
+    if scenario_mode == "device_local" or device_local_count > 0:
+        return "device_local_starter"
+    return "agent_runtime_preservation"
+
+
+def _edgeenv_preservation_details_label(
+    metrics: dict[str, Any],
+    operation_context: dict[str, Any],
+) -> str:
+    queue_state = operation_context.get("queue_state_summary") or {}
+    runtime_events = operation_context.get("runtime_event_summary") or {}
+    worker_health = operation_context.get("worker_health_snapshot") or {}
+    workers = worker_health.get("workers") if isinstance(worker_health, dict) else {}
+
+    sources = _unique_strings(
+        [
+            *(_string_list(metrics.get("device_local_producer_sources"))),
+            *(_string_list(metrics.get("runtime_event_producer_sources"))),
+            *(_string_list(queue_state.get("device_local_producer_sources"))),
+            *(_string_list(runtime_events.get("producer_sources"))),
+        ]
+    )
+    stages: list[str] = []
+    if isinstance(workers, dict):
+        for task_name, worker in workers.items():
+            if not isinstance(worker, dict):
+                continue
+            stage = worker.get("producer_stage")
+            if isinstance(stage, str) and stage:
+                task = worker.get("task") or worker.get("agent_id") or task_name
+                stages.append(f"{task}:{stage}")
+
+    resource_markers: list[str] = []
+    for source in sources:
+        if source in {"process_resource_snapshot", "resource_snapshot_fixture"}:
+            resource_markers.append(source)
+        if "tegrastats" in source:
+            resource_markers.append(source)
+
+    parts = [
+        f"sources={_label_list(sources)}",
+        f"stages={_label_list(_unique_strings(stages))}",
+        (
+            "device_local_events="
+            f"{_fmt_number(metrics.get('device_local_event_count'))}"
+        ),
+        f"resource={_label_list(_unique_strings(resource_markers))}",
+        f"queue={metrics.get('queue_pressure_reason') or 'unknown'}",
+    ]
+    return ", ".join(parts)
+
+
+def _unique_strings(values: list[str]) -> list[str]:
+    result: list[str] = []
+    for value in values:
+        if value and value not in result:
+            result.append(value)
+    return result
+
+
+def _label_list(values: list[str]) -> str:
+    return "+".join(values) if values else "none"
+
+
 def _edgeenv_preservation_markdown_lines(context: dict[str, Any]) -> list[str]:
     if not context:
         return []
@@ -1069,6 +1176,8 @@ def _edgeenv_preservation_markdown_lines(context: dict[str, Any]) -> list[str]:
         "",
         "| Field | Value |",
         "|---|---|",
+        f"| preservation_identity | {context.get('preservation_identity_label') or '-'} |",
+        f"| preservation_details | {context.get('preservation_details_label') or '-'} |",
         f"| edgeenv_run_id | {context.get('run_id') or '-'} |",
         f"| created_at | {context.get('created_at') or '-'} |",
         f"| runtime_operation_schema | {context.get('runtime_operation_schema_version') or '-'} |",
