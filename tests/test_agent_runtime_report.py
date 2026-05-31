@@ -1296,9 +1296,36 @@ def test_agent_runtime_report_surfaces_edgeenv_run_show_preservation():
         "latency_budget_exceeded",
     ]
     assert context["comparability_role"] == "supplemental_evidence_not_gate"
+    assert context["preservation_identity_label"] == (
+        "identity=jetson_device_local_preservation, "
+        "path=device_local_starter, "
+        "run=run-20260529-094714-0955a027"
+    )
+    assert context["preservation_details_label"] == (
+        "sources=resource_snapshot_fixture+image_file+fastapi_request_fixture, "
+        "stages=safety_monitor_agent:device_local_starter+"
+        "vision_agent:device_local_starter, "
+        "device_local_events=4, "
+        "resource=resource_snapshot_fixture, "
+        "queue=max_total_queue_depth_exceeded_overload_threshold"
+    )
 
     markdown = build_agent_runtime_reliability_markdown(report)
     assert "Runtime Intelligence EdgeEnv Preservation" in markdown
+    assert (
+        "| preservation_identity | identity=jetson_device_local_preservation, "
+        "path=device_local_starter, run=run-20260529-094714-0955a027 |"
+        in markdown
+    )
+    assert (
+        "| preservation_details | "
+        "sources=resource_snapshot_fixture+image_file+fastapi_request_fixture, "
+        "stages=safety_monitor_agent:device_local_starter+"
+        "vision_agent:device_local_starter, device_local_events=4, "
+        "resource=resource_snapshot_fixture, "
+        "queue=max_total_queue_depth_exceeded_overload_threshold |"
+        in markdown
+    )
     assert "| edgeenv_run_id | run-20260529-094714-0955a027 |" in markdown
     assert "| runtime_operation_health_reason | timeout_threshold_exceeded |" in markdown
     assert "| runtime_operation_recommended_action | review_latency_budget_or_degrade |" in markdown
@@ -1528,6 +1555,11 @@ def test_agent_runtime_report_loads_committed_fixtures():
         "inferedge-runtime-operation-summary-v1"
     )
     assert context["comparability_role"] == "supplemental_evidence_not_gate"
+    assert context["preservation_identity_label"].startswith(
+        "identity=edgeenv_runtime_operation_preservation, "
+        "path=agent_runtime_preservation"
+    )
+    assert "device_local_events=0" in context["preservation_details_label"]
 
 
 def test_agent_runtime_report_surfaces_remote_execution_failure():
