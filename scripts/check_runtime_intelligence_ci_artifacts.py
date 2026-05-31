@@ -68,6 +68,7 @@ REQUIRED_BUNDLE_MANIFEST_SUMMARY_MARKERS = (
 )
 REQUIRED_LAB_EXPECTED_REPORT_MARKERS = (
     "Runtime Intelligence Risk Summary",
+    "Runtime replay duration scope",
     "Orchestrator operation feed context",
     "Orchestrator task event rollup",
     "Lab EdgeEnv preservation context",
@@ -150,6 +151,8 @@ def _validate_runtime_report(path: Path, errors: list[str]) -> None:
         return
     for marker in (
         "## Runtime Intelligence Risk Summary",
+        "Runtime replay duration scope",
+        "short 96-frame-class replay (96 frames)",
         "Lab remains the final deployment decision owner.",
         "AIGuard runtime operation anomalies",
         "runtime_queue_overload, runtime_thermal_instability",
@@ -286,7 +289,8 @@ def _validate_aiguard_handoff_alignment(
             "decision_owner: lab",
             "diagnosis_owner: aiguard",
             "lab_expected_report_markers: "
-            "Runtime Intelligence Risk Summary, Orchestrator operation feed context, "
+            "Runtime Intelligence Risk Summary, Runtime replay duration scope, "
+            "Orchestrator operation feed context, "
             "Orchestrator task event rollup, "
             "Lab EdgeEnv preservation context, "
             "AIGuard task event rollup evidence, "

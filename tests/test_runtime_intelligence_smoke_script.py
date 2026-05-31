@@ -120,6 +120,13 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
         in bundle_summary
     )
 
+    runtime_summary = (output_dir / "runtime_anomaly_summary.md").read_text(
+        encoding="utf-8"
+    )
+    assert "Runtime replay duration scope" in runtime_summary
+    assert "short 96-frame-class replay (96 frames)" in runtime_summary
+    assert "class=short_96_frame_class, frames=96" in runtime_summary
+
     alignment_summary = (
         output_dir / "aiguard_edgeenv_handoff_alignment.md"
     ).read_text(encoding="utf-8")

@@ -123,6 +123,9 @@
       "schema_version": "inferedge-runtime-telemetry.v1",
       "telemetry_source": "synthetic_local_fixture",
       "telemetry_timestamp": "2026-05-21T00:05:01Z",
+      "frames": 96,
+      "duration_class": "short_96_frame_class",
+      "duration_label": "short 96-frame-class replay (96 frames)",
       "telemetry_coverage": {
         "schema_version": "inferedge-runtime-telemetry-coverage-v1",
         "expected_fields": [
@@ -233,6 +236,9 @@
           },
           "producer": {
             "operation_context_role": "supplemental",
+            "frames": 96,
+            "duration_class": "short_96_frame_class",
+            "duration_label": "short 96-frame-class replay (96 frames)",
             "producer_sources": [
               "device_local_cli_override",
               "orchestration_summary"
