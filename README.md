@@ -501,7 +501,7 @@ When `--with-guard` is used with EdgeEnv evidence, Lab preserves deterministic A
 If AIGuard preserves EdgeEnv/Orchestrator `candidate_context.producer` lineage, Lab shows the device-local producer source, task stage, event count, and supplemental role as traceability evidence. Lab also surfaces the Orchestrator-declared downstream guard alignment marker, including `producer_lineage_evidence_type=edgeenv_orchestrator_producer_lineage`, so reviewers can see which deterministic AIGuard evidence type was expected without making Orchestrator or AIGuard the final decision owner. The Runtime Intelligence gates also require `edgeenv_orchestrator_producer_lineage` and `runtime_history_seed_run_config_traceability` so these handoffs cannot disappear silently from the Lab-owned report.
 
 If EdgeEnv preserves an Orchestrator `operation_risk_summary`, Lab shows the compact queue-pressure, max-pressure task, worker-health, and producer/device-local event markers as navigation context in the Runtime Intelligence Risk Summary. These markers help reviewers find the relevant operation evidence, but they do not become EdgeEnv regression deltas, comparability fields, or a deployment decision override.
-Lab also renders a separate `Orchestrator queue/deadline/fallback markers` row when those compact counters are present. That row keeps `queue_pressure_reason`, queue depth, deadline miss count, and fallback count together so reviewers can spot operation pressure before reading the detailed task rollup.
+Lab also renders a separate `Orchestrator queue/deadline/fallback markers` row when those compact counters are present. That row keeps `queue_pressure_reason`, `max_total_queue_depth` when available, deadline miss count, and fallback count together so reviewers can spot operation pressure before reading the detailed task rollup.
 
 When EdgeEnv/Orchestrator context includes reviewer-facing duration metadata,
 Lab renders a `Runtime replay duration scope` row with `duration_label`,
@@ -538,7 +538,7 @@ Markdown and HTML reports include a Runtime Intelligence Risk Summary that conne
 - telemetry replay gaps
 - Runtime history seed and run_config traceability
 - Orchestrator operation risk summary markers
-- compact queue/deadline/fallback operation markers
+- compact queue/deadline/fallback operation markers with `max_total_queue_depth`
 - Lab EdgeEnv preservation context markers
 - device-local producer lineage handoff
 - Orchestrator-declared downstream guard alignment

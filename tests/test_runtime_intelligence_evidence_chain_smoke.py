@@ -84,6 +84,9 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert operation_context["candidate_context"]["telemetry_source"] == (
         "inferedge_orchestrator_operation_summary"
     )
+    assert operation_context["candidate_context"]["operation"][
+        "max_total_queue_depth"
+    ] == 7
     assert operation_context["downstream_guard_alignment"][
         "producer_lineage_evidence_type"
     ] == "edgeenv_orchestrator_producer_lineage"
@@ -383,7 +386,8 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert "| Orchestrator context attached runs | candidate |" in bundle["markdown"]
     assert (
         "| Orchestrator queue/deadline/fallback markers | candidate: "
-        "queue_pressure_reason=queue_backlog_threshold_exceeded"
+        "queue_pressure_reason=queue_backlog_threshold_exceeded, "
+        "max_total_queue_depth=7"
     ) in bundle["markdown"]
     assert (
         "| Jetson/device-local EdgeEnv preservation run | candidate: "
