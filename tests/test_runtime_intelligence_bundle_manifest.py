@@ -173,6 +173,13 @@ def test_readme_runtime_intelligence_section_stays_scannable():
     readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
 
     assert "| Reviewer question | Where to look | Meaning |" in readme
+    assert "Reviewer Focus" in readme
+    assert "`Focus / Quick signal / First read`" in readme
+    assert "Decision owner" in readme
+    assert "EdgeEnv regression gate" in readme
+    assert "Telemetry/replay quality" in readme
+    assert "Operation context" in readme
+    assert "AIGuard warnings" in readme
     for row in [
         "Did AIGuard preserve EdgeEnv/Orchestrator producer lineage?",
         "Is there operation pressure?",

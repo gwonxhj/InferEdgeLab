@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from inferedgelab.report.runtime_intelligence import build_runtime_intelligence_risk_rows
+from inferedgelab.report.runtime_intelligence import (
+    build_runtime_intelligence_reviewer_focus_rows,
+    build_runtime_intelligence_risk_rows,
+)
 from inferedgelab.services.guard_analysis import guard_primary_reason, guard_status, guard_verdict
 
 
@@ -333,7 +336,22 @@ def _append_runtime_intelligence_risk_summary(
     if not rows:
         return
 
+    focus_rows = build_runtime_intelligence_reviewer_focus_rows(
+        guard_analysis=guard_analysis,
+        deployment_decision=deployment_decision,
+        edgeenv_regression=edgeenv_regression,
+    )
     lines.append("## Runtime Intelligence Risk Summary")
+    lines.append("")
+    if focus_rows:
+        lines.append("### Reviewer Focus")
+        lines.append("")
+        lines.append("| Focus | Quick signal | First read |")
+        lines.append("|---|---|---|")
+        for focus, value, first_read in focus_rows:
+            lines.append(f"| {focus} | {value} | {first_read} |")
+        lines.append("")
+    lines.append("### Detailed Evidence Rows")
     lines.append("")
     lines.append("| Signal | Value | Lab interpretation |")
     lines.append("|---|---|---|")

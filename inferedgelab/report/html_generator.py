@@ -3,7 +3,10 @@ from __future__ import annotations
 from html import escape
 from typing import Any, Dict, Optional
 
-from inferedgelab.report.runtime_intelligence import build_runtime_intelligence_risk_rows
+from inferedgelab.report.runtime_intelligence import (
+    build_runtime_intelligence_reviewer_focus_rows,
+    build_runtime_intelligence_risk_rows,
+)
 from inferedgelab.services.guard_analysis import guard_primary_reason, guard_status, guard_verdict
 
 
@@ -594,6 +597,23 @@ def _runtime_intelligence_risk_summary_to_html(
     if not rows:
         return ""
 
+    focus_rows = build_runtime_intelligence_reviewer_focus_rows(
+        guard_analysis=guard_analysis,
+        deployment_decision=deployment_decision,
+        edgeenv_regression=edgeenv_regression,
+    )
+    focus_html = []
+    for focus, value, first_read in focus_rows:
+        focus_html.append(
+            f"""
+            <tr>
+              <td>{escape(focus)}</td>
+              <td>{escape(value)}</td>
+              <td>{escape(first_read)}</td>
+            </tr>
+            """
+        )
+
     row_html = []
     for signal, value, interpretation in rows:
         row_html.append(
@@ -609,6 +629,18 @@ def _runtime_intelligence_risk_summary_to_html(
     return f"""
   <h2>Runtime Intelligence Risk Summary</h2>
   <div class="meta">
+    <h3>Reviewer Focus</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Focus</th>
+          <th>Quick signal</th>
+          <th>First read</th>
+        </tr>
+      </thead>
+      <tbody>{''.join(focus_html)}</tbody>
+    </table>
+    <h3>Detailed Evidence Rows</h3>
     <table>
       <thead>
         <tr>

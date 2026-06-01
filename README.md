@@ -518,6 +518,12 @@ AIGuard evidence in the same Lab-owned report. The summary is a reviewer
 navigation surface: it makes runtime risk evidence easy to find, while Lab
 remains the final deployment decision owner.
 
+The report starts with a `Reviewer Focus` table using
+`Focus / Quick signal / First read` columns so reviewers can quickly scan the
+Decision owner, EdgeEnv regression gate, Telemetry/replay quality,
+Operation context, and AIGuard warnings before reading the detailed evidence
+rows.
+
 | Reviewer question | Where to look | Meaning |
 |---|---|---|
 | Did AIGuard preserve EdgeEnv/Orchestrator producer lineage? | `producer_lineage_evidence_type=edgeenv_orchestrator_producer_lineage` and `runtime_history_seed_run_config_traceability` | Confirms the expected deterministic AIGuard evidence reached the Lab-owned report. |
