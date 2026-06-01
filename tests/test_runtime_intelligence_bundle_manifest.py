@@ -169,6 +169,76 @@ def test_runtime_intelligence_docs_record_jetson_edgeenv_preservation_boundary()
         assert "thermal endurance validation" in text
 
 
+def test_readme_runtime_intelligence_section_stays_scannable():
+    readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+
+    assert "| Reviewer question | Where to look | Meaning |" in readme
+    for row in [
+        "Did AIGuard preserve EdgeEnv/Orchestrator producer lineage?",
+        "Is there operation pressure?",
+        "Can queue depth be traced back to AIGuard raw context?",
+        "What replay window was used?",
+        "Was EdgeEnv preservation rendered by Lab?",
+        "Is this the Jetson/device-local preservation path?",
+        "Where are producer/source/resource details?",
+        "Which tasks were affected?",
+        "Is there deterministic operation-risk evidence?",
+        "Is this remote dispatch starter evidence?",
+    ]:
+        assert row in readme
+
+    for marker in [
+        "edgeenv_orchestrator_producer_lineage",
+        "runtime_history_seed_run_config_traceability",
+        "Orchestrator queue/deadline/fallback markers",
+        "AIGuard max queue raw-context traceability",
+        "Runtime replay duration scope",
+        "Lab EdgeEnv preservation context",
+        "Jetson/device-local EdgeEnv preservation run",
+        "Jetson/device-local EdgeEnv preservation details",
+        "AIGuard remote dispatch event summary",
+        "Remote fallback starter evidence",
+        "Lab remains the final deployment decision owner",
+        "production_remote_execution=false",
+    ]:
+        assert marker in readme
+
+
+def test_readme_internal_links_include_matching_korean_labels():
+    readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    link_pairs = [
+        (
+            "Portfolio submission",
+            "포트폴리오 제출 문서",
+            "docs/portfolio/inferedge_portfolio_submission.md",
+        ),
+        (
+            "Resume/interview summary",
+            "이력서/면접 요약",
+            "docs/portfolio/inferedge_resume_interview_summary.md",
+        ),
+        (
+            "1-page architecture summary",
+            "1페이지 아키텍처 요약",
+            "docs/portfolio/inferedge_1page_architecture.md",
+        ),
+        (
+            "Pipeline status",
+            "파이프라인 상태",
+            "docs/portfolio/inferedge_pipeline_status.md",
+        ),
+        (
+            "docs/portfolio/edgeenv_runtime_regression_lab_handoff.md",
+            "EdgeEnv 런타임 회귀 Lab handoff 문서",
+            "docs/portfolio/edgeenv_runtime_regression_lab_handoff.md",
+        ),
+    ]
+
+    for english_label, korean_label, target in link_pairs:
+        assert f"[{english_label}]({target})" in readme
+        assert f"[한국어: {korean_label}]({target})" in readme
+
+
 def test_runtime_intelligence_bundle_manifest_gate_validates_edgeenv_handoff(
     tmp_path,
 ):

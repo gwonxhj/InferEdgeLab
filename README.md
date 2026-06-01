@@ -120,7 +120,14 @@ Runtime identity polish: when a Forge manifest is applied, Runtime now preserves
 
 Not implemented yet: real worker daemon, full automated Forge/Runtime execution from production Lab workers, DB/Redis/queue, file upload, production frontend beyond Local Studio, and production auth/billing/deployment controls.
 
-Portfolio entry points: [portfolio submission](docs/portfolio/inferedge_portfolio_submission.md) · [resume/interview summary](docs/portfolio/inferedge_resume_interview_summary.md) · [1-page architecture summary](docs/portfolio/inferedge_1page_architecture.md) · [pipeline status](docs/portfolio/inferedge_pipeline_status.md)
+Portfolio entry points:
+
+| Document | Korean label | Use it for |
+|---|---|---|
+| [Portfolio submission](docs/portfolio/inferedge_portfolio_submission.md) | [한국어: 포트폴리오 제출 문서](docs/portfolio/inferedge_portfolio_submission.md) | submission-ready project narrative |
+| [Resume/interview summary](docs/portfolio/inferedge_resume_interview_summary.md) | [한국어: 이력서/면접 요약](docs/portfolio/inferedge_resume_interview_summary.md) | short role-specific explanation |
+| [1-page architecture summary](docs/portfolio/inferedge_1page_architecture.md) | [한국어: 1페이지 아키텍처 요약](docs/portfolio/inferedge_1page_architecture.md) | ecosystem diagram and role split |
+| [Pipeline status](docs/portfolio/inferedge_pipeline_status.md) | [한국어: 파이프라인 상태](docs/portfolio/inferedge_pipeline_status.md) | current implementation status |
 
 Interview one-liner: **InferEdge is an end-to-end inference validation pipeline that converts, runs, compares, diagnoses, and decides whether an edge AI model candidate is ready to deploy.**
 
@@ -496,42 +503,27 @@ If the EdgeEnv report includes `runtime_telemetry_context`, Lab shows supplement
 
 #### Runtime Intelligence Risk Summary
 
-When `--with-guard` is used with EdgeEnv evidence, Lab preserves deterministic AIGuard evidence in the same Lab-owned report. This can include runtime latency regression, telemetry-context coverage, and telemetry replay-history context.
+When `--with-guard` is used with EdgeEnv evidence, Lab preserves deterministic
+AIGuard evidence in the same Lab-owned report. The summary is a reviewer
+navigation surface: it makes runtime risk evidence easy to find, while Lab
+remains the final deployment decision owner.
 
-If AIGuard preserves EdgeEnv/Orchestrator `candidate_context.producer` lineage, Lab shows the device-local producer source, task stage, event count, and supplemental role as traceability evidence. Lab also surfaces the Orchestrator-declared downstream guard alignment marker, including `producer_lineage_evidence_type=edgeenv_orchestrator_producer_lineage`, so reviewers can see which deterministic AIGuard evidence type was expected without making Orchestrator or AIGuard the final decision owner. The Runtime Intelligence gates also require `edgeenv_orchestrator_producer_lineage` and `runtime_history_seed_run_config_traceability` so these handoffs cannot disappear silently from the Lab-owned report.
+| Reviewer question | Where to look | Meaning |
+|---|---|---|
+| Did AIGuard preserve EdgeEnv/Orchestrator producer lineage? | `producer_lineage_evidence_type=edgeenv_orchestrator_producer_lineage` and `runtime_history_seed_run_config_traceability` | Confirms the expected deterministic AIGuard evidence reached the Lab-owned report. |
+| Is there operation pressure? | `Orchestrator queue/deadline/fallback markers` | Keeps `queue_pressure_reason`, `max_total_queue_depth`, deadline misses, and fallback count together before the detailed task rollup. |
+| Can queue depth be traced back to AIGuard raw context? | `AIGuard max queue raw-context traceability` | Ties visible `max_total_queue_depth` markers back to deterministic AIGuard context and Orchestrator operation evidence. |
+| What replay window was used? | `Runtime replay duration scope` | Shows `duration_label`, `duration_class`, frame count, `duration_source`, and `duration_scope_label` such as `source=entrypoint_requested_frames`. |
+| Was EdgeEnv preservation rendered by Lab? | `Lab EdgeEnv preservation context` | Shows `lab_report_preservation_context_present=True`, `lab_preservation=present`, and `lab_context=present` without making EdgeEnv the decision owner. |
+| Is this the Jetson/device-local preservation path? | `Jetson/device-local EdgeEnv preservation run` | Starts with `identity=jetson_device_local_preservation` and `path=device_local_starter` when available. |
+| Where are producer/source/resource details? | `Jetson/device-local EdgeEnv preservation details` | Keeps source, stage, device-local event, resource, and queue markers out of the short identity row. |
+| Which tasks were affected? | `Orchestrator task event rollup` and `AIGuard task event rollup evidence` | Shows scheduler delay, deadline misses, fallback decisions, and queue/drop reasons as review context only. |
+| Is there deterministic operation-risk evidence? | `AIGuard runtime operation anomalies` and `AIGuard Orchestrator Operation Evidence` | Preserves warning evidence without overriding EdgeEnv comparability or Lab deployment policy. |
+| Is this remote dispatch starter evidence? | `AIGuard remote dispatch event summary` and `Remote fallback starter evidence` | Preserves `evidence_role=remote_dispatch_runtime_event_compact_summary`, `operation_boundary=remote dispatch starter evidence only`, and `production_remote_execution=false`. |
 
-If EdgeEnv preserves an Orchestrator `operation_risk_summary`, Lab shows the compact queue-pressure, max-pressure task, worker-health, and producer/device-local event markers as navigation context in the Runtime Intelligence Risk Summary. These markers help reviewers find the relevant operation evidence, but they do not become EdgeEnv regression deltas, comparability fields, or a deployment decision override.
-Lab also renders a separate `Orchestrator queue/deadline/fallback markers` row when those compact counters are present. That row keeps `queue_pressure_reason`, `max_total_queue_depth` when available, deadline miss count, and fallback count together so reviewers can spot operation pressure before reading the detailed task rollup.
-When AIGuard raw context preserves `orchestrator_candidate_operation_max_total_queue_depth`, Lab also renders an `AIGuard max queue raw-context traceability` row. This ties the visible `max_total_queue_depth` report marker back to deterministic AIGuard context and Orchestrator operation evidence without changing Lab's deployment decision ownership.
-
-When EdgeEnv/Orchestrator context includes reviewer-facing duration metadata,
-Lab renders a `Runtime replay duration scope` row with `duration_label`,
-`duration_class`, frame count, and optional `duration_source` /
-`duration_scope_label` traceability such as `source=entrypoint_requested_frames`.
-This helps reviewers distinguish short 96-frame replay, 5-minute-class
-sustained replay, and quick starter smoke without changing Lab deployment
-policy or treating replay duration as a production readiness claim.
-
-When the EdgeEnv preservation path is present, Lab also renders a `Lab EdgeEnv
-preservation context` row with `lab_report_preservation_context_present=True`,
-`lab_preservation=present`, and `lab_context=present`. This keeps Lab's
-Runtime Intelligence artifact gate aligned with the entrypoint evidence index
-without making EdgeEnv the deployment decision owner.
-The companion `Jetson/device-local EdgeEnv preservation run` row starts with
-`identity=jetson_device_local_preservation` and, when available,
-`path=device_local_starter`, so reviewers can spot the preserved Jetson or
-device-local run before reading queue, resource, and producer details. The
-producer/source/stage/resource markers are rendered in a separate
-`Jetson/device-local EdgeEnv preservation details` row so the identity row stays
-short enough to scan.
-
-If the Orchestrator feed includes `runtime_task_event_summary`, Lab also renders a task-level event rollup showing which workload had scheduler delay, deadline misses, fallback decisions, or drop/policy reasons. This is report navigation context only; Lab still owns the deployment decision.
-
-If AIGuard also emits `edgeenv_orchestrator_operation_risk_summary`, Lab renders that deterministic evidence as a separate operation-risk summary row. This keeps the AIGuard warning explanation visible while preserving Lab as the final deployment decision owner.
-
-If AIGuard emits `edgeenv_orchestrator_task_event_rollup`, Lab renders a separate task-event evidence row for affected tasks, deadline misses, fallback decisions, scheduler delay, and queue/drop reasons. This is deterministic review context only; it does not override EdgeEnv comparability or Lab deployment policy.
-
-For the remote dispatch starter path, Lab surfaces AIGuard's compact remote runtime event summary, count alias, consistency state, `evidence_role=remote_dispatch_runtime_event_compact_summary`, `operation_boundary=remote dispatch starter evidence only`, and `production_remote_execution=false` markers. These values remain Lab-owned deployment review context: Lab can require review from the evidence, but it does not treat Orchestrator, EdgeEnv, or AIGuard as the final decision owner and does not present the path as production remote execution, long-lived worker readiness, or cloud orchestration.
+These rows do not turn Orchestrator, EdgeEnv, or AIGuard into final decision
+owners. They also do not present the path as production remote execution,
+long-lived worker readiness, cloud orchestration, or production readiness.
 
 Markdown and HTML reports include a Runtime Intelligence Risk Summary that connects:
 
@@ -584,7 +576,9 @@ bash scripts/smoke_runtime_intelligence_chain.sh \
 
 The smoke gates the EdgeEnv handoff history fixture for preserved device-local Orchestrator `candidate_context.producer` lineage and checks that EdgeEnv-declared external AIGuard evidence requirements are satisfied by the bundled `guard_analysis`. It also carries a precomputed AIGuard handoff-alignment artifact so the EdgeEnv handoff summary and AIGuard producer-lineage raw context agree on the same `producer_lineage_guard_alignment_run_ids`. This is an artifact integrity check only; EdgeEnv still owns comparability/regression evidence, AIGuard remains an optional deterministic evidence provider, and Lab still owns the deployment decision.
 
-The committed handoff smoke is documented in [docs/portfolio/edgeenv_runtime_regression_lab_handoff.md](docs/portfolio/edgeenv_runtime_regression_lab_handoff.md).
+The committed handoff smoke is documented in
+[docs/portfolio/edgeenv_runtime_regression_lab_handoff.md](docs/portfolio/edgeenv_runtime_regression_lab_handoff.md)
+([한국어: EdgeEnv 런타임 회귀 Lab handoff 문서](docs/portfolio/edgeenv_runtime_regression_lab_handoff.md)).
 
 **Core workflow:**
 
