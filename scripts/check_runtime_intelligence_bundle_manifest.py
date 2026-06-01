@@ -167,6 +167,7 @@ SUMMARY_CONTRACT_MARKERS = (
     "aiguard_raw_context: downstream_guard_alignment preserved",
     "aiguard_raw_context: producer_lineage_guard_alignment preserved",
     "aiguard_raw_context: missing_telemetry_orchestrator_context preserved",
+    "aiguard_raw_context: max_total_queue_depth traceability preserved",
     "aiguard_handoff_alignment: external required evidence types satisfied",
     "expected_report_markers: Runtime Intelligence report markers declared",
     "expected_report_markers: remote fallback Lab context row declared",
@@ -1653,6 +1654,8 @@ def _validate_guard_analysis(guard_analysis: dict[str, Any], errors: list[str]) 
             _validate_run_config_traceability_evidence(item, index, errors)
         if item.get("type") == "remote_execution_recovered_by_fallback":
             _validate_remote_runtime_event_summary_evidence(item, index, errors)
+        if item.get("type") == "runtime_queue_overload":
+            _validate_queue_overload_evidence(item, index, errors)
 
 
 def _validate_external_aiguard_evidence_alignment(
@@ -2242,6 +2245,28 @@ def _validate_coverage_gap_evidence(
             )
     _validate_aiguard_orchestrator_mapping_hint(edgeenv, errors)
     _validate_aiguard_missing_orchestrator_context(edgeenv, errors)
+
+
+def _validate_queue_overload_evidence(
+    item: dict[str, Any],
+    index: int,
+    errors: list[str],
+) -> None:
+    edgeenv = (item.get("raw_context") or {}).get("edgeenv_regression")
+    _record(
+        isinstance(edgeenv, dict),
+        errors,
+        f"AIGuard evidence[{index}] raw_context.edgeenv_regression must be an object",
+    )
+    if not isinstance(edgeenv, dict):
+        return
+    _record(
+        edgeenv.get("orchestrator_candidate_operation_max_total_queue_depth")
+        == 7.0,
+        errors,
+        "AIGuard queue overload evidence "
+        "orchestrator_candidate_operation_max_total_queue_depth must be 7.0",
+    )
 
 
 def _validate_aiguard_history_seed_context(

@@ -150,6 +150,12 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert guard_edgeenv_context["orchestrator_candidate_context_telemetry_source"] == (
         "inferedge_orchestrator_operation_summary"
     )
+    assert (
+        guard_edgeenv_context[
+            "orchestrator_candidate_operation_max_total_queue_depth"
+        ]
+        == 7.0
+    )
     assert guard_edgeenv_context["orchestrator_downstream_guard_alignment"][
         "producer_lineage_evidence_type"
     ] == "edgeenv_orchestrator_producer_lineage"
