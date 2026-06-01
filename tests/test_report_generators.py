@@ -372,6 +372,7 @@ def make_edgeenv_regression_with_orchestrator_context() -> dict:
             ),
             "operation": {
                 "queue_depth": 7,
+                "max_total_queue_depth": 7,
                 "deadline_missed_count": 2,
                 "fallback_count": 1,
                 "runtime_task_event_summary": {
@@ -850,7 +851,7 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
     assert (
         "| Orchestrator queue/deadline/fallback markers | candidate: "
         "queue_pressure_reason=queue_backlog_threshold_exceeded, "
-        "queue_depth=7, deadline_missed_count=2, fallback_count=1 |"
+        "max_total_queue_depth=7, deadline_missed_count=2, fallback_count=1 |"
     ) in text
     assert (
         "| Runtime replay duration scope | candidate: "
@@ -931,7 +932,7 @@ def test_generate_compare_html_summarizes_operation_risk_summary():
     assert "Orchestrator queue/deadline/fallback markers" in html
     assert (
         "queue_pressure_reason=queue_backlog_threshold_exceeded, "
-        "queue_depth=7, deadline_missed_count=2, fallback_count=1"
+        "max_total_queue_depth=7, deadline_missed_count=2, fallback_count=1"
     ) in html
     assert "Orchestrator task event rollup" in html
     assert "vision_agent(delay=1,miss=1,max_delay_cycles=3,max_wait_ms=15)" in html

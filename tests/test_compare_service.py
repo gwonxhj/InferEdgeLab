@@ -177,6 +177,7 @@ def write_edgeenv_regression_with_orchestrator_context(tmp_path) -> str:
             "queue_depth": 7,
             "operation": {
                 "queue_depth": 7,
+                "max_total_queue_depth": 7,
                 "deadline_missed_count": 2,
                 "fallback_count": 1,
                 "runtime_task_event_summary": {
@@ -807,7 +808,7 @@ def test_build_compare_bundle_summarizes_orchestrator_context_runtime_anomalies(
     assert "| Orchestrator context attached runs | candidate |" in bundle["markdown"]
     assert (
         "| Orchestrator queue/deadline/fallback markers | candidate: "
-        "queue_depth=7, deadline_missed_count=2, fallback_count=1 |"
+        "max_total_queue_depth=7, deadline_missed_count=2, fallback_count=1 |"
     ) in bundle["markdown"]
     assert "| Orchestrator task event rollup | candidate: " in bundle["markdown"]
     assert "vision_agent(delay=1,miss=1,max_delay_cycles=3,max_wait_ms=15)" in bundle[

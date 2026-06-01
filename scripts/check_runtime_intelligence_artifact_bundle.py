@@ -31,7 +31,8 @@ REQUIRED_MARKDOWN_MARKERS = {
     ),
     "orchestrator_queue_deadline_fallback_markers": (
         "| Orchestrator queue/deadline/fallback markers | candidate: "
-        "queue_pressure_reason=queue_backlog_threshold_exceeded"
+        "queue_pressure_reason=queue_backlog_threshold_exceeded, "
+        "max_total_queue_depth=7"
     ),
     "runtime_replay_duration_scope": (
         "| Runtime replay duration scope | candidate: "

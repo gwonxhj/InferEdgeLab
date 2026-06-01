@@ -183,6 +183,7 @@ def _validate_runtime_report(path: Path, errors: list[str]) -> None:
         "Runtime telemetry coverage gaps",
         "Orchestrator queue/deadline/fallback markers",
         "queue_pressure_reason=queue_backlog_threshold_exceeded",
+        "max_total_queue_depth=7",
         "AIGuard producer-lineage guard alignment",
         "edgeenv_orchestrator_producer_lineage",
         "AIGuard run_config traceability evidence",
