@@ -124,6 +124,12 @@ def build_runtime_intelligence_risk_rows(
             warning_items,
             evidence_items,
         )
+        _append_aiguard_max_queue_traceability_row(
+            rows,
+            edgeenv_regression,
+            evidence_items,
+            guard_analysis,
+        )
         _append_aiguard_remote_dispatch_rows(rows, guard_analysis, evidence_items)
         _append_aiguard_run_config_traceability_row(rows, evidence_items)
 
@@ -913,6 +919,151 @@ def _append_aiguard_runtime_operation_rows(
                 "Compact Runtime run_config markers improve replay traceability without changing Lab policy.",
             )
         )
+
+
+def _append_aiguard_max_queue_traceability_row(
+    rows: list[tuple[str, str, str]],
+    edgeenv_regression: dict[str, Any] | None,
+    evidence_items: list[dict[str, Any]],
+    guard_analysis: dict[str, Any],
+) -> None:
+    label = _aiguard_max_queue_traceability_label(
+        edgeenv_regression,
+        evidence_items,
+        guard_analysis,
+    )
+    if not label:
+        return
+
+    rows.append(
+        (
+            "AIGuard max queue raw-context traceability",
+            label,
+            (
+                "The visible Lab max_total_queue_depth marker is traceable "
+                "through AIGuard raw context to Orchestrator operation evidence; "
+                "it remains review context, not a decision override."
+            ),
+        )
+    )
+
+
+def _aiguard_max_queue_traceability_label(
+    edgeenv_regression: dict[str, Any] | None,
+    evidence_items: list[dict[str, Any]],
+    guard_analysis: dict[str, Any],
+) -> str:
+    report_values: dict[str, Any] = {}
+    if isinstance(edgeenv_regression, dict):
+        telemetry_context = edgeenv_regression.get("runtime_telemetry_context")
+        if isinstance(telemetry_context, dict):
+            report_values = _orchestrator_max_queue_depth_by_run(telemetry_context)
+
+    raw_values = _aiguard_max_queue_raw_context_by_run(
+        evidence_items,
+        guard_analysis,
+    )
+    if not report_values or not raw_values:
+        return ""
+
+    labels: list[str] = []
+    for run_label in ("baseline", "candidate"):
+        report_value = report_values.get(run_label)
+        raw_value = raw_values.get(run_label)
+        if report_value is None or raw_value is None:
+            continue
+        labels.append(
+            (
+                f"{run_label}: report=max_total_queue_depth="
+                f"{_format_compact_value(report_value)}, "
+                f"raw_context=orchestrator_{run_label}_operation_"
+                "max_total_queue_depth="
+                f"{_format_compact_value(raw_value)}, "
+                f"match={_compact_values_match(report_value, raw_value)}"
+            )
+        )
+    return "; ".join(labels)
+
+
+def _orchestrator_max_queue_depth_by_run(
+    context: dict[str, Any],
+) -> dict[str, Any]:
+    values: dict[str, Any] = {}
+    for run_label in ("baseline", "candidate"):
+        run_context = context.get(run_label)
+        if not isinstance(run_context, dict):
+            continue
+        operation_context = run_context.get("orchestrator_operation_context")
+        if not isinstance(operation_context, dict):
+            continue
+
+        candidate_context = operation_context.get("candidate_context")
+        if not isinstance(candidate_context, dict):
+            candidate_context = {}
+        operation = candidate_context.get("operation")
+        if not isinstance(operation, dict):
+            operation = {}
+        operation_summary = operation_context.get("operation_risk_summary")
+        if not isinstance(operation_summary, dict):
+            operation_summary = {}
+        queue_state = operation_context.get("queue_state_summary")
+        if not isinstance(queue_state, dict):
+            queue_state = {}
+
+        value = _first_present(
+            operation_summary.get("max_total_queue_depth"),
+            queue_state.get("max_total_queue_depth"),
+            operation.get("max_total_queue_depth"),
+            candidate_context.get("max_total_queue_depth"),
+        )
+        if value is not None:
+            values[run_label] = value
+    return values
+
+
+def _aiguard_max_queue_raw_context_by_run(
+    evidence_items: list[dict[str, Any]],
+    guard_analysis: dict[str, Any],
+) -> dict[str, Any]:
+    values: dict[str, Any] = {}
+    for edgeenv_metrics in _aiguard_edgeenv_metric_sources(
+        evidence_items,
+        guard_analysis,
+    ):
+        for run_label in ("baseline", "candidate"):
+            field = f"orchestrator_{run_label}_operation_max_total_queue_depth"
+            value = edgeenv_metrics.get(field)
+            if value is not None and run_label not in values:
+                values[run_label] = value
+    return values
+
+
+def _aiguard_edgeenv_metric_sources(
+    evidence_items: list[dict[str, Any]],
+    guard_analysis: dict[str, Any],
+) -> list[dict[str, Any]]:
+    sources: list[dict[str, Any]] = []
+    for item in evidence_items:
+        raw_context = item.get("raw_context")
+        if not isinstance(raw_context, dict):
+            continue
+        edgeenv_metrics = raw_context.get("edgeenv_regression")
+        if isinstance(edgeenv_metrics, dict):
+            sources.append(edgeenv_metrics)
+
+    candidate_summary = guard_analysis.get("candidate_summary")
+    if isinstance(candidate_summary, dict):
+        edgeenv_metrics = candidate_summary.get("edgeenv_regression")
+        if isinstance(edgeenv_metrics, dict):
+            sources.append(edgeenv_metrics)
+    return sources
+
+
+def _compact_values_match(left: Any, right: Any) -> bool:
+    try:
+        return float(left) == float(right)
+    except (TypeError, ValueError):
+        return str(left) == str(right)
 
 
 def _append_aiguard_run_config_traceability_row(

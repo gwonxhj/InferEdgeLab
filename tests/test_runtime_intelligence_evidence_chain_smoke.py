@@ -425,6 +425,12 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
         "device_local_events=2.0, role=supplemental |"
     ) in bundle["markdown"]
     assert (
+        "| AIGuard max queue raw-context traceability | candidate: "
+        "report=max_total_queue_depth=7, "
+        "raw_context=orchestrator_candidate_operation_max_total_queue_depth=7, "
+        "match=True |"
+    ) in bundle["markdown"]
+    assert (
         "| AIGuard producer-lineage guard alignment | "
         "evidence=edgeenv_orchestrator_producer_lineage, "
         "candidates=runtime_queue_overload,runtime_thermal_instability, "
@@ -530,6 +536,12 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     ) in markdown
     assert "queue=queue_backlog_threshold_exceeded" in markdown
     assert "AIGuard producer lineage handoff" in markdown
+    assert "AIGuard max queue raw-context traceability" in markdown
+    assert (
+        "report=max_total_queue_depth=7, "
+        "raw_context=orchestrator_candidate_operation_max_total_queue_depth=7, "
+        "match=True"
+    ) in markdown
     assert "AIGuard producer-lineage guard alignment" in markdown
     assert "edgeenv_orchestrator_producer_lineage" in markdown
     assert "Device-local Orchestrator producer lineage is preserved" in markdown
@@ -568,6 +580,8 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     ) in html
     assert "queue=queue_backlog_threshold_exceeded" in html
     assert "AIGuard producer lineage handoff" in html
+    assert "AIGuard max queue raw-context traceability" in html
+    assert "orchestrator_candidate_operation_max_total_queue_depth=7" in html
     assert "AIGuard producer-lineage guard alignment" in html
     assert "edgeenv_orchestrator_producer_lineage" in html
     assert "Device-local Orchestrator producer lineage is preserved" in html

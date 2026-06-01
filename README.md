@@ -502,6 +502,7 @@ If AIGuard preserves EdgeEnv/Orchestrator `candidate_context.producer` lineage, 
 
 If EdgeEnv preserves an Orchestrator `operation_risk_summary`, Lab shows the compact queue-pressure, max-pressure task, worker-health, and producer/device-local event markers as navigation context in the Runtime Intelligence Risk Summary. These markers help reviewers find the relevant operation evidence, but they do not become EdgeEnv regression deltas, comparability fields, or a deployment decision override.
 Lab also renders a separate `Orchestrator queue/deadline/fallback markers` row when those compact counters are present. That row keeps `queue_pressure_reason`, `max_total_queue_depth` when available, deadline miss count, and fallback count together so reviewers can spot operation pressure before reading the detailed task rollup.
+When AIGuard raw context preserves `orchestrator_candidate_operation_max_total_queue_depth`, Lab also renders an `AIGuard max queue raw-context traceability` row. This ties the visible `max_total_queue_depth` report marker back to deterministic AIGuard context and Orchestrator operation evidence without changing Lab's deployment decision ownership.
 
 When EdgeEnv/Orchestrator context includes reviewer-facing duration metadata,
 Lab renders a `Runtime replay duration scope` row with `duration_label`,
@@ -539,6 +540,7 @@ Markdown and HTML reports include a Runtime Intelligence Risk Summary that conne
 - Runtime history seed and run_config traceability
 - Orchestrator operation risk summary markers
 - compact queue/deadline/fallback operation markers with `max_total_queue_depth`
+- AIGuard raw-context traceability for `max_total_queue_depth`
 - Lab EdgeEnv preservation context markers
 - device-local producer lineage handoff
 - Orchestrator-declared downstream guard alignment
