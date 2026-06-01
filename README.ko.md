@@ -37,6 +37,16 @@ InferEdgeOrchestrator operation feed
 - Runtime Intelligence smoke chain: Orchestrator operation context → EdgeEnv telemetry history/regression → AIGuard deterministic evidence → Lab-owned deployment risk report
 - Local Studio: inference validation을 브라우저에서 확인하는 local-first workflow UI
 
+## 역할 경계 한눈에 보기
+
+| 영역 | Lab이 담당하는 일 | Lab이 담당하지 않는 일 |
+|---|---|---|
+| Validation decision | compare/evaluate/report/API/job workflow와 최종 `deployment_decision`을 생성한다. | Forge build, Runtime execution, EdgeEnv registry, AIGuard diagnosis policy, Orchestrator scheduling을 소유하지 않는다. |
+| Forge / Runtime evidence | metadata, manifest, worker response, Runtime result, validation evidence를 ingest하고 정렬한다. | `metadata.json`, `manifest.json`, Runtime `result.json`, compare output contract를 임의 변경하지 않는다. |
+| EdgeEnv regression evidence | comparability, regression, telemetry coverage, replay gap을 deployment risk context로 표시한다. | EdgeEnv registry/comparability ownership을 재계산하거나 comparability-first gate를 우회하지 않는다. |
+| AIGuard / Orchestrator evidence | optional deterministic diagnosis와 supplemental operation context를 Lab-owned report에 보존한다. | AIGuard/Orchestrator를 final decision owner로 만들거나 production remote execution/control-plane readiness를 주장하지 않는다. |
+| Local Studio / API | local-first evidence replay, in-memory job, reviewer workflow UI를 제공한다. | production SaaS, DB/queue/auth/billing/upload service, cloud dashboard가 되지 않는다. |
+
 ## What Makes InferEdge Different?
 
 InferEdge는 단순 benchmark tool이 아닙니다.

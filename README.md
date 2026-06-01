@@ -21,6 +21,16 @@ Language: English | [한국어](README.ko.md)
 - Runtime Intelligence smoke chain: Orchestrator operation context -> EdgeEnv telemetry history/regression -> AIGuard deterministic evidence -> Lab-owned deployment risk report
 - Local Studio: interactive workflow UI for inference validation
 
+## Role Boundary At A Glance
+
+| Area | Lab owns | Lab does not own |
+|---|---|---|
+| Validation decision | Compare/evaluate/report/API/job workflow and final `deployment_decision` | Forge build, Runtime execution, EdgeEnv registry, AIGuard diagnosis policy, or Orchestrator scheduling |
+| Forge / Runtime evidence | Ingests and aligns metadata, manifest, worker response, Runtime result, and validation evidence | Mutate `metadata.json`, `manifest.json`, Runtime `result.json`, or compare output contracts |
+| EdgeEnv regression evidence | Renders comparability, regression, telemetry coverage, and replay gaps as deployment risk context | Recompute EdgeEnv registry/comparability ownership or bypass the comparability-first gate |
+| AIGuard / Orchestrator evidence | Preserves optional deterministic diagnosis and supplemental operation context in Lab-owned reports | Make AIGuard/Orchestrator final decision owners or claim production remote execution/control-plane readiness |
+| Local Studio / API | Provides local-first evidence replay, in-memory jobs, and reviewer workflow UI | Become production SaaS, DB/queue/auth/billing/upload service, or cloud dashboard |
+
 ## What Makes InferEdge Different?
 
 InferEdge is not a benchmark tool.

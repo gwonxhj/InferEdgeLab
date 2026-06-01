@@ -45,3 +45,32 @@ def test_validate_changed_files_fails_for_unexpected_tracked_file():
 
     assert "unexpected tracked files" in str(exc_info.value)
     assert "Roadmap.md" in str(exc_info.value)
+
+
+def test_readmes_expose_lab_role_boundaries():
+    root = Path(__file__).resolve().parents[1]
+    readme = (root / "README.md").read_text(encoding="utf-8")
+    readme_ko = (root / "README.ko.md").read_text(encoding="utf-8")
+
+    assert "Language: English | [한국어](README.ko.md)" in readme
+    assert "언어: [English](README.md) | 한국어" in readme_ko
+
+    for required in [
+        "## Role Boundary At A Glance",
+        "final `deployment_decision`",
+        "Mutate `metadata.json`, `manifest.json`, Runtime `result.json`",
+        "bypass the comparability-first gate",
+        "Make AIGuard/Orchestrator final decision owners",
+        "production SaaS, DB/queue/auth/billing/upload service, or cloud dashboard",
+    ]:
+        assert required in readme
+
+    for required in [
+        "## 역할 경계 한눈에 보기",
+        "최종 `deployment_decision`",
+        "`metadata.json`, `manifest.json`, Runtime `result.json`",
+        "comparability-first gate를 우회하지 않는다",
+        "AIGuard/Orchestrator를 final decision owner로 만들거나",
+        "production SaaS, DB/queue/auth/billing/upload service, cloud dashboard",
+    ]:
+        assert required in readme_ko
