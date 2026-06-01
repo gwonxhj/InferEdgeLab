@@ -459,6 +459,11 @@ def make_runtime_operation_guard_analysis() -> dict:
                 "why_it_matters": "Queue backlog can inflate runtime latency.",
                 "suspected_causes": ["queue_overload", "scheduler_contention"],
                 "recommendation": "Review Orchestrator queue policy.",
+                "raw_context": {
+                    "edgeenv_regression": {
+                        "orchestrator_candidate_operation_max_total_queue_depth": 7.0,
+                    },
+                },
             },
             {
                 "type": "runtime_history_seed_run_config_traceability",
@@ -564,6 +569,7 @@ def make_runtime_operation_guard_analysis() -> dict:
                     "jetson_clocks": "unknown",
                 },
                 "candidate_queue_depth": 7.0,
+                "orchestrator_candidate_operation_max_total_queue_depth": 7.0,
                 "candidate_max_temperature_c": 78.5,
                 "candidate_throttling_detected": True,
                 "orchestrator_guard_alignment_producer_lineage_evidence_type": (
@@ -854,6 +860,12 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
         "max_total_queue_depth=7, deadline_missed_count=2, fallback_count=1 |"
     ) in text
     assert (
+        "| AIGuard max queue raw-context traceability | candidate: "
+        "report=max_total_queue_depth=7, "
+        "raw_context=orchestrator_candidate_operation_max_total_queue_depth=7, "
+        "match=True |"
+    ) in text
+    assert (
         "| Runtime replay duration scope | candidate: "
         "scope_label=source=entrypoint_requested_frames, "
         "label=short 96-frame-class replay (96 frames), "
@@ -920,6 +932,7 @@ def test_generate_compare_html_summarizes_operation_risk_summary():
     html = generate_compare_html(
         compare_result,
         judgement,
+        guard_analysis=make_runtime_operation_guard_analysis(),
         edgeenv_regression=make_edgeenv_regression_with_orchestrator_context(),
     )
 
@@ -933,6 +946,12 @@ def test_generate_compare_html_summarizes_operation_risk_summary():
     assert (
         "queue_pressure_reason=queue_backlog_threshold_exceeded, "
         "max_total_queue_depth=7, deadline_missed_count=2, fallback_count=1"
+    ) in html
+    assert "AIGuard max queue raw-context traceability" in html
+    assert (
+        "report=max_total_queue_depth=7, "
+        "raw_context=orchestrator_candidate_operation_max_total_queue_depth=7, "
+        "match=True"
     ) in html
     assert "Orchestrator task event rollup" in html
     assert "vision_agent(delay=1,miss=1,max_delay_cycles=3,max_wait_ms=15)" in html

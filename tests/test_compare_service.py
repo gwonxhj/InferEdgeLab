@@ -554,6 +554,11 @@ def make_edgeenv_orchestrator_context_guard_analysis() -> dict:
                 "why_it_matters": "Queue backlog can inflate runtime latency.",
                 "suspected_causes": ["queue_overload", "scheduler_contention"],
                 "recommendation": "Review Orchestrator queue policy.",
+                "raw_context": {
+                    "edgeenv_regression": {
+                        "orchestrator_candidate_operation_max_total_queue_depth": 7.0,
+                    },
+                },
             },
         ],
         "suspected_causes": ["thermal_pressure", "queue_overload"],
@@ -563,6 +568,7 @@ def make_edgeenv_orchestrator_context_guard_analysis() -> dict:
                 "history_orchestrator_feed_runs": 1.0,
                 "candidate_orchestrator_context_present": True,
                 "candidate_queue_depth": 7.0,
+                "orchestrator_candidate_operation_max_total_queue_depth": 7.0,
                 "candidate_max_temperature_c": 78.5,
                 "candidate_throttling_detected": True,
             }
@@ -810,6 +816,12 @@ def test_build_compare_bundle_summarizes_orchestrator_context_runtime_anomalies(
         "| Orchestrator queue/deadline/fallback markers | candidate: "
         "max_total_queue_depth=7, deadline_missed_count=2, fallback_count=1 |"
     ) in bundle["markdown"]
+    assert (
+        "| AIGuard max queue raw-context traceability | candidate: "
+        "report=max_total_queue_depth=7, "
+        "raw_context=orchestrator_candidate_operation_max_total_queue_depth=7, "
+        "match=True |"
+    ) in bundle["markdown"]
     assert "| Orchestrator task event rollup | candidate: " in bundle["markdown"]
     assert "vision_agent(delay=1,miss=1,max_delay_cycles=3,max_wait_ms=15)" in bundle[
         "markdown"
@@ -824,6 +836,7 @@ def test_build_compare_bundle_summarizes_orchestrator_context_runtime_anomalies(
     ]
     assert "AIGuard does not own the final decision" in bundle["markdown"]
     assert "AIGuard Orchestrator context handoff" in bundle["html"]
+    assert "AIGuard max queue raw-context traceability" in bundle["html"]
     assert "supplemental operation evidence" in bundle["html"]
 
 

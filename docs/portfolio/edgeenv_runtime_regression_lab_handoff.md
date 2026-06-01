@@ -181,6 +181,10 @@ Expected Lab behavior:
   `orchestrator_candidate_operation_max_total_queue_depth=7`, keeping the
   rendered Lab `max_total_queue_depth` row traceable to Orchestrator's
   producer-side operation context.
+- Lab now renders that link as `AIGuard max queue raw-context traceability`,
+  with the visible report value and the AIGuard raw-context value side by side
+  so reviewers can identify the preservation path without treating it as a
+  deployment decision override.
 - The same gate summary emits `expected_report_markers: remote fallback Lab context row declared`, keeping the remote fallback row-value marker visible in file-based CI artifacts without making CI a runtime control plane.
 - The same handoff gate verifies that the referenced `runtime_telemetry_history` artifact exists and preserves EdgeEnv history schema, telemetry coverage, and Runtime history seed ownership markers.
 - The same handoff gate verifies that missing telemetry entries remain evidence gaps while preserving Orchestrator producer markers, owner boundary flags, and EdgeEnv mapping hints when Orchestrator context is attached.
@@ -194,6 +198,10 @@ Expected Lab behavior:
 - Markdown/HTML reports include a `Runtime Intelligence Risk Summary` that summarizes EdgeEnv comparability/regression, telemetry replay gaps, Runtime history seed/run_config traceability, AIGuard deterministic evidence, and the Lab-owned deployment decision in one reviewer-facing table.
 - When EdgeEnv includes preserved Orchestrator feed context, the `Runtime Intelligence Risk Summary` surfaces queue, thermal, throttling, memory, fallback context, and compact `operation_risk_summary` markers as supplemental runtime evidence.
 - Lab now keeps queue pressure, `max_total_queue_depth` when available, deadline miss count, and fallback count together in an `Orchestrator queue/deadline/fallback markers` row when those compact counters are present. This is reviewer navigation context, not a production scheduler state or deployment decision override.
+- Lab also surfaces `AIGuard max queue raw-context traceability` when AIGuard
+  preserves the same `orchestrator_candidate_operation_max_total_queue_depth`
+  value, making the report row traceable back to deterministic AIGuard raw
+  context and Orchestrator operation evidence.
 - When EdgeEnv includes replay duration metadata, the same Risk Summary surfaces `Runtime replay duration scope` with `duration_label`, `duration_class`, frame count, and optional `duration_source` / `duration_scope_label` traceability as reviewer navigation context. This does not change EdgeEnv comparability or Lab deployment policy.
 - The report artifact gate summary also emits a `Validated Duration Traceability`
   section so reviewers can see `duration_handoff_alignment`,

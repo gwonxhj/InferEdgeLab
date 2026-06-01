@@ -103,6 +103,12 @@ REQUIRED_MARKDOWN_MARKERS = {
     "aiguard_producer_lineage_handoff": (
         "| AIGuard producer lineage handoff | sources=device_local_cli_override"
     ),
+    "aiguard_max_queue_traceability": (
+        "| AIGuard max queue raw-context traceability | candidate: "
+        "report=max_total_queue_depth=7, "
+        "raw_context=orchestrator_candidate_operation_max_total_queue_depth=7, "
+        "match=True |"
+    ),
     "aiguard_producer_lineage_evidence": "edgeenv_orchestrator_producer_lineage",
     "aiguard_producer_lineage_recommendation": (
         "Device-local Orchestrator producer lineage is preserved"
@@ -175,6 +181,12 @@ REQUIRED_HTML_MARKERS = {
     "lab_edgeenv_registry_marker": "lab_preservation=present",
     "orchestrator_operation_risk_queue": "queue=queue_backlog_threshold_exceeded",
     "aiguard_producer_lineage_handoff": "AIGuard producer lineage handoff",
+    "aiguard_max_queue_traceability": (
+        "AIGuard max queue raw-context traceability"
+    ),
+    "aiguard_max_queue_traceability_value": (
+        "raw_context=orchestrator_candidate_operation_max_total_queue_depth=7"
+    ),
     "aiguard_producer_lineage_evidence": "edgeenv_orchestrator_producer_lineage",
     "aiguard_producer_lineage_recommendation": (
         "Device-local Orchestrator producer lineage is preserved"
