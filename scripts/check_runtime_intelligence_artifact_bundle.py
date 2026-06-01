@@ -8,6 +8,13 @@ from rich import print as rprint
 
 REQUIRED_MARKDOWN_MARKERS = {
     "risk_summary_section": "## Runtime Intelligence Risk Summary",
+    "reviewer_focus_section": "### Reviewer Focus",
+    "reviewer_focus_table": "| Focus | Quick signal | First read |",
+    "reviewer_focus_edgeenv_gate": "| EdgeEnv regression gate |",
+    "reviewer_focus_telemetry_quality": "| Telemetry/replay quality |",
+    "reviewer_focus_operation_context": "| Operation context |",
+    "reviewer_focus_aiguard_warnings": "| AIGuard warnings |",
+    "detailed_evidence_rows": "### Detailed Evidence Rows",
     "lab_decision_owner": "Lab remains the final deployment decision owner.",
     "edgeenv_comparability": "| EdgeEnv comparability | Yes / same-condition |",
     "runtime_regression": "| Runtime regression | True / mixed / high |",
@@ -130,6 +137,13 @@ REQUIRED_MARKDOWN_MARKERS = {
 
 REQUIRED_HTML_MARKERS = {
     "risk_summary_section": "Runtime Intelligence Risk Summary",
+    "reviewer_focus_section": "Reviewer Focus",
+    "reviewer_focus_table": "Quick signal",
+    "reviewer_focus_edgeenv_gate": "EdgeEnv regression gate",
+    "reviewer_focus_telemetry_quality": "Telemetry/replay quality",
+    "reviewer_focus_operation_context": "Operation context",
+    "reviewer_focus_aiguard_warnings": "AIGuard warnings",
+    "detailed_evidence_rows": "Detailed Evidence Rows",
     "lab_decision_owner": "Lab remains the final deployment decision owner.",
     "runtime_telemetry_coverage": "Runtime telemetry coverage gaps",
     "aiguard_coverage_field_gap": "runtime_telemetry_field_gap",

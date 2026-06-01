@@ -846,6 +846,14 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
     )
 
     assert "## Runtime Intelligence Risk Summary" in text
+    assert "### Reviewer Focus" in text
+    assert "| Focus | Quick signal | First read |" in text
+    assert "| EdgeEnv regression gate | comparable=True; mode=same-condition;" in text
+    assert "deltas=mean=+18.4%,p99=+32.1%,fps=-20.5%,+1 more" in text
+    assert "| Telemetry/replay quality | gaps=0; history_missing_runs=0;" in text
+    assert "| Operation context | queue_deadline_fallback=present;" in text
+    assert "| AIGuard warnings | status=warning; verdict=suspicious;" in text
+    assert "### Detailed Evidence Rows" in text
     assert "| Orchestrator operation feed context | 1 |" in text
     assert "| Orchestrator context attached runs | candidate |" in text
     assert (
@@ -937,6 +945,13 @@ def test_generate_compare_html_summarizes_operation_risk_summary():
     )
 
     assert "Runtime Intelligence Risk Summary" in html
+    assert "Reviewer Focus" in html
+    assert "Quick signal" in html
+    assert "EdgeEnv regression gate" in html
+    assert "Telemetry/replay quality" in html
+    assert "Operation context" in html
+    assert "AIGuard warnings" in html
+    assert "Detailed Evidence Rows" in html
     assert "Runtime replay duration scope" in html
     assert "short 96-frame-class replay (96 frames)" in html
     assert "entrypoint_requested_frames" in html

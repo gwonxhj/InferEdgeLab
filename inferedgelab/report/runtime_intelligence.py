@@ -136,6 +136,189 @@ def build_runtime_intelligence_risk_rows(
     return rows
 
 
+def build_runtime_intelligence_reviewer_focus_rows(
+    *,
+    guard_analysis: dict[str, Any] | None,
+    deployment_decision: dict[str, Any] | None,
+    edgeenv_regression: dict[str, Any] | None,
+) -> list[tuple[str, str, str]]:
+    if guard_analysis is None and edgeenv_regression is None:
+        return []
+
+    rows: list[tuple[str, str, str]] = []
+    if deployment_decision is not None:
+        triggered_rules = _string_list(deployment_decision.get("triggered_rules"))
+        rows.append(
+            (
+                "Decision owner",
+                (
+                    f"Lab={deployment_decision.get('decision')}; "
+                    f"triggered_rules={_compact_join(triggered_rules)}"
+                ),
+                "Start here: Lab is the final policy owner and downstream evidence is context.",
+            )
+        )
+
+    if edgeenv_regression is not None:
+        rows.append(_edgeenv_reviewer_focus_row(edgeenv_regression))
+        telemetry_row = _telemetry_reviewer_focus_row(edgeenv_regression)
+        if telemetry_row is not None:
+            rows.append(telemetry_row)
+        operation_row = _operation_reviewer_focus_row(edgeenv_regression)
+        if operation_row is not None:
+            rows.append(operation_row)
+
+    if guard_analysis is not None:
+        rows.append(_aiguard_reviewer_focus_row(guard_analysis))
+
+    return rows
+
+
+def _edgeenv_reviewer_focus_row(
+    edgeenv_regression: dict[str, Any],
+) -> tuple[str, str, str]:
+    comparability = edgeenv_regression.get("comparability") or {}
+    evidence = edgeenv_regression.get("evidence")
+    if not isinstance(evidence, dict):
+        evidence = {}
+    metric_parts = [
+        _focus_percent("mean", evidence.get("mean_delta_pct")),
+        _focus_percent("p99", evidence.get("p99_delta_pct")),
+        _focus_percent("fps", evidence.get("fps_delta_pct")),
+        _focus_percent("memory", evidence.get("memory_peak_delta_pct")),
+    ]
+    metric_label = _compact_join([part for part in metric_parts if part])
+    return (
+        "EdgeEnv regression gate",
+        (
+            f"comparable={_first_present(comparability.get('comparable'), edgeenv_regression.get('comparable'))}; "
+            f"mode={edgeenv_regression.get('mode')}; "
+            f"regression={edgeenv_regression.get('regression_detected')}; "
+            f"type={edgeenv_regression.get('regression_type')}; "
+            f"severity={edgeenv_regression.get('severity')}; "
+            f"deltas={metric_label}"
+        ),
+        "Check comparability first, then read latency/resource deltas as deployment risk evidence.",
+    )
+
+
+def _telemetry_reviewer_focus_row(
+    edgeenv_regression: dict[str, Any],
+) -> tuple[str, str, str] | None:
+    telemetry_context = edgeenv_regression.get("runtime_telemetry_context")
+    if not isinstance(telemetry_context, dict):
+        return None
+
+    gaps = [
+        gap
+        for gap in telemetry_context.get("evidence_gaps") or []
+        if isinstance(gap, dict)
+    ]
+    history = telemetry_context.get("history") or {}
+    history_summary = history.get("summary") if isinstance(history, dict) else {}
+    if not isinstance(history_summary, dict):
+        history_summary = {}
+    coverage_labels = _runtime_telemetry_coverage_labels(telemetry_context)
+    replay_labels = _runtime_replay_scope_labels(telemetry_context)
+
+    return (
+        "Telemetry/replay quality",
+        (
+            f"gaps={len(gaps)}; "
+            f"history_missing_runs={history_summary.get('missing_telemetry_runs', '-')}; "
+            f"run_config_seeds={history_summary.get('history_seed_run_config_runs', '-')}; "
+            f"coverage={_compact_join(coverage_labels)}; "
+            f"replay={_compact_join(replay_labels, limit=1)}"
+        ),
+        "Missing telemetry and replay scope are evidence-quality context, not failure or policy override.",
+    )
+
+
+def _operation_reviewer_focus_row(
+    edgeenv_regression: dict[str, Any],
+) -> tuple[str, str, str] | None:
+    telemetry_context = edgeenv_regression.get("runtime_telemetry_context")
+    if not isinstance(telemetry_context, dict):
+        return None
+
+    marker_labels = _orchestrator_queue_deadline_fallback_labels(telemetry_context)
+    risk_labels = _orchestrator_operation_risk_labels(telemetry_context)
+    preservation_labels = _edgeenv_preservation_run_labels(telemetry_context)
+    task_labels = _orchestrator_task_event_rollup_labels(telemetry_context)
+    if not any((marker_labels, risk_labels, preservation_labels, task_labels)):
+        return None
+
+    parts = [
+        f"queue_deadline_fallback={'present' if marker_labels else 'missing'}",
+        f"operation_risk={'present' if risk_labels else 'missing'}",
+        f"device_local_preservation={'present' if preservation_labels else 'missing'}",
+        f"task_rollup={'present' if task_labels else 'missing'}",
+    ]
+    return (
+        "Operation context",
+        "; ".join(parts),
+        "Use this row to decide whether to scan Orchestrator/EdgeEnv operation evidence next.",
+    )
+
+
+def _aiguard_reviewer_focus_row(
+    guard_analysis: dict[str, Any],
+) -> tuple[str, str, str]:
+    evidence_items = [
+        item
+        for item in (guard_analysis.get("evidence") or [])
+        if isinstance(item, dict)
+    ]
+    warning_items = [
+        item
+        for item in evidence_items
+        if str(item.get("status")).lower() in {"warning", "failed", "error"}
+    ]
+    anomaly_types = sorted(
+        {
+            str(item.get("type"))
+            for item in warning_items
+            if item.get("type") in RUNTIME_OPERATION_ANOMALY_TYPES
+        }
+    )
+    remote_dispatch_types = sorted(
+        {
+            str(item.get("type"))
+            for item in evidence_items
+            if item.get("type") in REMOTE_DISPATCH_EVIDENCE_TYPES
+        }
+    )
+    return (
+        "AIGuard warnings",
+        (
+            f"status={guard_status(guard_analysis)}; "
+            f"verdict={guard_verdict(guard_analysis)}; "
+            f"review_items={len(warning_items)}; "
+            f"anomalies={_compact_join(anomaly_types)}; "
+            f"remote_dispatch={_compact_join(remote_dispatch_types, limit=1)}"
+        ),
+        "AIGuard provides deterministic warning evidence; Lab keeps the final decision.",
+    )
+
+
+def _focus_percent(label: str, value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return f"{label}={value:+.1f}%"
+    return f"{label}={value}"
+
+
+def _compact_join(values: list[str], *, limit: int = 3) -> str:
+    compact_values = [value for value in values if value]
+    if not compact_values:
+        return "none"
+    if len(compact_values) <= limit:
+        return ",".join(compact_values)
+    visible = ",".join(compact_values[:limit])
+    return f"{visible},+{len(compact_values) - limit} more"
+
+
 def _append_telemetry_context_rows(
     rows: list[tuple[str, str, str]],
     edgeenv_regression: dict[str, Any],

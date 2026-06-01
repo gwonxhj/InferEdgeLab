@@ -499,6 +499,16 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "raw_context: preserved in artifact; omitted from console summary" in out
     assert "'raw_context':" not in out
     assert "Runtime Intelligence Risk Summary" in markdown
+    assert "### Reviewer Focus" in markdown
+    assert "| Focus | Quick signal | First read |" in markdown
+    assert "| Decision owner | Lab=review_required;" in markdown
+    assert "| EdgeEnv regression gate | comparable=Yes; mode=same-condition;" in markdown
+    assert "deltas=mean=+18.0%,p99=+32.0%,fps=-22.0%,+1 more" in markdown
+    assert "| Telemetry/replay quality | gaps=0; history_missing_runs=1;" in markdown
+    assert "| Operation context | queue_deadline_fallback=present;" in markdown
+    assert "| AIGuard warnings | status=warning; verdict=suspicious;" in markdown
+    assert "remote_dispatch=remote_execution_recovered_by_fallback" in markdown
+    assert "### Detailed Evidence Rows" in markdown
     assert "Runtime telemetry coverage gaps" in markdown
     assert "Runtime telemetry history seed" in markdown
     assert "Runtime history seed run_config" in markdown
@@ -562,6 +572,14 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
         "warmup=1, runs=10"
     ) in markdown
     assert "Runtime Intelligence Risk Summary" in html
+    assert "Reviewer Focus" in html
+    assert "Quick signal" in html
+    assert "Decision owner" in html
+    assert "EdgeEnv regression gate" in html
+    assert "Telemetry/replay quality" in html
+    assert "Operation context" in html
+    assert "AIGuard warnings" in html
+    assert "Detailed Evidence Rows" in html
     assert "Orchestrator operation risk summary" in html
     assert "Orchestrator queue/deadline/fallback markers" in html
     assert "queue_pressure_reason=queue_backlog_threshold_exceeded" in html
