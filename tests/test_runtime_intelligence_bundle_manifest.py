@@ -193,6 +193,7 @@ def test_readme_runtime_intelligence_section_stays_scannable():
     for marker in [
         "edgeenv_orchestrator_producer_lineage",
         "runtime_history_seed_run_config_traceability",
+        "Reviewer operation quick scan",
         "Orchestrator queue/deadline/fallback markers",
         "AIGuard max queue raw-context traceability",
         "Runtime replay duration scope",

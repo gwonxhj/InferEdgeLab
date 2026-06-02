@@ -41,6 +41,15 @@ REQUIRED_MARKDOWN_MARKERS = {
         "queue_pressure_reason=queue_backlog_threshold_exceeded, "
         "max_total_queue_depth=7"
     ),
+    "reviewer_operation_quick_scan": (
+        "| Reviewer operation quick scan | candidate: "
+        "queue_pressure_reason=queue_backlog_threshold_exceeded, "
+        "max_total_queue_depth=7"
+    ),
+    "reviewer_operation_quick_scan_preservation": (
+        "preservation=identity=jetson_device_local_preservation, "
+        "path=device_local_starter, run=edgeenv-smoke-candidate"
+    ),
     "runtime_replay_duration_scope": (
         "| Runtime replay duration scope | candidate: "
         "scope_label=source=entrypoint_requested_frames"
@@ -180,6 +189,11 @@ REQUIRED_HTML_MARKERS = {
     ),
     "orchestrator_queue_deadline_fallback_values": (
         "queue_pressure_reason=queue_backlog_threshold_exceeded"
+    ),
+    "reviewer_operation_quick_scan": "Reviewer operation quick scan",
+    "reviewer_operation_quick_scan_preservation": (
+        "preservation=identity=jetson_device_local_preservation, "
+        "path=device_local_starter, run=edgeenv-smoke-candidate"
     ),
     "runtime_replay_duration_scope": "Runtime replay duration scope",
     "runtime_replay_duration_label": "short 96-frame-class replay (96 frames)",
