@@ -540,6 +540,14 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
         "run=edgeenv-smoke-candidate"
     ) in markdown
     assert (
+        "| Reviewer operation quick scan | candidate: "
+        "queue_pressure_reason=queue_backlog_threshold_exceeded, "
+        "max_total_queue_depth=7, deadline_missed_count=2, fallback_count=1; "
+        "preservation=identity=jetson_device_local_preservation, "
+        "path=device_local_starter, run=edgeenv-smoke-candidate; "
+        "task_rollup=present |"
+    ) in markdown
+    assert (
         "sources=device_local_cli_override, "
         "stages=vision_agent:device_local_starter, device_local_events=2, "
         "resource=tegrastats_timeline, queue=queue_backlog_threshold_exceeded"
@@ -586,6 +594,7 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "Jetson/device-local EdgeEnv preservation run" in html
     assert "Jetson/device-local EdgeEnv preservation details" in html
     assert "Lab EdgeEnv preservation context" in html
+    assert "Reviewer operation quick scan" in html
     assert "lab_report_preservation_context_present=True" in html
     assert "lab_preservation=present" in html
     assert "identity=jetson_device_local_preservation" in html
