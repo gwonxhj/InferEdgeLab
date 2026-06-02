@@ -1,5 +1,7 @@
 # InferEdge Resume and Interview Summary
 
+Language: English | [한국어](inferedge_resume_interview_summary.ko.md)
+
 ## Final Resume Bullets
 
 - Built InferEdge, an end-to-end Edge AI inference validation pipeline that connects Forge build provenance, C++ Runtime execution, Lab comparison/report/API/job workflows, optional AIGuard diagnosis evidence, and Lab-owned deployment decisions.

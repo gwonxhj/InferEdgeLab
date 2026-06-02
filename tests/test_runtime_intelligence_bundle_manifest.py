@@ -214,32 +214,62 @@ def test_readme_internal_links_include_matching_korean_labels():
             "Portfolio submission",
             "포트폴리오 제출 문서",
             "docs/portfolio/inferedge_portfolio_submission.md",
+            "docs/portfolio/inferedge_portfolio_submission.ko.md",
         ),
         (
             "Resume/interview summary",
             "이력서/면접 요약",
             "docs/portfolio/inferedge_resume_interview_summary.md",
+            "docs/portfolio/inferedge_resume_interview_summary.ko.md",
         ),
         (
             "1-page architecture summary",
             "1페이지 아키텍처 요약",
             "docs/portfolio/inferedge_1page_architecture.md",
+            "docs/portfolio/inferedge_1page_architecture.ko.md",
         ),
         (
             "Pipeline status",
             "파이프라인 상태",
             "docs/portfolio/inferedge_pipeline_status.md",
+            "docs/portfolio/inferedge_pipeline_status.ko.md",
         ),
         (
             "docs/portfolio/edgeenv_runtime_regression_lab_handoff.md",
             "EdgeEnv 런타임 회귀 Lab handoff 문서",
             "docs/portfolio/edgeenv_runtime_regression_lab_handoff.md",
+            "docs/portfolio/edgeenv_runtime_regression_lab_handoff.md",
         ),
     ]
 
-    for english_label, korean_label, target in link_pairs:
-        assert f"[{english_label}]({target})" in readme
-        assert f"[한국어: {korean_label}]({target})" in readme
+    for english_label, korean_label, english_target, korean_target in link_pairs:
+        assert f"[{english_label}]({english_target})" in readme
+        assert f"[한국어: {korean_label}]({korean_target})" in readme
+
+
+def test_portfolio_entry_korean_guides_preserve_language_links_and_boundaries():
+    guide_pairs = [
+        ("inferedge_portfolio_submission.md", "inferedge_portfolio_submission.ko.md"),
+        (
+            "inferedge_resume_interview_summary.md",
+            "inferedge_resume_interview_summary.ko.md",
+        ),
+        ("inferedge_1page_architecture.md", "inferedge_1page_architecture.ko.md"),
+        ("inferedge_pipeline_status.md", "inferedge_pipeline_status.ko.md"),
+    ]
+
+    for english_name, korean_name in guide_pairs:
+        english_doc = REPO_ROOT / "docs" / "portfolio" / english_name
+        korean_doc = REPO_ROOT / "docs" / "portfolio" / korean_name
+        english_text = english_doc.read_text(encoding="utf-8")
+        korean_text = korean_doc.read_text(encoding="utf-8")
+
+        assert f"Language: English | [한국어]({korean_name})" in english_text
+        assert f"언어: [English]({english_name}) | 한국어" in korean_text
+        assert "대표/canonical 문서" in korean_text
+        assert "Lab-owned deployment decision" in korean_text
+        assert "production SaaS" in korean_text
+        assert "cloud control plane" in korean_text
 
 
 def test_runtime_intelligence_bundle_manifest_gate_validates_edgeenv_handoff(

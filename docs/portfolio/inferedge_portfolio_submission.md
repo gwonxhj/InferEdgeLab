@@ -1,5 +1,7 @@
 # InferEdge Portfolio Submission
 
+Language: English | [한국어](inferedge_portfolio_submission.ko.md)
+
 ## 1. Project Summary
 
 InferEdge는 edge AI 모델을 변환, 실행, 비교, 진단하고 최종 배포 가능 여부를 판단하는 end-to-end inference validation pipeline이다.

@@ -1,5 +1,7 @@
 # InferEdge 1-Page Architecture Summary
 
+Language: English | [한국어](inferedge_1page_architecture.ko.md)
+
 ## One-line Pitch
 
 InferEdge is an end-to-end Edge AI inference validation pipeline that builds deployment artifacts, runs edge inference, compares results, diagnoses provenance issues, and produces deployment decisions.
