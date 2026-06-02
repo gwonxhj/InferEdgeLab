@@ -220,30 +220,33 @@ Cross-repo evidence:
 
 Runtime Intelligence smoke:
 
-- Orchestrator operation feed를 supplemental context로 보존
-- EdgeEnv telemetry history/regression evidence를 Lab report에 연결
-- Runtime history seed `run_config` snapshot을 replay/comparability traceability로 표시
-- Jetson EdgeEnv preservation smoke는 entrypoint가 device-local ONNX Runtime probe evidence, live `tegrastats`, Runtime operation summary를 EdgeEnv run evidence로 보존한 뒤 Lab deployment risk report까지 연결할 수 있음을 확인합니다.
-- 사용 가능한 경우 AIGuard deterministic runtime evidence 보존
-- AIGuard `runtime_history_seed_run_config_traceability` evidence를 gate에서 필수 traceability evidence로 검증
-- AIGuard raw context의 device-local producer lineage를 traceability evidence로 표시
-- 기존 JSON contract를 바꾸지 않고 Lab-owned Runtime Intelligence Risk Summary 생성
+- Orchestrator operation feed를 supplemental context로 보존합니다.
+- EdgeEnv telemetry history/regression evidence를 Lab report에 연결합니다.
+- AIGuard deterministic runtime evidence가 있으면 같은 Lab-owned report에 보존합니다.
+- Jetson EdgeEnv preservation smoke는 device-local ONNX Runtime probe evidence, live `tegrastats`, Runtime operation summary가 EdgeEnv run evidence를 거쳐 Lab deployment risk report까지 이어지는지 확인합니다.
+- 기존 JSON contract를 바꾸지 않고 Lab-owned Runtime Intelligence Risk Summary를 생성합니다.
 
-EdgeEnv runtime regression report에 `runtime_telemetry_context`가 포함되면 Lab은 이를 supplemental telemetry coverage / evidence-gap context로 표시하되, final deployment decision ownership은 Lab에 남깁니다.
+### Runtime Intelligence Risk Summary 빠른 읽기
 
-Runtime Intelligence report에서 읽어야 할 핵심 row:
+| 먼저 볼 항목 | Quick signal | 의미 |
+|---|---|---|
+| Decision owner | `Lab remains the final deployment decision owner` | EdgeEnv, AIGuard, Orchestrator는 evidence provider이고 최종 판단은 Lab이 소유합니다. |
+| EdgeEnv regression gate | EdgeEnv comparability / regression evidence | runtime regression은 EdgeEnv comparability context가 있을 때만 해석합니다. |
+| Telemetry/replay quality | telemetry replay gap, `runtime_history_seed_run_config_traceability` | Runtime history seed와 `run_config` traceability가 보존됐는지 확인합니다. |
+| Operation context | `Orchestrator queue/deadline/fallback markers` | queue pressure, `max_total_queue_depth`, deadline miss, fallback count를 한눈에 묶습니다. |
+| AIGuard warnings | deterministic AIGuard runtime operation evidence | AIGuard warning은 Lab policy를 덮어쓰지 않는 review evidence입니다. |
 
-- EdgeEnv comparability / regression evidence
-- telemetry replay gap
-- Runtime history seed `run_config` traceability
-- Orchestrator device-local producer lineage
-- Lab EdgeEnv preservation context marker
-- Jetson/device-local preservation row의 `identity=jetson_device_local_preservation`
-  및 `path=device_local_starter` 식별 label
-- Jetson/device-local preservation detail row의 producer/source/stage/resource
-  navigation context
-- AIGuard deterministic anomaly evidence
-- Lab-owned deployment decision
+Marker group:
+
+| 그룹 | 핵심 row / label | 이유 |
+|---|---|---|
+| Producer lineage | `edgeenv_orchestrator_producer_lineage`, `runtime_history_seed_run_config_traceability` | EdgeEnv/Orchestrator lineage가 AIGuard와 Lab까지 보존됐는지 확인합니다. |
+| Queue pressure | `Orchestrator queue/deadline/fallback markers`, `AIGuard max queue raw-context traceability` | `max_total_queue_depth`가 AIGuard deterministic raw context와 연결되는지 보여줍니다. |
+| Replay / preservation | `Runtime replay duration scope`, `Lab EdgeEnv preservation context`, `Jetson/device-local EdgeEnv preservation run`, `Jetson/device-local EdgeEnv preservation details` | replay duration과 `identity=jetson_device_local_preservation`, `path=device_local_starter` label을 빠르게 찾게 합니다. |
+| Task / operation risk | `Orchestrator task event rollup`, `AIGuard task event rollup evidence`, `AIGuard runtime operation anomalies` | scheduler delay, deadline miss, fallback decision, queue/drop reason을 review context로 보여줍니다. |
+| Remote starter boundary | `AIGuard remote dispatch event summary`, `Remote fallback starter evidence`, `production_remote_execution=false` | remote dispatch를 production execution이 아니라 starter evidence로 제한합니다. |
+
+세부 marker contract는 [docs/portfolio/edgeenv_runtime_regression_lab_handoff.md](docs/portfolio/edgeenv_runtime_regression_lab_handoff.md)에 정리되어 있습니다.
 
 최신 Jetson EdgeEnv preservation smoke:
 
