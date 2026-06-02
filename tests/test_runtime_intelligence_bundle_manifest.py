@@ -172,7 +172,8 @@ def test_runtime_intelligence_docs_record_jetson_edgeenv_preservation_boundary()
 def test_readme_runtime_intelligence_section_stays_scannable():
     readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
 
-    assert "| Reviewer question | Where to look | Meaning |" in readme
+    assert "| First read | Quick signal | What it tells you |" in readme
+    assert "| Marker group | Key rows / labels | Why it matters |" in readme
     assert "Reviewer Focus" in readme
     assert "`Focus / Quick signal / First read`" in readme
     assert "Decision owner" in readme
@@ -181,16 +182,11 @@ def test_readme_runtime_intelligence_section_stays_scannable():
     assert "Operation context" in readme
     assert "AIGuard warnings" in readme
     for row in [
-        "Did AIGuard preserve EdgeEnv/Orchestrator producer lineage?",
-        "Is there operation pressure?",
-        "Can queue depth be traced back to AIGuard raw context?",
-        "What replay window was used?",
-        "Was EdgeEnv preservation rendered by Lab?",
-        "Is this the Jetson/device-local preservation path?",
-        "Where are producer/source/resource details?",
-        "Which tasks were affected?",
-        "Is there deterministic operation-risk evidence?",
-        "Is this remote dispatch starter evidence?",
+        "Producer lineage",
+        "Queue pressure",
+        "Replay and preservation",
+        "Task and operation risk",
+        "Remote starter boundary",
     ]:
         assert row in readme
 
