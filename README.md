@@ -134,10 +134,10 @@ Portfolio entry points:
 
 | Document | Korean label | Use it for |
 |---|---|---|
-| [Portfolio submission](docs/portfolio/inferedge_portfolio_submission.md) | [한국어: 포트폴리오 제출 문서](docs/portfolio/inferedge_portfolio_submission.md) | submission-ready project narrative |
-| [Resume/interview summary](docs/portfolio/inferedge_resume_interview_summary.md) | [한국어: 이력서/면접 요약](docs/portfolio/inferedge_resume_interview_summary.md) | short role-specific explanation |
-| [1-page architecture summary](docs/portfolio/inferedge_1page_architecture.md) | [한국어: 1페이지 아키텍처 요약](docs/portfolio/inferedge_1page_architecture.md) | ecosystem diagram and role split |
-| [Pipeline status](docs/portfolio/inferedge_pipeline_status.md) | [한국어: 파이프라인 상태](docs/portfolio/inferedge_pipeline_status.md) | current implementation status |
+| [Portfolio submission](docs/portfolio/inferedge_portfolio_submission.md) | [한국어: 포트폴리오 제출 문서](docs/portfolio/inferedge_portfolio_submission.ko.md) | submission-ready project narrative |
+| [Resume/interview summary](docs/portfolio/inferedge_resume_interview_summary.md) | [한국어: 이력서/면접 요약](docs/portfolio/inferedge_resume_interview_summary.ko.md) | short role-specific explanation |
+| [1-page architecture summary](docs/portfolio/inferedge_1page_architecture.md) | [한국어: 1페이지 아키텍처 요약](docs/portfolio/inferedge_1page_architecture.ko.md) | ecosystem diagram and role split |
+| [Pipeline status](docs/portfolio/inferedge_pipeline_status.md) | [한국어: 파이프라인 상태](docs/portfolio/inferedge_pipeline_status.ko.md) | current implementation status |
 
 Interview one-liner: **InferEdge is an end-to-end inference validation pipeline that converts, runs, compares, diagnoses, and decides whether an edge AI model candidate is ready to deploy.**
 

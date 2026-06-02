@@ -1,5 +1,7 @@
 # InferEdge Pipeline Status
 
+Language: English | [한국어](inferedge_pipeline_status.ko.md)
+
 ## Purpose
 
 This document summarizes the current portfolio status of the InferEdge multi-repository project.
