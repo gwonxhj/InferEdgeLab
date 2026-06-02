@@ -868,6 +868,13 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
         "max_total_queue_depth=7, deadline_missed_count=2, fallback_count=1 |"
     ) in text
     assert (
+        "| Reviewer operation quick scan | candidate: "
+        "queue_pressure_reason=queue_backlog_threshold_exceeded, "
+        "max_total_queue_depth=7, deadline_missed_count=2, fallback_count=1; "
+        "preservation=identity=jetson_device_local_preservation, "
+        "run=candidate; task_rollup=present |"
+    ) in text
+    assert (
         "| AIGuard max queue raw-context traceability | candidate: "
         "report=max_total_queue_depth=7, "
         "raw_context=orchestrator_candidate_operation_max_total_queue_depth=7, "
@@ -958,10 +965,12 @@ def test_generate_compare_html_summarizes_operation_risk_summary():
     assert "scope_label=source=entrypoint_requested_frames" in html
     assert "Orchestrator operation risk summary" in html
     assert "Orchestrator queue/deadline/fallback markers" in html
+    assert "Reviewer operation quick scan" in html
     assert (
         "queue_pressure_reason=queue_backlog_threshold_exceeded, "
         "max_total_queue_depth=7, deadline_missed_count=2, fallback_count=1"
     ) in html
+    assert "preservation=identity=jetson_device_local_preservation" in html
     assert "AIGuard max queue raw-context traceability" in html
     assert (
         "report=max_total_queue_depth=7, "

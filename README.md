@@ -527,7 +527,7 @@ areas before opening detailed evidence rows.
 | Decision owner | `Lab remains the final deployment decision owner` | The report is Lab-owned; EdgeEnv, AIGuard, and Orchestrator provide evidence only. |
 | EdgeEnv regression gate | EdgeEnv comparability / regression evidence | Runtime regression is interpreted only after EdgeEnv comparability context is present. |
 | Telemetry/replay quality | telemetry replay gaps and `runtime_history_seed_run_config_traceability` | Shows whether Runtime history seed and `run_config` traceability are available. |
-| Operation context | `Orchestrator queue/deadline/fallback markers` | Groups queue pressure, `max_total_queue_depth`, deadline misses, and fallback count. |
+| Operation context | `Reviewer operation quick scan`, `Orchestrator queue/deadline/fallback markers` | Groups queue pressure, `max_total_queue_depth`, deadline misses, fallback count, and Jetson/device-local preservation identity. |
 | AIGuard warnings | deterministic AIGuard runtime operation evidence | Preserves warning evidence without overriding Lab deployment policy. |
 
 Reviewer marker map:
@@ -535,7 +535,7 @@ Reviewer marker map:
 | Marker group | Key rows / labels | Why it matters |
 |---|---|---|
 | Producer lineage | `edgeenv_orchestrator_producer_lineage`, `runtime_history_seed_run_config_traceability` | Confirms EdgeEnv/Orchestrator lineage reached AIGuard and Lab. |
-| Queue pressure | `Orchestrator queue/deadline/fallback markers`, `AIGuard max queue raw-context traceability` | Makes `max_total_queue_depth` traceable back to deterministic AIGuard raw context. |
+| Queue pressure | `Reviewer operation quick scan`, `Orchestrator queue/deadline/fallback markers`, `AIGuard max queue raw-context traceability` | Makes `max_total_queue_depth` traceable back to deterministic AIGuard raw context while keeping device-local preservation labels easy to spot. |
 | Replay and preservation | `Runtime replay duration scope`, `Lab EdgeEnv preservation context`, `Jetson/device-local EdgeEnv preservation run`, `Jetson/device-local EdgeEnv preservation details` | Shows replay duration, Lab preservation, and `identity=jetson_device_local_preservation` / `path=device_local_starter` labels. |
 | Task and operation risk | `Orchestrator task event rollup`, `AIGuard task event rollup evidence`, `AIGuard runtime operation anomalies` | Shows scheduler delay, deadline misses, fallback decisions, and queue/drop reasons as review context only. |
 | Remote starter boundary | `AIGuard remote dispatch event summary`, `Remote fallback starter evidence`, `production_remote_execution=false` | Keeps remote dispatch as starter evidence, not production remote execution. |

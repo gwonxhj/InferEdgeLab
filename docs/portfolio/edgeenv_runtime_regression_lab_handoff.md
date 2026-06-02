@@ -198,6 +198,7 @@ Expected Lab behavior:
 - Markdown/HTML reports include a `Runtime Intelligence Risk Summary` that summarizes EdgeEnv comparability/regression, telemetry replay gaps, Runtime history seed/run_config traceability, AIGuard deterministic evidence, and the Lab-owned deployment decision in one reviewer-facing table.
 - When EdgeEnv includes preserved Orchestrator feed context, the `Runtime Intelligence Risk Summary` surfaces queue, thermal, throttling, memory, fallback context, and compact `operation_risk_summary` markers as supplemental runtime evidence.
 - Lab now keeps queue pressure, `max_total_queue_depth` when available, deadline miss count, and fallback count together in an `Orchestrator queue/deadline/fallback markers` row when those compact counters are present. This is reviewer navigation context, not a production scheduler state or deployment decision override.
+- Lab also renders a `Reviewer operation quick scan` row that combines the same queue/deadline/fallback counters with Jetson/device-local preservation identity, so reviewers can identify the relevant EdgeEnv run before opening the full operation rows.
 - Lab also surfaces `AIGuard max queue raw-context traceability` when AIGuard
   preserves the same `orchestrator_candidate_operation_max_total_queue_depth`
   value, making the report row traceable back to deterministic AIGuard raw

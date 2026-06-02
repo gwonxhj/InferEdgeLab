@@ -405,6 +405,16 @@ def _append_telemetry_context_rows(
             )
         )
 
+    operation_quick_scan_labels = _operation_quick_scan_labels(telemetry_context)
+    if operation_quick_scan_labels:
+        rows.append(
+            (
+                "Reviewer operation quick scan",
+                "; ".join(operation_quick_scan_labels),
+                "One-line navigation labels combine queue/deadline/fallback and Jetson/device-local preservation context without changing Lab policy.",
+            )
+        )
+
     operation_risk_labels = _orchestrator_operation_risk_labels(telemetry_context)
     if operation_risk_labels:
         rows.append(
@@ -691,6 +701,49 @@ def _orchestrator_queue_deadline_fallback_labels(
         if parts:
             labels.append(f"{run_label}: " + ", ".join(parts))
     return labels
+
+
+def _operation_quick_scan_labels(context: dict[str, Any]) -> list[str]:
+    marker_by_run = _label_values_by_run(
+        _orchestrator_queue_deadline_fallback_labels(context)
+    )
+    risk_by_run = _label_values_by_run(_orchestrator_operation_risk_labels(context))
+    preservation_by_run = _label_values_by_run(
+        _edgeenv_preservation_run_labels(context)
+    )
+    task_by_run = _label_values_by_run(_orchestrator_task_event_rollup_labels(context))
+
+    labels: list[str] = []
+    for run_label in ("baseline", "candidate"):
+        parts: list[str] = []
+        marker_label = marker_by_run.get(run_label)
+        risk_label = risk_by_run.get(run_label)
+        if marker_label:
+            parts.append(marker_label)
+        elif risk_label:
+            parts.append(f"risk={risk_label}")
+
+        preservation_label = preservation_by_run.get(run_label)
+        if preservation_label:
+            parts.append(f"preservation={preservation_label}")
+
+        if task_by_run.get(run_label):
+            parts.append("task_rollup=present")
+
+        if parts:
+            labels.append(f"{run_label}: " + "; ".join(parts))
+    return labels
+
+
+def _label_values_by_run(labels: list[str]) -> dict[str, str]:
+    values_by_run: dict[str, str] = {}
+    for label in labels:
+        if ": " not in label:
+            continue
+        run_label, value = label.split(": ", 1)
+        if run_label and value and run_label not in values_by_run:
+            values_by_run[run_label] = value
+    return values_by_run
 
 
 def _runtime_replay_scope_labels(context: dict[str, Any]) -> list[str]:
