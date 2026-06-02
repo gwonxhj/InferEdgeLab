@@ -71,6 +71,7 @@ REQUIRED_LAB_EXPECTED_REPORT_MARKERS = (
     "Runtime Intelligence Risk Summary",
     "Runtime replay duration scope",
     "Orchestrator operation feed context",
+    "Reviewer operation quick scan",
     "Orchestrator task event rollup",
     "Lab EdgeEnv preservation context",
     "AIGuard task event rollup evidence",
@@ -182,9 +183,11 @@ def _validate_runtime_report(path: Path, errors: list[str]) -> None:
         "lab_preservation=present",
         "edgeenv_orchestrator_task_event_rollup",
         "Runtime telemetry coverage gaps",
+        "Reviewer operation quick scan",
         "Orchestrator queue/deadline/fallback markers",
         "queue_pressure_reason=queue_backlog_threshold_exceeded",
         "max_total_queue_depth=7",
+        "preservation=identity=jetson_device_local_preservation",
         "AIGuard max queue raw-context traceability",
         "raw_context=orchestrator_candidate_operation_max_total_queue_depth=7",
         "AIGuard producer-lineage guard alignment",
@@ -314,6 +317,7 @@ def _validate_aiguard_handoff_alignment(
             "lab_expected_report_markers: "
             "Runtime Intelligence Risk Summary, Runtime replay duration scope, "
             "Orchestrator operation feed context, "
+            "Reviewer operation quick scan, "
             "Orchestrator task event rollup, "
             "Lab EdgeEnv preservation context, "
             "AIGuard task event rollup evidence, "
