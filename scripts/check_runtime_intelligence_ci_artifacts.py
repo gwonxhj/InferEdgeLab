@@ -94,6 +94,10 @@ REQUIRED_DURATION_TRACEABILITY_SUMMARY_MARKERS = (
     "duration_scope_label: scope_label=source=entrypoint_requested_frames",
     "duration_label: short 96-frame-class replay (96 frames)",
 )
+REQUIRED_REVIEWER_FOCUS_SUMMARY_MARKERS = (
+    "## Validated Reviewer Focus",
+    "reviewer_focus_operation_quick_scan: Reviewer Focus / Operation quick scan marker validated",
+)
 
 
 def _record(condition: bool, errors: list[str], message: str) -> None:
@@ -146,6 +150,12 @@ def _validate_runtime_artifact_gate_summary(path: Path, errors: list[str]) -> No
             errors,
             f"{label} missing duration traceability marker: {marker}",
         )
+    for marker in REQUIRED_REVIEWER_FOCUS_SUMMARY_MARKERS:
+        _record(
+            marker in text,
+            errors,
+            f"{label} missing reviewer focus marker: {marker}",
+        )
 
 
 def _validate_bundle_manifest_gate_summary(path: Path, errors: list[str]) -> None:
@@ -183,6 +193,7 @@ def _validate_runtime_report(path: Path, errors: list[str]) -> None:
         "lab_preservation=present",
         "edgeenv_orchestrator_task_event_rollup",
         "Runtime telemetry coverage gaps",
+        "Operation quick scan",
         "Reviewer operation quick scan",
         "Orchestrator queue/deadline/fallback markers",
         "queue_pressure_reason=queue_backlog_threshold_exceeded",
@@ -362,6 +373,14 @@ def _write_summary(path: Path, report_dir: Path, errors: list[str]) -> None:
         lines.extend(
             f"- {marker}"
             for marker in REQUIRED_DURATION_TRACEABILITY_SUMMARY_MARKERS
+            if not marker.startswith("## ")
+        )
+        lines.append("")
+        lines.append("## Validated Reviewer Focus")
+        lines.append("")
+        lines.extend(
+            f"- {marker}"
+            for marker in REQUIRED_REVIEWER_FOCUS_SUMMARY_MARKERS
             if not marker.startswith("## ")
         )
         lines.append("")
