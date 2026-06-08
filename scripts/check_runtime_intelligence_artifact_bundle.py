@@ -12,6 +12,7 @@ REQUIRED_MARKDOWN_MARKERS = {
     "reviewer_focus_table": "| Focus | Quick signal | First read |",
     "reviewer_focus_edgeenv_gate": "| EdgeEnv regression gate |",
     "reviewer_focus_telemetry_quality": "| Telemetry/replay quality |",
+    "reviewer_focus_operation_quick_scan": "| Operation quick scan | candidate: ",
     "reviewer_focus_operation_context": "| Operation context |",
     "reviewer_focus_aiguard_warnings": "| AIGuard warnings |",
     "detailed_evidence_rows": "### Detailed Evidence Rows",
@@ -150,6 +151,7 @@ REQUIRED_HTML_MARKERS = {
     "reviewer_focus_table": "Quick signal",
     "reviewer_focus_edgeenv_gate": "EdgeEnv regression gate",
     "reviewer_focus_telemetry_quality": "Telemetry/replay quality",
+    "reviewer_focus_operation_quick_scan": "Operation quick scan",
     "reviewer_focus_operation_context": "Operation context",
     "reviewer_focus_aiguard_warnings": "AIGuard warnings",
     "detailed_evidence_rows": "Detailed Evidence Rows",
@@ -248,6 +250,10 @@ DURATION_TRACEABILITY_SUMMARY_MARKERS = (
     "duration_label: short 96-frame-class replay (96 frames)",
 )
 
+REVIEWER_FOCUS_SUMMARY_MARKERS = (
+    "reviewer_focus_operation_quick_scan: Reviewer Focus / Operation quick scan marker validated",
+)
+
 
 def _read_text(path: str, label: str) -> str:
     try:
@@ -290,6 +296,10 @@ def _write_summary(
         lines.append("## Validated Duration Traceability")
         lines.append("")
         lines.extend(f"- {marker}" for marker in DURATION_TRACEABILITY_SUMMARY_MARKERS)
+        lines.append("")
+        lines.append("## Validated Reviewer Focus")
+        lines.append("")
+        lines.extend(f"- {marker}" for marker in REVIEWER_FOCUS_SUMMARY_MARKERS)
         lines.append("")
 
     out_path = Path(path)

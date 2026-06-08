@@ -14,6 +14,8 @@ DURATION_TRACEABILITY_SUMMARY = "\n".join(
         "- duration_source: source=entrypoint_requested_frames",
         "- duration_scope_label: scope_label=source=entrypoint_requested_frames",
         "- duration_label: short 96-frame-class replay (96 frames)",
+        "## Validated Reviewer Focus",
+        "- reviewer_focus_operation_quick_scan: Reviewer Focus / Operation quick scan marker validated",
     ]
 ) + "\n"
 
@@ -120,6 +122,7 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
                 "lab_report_preservation_context_present=True",
                 "lab_preservation=present",
                 "Runtime telemetry coverage gaps",
+                "Operation quick scan",
                 "Reviewer operation quick scan",
                 "Orchestrator queue/deadline/fallback markers",
                 "queue_pressure_reason=queue_backlog_threshold_exceeded",
@@ -274,6 +277,11 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         in summary
     )
     assert "duration_label: short 96-frame-class replay (96 frames)" in summary
+    assert "## Validated Reviewer Focus" in summary
+    assert (
+        "reviewer_focus_operation_quick_scan: Reviewer Focus / "
+        "Operation quick scan marker validated"
+    ) in summary
 
     (report_dir / "runtime_anomaly_gate_summary.md").write_text(
         "- Status: passed\n",
@@ -291,6 +299,10 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
     assert (
         "Runtime Intelligence artifact gate summary missing duration "
         "traceability marker: ## Validated Duration Traceability"
+    ) in missing_summary
+    assert (
+        "Runtime Intelligence artifact gate summary missing reviewer focus "
+        "marker: ## Validated Reviewer Focus"
     ) in missing_summary
 
 
@@ -366,6 +378,7 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_lab_marker_cont
                 "lab_report_preservation_context_present=True",
                 "lab_preservation=present",
                 "Runtime telemetry coverage gaps",
+                "Operation quick scan",
                 "Reviewer operation quick scan",
                 "Orchestrator queue/deadline/fallback markers",
                 "queue_pressure_reason=queue_backlog_threshold_exceeded",
@@ -519,6 +532,7 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_contract_marker
                 "lab_report_preservation_context_present=True",
                 "lab_preservation=present",
                 "Runtime telemetry coverage gaps",
+                "Operation quick scan",
                 "Reviewer operation quick scan",
                 "Orchestrator queue/deadline/fallback markers",
                 "queue_pressure_reason=queue_backlog_threshold_exceeded",
@@ -611,6 +625,7 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_coverage_gap_ma
                 "lab_report_preservation_context_present=True",
                 "lab_preservation=present",
                 "Runtime telemetry coverage gaps",
+                "Operation quick scan",
                 "Reviewer operation quick scan",
                 "Orchestrator queue/deadline/fallback markers",
                 "queue_pressure_reason=queue_backlog_threshold_exceeded",
@@ -688,6 +703,7 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_failed_deployment_risk(
                 "lab_report_preservation_context_present=True",
                 "lab_preservation=present",
                 "Runtime telemetry coverage gaps",
+                "Operation quick scan",
                 "Reviewer operation quick scan",
                 "Orchestrator queue/deadline/fallback markers",
                 "queue_pressure_reason=queue_backlog_threshold_exceeded",
