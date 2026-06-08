@@ -527,7 +527,8 @@ areas before opening detailed evidence rows.
 | Decision owner | `Lab remains the final deployment decision owner` | The report is Lab-owned; EdgeEnv, AIGuard, and Orchestrator provide evidence only. |
 | EdgeEnv regression gate | EdgeEnv comparability / regression evidence | Runtime regression is interpreted only after EdgeEnv comparability context is present. |
 | Telemetry/replay quality | telemetry replay gaps and `runtime_history_seed_run_config_traceability` | Shows whether Runtime history seed and `run_config` traceability are available. |
-| Operation context | `Reviewer operation quick scan`, `Orchestrator queue/deadline/fallback markers` | Groups queue pressure, `max_total_queue_depth`, deadline misses, fallback count, and Jetson/device-local preservation identity. |
+| Operation quick scan | `Reviewer operation quick scan` value promoted into Reviewer Focus | Shows queue pressure, `max_total_queue_depth`, deadline misses, fallback count, and Jetson/device-local preservation identity before the detailed rows. |
+| Operation context | `Orchestrator queue/deadline/fallback markers` and task rollup presence | Shows which Orchestrator/EdgeEnv operation evidence groups are available for deeper review. |
 | AIGuard warnings | deterministic AIGuard runtime operation evidence | Preserves warning evidence without overriding Lab deployment policy. |
 
 Reviewer marker map:

@@ -505,7 +505,16 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "| EdgeEnv regression gate | comparable=Yes; mode=same-condition;" in markdown
     assert "deltas=mean=+18.0%,p99=+32.0%,fps=-22.0%,+1 more" in markdown
     assert "| Telemetry/replay quality | gaps=0; history_missing_runs=1;" in markdown
+    assert (
+        "| Operation quick scan | candidate: "
+        "queue_pressure_reason=queue_backlog_threshold_exceeded, "
+        "max_total_queue_depth=7, deadline_missed_count=2, fallback_count=1; "
+        "preservation=identity=jetson_device_local_preservation, "
+        "path=device_local_starter, run=edgeenv-smoke-candidate; "
+        "task_rollup=present |"
+    ) in markdown
     assert "| Operation context | queue_deadline_fallback=present;" in markdown
+    assert markdown.index("| Operation quick scan |") < markdown.index("| Operation context |")
     assert "| AIGuard warnings | status=warning; verdict=suspicious;" in markdown
     assert "remote_dispatch=remote_execution_recovered_by_fallback" in markdown
     assert "### Detailed Evidence Rows" in markdown
@@ -585,7 +594,9 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "Decision owner" in html
     assert "EdgeEnv regression gate" in html
     assert "Telemetry/replay quality" in html
+    assert "Operation quick scan" in html
     assert "Operation context" in html
+    assert html.index("Operation quick scan") < html.index("Operation context")
     assert "AIGuard warnings" in html
     assert "Detailed Evidence Rows" in html
     assert "Orchestrator operation risk summary" in html
