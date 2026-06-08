@@ -851,7 +851,15 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
     assert "| EdgeEnv regression gate | comparable=True; mode=same-condition;" in text
     assert "deltas=mean=+18.4%,p99=+32.1%,fps=-20.5%,+1 more" in text
     assert "| Telemetry/replay quality | gaps=0; history_missing_runs=0;" in text
+    assert (
+        "| Operation quick scan | candidate: "
+        "queue_pressure_reason=queue_backlog_threshold_exceeded, "
+        "max_total_queue_depth=7, deadline_missed_count=2, fallback_count=1; "
+        "preservation=identity=jetson_device_local_preservation, "
+        "run=candidate; task_rollup=present |"
+    ) in text
     assert "| Operation context | queue_deadline_fallback=present;" in text
+    assert text.index("| Operation quick scan |") < text.index("| Operation context |")
     assert "| AIGuard warnings | status=warning; verdict=suspicious;" in text
     assert "### Detailed Evidence Rows" in text
     assert "| Orchestrator operation feed context | 1 |" in text
@@ -956,7 +964,9 @@ def test_generate_compare_html_summarizes_operation_risk_summary():
     assert "Quick signal" in html
     assert "EdgeEnv regression gate" in html
     assert "Telemetry/replay quality" in html
+    assert "Operation quick scan" in html
     assert "Operation context" in html
+    assert html.index("Operation quick scan") < html.index("Operation context")
     assert "AIGuard warnings" in html
     assert "Detailed Evidence Rows" in html
     assert "Runtime replay duration scope" in html

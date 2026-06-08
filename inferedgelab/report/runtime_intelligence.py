@@ -164,6 +164,11 @@ def build_runtime_intelligence_reviewer_focus_rows(
         telemetry_row = _telemetry_reviewer_focus_row(edgeenv_regression)
         if telemetry_row is not None:
             rows.append(telemetry_row)
+        operation_quick_scan_row = _operation_quick_scan_reviewer_focus_row(
+            edgeenv_regression
+        )
+        if operation_quick_scan_row is not None:
+            rows.append(operation_quick_scan_row)
         operation_row = _operation_reviewer_focus_row(edgeenv_regression)
         if operation_row is not None:
             rows.append(operation_row)
@@ -258,6 +263,24 @@ def _operation_reviewer_focus_row(
         "Operation context",
         "; ".join(parts),
         "Use this row to decide whether to scan Orchestrator/EdgeEnv operation evidence next.",
+    )
+
+
+def _operation_quick_scan_reviewer_focus_row(
+    edgeenv_regression: dict[str, Any],
+) -> tuple[str, str, str] | None:
+    telemetry_context = edgeenv_regression.get("runtime_telemetry_context")
+    if not isinstance(telemetry_context, dict):
+        return None
+
+    labels = _operation_quick_scan_labels(telemetry_context)
+    if not labels:
+        return None
+
+    return (
+        "Operation quick scan",
+        "; ".join(labels),
+        "Start here for queue/deadline/fallback pressure and Jetson/device-local preservation identity.",
     )
 
 
