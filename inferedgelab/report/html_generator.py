@@ -627,11 +627,19 @@ def _runtime_intelligence_risk_summary_to_html(
         )
 
     review_path_html = (
+        "<h3>Review Path</h3>"
         "<p><strong>Review path:</strong> start with <code>Reviewer Focus</code>, "
         "then open <code>Detailed Evidence Rows</code> only for comparable "
         "regression, telemetry/replay gaps, operation quick scan, preserved "
         "run/path, or deterministic warning evidence. Lab remains the final "
         "deployment decision owner.</p>"
+        "<ol>"
+        "<li><strong>Reviewer Focus</strong>: quick scan comparability, "
+        "telemetry quality, operation pressure, and AIGuard warning status.</li>"
+        "<li><strong>Detailed Evidence Rows</strong>: open only the rows needed "
+        "to verify the specific regression, replay gap, preserved run/path, or "
+        "deterministic warning evidence.</li>"
+        "</ol>"
     )
 
     return f"""

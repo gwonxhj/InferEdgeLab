@@ -215,6 +215,7 @@ Expected Lab behavior:
   preserving the promoted Lab quick-scan row as reviewer navigation evidence
   without changing Lab deployment policy.
 - The same report artifact gate summary emits `Validated Review Path` with
+  `review_path_section: short Review Path section rendered`,
   `review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated`,
   preserving the generated report reading order as reviewer navigation
   evidence without making CI or AIGuard the report owner.

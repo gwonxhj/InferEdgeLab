@@ -18,12 +18,15 @@ DURATION_TRACEABILITY_SUMMARY = "\n".join(
         "- reviewer_focus_operation_quick_scan: Reviewer Focus / Operation quick scan marker validated",
         "- reviewer_focus_operation_quick_scan_raw_marker: raw marker preserved in Lab report",
         "## Validated Review Path",
+        "- review_path_section: short Review Path section rendered",
         "- review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated",
         "- review_path_scope: comparable regression / telemetry replay / operation evidence preserved",
     ]
 ) + "\n"
 RUNTIME_REPORT_REVIEW_PATH_MARKERS = [
+    "### Review Path",
     "Review path: start with `Reviewer Focus`, then open `Detailed Evidence Rows`",
+    "| Step | Open | Use it for |",
     "only for comparable regression, telemetry/replay gaps, operation quick scan",
 ]
 
@@ -300,6 +303,7 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         "raw marker preserved in Lab report"
     ) in summary
     assert "## Validated Review Path" in summary
+    assert "review_path_section: short Review Path section rendered" in summary
     assert (
         "review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated"
         in summary

@@ -8,9 +8,11 @@ from rich import print as rprint
 
 REQUIRED_MARKDOWN_MARKERS = {
     "risk_summary_section": "## Runtime Intelligence Risk Summary",
+    "review_path_section": "### Review Path",
     "review_path": (
         "Review path: start with `Reviewer Focus`, then open `Detailed Evidence Rows`"
     ),
+    "review_path_table": "| Step | Open | Use it for |",
     "review_path_scope": (
         "only for comparable regression, telemetry/replay gaps, operation quick scan"
     ),
@@ -159,8 +161,10 @@ REQUIRED_MARKDOWN_MARKERS = {
 
 REQUIRED_HTML_MARKERS = {
     "risk_summary_section": "Runtime Intelligence Risk Summary",
+    "review_path_section": "<h3>Review Path</h3>",
     "review_path": "Review path:",
     "review_path_focus": "start with <code>Reviewer Focus</code>",
+    "review_path_detail_step": "<strong>Detailed Evidence Rows</strong>: open only the rows needed",
     "review_path_scope": (
         "only for comparable regression, telemetry/replay gaps, operation quick scan"
     ),
@@ -279,6 +283,7 @@ REVIEWER_FOCUS_SUMMARY_MARKERS = (
 )
 
 REVIEW_PATH_SUMMARY_MARKERS = (
+    "review_path_section: short Review Path section rendered",
     "review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated",
     "review_path_scope: comparable regression / telemetry replay / operation evidence preserved",
 )

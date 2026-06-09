@@ -499,12 +499,14 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "raw_context: preserved in artifact; omitted from console summary" in out
     assert "'raw_context':" not in out
     assert "Runtime Intelligence Risk Summary" in markdown
+    assert "### Review Path" in markdown
     assert (
         "Review path: start with `Reviewer Focus`, then open `Detailed Evidence Rows` "
         "only for comparable regression, telemetry/replay gaps, operation quick scan, "
         "preserved run/path, or deterministic warning evidence. Lab remains the final "
         "deployment decision owner."
     ) in markdown
+    assert "| Step | Open | Use it for |" in markdown
     assert "### Reviewer Focus" in markdown
     assert "| Focus | Quick signal | First read |" in markdown
     assert "| Decision owner | Lab=review_required;" in markdown
@@ -599,8 +601,10 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
         "warmup=1, runs=10"
     ) in markdown
     assert "Runtime Intelligence Risk Summary" in html
+    assert "<h3>Review Path</h3>" in html
     assert "Review path:" in html
     assert "start with <code>Reviewer Focus</code>" in html
+    assert "<strong>Detailed Evidence Rows</strong>: open only the rows needed" in html
     assert "Lab remains the final deployment decision owner." in html
     assert "Reviewer Focus" in html
     assert "Quick signal" in html

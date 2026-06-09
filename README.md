@@ -518,9 +518,10 @@ AIGuard evidence in the same Lab-owned report. The summary is a reviewer
 navigation surface, not a new owner: Lab remains the final deployment decision
 owner.
 
-Start with the report's `Reviewer Focus` table, then open only the detailed rows
-needed for the risk being reviewed. The README keeps this as a short reviewer
-path; the full marker contract stays in the handoff document linked below.
+Start with the report's `Review Path` section, then use the `Reviewer Focus`
+table before opening only the detailed rows needed for the risk being reviewed.
+The README keeps this as a short reviewer path; the full marker contract stays
+in the handoff document linked below.
 
 | Reviewer question | Evidence path | Why it matters |
 |---|---|---|

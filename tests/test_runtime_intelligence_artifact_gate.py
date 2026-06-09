@@ -69,6 +69,7 @@ def test_runtime_intelligence_artifact_gate_passes_for_chain_report(tmp_path):
         "Operation quick scan marker validated"
     ) in summary
     assert "## Validated Review Path" in summary
+    assert "review_path_section: short Review Path section rendered" in summary
     assert (
         "review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated"
         in summary
@@ -79,7 +80,10 @@ def test_runtime_intelligence_artifact_gate_passes_for_chain_report(tmp_path):
     ) in summary
     markdown = markdown_path.read_text(encoding="utf-8")
     html = html_path.read_text(encoding="utf-8")
+    assert "### Review Path" in markdown
     assert "Review path: start with `Reviewer Focus`" in markdown
+    assert "| Step | Open | Use it for |" in markdown
+    assert "<h3>Review Path</h3>" in html
     assert "Review path:" in html
     assert "Runtime replay duration scope" in markdown
     assert "short 96-frame-class replay (96 frames)" in markdown
@@ -121,6 +125,7 @@ def test_runtime_intelligence_artifact_gate_cli_passes_for_chain_report(tmp_path
     assert "reviewer_focus_operation_quick_scan" in summary
     assert "reviewer_focus_operation_quick_scan_raw_marker" in summary
     assert "Validated Review Path" in summary
+    assert "review_path_section: short Review Path section rendered" in summary
     assert "review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated" in summary
 
 

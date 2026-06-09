@@ -846,11 +846,22 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
     )
 
     assert "## Runtime Intelligence Risk Summary" in text
+    assert "### Review Path" in text
     assert (
         "Review path: start with `Reviewer Focus`, then open `Detailed Evidence Rows` "
         "only for comparable regression, telemetry/replay gaps, operation quick scan, "
         "preserved run/path, or deterministic warning evidence. Lab remains the final "
         "deployment decision owner."
+    ) in text
+    assert "| Step | Open | Use it for |" in text
+    assert (
+        "| 1 | `Reviewer Focus` | Quick scan for comparability, telemetry quality, "
+        "operation pressure, and AIGuard warning status. |"
+    ) in text
+    assert (
+        "| 2 | `Detailed Evidence Rows` | Open only the rows needed to verify the "
+        "specific regression, replay gap, preserved run/path, or deterministic "
+        "warning evidence. |"
     ) in text
     assert "### Reviewer Focus" in text
     assert "| Focus | Quick signal | First read |" in text
@@ -970,8 +981,11 @@ def test_generate_compare_html_summarizes_operation_risk_summary():
     )
 
     assert "Runtime Intelligence Risk Summary" in html
+    assert "<h3>Review Path</h3>" in html
     assert "Review path:" in html
     assert "start with <code>Reviewer Focus</code>" in html
+    assert "<strong>Reviewer Focus</strong>: quick scan comparability" in html
+    assert "<strong>Detailed Evidence Rows</strong>: open only the rows needed" in html
     assert "Lab remains the final deployment decision owner." in html
     assert "Reviewer Focus" in html
     assert "Quick signal" in html
