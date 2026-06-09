@@ -135,6 +135,18 @@ def test_runtime_intelligence_bundle_manifest_gate_cli_passes(tmp_path):
         "expected_report_markers: remote fallback Lab context row declared"
         in summary
     )
+    assert (
+        "reviewer_path_gate: README/ecosystem reviewer path gate context declared"
+        in summary
+    )
+    assert (
+        "reviewer_path_local_links: local reviewer path link gate context preserved"
+        in summary
+    )
+    assert (
+        "reviewer_path_anchor_fragments: reviewer path anchor gate context preserved"
+        in summary
+    )
 
 def test_runtime_intelligence_docs_describe_expected_report_markers():
     handoff_doc = (

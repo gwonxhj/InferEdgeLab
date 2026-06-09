@@ -174,6 +174,9 @@ SUMMARY_CONTRACT_MARKERS = (
     "expected_report_markers: Runtime Intelligence report markers declared",
     "expected_report_markers: EdgeEnv fixture matrix coverage row declared",
     "expected_report_markers: remote fallback Lab context row declared",
+    "reviewer_path_gate: README/ecosystem reviewer path gate context declared",
+    "reviewer_path_local_links: local reviewer path link gate context preserved",
+    "reviewer_path_anchor_fragments: reviewer path anchor gate context preserved",
 )
 EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS = (
     "edgeenv_handoff: lab_bundle_alignment validated",
