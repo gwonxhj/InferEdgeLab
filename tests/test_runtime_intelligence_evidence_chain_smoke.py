@@ -519,13 +519,11 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "| Telemetry/replay quality | gaps=0; history_missing_runs=1;" in markdown
     assert (
         "| Operation quick scan | candidate: "
-        "queue_pressure_reason=queue_backlog_threshold_exceeded, "
-        "max_total_queue_depth=7, deadline_missed_count=2, fallback_count=1; "
-        "preservation=identity=jetson_device_local_preservation, "
+        "queue=queue_backlog_threshold_exceeded, depth=7, "
+        "deadline_miss=2, fallback=1; "
+        "preservation=jetson_device_local_preservation, "
         "path=device_local_starter, run=edgeenv-smoke-candidate; "
-        "task_rollup=present; "
-        "rendered_label=Reviewer operation quick scan; "
-        "raw_marker=reviewer_focus_operation_quick_scan |"
+        "task_rollup=present |"
     ) in markdown
     assert "| Operation context | queue_deadline_fallback=present;" in markdown
     assert markdown.index("| Operation quick scan |") < markdown.index("| Operation context |")

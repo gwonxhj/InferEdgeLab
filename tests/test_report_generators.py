@@ -874,12 +874,10 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
     assert "| Telemetry/replay quality | gaps=0; history_missing_runs=0;" in text
     assert (
         "| Operation quick scan | candidate: "
-        "queue_pressure_reason=queue_backlog_threshold_exceeded, "
-        "max_total_queue_depth=7, deadline_missed_count=2, fallback_count=1; "
-        "preservation=identity=jetson_device_local_preservation, "
-        "run=candidate; task_rollup=present; "
-        "rendered_label=Reviewer operation quick scan; "
-        "raw_marker=reviewer_focus_operation_quick_scan |"
+        "queue=queue_backlog_threshold_exceeded, depth=7, "
+        "deadline_miss=2, fallback=1; "
+        "preservation=jetson_device_local_preservation, run=candidate; "
+        "task_rollup=present |"
     ) in text
     assert "| Operation context | queue_deadline_fallback=present;" in text
     assert text.index("| Operation quick scan |") < text.index("| Operation context |")
