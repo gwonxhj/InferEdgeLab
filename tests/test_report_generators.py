@@ -855,6 +855,10 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
     ) in text
     assert "| Step | Open | Use it for |" in text
     assert (
+        "Fast path: `Reviewer Focus` -> `Detailed Evidence Rows` only when a quick "
+        "signal needs supporting evidence."
+    ) in text
+    assert (
         "| 1 | `Reviewer Focus` | Quick scan for comparability, telemetry quality, "
         "operation pressure, and AIGuard warning status. |"
     ) in text
@@ -981,9 +985,11 @@ def test_generate_compare_html_summarizes_operation_risk_summary():
     )
 
     assert "Runtime Intelligence Risk Summary" in html
+    assert 'class="review-path"' in html
     assert "<h3>Review Path</h3>" in html
     assert "Review path:" in html
     assert "start with <code>Reviewer Focus</code>" in html
+    assert "<strong>Fast path:</strong> <code>Reviewer Focus</code> ->" in html
     assert "<strong>Reviewer Focus</strong>: quick scan comparability" in html
     assert "<strong>Detailed Evidence Rows</strong>: open only the rows needed" in html
     assert "Lab remains the final deployment decision owner." in html

@@ -352,6 +352,11 @@ def _append_runtime_intelligence_risk_summary(
         "deployment decision owner."
     )
     lines.append("")
+    lines.append(
+        "Fast path: `Reviewer Focus` -> `Detailed Evidence Rows` only when a quick "
+        "signal needs supporting evidence."
+    )
+    lines.append("")
     lines.append("| Step | Open | Use it for |")
     lines.append("|---|---|---|")
     lines.append(

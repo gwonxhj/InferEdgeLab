@@ -13,6 +13,10 @@ REQUIRED_MARKDOWN_MARKERS = {
         "Review path: start with `Reviewer Focus`, then open `Detailed Evidence Rows`"
     ),
     "review_path_table": "| Step | Open | Use it for |",
+    "review_path_fast_path": (
+        "Fast path: `Reviewer Focus` -> `Detailed Evidence Rows` only when a quick "
+        "signal needs supporting evidence."
+    ),
     "review_path_scope": (
         "only for comparable regression, telemetry/replay gaps, operation quick scan"
     ),
@@ -161,9 +165,13 @@ REQUIRED_MARKDOWN_MARKERS = {
 
 REQUIRED_HTML_MARKERS = {
     "risk_summary_section": "Runtime Intelligence Risk Summary",
+    "review_path_panel": 'class="review-path"',
     "review_path_section": "<h3>Review Path</h3>",
     "review_path": "Review path:",
     "review_path_focus": "start with <code>Reviewer Focus</code>",
+    "review_path_fast_path": (
+        "<strong>Fast path:</strong> <code>Reviewer Focus</code> ->"
+    ),
     "review_path_detail_step": "<strong>Detailed Evidence Rows</strong>: open only the rows needed",
     "review_path_scope": (
         "only for comparable regression, telemetry/replay gaps, operation quick scan"
@@ -284,6 +292,7 @@ REVIEWER_FOCUS_SUMMARY_MARKERS = (
 
 REVIEW_PATH_SUMMARY_MARKERS = (
     "review_path_section: short Review Path section rendered",
+    "review_path_fast_path: readable Review Path fast path rendered",
     "review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated",
     "review_path_scope: comparable regression / telemetry replay / operation evidence preserved",
 )

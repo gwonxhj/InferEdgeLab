@@ -520,6 +520,8 @@ owner.
 
 Start with the report's `Review Path` section, then use the `Reviewer Focus`
 table before opening only the detailed rows needed for the risk being reviewed.
+The generated section also includes a `Fast path` line so reviewers can scan the
+short route before reading the full evidence table.
 The README keeps this as a short reviewer path; the full marker contract stays
 in the handoff document linked below.
 

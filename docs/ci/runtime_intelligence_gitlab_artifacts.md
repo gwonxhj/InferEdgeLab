@@ -208,6 +208,7 @@ so reviewers can confirm the promoted Lab quick-scan row from the compact gate
 summary before opening the full Markdown/HTML report.
 It also emits `Validated Review Path` with
 `review_path_section: short Review Path section rendered`,
+`review_path_fast_path: readable Review Path fast path rendered`,
 `review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated`,
 so the compact gate summary preserves the report reading order without making
 CI the report owner or deployment decision owner.
@@ -225,9 +226,10 @@ It also repeats the report gate's `Validated Reviewer Focus` section and the
 `reviewer_focus_operation_quick_scan` marker, keeping the promoted
 `Operation quick scan` row visible in CI artifacts without making CI a report
 owner or runtime control plane.
-The final CI summary also repeats `Validated Review Path` and the
-`review_path` marker, so reviewers can follow the same README -> Lab report ->
-gate-summary reading order from the deployment-risk artifact.
+The final CI summary also repeats `Validated Review Path`, the `review_path`
+marker, and the readable fast-path marker, so reviewers can follow the same
+README -> Lab report -> gate-summary reading order from the deployment-risk
+artifact.
 The same CI artifact gate also checks the copied
 `aiguard_edgeenv_handoff_alignment.json/.md` for Lab report marker context:
 `lab_expected_report_markers` must match the Lab-owned Runtime Intelligence
