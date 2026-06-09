@@ -518,28 +518,18 @@ AIGuard evidence in the same Lab-owned report. The summary is a reviewer
 navigation surface, not a new owner: Lab remains the final deployment decision
 owner.
 
-Start with the report's `Reviewer Focus` table. It uses
-`Focus / Quick signal / First read` columns so reviewers can scan the main risk
-areas before opening detailed evidence rows.
+Start with the report's `Reviewer Focus` table, then open only the detailed rows
+needed for the risk being reviewed. The README keeps this as a short reviewer
+path; the full marker contract stays in the handoff document linked below.
 
-| First read | Quick signal | What it tells you |
+| Reviewer question | Evidence path | Why it matters |
 |---|---|---|
-| Decision owner | `Lab remains the final deployment decision owner` | The report is Lab-owned; EdgeEnv, AIGuard, and Orchestrator provide evidence only. |
-| EdgeEnv regression gate | EdgeEnv comparability / regression evidence | Runtime regression is interpreted only after EdgeEnv comparability context is present. |
-| Telemetry/replay quality | telemetry replay gaps and `runtime_history_seed_run_config_traceability` | Shows whether Runtime history seed and `run_config` traceability are available. |
-| Operation quick scan | `Reviewer operation quick scan` value promoted into Reviewer Focus with `raw_marker=reviewer_focus_operation_quick_scan` | Shows queue pressure, `max_total_queue_depth`, deadline misses, fallback count, and Jetson/device-local preservation identity before the detailed rows. |
-| Operation context | `Orchestrator queue/deadline/fallback markers` and task rollup presence | Shows which Orchestrator/EdgeEnv operation evidence groups are available for deeper review. |
-| AIGuard warnings | deterministic AIGuard runtime operation evidence | Preserves warning evidence without overriding Lab deployment policy. |
-
-Reviewer marker map:
-
-| Marker group | Key rows / labels | Why it matters |
-|---|---|---|
-| Producer lineage | `edgeenv_orchestrator_producer_lineage`, `runtime_history_seed_run_config_traceability` | Confirms EdgeEnv/Orchestrator lineage reached AIGuard and Lab. |
-| Queue pressure | `Reviewer operation quick scan`, `Orchestrator queue/deadline/fallback markers`, `AIGuard max queue raw-context traceability` | Makes `max_total_queue_depth` traceable back to deterministic AIGuard raw context while keeping device-local preservation labels easy to spot. |
-| Replay and preservation | `Runtime replay duration scope`, `Lab EdgeEnv preservation context`, `Jetson/device-local EdgeEnv preservation run`, `Jetson/device-local EdgeEnv preservation details` | Shows replay duration, Lab preservation, and `identity=jetson_device_local_preservation` / `path=device_local_starter` labels. |
-| Task and operation risk | `Orchestrator task event rollup`, `AIGuard task event rollup evidence`, `AIGuard runtime operation anomalies` | Shows scheduler delay, deadline misses, fallback decisions, and queue/drop reasons as review context only. |
-| Remote starter boundary | `AIGuard remote dispatch event summary`, `Remote fallback starter evidence`, `production_remote_execution=false` | Keeps remote dispatch as starter evidence, not production remote execution. |
+| Who owns the decision? | `Lab remains the final deployment decision owner` | Confirms EdgeEnv, AIGuard, and Orchestrator are evidence providers only. |
+| Is regression comparable? | EdgeEnv comparability / regression evidence | Prevents runtime regression from being interpreted before comparability context exists. |
+| Is telemetry/replay evidence complete enough? | telemetry replay gaps, `runtime_history_seed_run_config_traceability`, `edgeenv_orchestrator_producer_lineage` | Shows whether Runtime seed, `run_config`, EdgeEnv history, and Orchestrator lineage reached Lab. |
+| Is there an operation risk worth opening first? | `Reviewer operation quick scan`, `raw_marker=reviewer_focus_operation_quick_scan`, `Orchestrator queue/deadline/fallback markers` | Surfaces queue pressure, `max_total_queue_depth`, deadline misses, fallback count, and Jetson/device-local identity before the detailed rows. |
+| Which preserved run/path is being reviewed? | `Runtime replay duration scope`, `Lab EdgeEnv preservation context`, `Jetson/device-local EdgeEnv preservation run`, `Jetson/device-local EdgeEnv preservation details` | Keeps replay duration, `identity=jetson_device_local_preservation`, and `path=device_local_starter` easy to find. |
+| Which warnings remain review context only? | `AIGuard max queue raw-context traceability`, `AIGuard runtime operation anomalies`, `AIGuard remote dispatch event summary`, `Remote fallback starter evidence`, `production_remote_execution=false` | Preserves deterministic warning and remote starter evidence without making AIGuard/Orchestrator the policy owner. |
 
 These rows do not turn Orchestrator, EdgeEnv, or AIGuard into final decision
 owners. They also do not present the path as production remote execution,

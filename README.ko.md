@@ -226,26 +226,19 @@ Runtime Intelligence smoke:
 - Jetson EdgeEnv preservation smoke는 device-local ONNX Runtime probe evidence, live `tegrastats`, Runtime operation summary가 EdgeEnv run evidence를 거쳐 Lab deployment risk report까지 이어지는지 확인합니다.
 - 기존 JSON contract를 바꾸지 않고 Lab-owned Runtime Intelligence Risk Summary를 생성합니다.
 
-### Runtime Intelligence Risk Summary 빠른 읽기
+### Runtime Intelligence Risk Summary 검토 경로
 
-| 먼저 볼 항목 | Quick signal | 의미 |
+먼저 report의 `Reviewer Focus` table을 보고, 필요한 경우에만 detailed row를 열어 확인합니다.
+README에서는 빠른 검토 경로만 유지하고, 세부 marker contract는 아래 handoff 문서에 둡니다.
+
+| 리뷰어 질문 | 확인할 evidence path | 의미 |
 |---|---|---|
-| Decision owner | `Lab remains the final deployment decision owner` | EdgeEnv, AIGuard, Orchestrator는 evidence provider이고 최종 판단은 Lab이 소유합니다. |
-| EdgeEnv regression gate | EdgeEnv comparability / regression evidence | runtime regression은 EdgeEnv comparability context가 있을 때만 해석합니다. |
-| Telemetry/replay quality | telemetry replay gap, `runtime_history_seed_run_config_traceability` | Runtime history seed와 `run_config` traceability가 보존됐는지 확인합니다. |
-| Operation quick scan | `Reviewer operation quick scan` 값을 Reviewer Focus로 승격하고 `raw_marker=reviewer_focus_operation_quick_scan`을 보존 | detailed row를 열기 전에 queue pressure, `max_total_queue_depth`, deadline miss, fallback count, Jetson/device-local preservation identity를 먼저 봅니다. |
-| Operation context | `Orchestrator queue/deadline/fallback markers`, task rollup presence | 더 깊게 볼 Orchestrator/EdgeEnv operation evidence 그룹이 있는지 확인합니다. |
-| AIGuard warnings | deterministic AIGuard runtime operation evidence | AIGuard warning은 Lab policy를 덮어쓰지 않는 review evidence입니다. |
-
-Marker group:
-
-| 그룹 | 핵심 row / label | 이유 |
-|---|---|---|
-| Producer lineage | `edgeenv_orchestrator_producer_lineage`, `runtime_history_seed_run_config_traceability` | EdgeEnv/Orchestrator lineage가 AIGuard와 Lab까지 보존됐는지 확인합니다. |
-| Queue pressure | `Reviewer operation quick scan`, `Orchestrator queue/deadline/fallback markers`, `AIGuard max queue raw-context traceability` | `max_total_queue_depth`가 AIGuard deterministic raw context와 연결되는지 보여주고 device-local preservation label을 쉽게 찾게 합니다. |
-| Replay / preservation | `Runtime replay duration scope`, `Lab EdgeEnv preservation context`, `Jetson/device-local EdgeEnv preservation run`, `Jetson/device-local EdgeEnv preservation details` | replay duration과 `identity=jetson_device_local_preservation`, `path=device_local_starter` label을 빠르게 찾게 합니다. |
-| Task / operation risk | `Orchestrator task event rollup`, `AIGuard task event rollup evidence`, `AIGuard runtime operation anomalies` | scheduler delay, deadline miss, fallback decision, queue/drop reason을 review context로 보여줍니다. |
-| Remote starter boundary | `AIGuard remote dispatch event summary`, `Remote fallback starter evidence`, `production_remote_execution=false` | remote dispatch를 production execution이 아니라 starter evidence로 제한합니다. |
+| 최종 판단 owner는 누구인가? | `Lab remains the final deployment decision owner` | EdgeEnv, AIGuard, Orchestrator는 evidence provider이고 최종 판단은 Lab이 소유합니다. |
+| runtime regression을 비교해도 되는가? | EdgeEnv comparability / regression evidence | runtime regression은 EdgeEnv comparability context가 있을 때만 해석합니다. |
+| telemetry/replay evidence가 충분한가? | telemetry replay gap, `runtime_history_seed_run_config_traceability`, `edgeenv_orchestrator_producer_lineage` | Runtime seed, `run_config`, EdgeEnv history, Orchestrator lineage가 Lab까지 보존됐는지 확인합니다. |
+| 먼저 열어볼 operation risk가 있는가? | `Reviewer operation quick scan`, `raw_marker=reviewer_focus_operation_quick_scan`, `Orchestrator queue/deadline/fallback markers` | detailed row를 열기 전에 queue pressure, `max_total_queue_depth`, deadline miss, fallback count, Jetson/device-local identity를 먼저 봅니다. |
+| 어떤 preserved run/path를 보는가? | `Runtime replay duration scope`, `Lab EdgeEnv preservation context`, `Jetson/device-local EdgeEnv preservation run`, `Jetson/device-local EdgeEnv preservation details` | replay duration과 `identity=jetson_device_local_preservation`, `path=device_local_starter` label을 빠르게 찾게 합니다. |
+| 어떤 warning이 review context로만 남는가? | `AIGuard max queue raw-context traceability`, `AIGuard runtime operation anomalies`, `AIGuard remote dispatch event summary`, `Remote fallback starter evidence`, `production_remote_execution=false` | AIGuard/Orchestrator가 policy owner가 되지 않도록 deterministic warning과 remote starter evidence를 보존합니다. |
 
 세부 marker contract는 [docs/portfolio/edgeenv_runtime_regression_lab_handoff.md](docs/portfolio/edgeenv_runtime_regression_lab_handoff.md)에 정리되어 있습니다.
 
