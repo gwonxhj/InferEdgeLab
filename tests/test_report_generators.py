@@ -869,6 +869,13 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
         "specific regression, replay gap, preserved run/path, or deterministic "
         "warning evidence. |"
     ) in text
+    assert (
+        "| 3 | `Artifact Gate Summary` | Cross-check "
+        "`runtime_intelligence_bundle_manifest_gate_summary.md` and "
+        "`runtime_anomaly_gate_summary.md` for `reviewer_path_gate`, "
+        "`reviewer_path_local_links`, and `reviewer_path_anchor_fragments` "
+        "marker preservation. |"
+    ) in text
     assert "### Reviewer Focus" in text
     assert "| Focus | Quick signal | First read |" in text
     assert "| EdgeEnv regression gate | comparable=True; mode=same-condition;" in text
@@ -993,6 +1000,9 @@ def test_generate_compare_html_summarizes_operation_risk_summary():
     assert "<strong>Fast path:</strong> <code>Reviewer Focus</code> ->" in html
     assert "<strong>Reviewer Focus</strong>: quick scan comparability" in html
     assert "<strong>Detailed Evidence Rows</strong>: open only the rows needed" in html
+    assert "<strong>Artifact Gate Summary</strong>: cross-check" in html
+    assert "runtime_intelligence_bundle_manifest_gate_summary.md" in html
+    assert "reviewer_path_anchor_fragments" in html
     assert "Lab remains the final deployment decision owner." in html
     assert "Reviewer Focus" in html
     assert "Quick signal" in html

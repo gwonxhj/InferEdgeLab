@@ -26,6 +26,7 @@ DURATION_TRACEABILITY_SUMMARY = "\n".join(
         "- review_path_fast_path: readable Review Path fast path rendered",
         "- review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated",
         "- review_path_scope: comparable regression / telemetry replay / operation evidence preserved",
+        "- review_path_artifact_gate_summary: artifact gate summary reference row validated",
     ]
 ) + "\n"
 RUNTIME_REPORT_REVIEW_PATH_MARKERS = [
@@ -33,6 +34,8 @@ RUNTIME_REPORT_REVIEW_PATH_MARKERS = [
     "Review path: start with `Reviewer Focus`, then open `Detailed Evidence Rows`",
     "Fast path: `Reviewer Focus` -> `Detailed Evidence Rows` only when a quick signal needs supporting evidence.",
     "| Step | Open | Use it for |",
+    "| 3 | `Artifact Gate Summary` | Cross-check `runtime_intelligence_bundle_manifest_gate_summary.md`",
+    "`reviewer_path_gate`, `reviewer_path_local_links`, and `reviewer_path_anchor_fragments`",
     "only for comparable regression, telemetry/replay gaps, operation quick scan",
 ]
 
@@ -329,6 +332,10 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         "review_path_scope: comparable regression / telemetry replay / "
         "operation evidence preserved"
     ) in summary
+    assert (
+        "review_path_artifact_gate_summary: artifact gate summary reference row validated"
+        in summary
+    )
 
     (report_dir / "runtime_anomaly_gate_summary.md").write_text(
         "- Status: passed\n",

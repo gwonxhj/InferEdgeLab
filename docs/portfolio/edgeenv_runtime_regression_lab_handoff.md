@@ -220,6 +220,7 @@ Expected Lab behavior:
   `review_path_section: short Review Path section rendered`,
   `review_path_fast_path: readable Review Path fast path rendered`,
   `review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated`,
+  `review_path_artifact_gate_summary: artifact gate summary reference row validated`,
   preserving the generated report reading order as reviewer navigation
   evidence without making CI or AIGuard the report owner.
 - The Jetson/device-local preservation row starts with `identity=jetson_device_local_preservation` and the device-local path marker such as `path=device_local_starter` when available, making the preserved Jetson EdgeEnv run easier to identify before reviewers inspect detailed queue/resource context.
