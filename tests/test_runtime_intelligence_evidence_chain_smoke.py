@@ -519,8 +519,9 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "| Telemetry/replay quality | gaps=0; history_missing_runs=1;" in markdown
     assert (
         "| Operation quick scan | candidate: "
-        "queue=queue_backlog_threshold_exceeded, depth=7, "
-        "deadline_miss=2, fallback=1; "
+        "operation_summary: mode=device_local, max_queue=7, "
+        "queue_pressure=queue_backlog_threshold_exceeded, "
+        "deadline_missed=2, fallback=1, dropped=0; "
         "preservation=jetson_device_local_preservation, "
         "path=device_local_starter, run=edgeenv-smoke-candidate; "
         "task_rollup=present |"
