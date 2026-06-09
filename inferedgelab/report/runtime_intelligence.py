@@ -474,15 +474,14 @@ def _operation_quick_scan_reviewer_focus_row(
     if not isinstance(telemetry_context, dict):
         return None
 
-    labels = _operation_quick_scan_labels(telemetry_context)
+    labels = _operation_quick_scan_focus_labels(telemetry_context)
     if not labels:
         return None
 
-    labels = _append_operation_quick_scan_traceability(labels)
     return (
         "Operation quick scan",
         "; ".join(labels),
-        "Start here for queue/deadline/fallback pressure and Jetson/device-local preservation identity.",
+        "Start here for the compact queue/deadline/fallback signal and Jetson/device-local preservation identity.",
     )
 
 
@@ -961,6 +960,67 @@ def _operation_quick_scan_labels(context: dict[str, Any]) -> list[str]:
         if parts:
             labels.append(f"{run_label}: " + "; ".join(parts))
     return labels
+
+
+def _operation_quick_scan_focus_labels(context: dict[str, Any]) -> list[str]:
+    marker_by_run = _label_values_by_run(
+        _orchestrator_queue_deadline_fallback_labels(context)
+    )
+    risk_by_run = _label_values_by_run(_orchestrator_operation_risk_labels(context))
+    preservation_by_run = _label_values_by_run(
+        _edgeenv_preservation_run_labels(context)
+    )
+    task_by_run = _label_values_by_run(_orchestrator_task_event_rollup_labels(context))
+
+    labels: list[str] = []
+    for run_label in ("baseline", "candidate"):
+        parts: list[str] = []
+        marker_label = marker_by_run.get(run_label)
+        risk_label = risk_by_run.get(run_label)
+        if marker_label:
+            parts.append(_compact_operation_quick_scan_marker_label(marker_label))
+        elif risk_label:
+            parts.append(
+                "risk="
+                + _compact_operation_quick_scan_marker_label(risk_label)
+            )
+
+        preservation_label = preservation_by_run.get(run_label)
+        if preservation_label:
+            parts.append(
+                "preservation="
+                + _compact_operation_quick_scan_preservation_label(
+                    preservation_label
+                )
+            )
+
+        if task_by_run.get(run_label):
+            parts.append("task_rollup=present")
+
+        if parts:
+            labels.append(f"{run_label}: " + "; ".join(parts))
+    return labels
+
+
+def _compact_operation_quick_scan_marker_label(label: str) -> str:
+    replacements = (
+        ("queue_pressure_reason=", "queue="),
+        ("max_total_queue_depth=", "depth="),
+        ("deadline_missed_count=", "deadline_miss="),
+        ("fallback_count=", "fallback="),
+        ("max_pressure_task=", "task="),
+        ("primary_health_reason=", "health="),
+        ("device_local_event_count=", "device_local_events="),
+        ("producer_event_count=", "producer_events="),
+    )
+    compact = label
+    for source, target in replacements:
+        compact = compact.replace(source, target)
+    return compact
+
+
+def _compact_operation_quick_scan_preservation_label(label: str) -> str:
+    return label.replace("identity=", "")
 
 
 def _append_operation_quick_scan_traceability(labels: list[str]) -> list[str]:
