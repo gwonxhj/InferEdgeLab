@@ -343,6 +343,13 @@ def _append_runtime_intelligence_risk_summary(
     )
     lines.append("## Runtime Intelligence Risk Summary")
     lines.append("")
+    lines.append(
+        "Review path: start with `Reviewer Focus`, then open `Detailed Evidence Rows` "
+        "only for comparable regression, telemetry/replay gaps, operation quick scan, "
+        "preserved run/path, or deterministic warning evidence. Lab remains the final "
+        "deployment decision owner."
+    )
+    lines.append("")
     if focus_rows:
         lines.append("### Reviewer Focus")
         lines.append("")

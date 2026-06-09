@@ -626,9 +626,18 @@ def _runtime_intelligence_risk_summary_to_html(
             """
         )
 
+    review_path_html = (
+        "<p><strong>Review path:</strong> start with <code>Reviewer Focus</code>, "
+        "then open <code>Detailed Evidence Rows</code> only for comparable "
+        "regression, telemetry/replay gaps, operation quick scan, preserved "
+        "run/path, or deterministic warning evidence. Lab remains the final "
+        "deployment decision owner.</p>"
+    )
+
     return f"""
   <h2>Runtime Intelligence Risk Summary</h2>
   <div class="meta">
+    {review_path_html}
     <h3>Reviewer Focus</h3>
     <table>
       <thead>

@@ -846,6 +846,12 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
     )
 
     assert "## Runtime Intelligence Risk Summary" in text
+    assert (
+        "Review path: start with `Reviewer Focus`, then open `Detailed Evidence Rows` "
+        "only for comparable regression, telemetry/replay gaps, operation quick scan, "
+        "preserved run/path, or deterministic warning evidence. Lab remains the final "
+        "deployment decision owner."
+    ) in text
     assert "### Reviewer Focus" in text
     assert "| Focus | Quick signal | First read |" in text
     assert "| EdgeEnv regression gate | comparable=True; mode=same-condition;" in text
@@ -964,6 +970,9 @@ def test_generate_compare_html_summarizes_operation_risk_summary():
     )
 
     assert "Runtime Intelligence Risk Summary" in html
+    assert "Review path:" in html
+    assert "start with <code>Reviewer Focus</code>" in html
+    assert "Lab remains the final deployment decision owner." in html
     assert "Reviewer Focus" in html
     assert "Quick signal" in html
     assert "EdgeEnv regression gate" in html
