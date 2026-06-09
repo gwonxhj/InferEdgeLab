@@ -126,6 +126,7 @@ REQUIRED_EXPECTED_REPORT_MARKERS = {
     "Runtime Intelligence Risk Summary",
     "Runtime replay duration scope",
     "Orchestrator operation feed context",
+    "EdgeEnv fixture matrix coverage",
     "Reviewer operation quick scan",
     "Orchestrator task event rollup",
     "Lab EdgeEnv preservation context",
@@ -171,6 +172,7 @@ SUMMARY_CONTRACT_MARKERS = (
     "aiguard_raw_context: max_total_queue_depth traceability preserved",
     "aiguard_handoff_alignment: external required evidence types satisfied",
     "expected_report_markers: Runtime Intelligence report markers declared",
+    "expected_report_markers: EdgeEnv fixture matrix coverage row declared",
     "expected_report_markers: remote fallback Lab context row declared",
 )
 EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS = (
@@ -179,6 +181,7 @@ EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS = (
     "edgeenv_handoff: history_seed_run_config validated",
     "edgeenv_handoff: remote_dispatch_boundary preserved",
     "edgeenv_handoff: device_local_producer_lineage validated",
+    "edgeenv_handoff: fixture_matrix_context validated",
     "edgeenv_handoff: producer_lineage_guard_alignment validated",
     "edgeenv_handoff: orchestrator_task_event_rollup validated",
     "edgeenv_handoff: missing_telemetry_orchestrator_context validated",
@@ -573,6 +576,8 @@ def _validate_edgeenv_handoff_report_summary(
     device_local_run_ids = _device_local_producer_context_run_ids(context)
     guard_alignment_run_ids = _producer_lineage_guard_alignment_run_ids(context)
     task_event_rollup_run_ids = _orchestrator_task_event_rollup_run_ids(context)
+    fixture_matrix_context = regression_report.get("fixture_matrix_context")
+    fixture_matrix_summary = _fixture_matrix_summary(fixture_matrix_context)
 
     _record(
         summary.get("device_local_producer_context_present")
@@ -621,6 +626,56 @@ def _validate_edgeenv_handoff_report_summary(
         "orchestrator_task_event_rollup_run_ids must match preserved "
         "Orchestrator task event rollup run IDs",
     )
+    _record(
+        summary.get("fixture_matrix_context_present")
+        is bool(fixture_matrix_summary),
+        errors,
+        "EdgeEnv handoff edgeenv_report_summary."
+        "fixture_matrix_context_present must match EdgeEnv regression "
+        "fixture_matrix_context",
+    )
+    if fixture_matrix_summary:
+        for key, expected in fixture_matrix_summary.items():
+            _record(
+                summary.get(key) == expected,
+                errors,
+                "EdgeEnv handoff edgeenv_report_summary."
+                f"{key} must match EdgeEnv regression fixture_matrix_context",
+            )
+
+
+def _fixture_matrix_summary(context: Any) -> dict[str, Any]:
+    if not isinstance(context, dict):
+        return {}
+    required_roles = _string_list(context.get("required_roles"))
+    covered_roles = _string_list(context.get("covered_roles"))
+    modes = _string_list(context.get("covered_modes"))
+    boundaries = context.get("boundaries")
+    if not isinstance(boundaries, dict):
+        boundaries = {}
+    return {
+        "fixture_matrix_schema_version": context.get("schema_version"),
+        "fixture_matrix_owner": context.get("owner"),
+        "fixture_matrix_required_role_count": context.get(
+            "required_role_count",
+            len(required_roles),
+        ),
+        "fixture_matrix_covered_role_count": context.get(
+            "covered_role_count",
+            len(covered_roles),
+        ),
+        "fixture_matrix_covered_modes": modes,
+        "fixture_matrix_comparability_first": boundaries.get("comparability_first"),
+        "fixture_matrix_not_a_deployment_decision": boundaries.get(
+            "not_a_deployment_decision"
+        ),
+    }
+
+
+def _string_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, str) and item]
 
 
 def _device_local_producer_context_run_ids(context: Any) -> list[str]:

@@ -58,11 +58,13 @@ REQUIRED_BUNDLE_MANIFEST_SUMMARY_MARKERS = (
     "aiguard_raw_context: max_total_queue_depth traceability preserved",
     "aiguard_handoff_alignment: external required evidence types satisfied",
     "expected_report_markers: Runtime Intelligence report markers declared",
+    "expected_report_markers: EdgeEnv fixture matrix coverage row declared",
     "expected_report_markers: remote fallback Lab context row declared",
     "edgeenv_handoff: lab_bundle_alignment validated",
     "edgeenv_handoff: runtime_telemetry_history validated",
     "edgeenv_handoff: external AIGuard evidence requirements declared",
     "edgeenv_handoff: device_local_producer_lineage validated",
+    "edgeenv_handoff: fixture_matrix_context validated",
     "edgeenv_handoff: producer_lineage_guard_alignment validated",
     "edgeenv_handoff: orchestrator_task_event_rollup validated",
     "edgeenv_handoff: missing_telemetry_orchestrator_context validated",
@@ -71,6 +73,7 @@ REQUIRED_LAB_EXPECTED_REPORT_MARKERS = (
     "Runtime Intelligence Risk Summary",
     "Runtime replay duration scope",
     "Orchestrator operation feed context",
+    "EdgeEnv fixture matrix coverage",
     "Reviewer operation quick scan",
     "Orchestrator task event rollup",
     "Lab EdgeEnv preservation context",
@@ -98,6 +101,7 @@ REQUIRED_REVIEWER_FOCUS_SUMMARY_MARKERS = (
     "## Validated Reviewer Focus",
     "reviewer_focus_operation_quick_scan: Reviewer Focus / Operation quick scan marker validated",
     "reviewer_focus_operation_quick_scan_raw_marker: raw marker preserved in Lab report",
+    "reviewer_focus_fixture_matrix: EdgeEnv fixture matrix row validated",
 )
 REQUIRED_REVIEW_PATH_SUMMARY_MARKERS = (
     "## Validated Review Path",
@@ -198,6 +202,10 @@ def _validate_runtime_report(path: Path, errors: list[str]) -> None:
         "| Step | Open | Use it for |",
         "only for comparable regression, telemetry/replay gaps, operation quick scan",
         "Runtime replay duration scope",
+        "EdgeEnv fixture matrix coverage",
+        "schema=edgeenv-regression-replay-fixture-matrix-v1",
+        "modes=same-condition,runtime-comparison,target-comparison,protocol_mismatch",
+        "not_a_deployment_decision=True",
         "short 96-frame-class replay (96 frames)",
         "source=entrypoint_requested_frames",
         "scope_label=source=entrypoint_requested_frames",
@@ -349,6 +357,7 @@ def _validate_aiguard_handoff_alignment(
             "lab_expected_report_markers: "
             "Runtime Intelligence Risk Summary, Runtime replay duration scope, "
             "Orchestrator operation feed context, "
+            "EdgeEnv fixture matrix coverage, "
             "Reviewer operation quick scan, "
             "Orchestrator task event rollup, "
             "Lab EdgeEnv preservation context, "

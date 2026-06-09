@@ -23,6 +23,8 @@ REQUIRED_MARKDOWN_MARKERS = {
     "reviewer_focus_section": "### Reviewer Focus",
     "reviewer_focus_table": "| Focus | Quick signal | First read |",
     "reviewer_focus_edgeenv_gate": "| EdgeEnv regression gate |",
+    "reviewer_focus_fixture_matrix": "| EdgeEnv fixture matrix |",
+    "reviewer_focus_fixture_matrix_roles": "roles=6/6",
     "reviewer_focus_telemetry_quality": "| Telemetry/replay quality |",
     "reviewer_focus_operation_quick_scan": "| Operation quick scan | candidate: ",
     "reviewer_focus_operation_quick_scan_raw_marker": (
@@ -37,6 +39,14 @@ REQUIRED_MARKDOWN_MARKERS = {
     "lab_decision_owner": "Lab remains the final deployment decision owner.",
     "edgeenv_comparability": "| EdgeEnv comparability | Yes / same-condition |",
     "runtime_regression": "| Runtime regression | True / mixed / high |",
+    "edgeenv_fixture_matrix_coverage": "| EdgeEnv fixture matrix coverage |",
+    "edgeenv_fixture_matrix_schema": (
+        "schema=edgeenv-regression-replay-fixture-matrix-v1"
+    ),
+    "edgeenv_fixture_matrix_modes": (
+        "modes=same-condition,runtime-comparison,target-comparison,protocol_mismatch"
+    ),
+    "edgeenv_fixture_matrix_boundary": "not_a_deployment_decision=True",
     "runtime_telemetry_coverage": (
         "| Runtime telemetry coverage gaps | baseline=none; candidate=queue_depth |"
     ),
@@ -179,6 +189,8 @@ REQUIRED_HTML_MARKERS = {
     "reviewer_focus_section": "Reviewer Focus",
     "reviewer_focus_table": "Quick signal",
     "reviewer_focus_edgeenv_gate": "EdgeEnv regression gate",
+    "reviewer_focus_fixture_matrix": "EdgeEnv fixture matrix",
+    "reviewer_focus_fixture_matrix_roles": "roles=6/6",
     "reviewer_focus_telemetry_quality": "Telemetry/replay quality",
     "reviewer_focus_operation_quick_scan": "Operation quick scan",
     "reviewer_focus_operation_quick_scan_raw_marker": (
@@ -192,6 +204,14 @@ REQUIRED_HTML_MARKERS = {
     "detailed_evidence_rows": "Detailed Evidence Rows",
     "lab_decision_owner": "Lab remains the final deployment decision owner.",
     "runtime_telemetry_coverage": "Runtime telemetry coverage gaps",
+    "edgeenv_fixture_matrix_coverage": "EdgeEnv fixture matrix coverage",
+    "edgeenv_fixture_matrix_schema": (
+        "schema=edgeenv-regression-replay-fixture-matrix-v1"
+    ),
+    "edgeenv_fixture_matrix_modes": (
+        "modes=same-condition,runtime-comparison,target-comparison,protocol_mismatch"
+    ),
+    "edgeenv_fixture_matrix_boundary": "not_a_deployment_decision=True",
     "aiguard_coverage_field_gap": "runtime_telemetry_field_gap",
     "aiguard_coverage_gap_recommendation": (
         "Inspect telemetry coverage missing fields"
@@ -288,6 +308,7 @@ DURATION_TRACEABILITY_SUMMARY_MARKERS = (
 REVIEWER_FOCUS_SUMMARY_MARKERS = (
     "reviewer_focus_operation_quick_scan: Reviewer Focus / Operation quick scan marker validated",
     "reviewer_focus_operation_quick_scan_raw_marker: raw marker preserved in Lab report",
+    "reviewer_focus_fixture_matrix: EdgeEnv fixture matrix row validated",
 )
 
 REVIEW_PATH_SUMMARY_MARKERS = (
@@ -343,6 +364,15 @@ def _write_summary(
         lines.append("## Validated Reviewer Focus")
         lines.append("")
         lines.extend(f"- {marker}" for marker in REVIEWER_FOCUS_SUMMARY_MARKERS)
+        lines.append("")
+        lines.append("## Validated EdgeEnv Fixture Matrix")
+        lines.append("")
+        lines.append(
+            "- edgeenv_fixture_matrix_coverage: EdgeEnv fixture matrix coverage row validated"
+        )
+        lines.append(
+            "- edgeenv_fixture_matrix_boundary: comparability-first EdgeEnv boundary preserved"
+        )
         lines.append("")
         lines.append("## Validated Review Path")
         lines.append("")

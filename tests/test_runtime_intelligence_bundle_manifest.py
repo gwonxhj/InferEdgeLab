@@ -128,10 +128,13 @@ def test_runtime_intelligence_bundle_manifest_gate_cli_passes(tmp_path):
         in summary
     )
     assert (
+        "expected_report_markers: EdgeEnv fixture matrix coverage row declared"
+        in summary
+    )
+    assert (
         "expected_report_markers: remote fallback Lab context row declared"
         in summary
     )
-
 
 def test_runtime_intelligence_docs_describe_expected_report_markers():
     handoff_doc = (
@@ -202,6 +205,7 @@ def test_readme_runtime_intelligence_section_stays_scannable():
         "Reviewer operation quick scan",
         "Orchestrator queue/deadline/fallback markers",
         "AIGuard max queue raw-context traceability",
+        "EdgeEnv fixture matrix coverage",
         "Runtime replay duration scope",
         "Lab EdgeEnv preservation context",
         "Jetson/device-local EdgeEnv preservation run",
@@ -299,6 +303,7 @@ def test_runtime_intelligence_bundle_manifest_gate_validates_edgeenv_handoff(
     assert "edgeenv_handoff: history_seed_run_config validated" in summary
     assert "edgeenv_handoff: remote_dispatch_boundary preserved" in summary
     assert "edgeenv_handoff: device_local_producer_lineage validated" in summary
+    assert "edgeenv_handoff: fixture_matrix_context validated" in summary
     assert "edgeenv_handoff: producer_lineage_guard_alignment validated" in summary
     assert "edgeenv_handoff: orchestrator_task_event_rollup validated" in summary
     assert "edgeenv_handoff: missing_telemetry_orchestrator_context validated" in summary

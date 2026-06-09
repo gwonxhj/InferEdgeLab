@@ -49,6 +49,7 @@
     "Runtime Intelligence Risk Summary",
     "Runtime replay duration scope",
     "Orchestrator operation feed context",
+    "EdgeEnv fixture matrix coverage",
     "Reviewer operation quick scan",
     "Orchestrator task event rollup",
     "Lab EdgeEnv preservation context",

@@ -40,6 +40,7 @@ REMOTE_FALLBACK_LAB_CONTEXT_LABEL = "Remote fallback starter evidence"
 
 REVIEWER_OPERATION_QUICK_SCAN_LABEL = "Reviewer operation quick scan"
 REVIEWER_OPERATION_QUICK_SCAN_RAW_MARKER = "reviewer_focus_operation_quick_scan"
+EDGEENV_FIXTURE_MATRIX_LABEL = "EdgeEnv fixture matrix coverage"
 
 RUN_CONFIG_MARKER_FIELDS = (
     "input_mode",
@@ -93,6 +94,15 @@ def build_runtime_intelligence_risk_rows(
                 "Same-condition runtime regression is deployment risk evidence, not a leaderboard score.",
             )
         )
+        fixture_matrix_label = _edgeenv_fixture_matrix_label(edgeenv_regression)
+        if fixture_matrix_label:
+            rows.append(
+                (
+                    EDGEENV_FIXTURE_MATRIX_LABEL,
+                    fixture_matrix_label,
+                    "EdgeEnv replay fixture coverage is reviewer navigation context; Lab does not recompute registry or comparability ownership.",
+                )
+            )
         _append_telemetry_context_rows(rows, edgeenv_regression)
 
     if guard_analysis is not None:
@@ -164,6 +174,11 @@ def build_runtime_intelligence_reviewer_focus_rows(
 
     if edgeenv_regression is not None:
         rows.append(_edgeenv_reviewer_focus_row(edgeenv_regression))
+        fixture_matrix_row = _edgeenv_fixture_matrix_reviewer_focus_row(
+            edgeenv_regression
+        )
+        if fixture_matrix_row is not None:
+            rows.append(fixture_matrix_row)
         telemetry_row = _telemetry_reviewer_focus_row(edgeenv_regression)
         if telemetry_row is not None:
             rows.append(telemetry_row)
@@ -208,6 +223,189 @@ def _edgeenv_reviewer_focus_row(
         ),
         "Check comparability first, then read latency/resource deltas as deployment risk evidence.",
     )
+
+
+def _edgeenv_fixture_matrix_reviewer_focus_row(
+    edgeenv_regression: dict[str, Any],
+) -> tuple[str, str, str] | None:
+    label = _edgeenv_fixture_matrix_label(edgeenv_regression)
+    if not label:
+        return None
+    return (
+        "EdgeEnv fixture matrix",
+        label,
+        "Confirms EdgeEnv replay fixture roles are visible before opening detailed regression evidence.",
+    )
+
+
+def _edgeenv_fixture_matrix_label(edgeenv_regression: dict[str, Any]) -> str:
+    context = _edgeenv_fixture_matrix_context(edgeenv_regression)
+    if context is None:
+        return ""
+
+    required_roles = _fixture_matrix_required_roles(context)
+    covered_roles = _fixture_matrix_covered_roles(context)
+    modes = _fixture_matrix_modes(context)
+    telemetry_gap_roles = _fixture_matrix_roles_with_flag(
+        context,
+        "telemetry_gap_expected",
+    )
+    replay_sequence_roles = _fixture_matrix_replay_sequence_roles(context)
+    boundaries = context.get("boundaries")
+    if not isinstance(boundaries, dict):
+        boundaries = context
+
+    required_count = _first_present(
+        context.get("required_role_count"),
+        len(required_roles) if required_roles else None,
+    )
+    covered_count = _first_present(
+        context.get("covered_role_count"),
+        len(covered_roles) if covered_roles else None,
+    )
+
+    parts: list[str] = []
+    schema_version = context.get("schema_version")
+    if schema_version is not None:
+        parts.append(f"schema={schema_version}")
+    owner = context.get("owner")
+    if owner is not None:
+        parts.append(f"owner={owner}")
+    if covered_count is not None or required_count is not None:
+        parts.append(
+            f"roles={_format_compact_value(covered_count or '-')}/"
+            f"{_format_compact_value(required_count or '-')}"
+        )
+    if modes:
+        parts.append(f"modes={_compact_join(modes, limit=4)}")
+    if telemetry_gap_roles:
+        parts.append(f"telemetry_gap={_compact_join(telemetry_gap_roles, limit=2)}")
+    if replay_sequence_roles:
+        parts.append(
+            f"replay_sequence={_compact_join(replay_sequence_roles, limit=2)}"
+        )
+
+    comparability_first = _first_present(
+        boundaries.get("comparability_first"),
+        context.get("comparability_first"),
+    )
+    if comparability_first is not None:
+        parts.append(f"comparability_first={comparability_first}")
+
+    for field in (
+        "not_a_deployment_decision",
+        "not_a_guard_analysis",
+        "not_production_monitoring",
+    ):
+        value = _first_present(boundaries.get(field), context.get(field))
+        if value is not None:
+            parts.append(f"{field}={value}")
+
+    return "; ".join(parts)
+
+
+def _edgeenv_fixture_matrix_context(
+    edgeenv_regression: dict[str, Any],
+) -> dict[str, Any] | None:
+    for field in (
+        "fixture_matrix_context",
+        "regression_fixture_matrix",
+        "fixture_matrix",
+    ):
+        context = edgeenv_regression.get(field)
+        if isinstance(context, dict):
+            return context
+
+    telemetry_context = edgeenv_regression.get("runtime_telemetry_context")
+    if isinstance(telemetry_context, dict):
+        context = telemetry_context.get("fixture_matrix_context")
+        if isinstance(context, dict):
+            return context
+    return None
+
+
+def _fixture_matrix_required_roles(context: dict[str, Any]) -> list[str]:
+    roles = _string_list(context.get("required_roles"))
+    if roles:
+        return roles
+    role_coverage = context.get("role_coverage")
+    if isinstance(role_coverage, dict):
+        return _string_list(role_coverage.get("required_roles"))
+    return []
+
+
+def _fixture_matrix_covered_roles(context: dict[str, Any]) -> list[str]:
+    roles = _string_list(context.get("covered_roles"))
+    if roles:
+        return roles
+    role_coverage = context.get("role_coverage")
+    if isinstance(role_coverage, dict):
+        roles = _string_list(role_coverage.get("covered_roles"))
+        if roles:
+            return roles
+    fixtures = context.get("fixtures")
+    if not isinstance(fixtures, list):
+        return []
+    return [
+        str(item.get("role"))
+        for item in fixtures
+        if isinstance(item, dict) and isinstance(item.get("role"), str)
+    ]
+
+
+def _fixture_matrix_modes(context: dict[str, Any]) -> list[str]:
+    modes = _string_list(context.get("covered_modes"))
+    if modes:
+        return modes
+    fixtures = context.get("fixtures")
+    if not isinstance(fixtures, list):
+        return []
+    unique_modes: list[str] = []
+    for item in fixtures:
+        if not isinstance(item, dict):
+            continue
+        mode = item.get("mode")
+        if isinstance(mode, str) and mode and mode not in unique_modes:
+            unique_modes.append(mode)
+    return unique_modes
+
+
+def _fixture_matrix_roles_with_flag(
+    context: dict[str, Any],
+    field: str,
+) -> list[str]:
+    roles = _string_list(context.get(field + "_roles"))
+    if roles:
+        return roles
+    fixtures = context.get("fixtures")
+    if not isinstance(fixtures, list):
+        return []
+    return [
+        str(item.get("role"))
+        for item in fixtures
+        if isinstance(item, dict)
+        and item.get(field) is True
+        and isinstance(item.get("role"), str)
+    ]
+
+
+def _fixture_matrix_replay_sequence_roles(context: dict[str, Any]) -> list[str]:
+    roles = _string_list(context.get("replay_sequence_roles"))
+    if roles:
+        return roles
+    fixtures = context.get("fixtures")
+    if not isinstance(fixtures, list):
+        return []
+    return [
+        str(item.get("role"))
+        for item in fixtures
+        if isinstance(item, dict)
+        and (
+            item.get("sequence_context") is not None
+            or item.get("role") == "replay_sequence_context"
+        )
+        and isinstance(item.get("role"), str)
+    ]
 
 
 def _telemetry_reviewer_focus_row(

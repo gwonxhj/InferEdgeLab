@@ -235,6 +235,7 @@ README에서는 빠른 검토 경로만 유지하고, 세부 marker contract는 
 |---|---|---|
 | 최종 판단 owner는 누구인가? | `Lab remains the final deployment decision owner` | EdgeEnv, AIGuard, Orchestrator는 evidence provider이고 최종 판단은 Lab이 소유합니다. |
 | runtime regression을 비교해도 되는가? | EdgeEnv comparability / regression evidence | runtime regression은 EdgeEnv comparability context가 있을 때만 해석합니다. |
+| 어떤 EdgeEnv replay fixture 범위가 포함됐는가? | `EdgeEnv fixture matrix coverage`, `roles=6/6`, `modes=same-condition,runtime-comparison,target-comparison,protocol_mismatch` | detailed evidence를 열기 전에 same-condition, blocked comparison, telemetry-gap, replay-sequence fixture coverage를 확인합니다. |
 | telemetry/replay evidence가 충분한가? | telemetry replay gap, `runtime_history_seed_run_config_traceability`, `edgeenv_orchestrator_producer_lineage` | Runtime seed, `run_config`, EdgeEnv history, Orchestrator lineage가 Lab까지 보존됐는지 확인합니다. |
 | 먼저 열어볼 operation risk가 있는가? | `Reviewer operation quick scan`, `raw_marker=reviewer_focus_operation_quick_scan`, `Orchestrator queue/deadline/fallback markers` | detailed row를 열기 전에 queue pressure, `max_total_queue_depth`, deadline miss, fallback count, Jetson/device-local identity를 먼저 봅니다. |
 | 어떤 preserved run/path를 보는가? | `Runtime replay duration scope`, `Lab EdgeEnv preservation context`, `Jetson/device-local EdgeEnv preservation run`, `Jetson/device-local EdgeEnv preservation details` | replay duration과 `identity=jetson_device_local_preservation`, `path=device_local_starter` label을 빠르게 찾게 합니다. |
