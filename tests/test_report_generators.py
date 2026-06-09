@@ -354,6 +354,7 @@ def make_edgeenv_regression_with_orchestrator_context() -> dict:
         "role": "orchestrator_operation_context_for_edgeenv",
         "source": "orchestration_summary",
         "run_id": "candidate",
+        "scenario_mode": "device_local",
         "not_a_regression_judgement": True,
         "not_a_comparability_gate": True,
         "decision_owner": "lab",
@@ -373,6 +374,7 @@ def make_edgeenv_regression_with_orchestrator_context() -> dict:
             "operation": {
                 "queue_depth": 7,
                 "max_total_queue_depth": 7,
+                "dropped_count": 1,
                 "deadline_missed_count": 2,
                 "fallback_count": 1,
                 "runtime_task_event_summary": {
@@ -874,8 +876,9 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
     assert "| Telemetry/replay quality | gaps=0; history_missing_runs=0;" in text
     assert (
         "| Operation quick scan | candidate: "
-        "queue=queue_backlog_threshold_exceeded, depth=7, "
-        "deadline_miss=2, fallback=1; "
+        "operation_summary: mode=device_local, max_queue=7, "
+        "queue_pressure=queue_backlog_threshold_exceeded, "
+        "deadline_missed=2, fallback=1, dropped=1; "
         "preservation=jetson_device_local_preservation, run=candidate; "
         "task_rollup=present |"
     ) in text
@@ -996,6 +999,8 @@ def test_generate_compare_html_summarizes_operation_risk_summary():
     assert "EdgeEnv regression gate" in html
     assert "Telemetry/replay quality" in html
     assert "Operation quick scan" in html
+    assert "operation_summary: mode=device_local, max_queue=7" in html
+    assert "deadline_missed=2, fallback=1, dropped=1" in html
     assert "Operation context" in html
     assert html.index("Operation quick scan") < html.index("Operation context")
     assert "AIGuard warnings" in html

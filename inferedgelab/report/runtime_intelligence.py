@@ -977,7 +977,10 @@ def _operation_quick_scan_focus_labels(context: dict[str, Any]) -> list[str]:
         parts: list[str] = []
         marker_label = marker_by_run.get(run_label)
         risk_label = risk_by_run.get(run_label)
-        if marker_label:
+        operation_summary_label = _operation_summary_focus_label(context, run_label)
+        if operation_summary_label:
+            parts.append(f"operation_summary: {operation_summary_label}")
+        elif marker_label:
             parts.append(_compact_operation_quick_scan_marker_label(marker_label))
         elif risk_label:
             parts.append(
@@ -1000,6 +1003,152 @@ def _operation_quick_scan_focus_labels(context: dict[str, Any]) -> list[str]:
         if parts:
             labels.append(f"{run_label}: " + "; ".join(parts))
     return labels
+
+
+def _operation_summary_focus_label(
+    context: dict[str, Any],
+    run_label: str,
+) -> str:
+    run_context = context.get(run_label)
+    if not isinstance(run_context, dict):
+        return ""
+    operation_context = run_context.get("orchestrator_operation_context")
+    if not isinstance(operation_context, dict):
+        return ""
+
+    candidate_context = operation_context.get("candidate_context")
+    if not isinstance(candidate_context, dict):
+        candidate_context = {}
+    operation = candidate_context.get("operation")
+    if not isinstance(operation, dict):
+        operation = {}
+    operation_summary = operation_context.get("operation_risk_summary")
+    if not isinstance(operation_summary, dict):
+        operation_summary = {}
+    queue_state = operation_context.get("queue_state_summary")
+    if not isinstance(queue_state, dict):
+        queue_state = {}
+    runtime_event_summary = operation_context.get("runtime_event_summary")
+    if not isinstance(runtime_event_summary, dict):
+        runtime_event_summary = {}
+    producer = candidate_context.get("producer")
+    if not isinstance(producer, dict):
+        producer = {}
+
+    has_operation_signal = any(
+        value is not None
+        for value in (
+            operation_summary.get("max_total_queue_depth"),
+            queue_state.get("max_total_queue_depth"),
+            operation.get("max_total_queue_depth"),
+            candidate_context.get("max_total_queue_depth"),
+            operation.get("queue_depth"),
+            candidate_context.get("queue_depth"),
+            operation_summary.get("queue_pressure_state"),
+            queue_state.get("queue_pressure_state"),
+            operation.get("queue_pressure_state"),
+            operation_summary.get("queue_pressure_reason"),
+            queue_state.get("queue_pressure_reason"),
+            operation.get("queue_pressure_reason"),
+            candidate_context.get("queue_pressure_reason"),
+            operation_summary.get("deadline_missed_count"),
+            operation.get("deadline_missed_count"),
+            runtime_event_summary.get("deadline_missed_count"),
+            candidate_context.get("deadline_missed_count"),
+            operation_summary.get("fallback_count"),
+            operation.get("fallback_count"),
+            runtime_event_summary.get("fallback_count"),
+            runtime_event_summary.get("fallback_decision_count"),
+            candidate_context.get("fallback_count"),
+            operation_summary.get("dropped_count"),
+            operation.get("dropped_count"),
+            runtime_event_summary.get("dropped_count"),
+            runtime_event_summary.get("drop_count"),
+            candidate_context.get("dropped_count"),
+        )
+    )
+    if not has_operation_signal:
+        return ""
+
+    payloads = [
+        operation_context,
+        candidate_context,
+        producer,
+        operation_summary,
+        run_context,
+    ]
+    mode = _first_payload_value(payloads, "scenario_mode")
+    if mode is None and _has_device_local_signal(
+        producer,
+        operation_summary,
+        candidate_context,
+    ):
+        mode = "device_local"
+
+    max_queue = _first_present(
+        operation_summary.get("max_total_queue_depth"),
+        queue_state.get("max_total_queue_depth"),
+        operation.get("max_total_queue_depth"),
+        candidate_context.get("max_total_queue_depth"),
+        operation.get("queue_depth"),
+        candidate_context.get("queue_depth"),
+        run_context.get("queue_depth"),
+    )
+    queue_pressure = _first_present(
+        operation_summary.get("queue_pressure_state"),
+        queue_state.get("queue_pressure_state"),
+        operation.get("queue_pressure_state"),
+        operation_summary.get("queue_pressure_reason"),
+        queue_state.get("queue_pressure_reason"),
+        operation.get("queue_pressure_reason"),
+        candidate_context.get("queue_pressure_reason"),
+    )
+    deadline_missed = _first_present(
+        operation_summary.get("deadline_missed_count"),
+        operation.get("deadline_missed_count"),
+        runtime_event_summary.get("deadline_missed_count"),
+        candidate_context.get("deadline_missed_count"),
+        0,
+    )
+    fallback = _first_present(
+        operation_summary.get("fallback_count"),
+        operation.get("fallback_count"),
+        runtime_event_summary.get("fallback_count"),
+        runtime_event_summary.get("fallback_decision_count"),
+        candidate_context.get("fallback_count"),
+        0,
+    )
+    dropped = _first_present(
+        operation_summary.get("dropped_count"),
+        operation.get("dropped_count"),
+        runtime_event_summary.get("dropped_count"),
+        runtime_event_summary.get("drop_count"),
+        candidate_context.get("dropped_count"),
+        0,
+    )
+
+    return (
+        f"mode={mode or 'unknown'}, "
+        f"max_queue={_format_compact_value(max_queue) if max_queue is not None else 'unknown'}, "
+        f"queue_pressure={queue_pressure or 'unknown'}, "
+        f"deadline_missed={_format_compact_value(deadline_missed)}, "
+        f"fallback={_format_compact_value(fallback)}, "
+        f"dropped={_format_compact_value(dropped)}"
+    )
+
+
+def _has_device_local_signal(*payloads: dict[str, Any]) -> bool:
+    for payload in payloads:
+        for value in payload.values():
+            if isinstance(value, str) and "device_local" in value:
+                return True
+            if isinstance(value, list) and any(
+                isinstance(item, str) and "device_local" in item for item in value
+            ):
+                return True
+            if isinstance(value, dict) and _has_device_local_signal(value):
+                return True
+    return False
 
 
 def _compact_operation_quick_scan_marker_label(label: str) -> str:
