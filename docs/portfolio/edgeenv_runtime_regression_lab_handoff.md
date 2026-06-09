@@ -214,6 +214,10 @@ Expected Lab behavior:
   `reviewer_focus_operation_quick_scan: Reviewer Focus / Operation quick scan marker validated`,
   preserving the promoted Lab quick-scan row as reviewer navigation evidence
   without changing Lab deployment policy.
+- The same report artifact gate summary emits `Validated Review Path` with
+  `review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated`,
+  preserving the generated report reading order as reviewer navigation
+  evidence without making CI or AIGuard the report owner.
 - The Jetson/device-local preservation row starts with `identity=jetson_device_local_preservation` and the device-local path marker such as `path=device_local_starter` when available, making the preserved Jetson EdgeEnv run easier to identify before reviewers inspect detailed queue/resource context.
 - The detailed producer/source/stage/resource markers are rendered in a separate `Jetson/device-local EdgeEnv preservation details` row so the identity row stays short while preserving the same navigation context.
 - Agent Runtime Reliability reports now mirror the same reviewer-facing split inside `Runtime Intelligence EdgeEnv Preservation`: `preservation_identity` keeps the run/path identity short, while `preservation_details` carries source, stage, device-local event, resource, and queue markers as navigation context.

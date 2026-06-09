@@ -187,7 +187,7 @@ EdgeEnv handoff summary and AIGuard deterministic evidence agree on
 producer-lineage guard-alignment run IDs. This keeps the cross-repo marker
 check file-based and does not make AIGuard a deployment decision owner.
 
-The artifact gate is implemented by `scripts/check_runtime_intelligence_artifact_bundle.py`. It checks the generated Markdown / HTML report for the required Runtime Intelligence rows, including the `Reviewer Focus` quick-scan table, Lab ownership, EdgeEnv comparability, telemetry coverage-gap markers, Runtime replay duration scope with `source=entrypoint_requested_frames` traceability, Orchestrator operation feed context, the Lab-owned `Reviewer operation quick scan` row, compact queue/deadline/fallback operation markers with `max_total_queue_depth`, AIGuard max queue raw-context traceability, Orchestrator task event rollup, Lab EdgeEnv preservation context, Jetson/device-local preservation identity and detail labels, Orchestrator `operation_risk_summary` navigation context, AIGuard runtime operation anomalies, AIGuard `edgeenv_orchestrator_operation_risk_summary` evidence, AIGuard `edgeenv_orchestrator_task_event_rollup` evidence, remote dispatch starter event summary, `Remote fallback starter evidence`, `edgeenv_orchestrator_producer_lineage`, `runtime_history_seed_run_config_traceability`, `remote_execution_recovered_by_fallback`, and triggered deployment review rules.
+The artifact gate is implemented by `scripts/check_runtime_intelligence_artifact_bundle.py`. It checks the generated Markdown / HTML report for the required Runtime Intelligence rows, including the `Review path` note, the `Reviewer Focus` quick-scan table, Lab ownership, EdgeEnv comparability, telemetry coverage-gap markers, Runtime replay duration scope with `source=entrypoint_requested_frames` traceability, Orchestrator operation feed context, the Lab-owned `Reviewer operation quick scan` row, compact queue/deadline/fallback operation markers with `max_total_queue_depth`, AIGuard max queue raw-context traceability, Orchestrator task event rollup, Lab EdgeEnv preservation context, Jetson/device-local preservation identity and detail labels, Orchestrator `operation_risk_summary` navigation context, AIGuard runtime operation anomalies, AIGuard `edgeenv_orchestrator_operation_risk_summary` evidence, AIGuard `edgeenv_orchestrator_task_event_rollup` evidence, remote dispatch starter event summary, `Remote fallback starter evidence`, `edgeenv_orchestrator_producer_lineage`, `runtime_history_seed_run_config_traceability`, `remote_execution_recovered_by_fallback`, and triggered deployment review rules.
 
 The bundle manifest gate also checks the external AIGuard artifact before the
 rendered report stage. In particular, `runtime_queue_overload` must preserve
@@ -206,6 +206,10 @@ The same report gate summary also emits `Validated Reviewer Focus` with
 `reviewer_focus_operation_quick_scan: Reviewer Focus / Operation quick scan marker validated`,
 so reviewers can confirm the promoted Lab quick-scan row from the compact gate
 summary before opening the full Markdown/HTML report.
+It also emits `Validated Review Path` with
+`review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated`,
+so the compact gate summary preserves the report reading order without making
+CI the report owner or deployment decision owner.
 
 The CI artifact gate is implemented by `scripts/check_runtime_intelligence_ci_artifacts.py`. It runs in the deployment-risk stage and verifies that the collected optional GitLab artifacts include the manifest gate summary, AIGuard handoff alignment artifact, report gate summary, Runtime Intelligence Risk Summary report, portfolio demo status, and the validated contract markers from the bundle manifest gate. This keeps the final CI gate file-based and deterministic without turning GitLab into a runtime control plane.
 The final `runtime_intelligence_ci_artifact_gate_summary.md` also preserves the
@@ -220,6 +224,9 @@ It also repeats the report gate's `Validated Reviewer Focus` section and the
 `reviewer_focus_operation_quick_scan` marker, keeping the promoted
 `Operation quick scan` row visible in CI artifacts without making CI a report
 owner or runtime control plane.
+The final CI summary also repeats `Validated Review Path` and the
+`review_path` marker, so reviewers can follow the same README -> Lab report ->
+gate-summary reading order from the deployment-risk artifact.
 The same CI artifact gate also checks the copied
 `aiguard_edgeenv_handoff_alignment.json/.md` for Lab report marker context:
 `lab_expected_report_markers` must match the Lab-owned Runtime Intelligence

@@ -99,6 +99,11 @@ REQUIRED_REVIEWER_FOCUS_SUMMARY_MARKERS = (
     "reviewer_focus_operation_quick_scan: Reviewer Focus / Operation quick scan marker validated",
     "reviewer_focus_operation_quick_scan_raw_marker: raw marker preserved in Lab report",
 )
+REQUIRED_REVIEW_PATH_SUMMARY_MARKERS = (
+    "## Validated Review Path",
+    "review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated",
+    "review_path_scope: comparable regression / telemetry replay / operation evidence preserved",
+)
 
 
 def _record(condition: bool, errors: list[str], message: str) -> None:
@@ -157,6 +162,12 @@ def _validate_runtime_artifact_gate_summary(path: Path, errors: list[str]) -> No
             errors,
             f"{label} missing reviewer focus marker: {marker}",
         )
+    for marker in REQUIRED_REVIEW_PATH_SUMMARY_MARKERS:
+        _record(
+            marker in text,
+            errors,
+            f"{label} missing review path marker: {marker}",
+        )
 
 
 def _validate_bundle_manifest_gate_summary(path: Path, errors: list[str]) -> None:
@@ -179,6 +190,8 @@ def _validate_runtime_report(path: Path, errors: list[str]) -> None:
         return
     for marker in (
         "## Runtime Intelligence Risk Summary",
+        "Review path: start with `Reviewer Focus`, then open `Detailed Evidence Rows`",
+        "only for comparable regression, telemetry/replay gaps, operation quick scan",
         "Runtime replay duration scope",
         "short 96-frame-class replay (96 frames)",
         "source=entrypoint_requested_frames",
@@ -384,6 +397,14 @@ def _write_summary(path: Path, report_dir: Path, errors: list[str]) -> None:
         lines.extend(
             f"- {marker}"
             for marker in REQUIRED_REVIEWER_FOCUS_SUMMARY_MARKERS
+            if not marker.startswith("## ")
+        )
+        lines.append("")
+        lines.append("## Validated Review Path")
+        lines.append("")
+        lines.extend(
+            f"- {marker}"
+            for marker in REQUIRED_REVIEW_PATH_SUMMARY_MARKERS
             if not marker.startswith("## ")
         )
         lines.append("")

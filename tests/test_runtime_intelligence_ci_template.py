@@ -17,8 +17,15 @@ DURATION_TRACEABILITY_SUMMARY = "\n".join(
         "## Validated Reviewer Focus",
         "- reviewer_focus_operation_quick_scan: Reviewer Focus / Operation quick scan marker validated",
         "- reviewer_focus_operation_quick_scan_raw_marker: raw marker preserved in Lab report",
+        "## Validated Review Path",
+        "- review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated",
+        "- review_path_scope: comparable regression / telemetry replay / operation evidence preserved",
     ]
 ) + "\n"
+RUNTIME_REPORT_REVIEW_PATH_MARKERS = [
+    "Review path: start with `Reviewer Focus`, then open `Detailed Evidence Rows`",
+    "only for comparable regression, telemetry/replay gaps, operation quick scan",
+]
 
 
 def test_runtime_intelligence_gitlab_template_preserves_roadmap_stages():
@@ -86,6 +93,8 @@ def test_runtime_intelligence_gitlab_doc_states_ownership_boundaries():
     assert "aiguard_validates_expected_report_markers" in text
     assert "Validated Duration Traceability" in text
     assert "duration_handoff_alignment" in text
+    assert "Validated Review Path" in text
+    assert "Review path" in text
     assert "runtime_intelligence_ci_artifact_gate_summary.md" in text
 
 
@@ -108,6 +117,7 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         "\n".join(
             [
                 "## Runtime Intelligence Risk Summary",
+                *RUNTIME_REPORT_REVIEW_PATH_MARKERS,
                 "Runtime replay duration scope",
                 "short 96-frame-class replay (96 frames)",
                 "source=entrypoint_requested_frames",
@@ -289,6 +299,15 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         "reviewer_focus_operation_quick_scan_raw_marker: "
         "raw marker preserved in Lab report"
     ) in summary
+    assert "## Validated Review Path" in summary
+    assert (
+        "review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated"
+        in summary
+    )
+    assert (
+        "review_path_scope: comparable regression / telemetry replay / "
+        "operation evidence preserved"
+    ) in summary
 
     (report_dir / "runtime_anomaly_gate_summary.md").write_text(
         "- Status: passed\n",
@@ -310,6 +329,10 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
     assert (
         "Runtime Intelligence artifact gate summary missing reviewer focus "
         "marker: ## Validated Reviewer Focus"
+    ) in missing_summary
+    assert (
+        "Runtime Intelligence artifact gate summary missing review path "
+        "marker: ## Validated Review Path"
     ) in missing_summary
 
 
@@ -370,6 +393,7 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_lab_marker_cont
         "\n".join(
             [
                 "## Runtime Intelligence Risk Summary",
+                *RUNTIME_REPORT_REVIEW_PATH_MARKERS,
                 "Runtime replay duration scope",
                 "short 96-frame-class replay (96 frames)",
                 "source=entrypoint_requested_frames",
@@ -526,6 +550,7 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_contract_marker
         "\n".join(
             [
                 "## Runtime Intelligence Risk Summary",
+                *RUNTIME_REPORT_REVIEW_PATH_MARKERS,
                 "Runtime replay duration scope",
                 "short 96-frame-class replay (96 frames)",
                 "source=entrypoint_requested_frames",
@@ -621,6 +646,7 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_coverage_gap_ma
         "\n".join(
             [
                 "## Runtime Intelligence Risk Summary",
+                *RUNTIME_REPORT_REVIEW_PATH_MARKERS,
                 "Runtime replay duration scope",
                 "short 96-frame-class replay (96 frames)",
                 "source=entrypoint_requested_frames",
@@ -701,6 +727,7 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_failed_deployment_risk(
         "\n".join(
             [
                 "## Runtime Intelligence Risk Summary",
+                *RUNTIME_REPORT_REVIEW_PATH_MARKERS,
                 "Runtime replay duration scope",
                 "short 96-frame-class replay (96 frames)",
                 "source=entrypoint_requested_frames",
