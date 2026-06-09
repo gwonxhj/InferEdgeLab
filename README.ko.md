@@ -233,7 +233,7 @@ Runtime Intelligence smoke:
 | Decision owner | `Lab remains the final deployment decision owner` | EdgeEnv, AIGuard, Orchestrator는 evidence provider이고 최종 판단은 Lab이 소유합니다. |
 | EdgeEnv regression gate | EdgeEnv comparability / regression evidence | runtime regression은 EdgeEnv comparability context가 있을 때만 해석합니다. |
 | Telemetry/replay quality | telemetry replay gap, `runtime_history_seed_run_config_traceability` | Runtime history seed와 `run_config` traceability가 보존됐는지 확인합니다. |
-| Operation quick scan | `Reviewer operation quick scan` 값을 Reviewer Focus로 승격 | detailed row를 열기 전에 queue pressure, `max_total_queue_depth`, deadline miss, fallback count, Jetson/device-local preservation identity를 먼저 봅니다. |
+| Operation quick scan | `Reviewer operation quick scan` 값을 Reviewer Focus로 승격하고 `raw_marker=reviewer_focus_operation_quick_scan`을 보존 | detailed row를 열기 전에 queue pressure, `max_total_queue_depth`, deadline miss, fallback count, Jetson/device-local preservation identity를 먼저 봅니다. |
 | Operation context | `Orchestrator queue/deadline/fallback markers`, task rollup presence | 더 깊게 볼 Orchestrator/EdgeEnv operation evidence 그룹이 있는지 확인합니다. |
 | AIGuard warnings | deterministic AIGuard runtime operation evidence | AIGuard warning은 Lab policy를 덮어쓰지 않는 review evidence입니다. |
 

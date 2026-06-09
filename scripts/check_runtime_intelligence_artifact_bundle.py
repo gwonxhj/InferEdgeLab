@@ -13,6 +13,12 @@ REQUIRED_MARKDOWN_MARKERS = {
     "reviewer_focus_edgeenv_gate": "| EdgeEnv regression gate |",
     "reviewer_focus_telemetry_quality": "| Telemetry/replay quality |",
     "reviewer_focus_operation_quick_scan": "| Operation quick scan | candidate: ",
+    "reviewer_focus_operation_quick_scan_raw_marker": (
+        "raw_marker=reviewer_focus_operation_quick_scan"
+    ),
+    "reviewer_focus_operation_quick_scan_rendered_label": (
+        "rendered_label=Reviewer operation quick scan"
+    ),
     "reviewer_focus_operation_context": "| Operation context |",
     "reviewer_focus_aiguard_warnings": "| AIGuard warnings |",
     "detailed_evidence_rows": "### Detailed Evidence Rows",
@@ -152,6 +158,12 @@ REQUIRED_HTML_MARKERS = {
     "reviewer_focus_edgeenv_gate": "EdgeEnv regression gate",
     "reviewer_focus_telemetry_quality": "Telemetry/replay quality",
     "reviewer_focus_operation_quick_scan": "Operation quick scan",
+    "reviewer_focus_operation_quick_scan_raw_marker": (
+        "raw_marker=reviewer_focus_operation_quick_scan"
+    ),
+    "reviewer_focus_operation_quick_scan_rendered_label": (
+        "rendered_label=Reviewer operation quick scan"
+    ),
     "reviewer_focus_operation_context": "Operation context",
     "reviewer_focus_aiguard_warnings": "AIGuard warnings",
     "detailed_evidence_rows": "Detailed Evidence Rows",
@@ -252,6 +264,7 @@ DURATION_TRACEABILITY_SUMMARY_MARKERS = (
 
 REVIEWER_FOCUS_SUMMARY_MARKERS = (
     "reviewer_focus_operation_quick_scan: Reviewer Focus / Operation quick scan marker validated",
+    "reviewer_focus_operation_quick_scan_raw_marker: raw marker preserved in Lab report",
 )
 
 

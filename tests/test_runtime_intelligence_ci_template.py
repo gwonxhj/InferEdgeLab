@@ -16,6 +16,7 @@ DURATION_TRACEABILITY_SUMMARY = "\n".join(
         "- duration_label: short 96-frame-class replay (96 frames)",
         "## Validated Reviewer Focus",
         "- reviewer_focus_operation_quick_scan: Reviewer Focus / Operation quick scan marker validated",
+        "- reviewer_focus_operation_quick_scan_raw_marker: raw marker preserved in Lab report",
     ]
 ) + "\n"
 
@@ -124,6 +125,8 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
                 "Runtime telemetry coverage gaps",
                 "Operation quick scan",
                 "Reviewer operation quick scan",
+                "rendered_label=Reviewer operation quick scan",
+                "raw_marker=reviewer_focus_operation_quick_scan",
                 "Orchestrator queue/deadline/fallback markers",
                 "queue_pressure_reason=queue_backlog_threshold_exceeded",
                 "max_total_queue_depth=7",
@@ -282,6 +285,10 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         "reviewer_focus_operation_quick_scan: Reviewer Focus / "
         "Operation quick scan marker validated"
     ) in summary
+    assert (
+        "reviewer_focus_operation_quick_scan_raw_marker: "
+        "raw marker preserved in Lab report"
+    ) in summary
 
     (report_dir / "runtime_anomaly_gate_summary.md").write_text(
         "- Status: passed\n",
@@ -380,6 +387,8 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_lab_marker_cont
                 "Runtime telemetry coverage gaps",
                 "Operation quick scan",
                 "Reviewer operation quick scan",
+                "rendered_label=Reviewer operation quick scan",
+                "raw_marker=reviewer_focus_operation_quick_scan",
                 "Orchestrator queue/deadline/fallback markers",
                 "queue_pressure_reason=queue_backlog_threshold_exceeded",
                 "max_total_queue_depth=7",
@@ -534,6 +543,8 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_contract_marker
                 "Runtime telemetry coverage gaps",
                 "Operation quick scan",
                 "Reviewer operation quick scan",
+                "rendered_label=Reviewer operation quick scan",
+                "raw_marker=reviewer_focus_operation_quick_scan",
                 "Orchestrator queue/deadline/fallback markers",
                 "queue_pressure_reason=queue_backlog_threshold_exceeded",
                 "max_total_queue_depth=7",
@@ -627,6 +638,8 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_coverage_gap_ma
                 "Runtime telemetry coverage gaps",
                 "Operation quick scan",
                 "Reviewer operation quick scan",
+                "rendered_label=Reviewer operation quick scan",
+                "raw_marker=reviewer_focus_operation_quick_scan",
                 "Orchestrator queue/deadline/fallback markers",
                 "queue_pressure_reason=queue_backlog_threshold_exceeded",
                 "max_total_queue_depth=7",
@@ -705,6 +718,8 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_failed_deployment_risk(
                 "Runtime telemetry coverage gaps",
                 "Operation quick scan",
                 "Reviewer operation quick scan",
+                "rendered_label=Reviewer operation quick scan",
+                "raw_marker=reviewer_focus_operation_quick_scan",
                 "Orchestrator queue/deadline/fallback markers",
                 "queue_pressure_reason=queue_backlog_threshold_exceeded",
                 "max_total_queue_depth=7",
