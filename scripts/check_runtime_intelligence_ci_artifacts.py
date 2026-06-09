@@ -102,6 +102,7 @@ REQUIRED_REVIEWER_FOCUS_SUMMARY_MARKERS = (
 REQUIRED_REVIEW_PATH_SUMMARY_MARKERS = (
     "## Validated Review Path",
     "review_path_section: short Review Path section rendered",
+    "review_path_fast_path: readable Review Path fast path rendered",
     "review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated",
     "review_path_scope: comparable regression / telemetry replay / operation evidence preserved",
 )
@@ -193,6 +194,7 @@ def _validate_runtime_report(path: Path, errors: list[str]) -> None:
         "## Runtime Intelligence Risk Summary",
         "### Review Path",
         "Review path: start with `Reviewer Focus`, then open `Detailed Evidence Rows`",
+        "Fast path: `Reviewer Focus` -> `Detailed Evidence Rows` only when a quick signal needs supporting evidence.",
         "| Step | Open | Use it for |",
         "only for comparable regression, telemetry/replay gaps, operation quick scan",
         "Runtime replay duration scope",

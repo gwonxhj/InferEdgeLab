@@ -627,19 +627,26 @@ def _runtime_intelligence_risk_summary_to_html(
         )
 
     review_path_html = (
+        '<div class="review-path">'
         "<h3>Review Path</h3>"
         "<p><strong>Review path:</strong> start with <code>Reviewer Focus</code>, "
         "then open <code>Detailed Evidence Rows</code> only for comparable "
         "regression, telemetry/replay gaps, operation quick scan, preserved "
         "run/path, or deterministic warning evidence. Lab remains the final "
         "deployment decision owner.</p>"
-        "<ol>"
-        "<li><strong>Reviewer Focus</strong>: quick scan comparability, "
-        "telemetry quality, operation pressure, and AIGuard warning status.</li>"
-        "<li><strong>Detailed Evidence Rows</strong>: open only the rows needed "
-        "to verify the specific regression, replay gap, preserved run/path, or "
-        "deterministic warning evidence.</li>"
-        "</ol>"
+        "<p><strong>Fast path:</strong> <code>Reviewer Focus</code> -> "
+        "<code>Detailed Evidence Rows</code> only when a quick signal needs "
+        "supporting evidence.</p>"
+        '<div class="review-path-steps">'
+        '<div class="review-step"><span class="review-step-index">1</span>'
+        "<strong>Reviewer Focus</strong>: quick scan comparability, telemetry "
+        "quality, operation pressure, and AIGuard warning status.</div>"
+        '<div class="review-step"><span class="review-step-index">2</span>'
+        "<strong>Detailed Evidence Rows</strong>: open only the rows needed "
+        "to verify the specific regression, "
+        "replay gap, preserved run/path, or deterministic warning evidence.</div>"
+        "</div>"
+        "</div>"
     )
 
     return f"""
@@ -862,6 +869,51 @@ def generate_compare_html(
       font-size: 20px;
       font-weight: 700;
       color: #111827;
+    }}
+    .review-path {{
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-left: 4px solid #2563eb;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 18px;
+    }}
+    .review-path h3 {{
+      margin-top: 0;
+    }}
+    .review-path p {{
+      margin: 8px 0;
+      line-height: 1.55;
+    }}
+    .review-path-steps {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }}
+    .review-step {{
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 12px;
+      color: #4b5563;
+      line-height: 1.45;
+    }}
+    .review-step strong {{
+      font-weight: 700;
+    }}
+    .review-step-index {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      margin-right: 8px;
+      border-radius: 999px;
+      background: #dbeafe;
+      color: #1e40af;
+      font-size: 13px;
+      font-weight: 700;
     }}
     .badge {{
       display: inline-block;
