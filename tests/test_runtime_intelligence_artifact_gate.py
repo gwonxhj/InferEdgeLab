@@ -85,6 +85,10 @@ def test_runtime_intelligence_artifact_gate_passes_for_chain_report(tmp_path):
         "review_path_scope: comparable regression / telemetry replay / "
         "operation evidence preserved"
     ) in summary
+    assert (
+        "review_path_artifact_gate_summary: artifact gate summary reference row validated"
+        in summary
+    )
     markdown = markdown_path.read_text(encoding="utf-8")
     html = html_path.read_text(encoding="utf-8")
     assert "### Review Path" in markdown
@@ -94,9 +98,13 @@ def test_runtime_intelligence_artifact_gate_passes_for_chain_report(tmp_path):
         "signal needs supporting evidence."
     ) in markdown
     assert "| Step | Open | Use it for |" in markdown
+    assert "| 3 | `Artifact Gate Summary` | Cross-check" in markdown
+    assert "reviewer_path_anchor_fragments" in markdown
     assert 'class="review-path"' in html
     assert "<h3>Review Path</h3>" in html
     assert "Review path:" in html
+    assert "<strong>Artifact Gate Summary</strong>: cross-check" in html
+    assert "runtime_intelligence_bundle_manifest_gate_summary.md" in html
     assert "Runtime replay duration scope" in markdown
     assert "short 96-frame-class replay (96 frames)" in markdown
     assert "source=entrypoint_requested_frames" in markdown
@@ -152,6 +160,10 @@ def test_runtime_intelligence_artifact_gate_cli_passes_for_chain_report(tmp_path
     assert "review_path_section: short Review Path section rendered" in summary
     assert "review_path_fast_path: readable Review Path fast path rendered" in summary
     assert "review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated" in summary
+    assert (
+        "review_path_artifact_gate_summary: artifact gate summary reference row validated"
+        in summary
+    )
 
 
 def test_runtime_intelligence_docs_describe_duration_traceability_gate_summary():

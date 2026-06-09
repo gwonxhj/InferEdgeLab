@@ -368,6 +368,13 @@ def _append_runtime_intelligence_risk_summary(
         "specific regression, replay gap, preserved run/path, or deterministic "
         "warning evidence. |"
     )
+    lines.append(
+        "| 3 | `Artifact Gate Summary` | Cross-check "
+        "`runtime_intelligence_bundle_manifest_gate_summary.md` and "
+        "`runtime_anomaly_gate_summary.md` for `reviewer_path_gate`, "
+        "`reviewer_path_local_links`, and `reviewer_path_anchor_fragments` "
+        "marker preservation. |"
+    )
     lines.append("")
     if focus_rows:
         lines.append("### Reviewer Focus")

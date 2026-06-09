@@ -511,6 +511,11 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
         "signal needs supporting evidence."
     ) in markdown
     assert "| Step | Open | Use it for |" in markdown
+    assert (
+        "| 3 | `Artifact Gate Summary` | Cross-check "
+        "`runtime_intelligence_bundle_manifest_gate_summary.md`"
+    ) in markdown
+    assert "reviewer_path_anchor_fragments" in markdown
     assert "### Reviewer Focus" in markdown
     assert "| Focus | Quick signal | First read |" in markdown
     assert "| Decision owner | Lab=review_required;" in markdown
@@ -610,6 +615,9 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "start with <code>Reviewer Focus</code>" in html
     assert "<strong>Fast path:</strong> <code>Reviewer Focus</code> ->" in html
     assert "<strong>Detailed Evidence Rows</strong>: open only the rows needed" in html
+    assert "<strong>Artifact Gate Summary</strong>: cross-check" in html
+    assert "runtime_intelligence_bundle_manifest_gate_summary.md" in html
+    assert "reviewer_path_anchor_fragments" in html
     assert "Lab remains the final deployment decision owner." in html
     assert "Reviewer Focus" in html
     assert "Quick signal" in html

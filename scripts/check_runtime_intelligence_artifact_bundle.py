@@ -17,6 +17,14 @@ REQUIRED_MARKDOWN_MARKERS = {
         "Fast path: `Reviewer Focus` -> `Detailed Evidence Rows` only when a quick "
         "signal needs supporting evidence."
     ),
+    "review_path_artifact_gate_summary": (
+        "| 3 | `Artifact Gate Summary` | Cross-check "
+        "`runtime_intelligence_bundle_manifest_gate_summary.md`"
+    ),
+    "review_path_artifact_gate_summary_markers": (
+        "`reviewer_path_gate`, `reviewer_path_local_links`, and "
+        "`reviewer_path_anchor_fragments`"
+    ),
     "review_path_scope": (
         "only for comparable regression, telemetry/replay gaps, operation quick scan"
     ),
@@ -183,6 +191,13 @@ REQUIRED_HTML_MARKERS = {
         "<strong>Fast path:</strong> <code>Reviewer Focus</code> ->"
     ),
     "review_path_detail_step": "<strong>Detailed Evidence Rows</strong>: open only the rows needed",
+    "review_path_artifact_gate_summary": (
+        "<strong>Artifact Gate Summary</strong>: cross-check"
+    ),
+    "review_path_artifact_gate_summary_file": (
+        "runtime_intelligence_bundle_manifest_gate_summary.md"
+    ),
+    "review_path_artifact_gate_summary_markers": "reviewer_path_anchor_fragments",
     "review_path_scope": (
         "only for comparable regression, telemetry/replay gaps, operation quick scan"
     ),
@@ -316,6 +331,7 @@ REVIEW_PATH_SUMMARY_MARKERS = (
     "review_path_fast_path: readable Review Path fast path rendered",
     "review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated",
     "review_path_scope: comparable regression / telemetry replay / operation evidence preserved",
+    "review_path_artifact_gate_summary: artifact gate summary reference row validated",
 )
 
 
