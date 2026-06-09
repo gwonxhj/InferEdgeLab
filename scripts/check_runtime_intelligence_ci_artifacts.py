@@ -97,6 +97,7 @@ REQUIRED_DURATION_TRACEABILITY_SUMMARY_MARKERS = (
 REQUIRED_REVIEWER_FOCUS_SUMMARY_MARKERS = (
     "## Validated Reviewer Focus",
     "reviewer_focus_operation_quick_scan: Reviewer Focus / Operation quick scan marker validated",
+    "reviewer_focus_operation_quick_scan_raw_marker: raw marker preserved in Lab report",
 )
 
 
@@ -195,6 +196,8 @@ def _validate_runtime_report(path: Path, errors: list[str]) -> None:
         "Runtime telemetry coverage gaps",
         "Operation quick scan",
         "Reviewer operation quick scan",
+        "rendered_label=Reviewer operation quick scan",
+        "raw_marker=reviewer_focus_operation_quick_scan",
         "Orchestrator queue/deadline/fallback markers",
         "queue_pressure_reason=queue_backlog_threshold_exceeded",
         "max_total_queue_depth=7",

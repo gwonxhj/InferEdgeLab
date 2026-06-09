@@ -38,6 +38,9 @@ REMOTE_DISPATCH_EVIDENCE_TYPES = {
 }
 REMOTE_FALLBACK_LAB_CONTEXT_LABEL = "Remote fallback starter evidence"
 
+REVIEWER_OPERATION_QUICK_SCAN_LABEL = "Reviewer operation quick scan"
+REVIEWER_OPERATION_QUICK_SCAN_RAW_MARKER = "reviewer_focus_operation_quick_scan"
+
 RUN_CONFIG_MARKER_FIELDS = (
     "input_mode",
     "input_preprocess",
@@ -277,6 +280,7 @@ def _operation_quick_scan_reviewer_focus_row(
     if not labels:
         return None
 
+    labels = _append_operation_quick_scan_traceability(labels)
     return (
         "Operation quick scan",
         "; ".join(labels),
@@ -430,9 +434,12 @@ def _append_telemetry_context_rows(
 
     operation_quick_scan_labels = _operation_quick_scan_labels(telemetry_context)
     if operation_quick_scan_labels:
+        operation_quick_scan_labels = _append_operation_quick_scan_traceability(
+            operation_quick_scan_labels
+        )
         rows.append(
             (
-                "Reviewer operation quick scan",
+                REVIEWER_OPERATION_QUICK_SCAN_LABEL,
                 "; ".join(operation_quick_scan_labels),
                 "One-line navigation labels combine queue/deadline/fallback and Jetson/device-local preservation context without changing Lab policy.",
             )
@@ -756,6 +763,16 @@ def _operation_quick_scan_labels(context: dict[str, Any]) -> list[str]:
         if parts:
             labels.append(f"{run_label}: " + "; ".join(parts))
     return labels
+
+
+def _append_operation_quick_scan_traceability(labels: list[str]) -> list[str]:
+    if not labels:
+        return labels
+    return [
+        *labels,
+        f"rendered_label={REVIEWER_OPERATION_QUICK_SCAN_LABEL}",
+        f"raw_marker={REVIEWER_OPERATION_QUICK_SCAN_RAW_MARKER}",
+    ]
 
 
 def _label_values_by_run(labels: list[str]) -> dict[str, str]:

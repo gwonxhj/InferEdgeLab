@@ -856,7 +856,9 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
         "queue_pressure_reason=queue_backlog_threshold_exceeded, "
         "max_total_queue_depth=7, deadline_missed_count=2, fallback_count=1; "
         "preservation=identity=jetson_device_local_preservation, "
-        "run=candidate; task_rollup=present |"
+        "run=candidate; task_rollup=present; "
+        "rendered_label=Reviewer operation quick scan; "
+        "raw_marker=reviewer_focus_operation_quick_scan |"
     ) in text
     assert "| Operation context | queue_deadline_fallback=present;" in text
     assert text.index("| Operation quick scan |") < text.index("| Operation context |")
@@ -880,7 +882,9 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
         "queue_pressure_reason=queue_backlog_threshold_exceeded, "
         "max_total_queue_depth=7, deadline_missed_count=2, fallback_count=1; "
         "preservation=identity=jetson_device_local_preservation, "
-        "run=candidate; task_rollup=present |"
+        "run=candidate; task_rollup=present; "
+        "rendered_label=Reviewer operation quick scan; "
+        "raw_marker=reviewer_focus_operation_quick_scan |"
     ) in text
     assert (
         "| AIGuard max queue raw-context traceability | candidate: "
@@ -976,6 +980,7 @@ def test_generate_compare_html_summarizes_operation_risk_summary():
     assert "Orchestrator operation risk summary" in html
     assert "Orchestrator queue/deadline/fallback markers" in html
     assert "Reviewer operation quick scan" in html
+    assert "raw_marker=reviewer_focus_operation_quick_scan" in html
     assert (
         "queue_pressure_reason=queue_backlog_threshold_exceeded, "
         "max_total_queue_depth=7, deadline_missed_count=2, fallback_count=1"

@@ -75,7 +75,10 @@ def test_runtime_intelligence_artifact_gate_passes_for_chain_report(tmp_path):
     assert "source=entrypoint_requested_frames" in markdown
     assert "scope_label=source=entrypoint_requested_frames" in markdown
     assert "| Operation quick scan | candidate: " in markdown
+    assert "rendered_label=Reviewer operation quick scan" in markdown
+    assert "raw_marker=reviewer_focus_operation_quick_scan" in markdown
     assert "Operation quick scan" in html
+    assert "raw_marker=reviewer_focus_operation_quick_scan" in html
 
 
 def test_runtime_intelligence_artifact_gate_cli_passes_for_chain_report(tmp_path):
@@ -105,6 +108,7 @@ def test_runtime_intelligence_artifact_gate_cli_passes_for_chain_report(tmp_path
     assert "- Status: passed" in summary
     assert "duration_handoff_alignment" in summary
     assert "reviewer_focus_operation_quick_scan" in summary
+    assert "reviewer_focus_operation_quick_scan_raw_marker" in summary
 
 
 def test_runtime_intelligence_docs_describe_duration_traceability_gate_summary():
