@@ -68,8 +68,19 @@ def test_runtime_intelligence_artifact_gate_passes_for_chain_report(tmp_path):
         "reviewer_focus_operation_quick_scan: Reviewer Focus / "
         "Operation quick scan marker validated"
     ) in summary
+    assert "## Validated Review Path" in summary
+    assert (
+        "review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated"
+        in summary
+    )
+    assert (
+        "review_path_scope: comparable regression / telemetry replay / "
+        "operation evidence preserved"
+    ) in summary
     markdown = markdown_path.read_text(encoding="utf-8")
     html = html_path.read_text(encoding="utf-8")
+    assert "Review path: start with `Reviewer Focus`" in markdown
+    assert "Review path:" in html
     assert "Runtime replay duration scope" in markdown
     assert "short 96-frame-class replay (96 frames)" in markdown
     assert "source=entrypoint_requested_frames" in markdown
@@ -109,6 +120,8 @@ def test_runtime_intelligence_artifact_gate_cli_passes_for_chain_report(tmp_path
     assert "duration_handoff_alignment" in summary
     assert "reviewer_focus_operation_quick_scan" in summary
     assert "reviewer_focus_operation_quick_scan_raw_marker" in summary
+    assert "Validated Review Path" in summary
+    assert "review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated" in summary
 
 
 def test_runtime_intelligence_docs_describe_duration_traceability_gate_summary():
@@ -128,6 +141,8 @@ def test_runtime_intelligence_docs_describe_duration_traceability_gate_summary()
         assert "scope_label=source=entrypoint_requested_frames" in text
         assert "Validated Reviewer Focus" in text
         assert "Operation quick scan marker validated" in text
+        assert "Validated Review Path" in text
+        assert "Reviewer Focus -> Detailed Evidence Rows guidance validated" in text
 
 
 def test_runtime_intelligence_artifact_gate_fails_when_owner_row_is_missing(

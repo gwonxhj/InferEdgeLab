@@ -8,6 +8,12 @@ from rich import print as rprint
 
 REQUIRED_MARKDOWN_MARKERS = {
     "risk_summary_section": "## Runtime Intelligence Risk Summary",
+    "review_path": (
+        "Review path: start with `Reviewer Focus`, then open `Detailed Evidence Rows`"
+    ),
+    "review_path_scope": (
+        "only for comparable regression, telemetry/replay gaps, operation quick scan"
+    ),
     "reviewer_focus_section": "### Reviewer Focus",
     "reviewer_focus_table": "| Focus | Quick signal | First read |",
     "reviewer_focus_edgeenv_gate": "| EdgeEnv regression gate |",
@@ -153,6 +159,11 @@ REQUIRED_MARKDOWN_MARKERS = {
 
 REQUIRED_HTML_MARKERS = {
     "risk_summary_section": "Runtime Intelligence Risk Summary",
+    "review_path": "Review path:",
+    "review_path_focus": "start with <code>Reviewer Focus</code>",
+    "review_path_scope": (
+        "only for comparable regression, telemetry/replay gaps, operation quick scan"
+    ),
     "reviewer_focus_section": "Reviewer Focus",
     "reviewer_focus_table": "Quick signal",
     "reviewer_focus_edgeenv_gate": "EdgeEnv regression gate",
@@ -267,6 +278,11 @@ REVIEWER_FOCUS_SUMMARY_MARKERS = (
     "reviewer_focus_operation_quick_scan_raw_marker: raw marker preserved in Lab report",
 )
 
+REVIEW_PATH_SUMMARY_MARKERS = (
+    "review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated",
+    "review_path_scope: comparable regression / telemetry replay / operation evidence preserved",
+)
+
 
 def _read_text(path: str, label: str) -> str:
     try:
@@ -313,6 +329,10 @@ def _write_summary(
         lines.append("## Validated Reviewer Focus")
         lines.append("")
         lines.extend(f"- {marker}" for marker in REVIEWER_FOCUS_SUMMARY_MARKERS)
+        lines.append("")
+        lines.append("## Validated Review Path")
+        lines.append("")
+        lines.extend(f"- {marker}" for marker in REVIEW_PATH_SUMMARY_MARKERS)
         lines.append("")
 
     out_path = Path(path)
