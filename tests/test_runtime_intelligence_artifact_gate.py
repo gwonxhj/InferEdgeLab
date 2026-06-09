@@ -68,6 +68,12 @@ def test_runtime_intelligence_artifact_gate_passes_for_chain_report(tmp_path):
         "reviewer_focus_operation_quick_scan: Reviewer Focus / "
         "Operation quick scan marker validated"
     ) in summary
+    assert "reviewer_focus_fixture_matrix: EdgeEnv fixture matrix row validated" in summary
+    assert "## Validated EdgeEnv Fixture Matrix" in summary
+    assert (
+        "edgeenv_fixture_matrix_coverage: EdgeEnv fixture matrix coverage row validated"
+        in summary
+    )
     assert "## Validated Review Path" in summary
     assert "review_path_section: short Review Path section rendered" in summary
     assert "review_path_fast_path: readable Review Path fast path rendered" in summary
@@ -100,6 +106,16 @@ def test_runtime_intelligence_artifact_gate_passes_for_chain_report(tmp_path):
     assert "raw_marker=reviewer_focus_operation_quick_scan" in markdown
     assert "Operation quick scan" in html
     assert "raw_marker=reviewer_focus_operation_quick_scan" in html
+    assert "| EdgeEnv fixture matrix |" in markdown
+    assert "| EdgeEnv fixture matrix coverage |" in markdown
+    assert "schema=edgeenv-regression-replay-fixture-matrix-v1" in markdown
+    assert (
+        "modes=same-condition,runtime-comparison,target-comparison,protocol_mismatch"
+        in markdown
+    )
+    assert "not_a_deployment_decision=True" in markdown
+    assert "EdgeEnv fixture matrix coverage" in html
+    assert "roles=6/6" in html
 
 
 def test_runtime_intelligence_artifact_gate_cli_passes_for_chain_report(tmp_path):
@@ -130,6 +146,8 @@ def test_runtime_intelligence_artifact_gate_cli_passes_for_chain_report(tmp_path
     assert "duration_handoff_alignment" in summary
     assert "reviewer_focus_operation_quick_scan" in summary
     assert "reviewer_focus_operation_quick_scan_raw_marker" in summary
+    assert "reviewer_focus_fixture_matrix" in summary
+    assert "Validated EdgeEnv Fixture Matrix" in summary
     assert "Validated Review Path" in summary
     assert "review_path_section: short Review Path section rendered" in summary
     assert "review_path_fast_path: readable Review Path fast path rendered" in summary
@@ -153,6 +171,7 @@ def test_runtime_intelligence_docs_describe_duration_traceability_gate_summary()
         assert "scope_label=source=entrypoint_requested_frames" in text
         assert "Validated Reviewer Focus" in text
         assert "Operation quick scan marker validated" in text
+        assert "EdgeEnv fixture matrix coverage" in text
         assert "Validated Review Path" in text
         assert "Reviewer Focus -> Detailed Evidence Rows guidance validated" in text
 

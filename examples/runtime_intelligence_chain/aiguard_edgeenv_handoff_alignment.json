@@ -8,11 +8,12 @@
   "guard_analysis_schema_version": "inferedge-aiguard-diagnosis-v1",
   "required_evidence_type_count": 7,
   "guard_evidence_type_count": 8,
-  "lab_expected_report_marker_count": 14,
+  "lab_expected_report_marker_count": 15,
   "lab_expected_report_markers": [
     "Runtime Intelligence Risk Summary",
     "Runtime replay duration scope",
     "Orchestrator operation feed context",
+    "EdgeEnv fixture matrix coverage",
     "Reviewer operation quick scan",
     "Orchestrator task event rollup",
     "Lab EdgeEnv preservation context",
