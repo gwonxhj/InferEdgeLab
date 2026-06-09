@@ -171,24 +171,30 @@ def test_runtime_intelligence_docs_record_jetson_edgeenv_preservation_boundary()
 
 def test_readme_runtime_intelligence_section_stays_scannable():
     readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    readme_ko = (REPO_ROOT / "README.ko.md").read_text(encoding="utf-8")
 
-    assert "| First read | Quick signal | What it tells you |" in readme
-    assert "| Marker group | Key rows / labels | Why it matters |" in readme
+    assert "| Reviewer question | Evidence path | Why it matters |" in readme
+    assert "| 리뷰어 질문 | 확인할 evidence path | 의미 |" in readme_ko
     assert "Reviewer Focus" in readme
-    assert "`Focus / Quick signal / First read`" in readme
-    assert "Decision owner" in readme
-    assert "EdgeEnv regression gate" in readme
-    assert "Telemetry/replay quality" in readme
-    assert "Operation context" in readme
-    assert "AIGuard warnings" in readme
+    assert "세부 marker contract" in readme_ko
+    assert "Who owns the decision?" in readme
+    assert "Is regression comparable?" in readme
+    assert "Is telemetry/replay evidence complete enough?" in readme
+    assert "Is there an operation risk worth opening first?" in readme
+    assert "Which preserved run/path is being reviewed?" in readme
+    assert "Which warnings remain review context only?" in readme
     for row in [
-        "Producer lineage",
-        "Queue pressure",
-        "Replay and preservation",
-        "Task and operation risk",
-        "Remote starter boundary",
+        "최종 판단 owner는 누구인가?",
+        "runtime regression을 비교해도 되는가?",
+        "telemetry/replay evidence가 충분한가?",
+        "먼저 열어볼 operation risk가 있는가?",
+        "어떤 preserved run/path를 보는가?",
+        "어떤 warning이 review context로만 남는가?",
     ]:
-        assert row in readme
+        assert row in readme_ko
+
+    assert "Reviewer marker map:" not in readme
+    assert "Marker group:" not in readme_ko
 
     for marker in [
         "edgeenv_orchestrator_producer_lineage",
@@ -206,6 +212,7 @@ def test_readme_runtime_intelligence_section_stays_scannable():
         "production_remote_execution=false",
     ]:
         assert marker in readme
+        assert marker in readme_ko
 
 
 def test_readme_internal_links_include_matching_korean_labels():
