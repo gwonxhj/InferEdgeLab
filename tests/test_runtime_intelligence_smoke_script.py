@@ -90,6 +90,10 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
         "aiguard_evidence: edgeenv_orchestrator_task_event_rollup validated"
         in bundle_summary
     )
+    assert (
+        "aiguard_evidence: edgeenv_orchestrator_operation_timeline_summary validated"
+        in bundle_summary
+    )
     assert "aiguard_raw_context: task_event_rollup preserved" in bundle_summary
     assert (
         "aiguard_raw_context: missing_telemetry_orchestrator_context preserved"

@@ -101,6 +101,7 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert "edgeenv_orchestrator_producer_lineage" in evidence_types
     assert "edgeenv_orchestrator_operation_risk_summary" in evidence_types
     assert "edgeenv_orchestrator_task_event_rollup" in evidence_types
+    assert "edgeenv_orchestrator_operation_timeline_summary" in evidence_types
     assert "runtime_history_seed_run_config_traceability" in evidence_types
     assert "remote_execution_recovered_by_fallback" in evidence_types
     coverage_evidence = next(
@@ -308,6 +309,25 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert task_event_rollup_evidence["raw_context"]["task_event_rollup"][
         "affected_tasks"
     ] == ["vision_agent", "voice_command_agent"]
+    operation_timeline_evidence = next(
+        item
+        for item in bundle["guard_analysis"]["evidence"]
+        if item["type"] == "edgeenv_orchestrator_operation_timeline_summary"
+    )
+    assert operation_timeline_evidence["status"] == "warning"
+    assert operation_timeline_evidence["observed_value"] == 6
+    operation_timeline_context = operation_timeline_evidence["raw_context"][
+        "operation_timeline_summary"
+    ]
+    assert operation_timeline_context["boundary_markers_valid"] is True
+    assert operation_timeline_context["affected_tasks"] == [
+        "vision_agent",
+        "voice_command_agent",
+    ]
+    assert operation_timeline_context["max_queue_wait_ms"] == 15.0
+    assert operation_timeline_context["policy_decision_reasons"] == [
+        "queue_backlog_threshold_exceeded"
+    ]
     assert operation_risk_context["device_local_event_count"] == 15.0
     run_config_traceability_evidence = next(
         item
@@ -552,7 +572,11 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "edgeenv_orchestrator_operation_risk_summary" in markdown
     assert "AIGuard task event rollup evidence" in markdown
     assert "edgeenv_orchestrator_task_event_rollup" in markdown
+    assert "AIGuard operation timeline evidence" in markdown
+    assert "edgeenv_orchestrator_operation_timeline_summary" in markdown
     assert "tasks=vision_agent,voice_command_agent" in markdown
+    assert "max_wait_ms=15" in markdown
+    assert "policy_decisions=2" in markdown
     assert "status=warning, markers=4" in markdown
     assert "health=worker_health_degraded" in markdown
     assert "Orchestrator context attached runs" in markdown
@@ -669,7 +693,11 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "edgeenv_orchestrator_operation_risk_summary" in html
     assert "AIGuard task event rollup evidence" in html
     assert "edgeenv_orchestrator_task_event_rollup" in html
+    assert "AIGuard operation timeline evidence" in html
+    assert "edgeenv_orchestrator_operation_timeline_summary" in html
     assert "tasks=vision_agent,voice_command_agent" in html
+    assert "max_wait_ms=15" in html
+    assert "policy_decisions=2" in html
     assert "health=worker_health_degraded" in html
     assert "AIGuard remote dispatch event summary" in html
     assert "events=3, final=succeeded, fallback_recovered=True" in html

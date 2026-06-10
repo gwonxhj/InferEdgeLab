@@ -87,6 +87,10 @@ def test_runtime_intelligence_bundle_manifest_gate_cli_passes(tmp_path):
         in summary
     )
     assert (
+        "aiguard_evidence: edgeenv_orchestrator_operation_timeline_summary validated"
+        in summary
+    )
+    assert (
         "aiguard_evidence: runtime_history_seed_run_config_traceability validated"
         in summary
     )
@@ -1433,6 +1437,56 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_guard_task_even
     ) in summary
     assert "task_event_rollup.decision_owner must be lab" in summary
     assert "task_event_rollup.boundary_markers_valid must be true" in summary
+
+
+def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_guard_operation_timeline(
+    tmp_path,
+):
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    guard_path = (
+        REPO_ROOT
+        / "examples"
+        / "runtime_intelligence_chain"
+        / manifest["files"]["aiguard_guard_analysis"]
+    )
+    guard_analysis = json.loads(guard_path.read_text(encoding="utf-8"))
+    timeline_evidence = next(
+        item
+        for item in guard_analysis["evidence"]
+        if item.get("type") == "edgeenv_orchestrator_operation_timeline_summary"
+    )
+    timeline_evidence["observed_value"] = 1
+    timeline_evidence["raw_context"]["operation_timeline_summary"][
+        "review_hints"
+    ] = ["review_queue_pressure"]
+    timeline_evidence["raw_context"]["operation_timeline_summary"][
+        "decision_owner"
+    ] = "aiguard"
+    timeline_evidence["raw_context"]["operation_timeline_summary"][
+        "boundary_markers_valid"
+    ] = False
+
+    guard_copy = tmp_path / "aiguard_guard_analysis.json"
+    guard_copy.write_text(json.dumps(guard_analysis), encoding="utf-8")
+    manifest["files"]["aiguard_guard_analysis"] = str(guard_copy)
+    manifest_path = tmp_path / "bundle_manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(manifest=str(manifest_path), summary_out=str(summary_path))
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "operation timeline observed_value must be 6" in summary
+    assert (
+        "operation_timeline_summary.review_hints is missing "
+        "['review_deadline_miss', 'review_fallback_use', 'review_scheduler_delay']"
+    ) in summary
+    assert "operation_timeline_summary.decision_owner must be lab" in summary
+    assert (
+        "operation_timeline_summary.boundary_markers_valid must be true"
+        in summary
+    )
 
 
 def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_guard_missing_context(

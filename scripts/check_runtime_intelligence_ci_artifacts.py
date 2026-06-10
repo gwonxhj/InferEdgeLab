@@ -42,6 +42,7 @@ REQUIRED_BUNDLE_MANIFEST_SUMMARY_MARKERS = (
     "edgeenv_history_seed_run_config: run_config snapshots validated",
     "aiguard_evidence: edgeenv_orchestrator_producer_lineage validated",
     "aiguard_evidence: edgeenv_orchestrator_task_event_rollup validated",
+    "aiguard_evidence: edgeenv_orchestrator_operation_timeline_summary validated",
     "aiguard_evidence: runtime_history_seed_run_config_traceability validated",
     "aiguard_evidence: remote_execution_recovered_by_fallback validated",
     "aiguard_raw_context: producer_lineage_shape preserved",
@@ -81,6 +82,7 @@ REQUIRED_LAB_EXPECTED_REPORT_MARKERS = (
     "Orchestrator task event rollup",
     "Lab EdgeEnv preservation context",
     "AIGuard task event rollup evidence",
+    "AIGuard operation timeline evidence",
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
     "AIGuard remote event summary consistency",
@@ -368,6 +370,7 @@ def _validate_aiguard_handoff_alignment(
             "Orchestrator task event rollup, "
             "Lab EdgeEnv preservation context, "
             "AIGuard task event rollup evidence, "
+            "AIGuard operation timeline evidence, "
             "AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, "
             "AIGuard remote event summary consistency, "
             "Remote fallback starter evidence, "
