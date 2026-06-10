@@ -98,6 +98,7 @@ REQUIRED_GUARD_TYPES = {
     "runtime_telemetry_context_coverage",
     "edgeenv_orchestrator_producer_lineage",
     "edgeenv_orchestrator_task_event_rollup",
+    "edgeenv_orchestrator_operation_timeline_summary",
     "runtime_history_seed_run_config_traceability",
     "runtime_queue_overload",
     "runtime_thermal_instability",
@@ -131,6 +132,7 @@ REQUIRED_EXPECTED_REPORT_MARKERS = {
     "Orchestrator task event rollup",
     "Lab EdgeEnv preservation context",
     "AIGuard task event rollup evidence",
+    "AIGuard operation timeline evidence",
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
     "AIGuard remote event summary consistency",
@@ -156,6 +158,7 @@ SUMMARY_CONTRACT_MARKERS = (
     "edgeenv_history_seed_run_config: run_config snapshots validated",
     "aiguard_evidence: edgeenv_orchestrator_producer_lineage validated",
     "aiguard_evidence: edgeenv_orchestrator_task_event_rollup validated",
+    "aiguard_evidence: edgeenv_orchestrator_operation_timeline_summary validated",
     "aiguard_evidence: runtime_history_seed_run_config_traceability validated",
     "aiguard_evidence: remote_execution_recovered_by_fallback validated",
     "aiguard_raw_context: producer_lineage_shape preserved",
@@ -1709,6 +1712,8 @@ def _validate_guard_analysis(guard_analysis: dict[str, Any], errors: list[str]) 
             _validate_producer_lineage_evidence(item, index, errors)
         if item.get("type") == "edgeenv_orchestrator_task_event_rollup":
             _validate_task_event_rollup_evidence(item, index, errors)
+        if item.get("type") == "edgeenv_orchestrator_operation_timeline_summary":
+            _validate_operation_timeline_evidence(item, index, errors)
         if item.get("type") == "runtime_history_seed_run_config_traceability":
             _validate_run_config_traceability_evidence(item, index, errors)
         if item.get("type") == "remote_execution_recovered_by_fallback":
@@ -1935,6 +1940,105 @@ def _validate_task_event_rollup_evidence(
         rollup.get("not_a_deployment_decision") is True,
         errors,
         f"AIGuard evidence[{index}] task_event_rollup.not_a_deployment_decision must be true",
+    )
+
+
+def _validate_operation_timeline_evidence(
+    item: dict[str, Any],
+    index: int,
+    errors: list[str],
+) -> None:
+    _record(
+        item.get("status") == "warning",
+        errors,
+        f"AIGuard evidence[{index}] operation timeline status must be warning",
+    )
+    _record(
+        item.get("observed_value") == 6,
+        errors,
+        f"AIGuard evidence[{index}] operation timeline observed_value must be 6",
+    )
+    raw_context = item.get("raw_context") or {}
+    timeline = raw_context.get("operation_timeline_summary")
+    _record(
+        isinstance(timeline, dict),
+        errors,
+        f"AIGuard evidence[{index}] raw_context.operation_timeline_summary must be an object",
+    )
+    if not isinstance(timeline, dict):
+        return
+
+    _record(
+        timeline.get("affected_tasks") == ["vision_agent", "voice_command_agent"],
+        errors,
+        f"AIGuard evidence[{index}] operation_timeline_summary.affected_tasks "
+        "must preserve vision_agent and voice_command_agent",
+    )
+    _record(
+        timeline.get("queue_pressure_reason") == "queue_backlog_threshold_exceeded",
+        errors,
+        f"AIGuard evidence[{index}] operation_timeline_summary.queue_pressure_reason "
+        "must preserve queue_backlog_threshold_exceeded",
+    )
+    _record(
+        timeline.get("max_queue_wait_ms") == 15.0,
+        errors,
+        f"AIGuard evidence[{index}] operation_timeline_summary.max_queue_wait_ms must be 15.0",
+    )
+    _record(
+        timeline.get("policy_decision_count") == 2.0,
+        errors,
+        f"AIGuard evidence[{index}] operation_timeline_summary.policy_decision_count must be 2.0",
+    )
+    _record(
+        timeline.get("policy_decision_reasons")
+        == ["queue_backlog_threshold_exceeded"],
+        errors,
+        f"AIGuard evidence[{index}] operation_timeline_summary.policy_decision_reasons "
+        "must preserve queue_backlog_threshold_exceeded",
+    )
+    review_hints = timeline.get("review_hints")
+    _record(
+        isinstance(review_hints, list),
+        errors,
+        f"AIGuard evidence[{index}] operation_timeline_summary.review_hints must be a list",
+    )
+    if isinstance(review_hints, list):
+        missing_hints = sorted(
+            {
+                "review_queue_pressure",
+                "review_scheduler_delay",
+                "review_deadline_miss",
+                "review_fallback_use",
+            }
+            - set(review_hints)
+        )
+        _record(
+            not missing_hints,
+            errors,
+            f"AIGuard evidence[{index}] operation_timeline_summary.review_hints "
+            f"is missing {missing_hints}",
+        )
+    _record(
+        timeline.get("boundary_markers_valid") is True,
+        errors,
+        f"AIGuard evidence[{index}] operation_timeline_summary.boundary_markers_valid "
+        "must be true",
+    )
+    _record(
+        timeline.get("decision_owner") == "lab",
+        errors,
+        f"AIGuard evidence[{index}] operation_timeline_summary.decision_owner must be lab",
+    )
+    _record(
+        timeline.get("scheduler_owner") == "orchestrator",
+        errors,
+        f"AIGuard evidence[{index}] operation_timeline_summary.scheduler_owner must be orchestrator",
+    )
+    _record(
+        timeline.get("not_a_deployment_decision") is True,
+        errors,
+        f"AIGuard evidence[{index}] operation_timeline_summary.not_a_deployment_decision must be true",
     )
 
 

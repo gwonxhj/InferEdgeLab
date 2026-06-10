@@ -156,6 +156,7 @@ producer-lineage source/stage/count shape. It also requires the Orchestrator
 downstream guard-alignment marker for `edgeenv_orchestrator_producer_lineage`
 to remain present in EdgeEnv/AIGuard handoff context. It also requires AIGuard
 `edgeenv_orchestrator_task_event_rollup`,
+`edgeenv_orchestrator_operation_timeline_summary`,
 `runtime_history_seed_run_config_traceability`, and
 `remote_execution_recovered_by_fallback` evidence so the smoke remains a
 cross-repo handoff fixture rather than a Lab-only report sample. When an
@@ -171,6 +172,7 @@ packaging runs. That marker set preserves `Runtime Intelligence Risk Summary`,
 `Orchestrator task event rollup`,
 `Lab EdgeEnv preservation context`,
 `AIGuard task event rollup evidence`,
+`AIGuard operation timeline evidence`,
 `AIGuard runtime operation anomalies`,
 `AIGuard remote dispatch event summary`,
 `AIGuard remote event summary consistency`,
@@ -189,7 +191,7 @@ EdgeEnv handoff summary and AIGuard deterministic evidence agree on
 producer-lineage guard-alignment run IDs. This keeps the cross-repo marker
 check file-based and does not make AIGuard a deployment decision owner.
 
-The artifact gate is implemented by `scripts/check_runtime_intelligence_artifact_bundle.py`. It checks the generated Markdown / HTML report for the required Runtime Intelligence rows, including the short `Review Path` section, the `Review path` note, the `Reviewer Focus` quick-scan table, Lab ownership, EdgeEnv comparability, `EdgeEnv fixture matrix coverage`, telemetry coverage-gap markers, Runtime replay duration scope with `source=entrypoint_requested_frames` traceability, Orchestrator operation feed context, the Lab-owned `Reviewer operation quick scan` row, compact queue/deadline/fallback operation markers with `max_total_queue_depth`, AIGuard max queue raw-context traceability, Orchestrator task event rollup, Lab EdgeEnv preservation context, Jetson/device-local preservation identity and detail labels, Orchestrator `operation_risk_summary` navigation context, AIGuard runtime operation anomalies, AIGuard `edgeenv_orchestrator_operation_risk_summary` evidence, AIGuard `edgeenv_orchestrator_task_event_rollup` evidence, remote dispatch starter event summary, `Remote fallback starter evidence`, `edgeenv_orchestrator_producer_lineage`, `runtime_history_seed_run_config_traceability`, `remote_execution_recovered_by_fallback`, and triggered deployment review rules.
+The artifact gate is implemented by `scripts/check_runtime_intelligence_artifact_bundle.py`. It checks the generated Markdown / HTML report for the required Runtime Intelligence rows, including the short `Review Path` section, the `Review path` note, the `Reviewer Focus` quick-scan table, Lab ownership, EdgeEnv comparability, `EdgeEnv fixture matrix coverage`, telemetry coverage-gap markers, Runtime replay duration scope with `source=entrypoint_requested_frames` traceability, Orchestrator operation feed context, the Lab-owned `Reviewer operation quick scan` row, compact queue/deadline/fallback operation markers with `max_total_queue_depth`, AIGuard max queue raw-context traceability, Orchestrator task event rollup, Lab EdgeEnv preservation context, Jetson/device-local preservation identity and detail labels, Orchestrator `operation_risk_summary` navigation context, AIGuard runtime operation anomalies, AIGuard `edgeenv_orchestrator_operation_risk_summary` evidence, AIGuard `edgeenv_orchestrator_task_event_rollup` evidence, AIGuard `edgeenv_orchestrator_operation_timeline_summary` evidence, remote dispatch starter event summary, `Remote fallback starter evidence`, `edgeenv_orchestrator_producer_lineage`, `runtime_history_seed_run_config_traceability`, `remote_execution_recovered_by_fallback`, and triggered deployment review rules.
 
 The bundle manifest gate also checks the external AIGuard artifact before the
 rendered report stage. In particular, `runtime_queue_overload` must preserve

@@ -1371,6 +1371,66 @@
       }
     },
     {
+      "type": "edgeenv_orchestrator_operation_timeline_summary",
+      "metric_name": "orchestrator_operation_timeline_review_marker_count",
+      "observed_value": 6,
+      "baseline_value": 0,
+      "threshold": 1,
+      "delta": null,
+      "delta_pct": null,
+      "increase_factor": null,
+      "severity": "medium",
+      "status": "warning",
+      "explanation": "EdgeEnv preserved Orchestrator operation_timeline_summary with 6 deterministic review marker(s).",
+      "why_it_matters": "The preserved operation timeline compactly links queue pressure, latency wait, policy decisions, and affected tasks for Lab review without making AIGuard or Orchestrator the final deployment owner.",
+      "suspected_causes": [
+        "scheduler_delay_context",
+        "deadline_miss_context",
+        "fallback_policy_context",
+        "queue_pressure_context"
+      ],
+      "recommendation": "Review the preserved operation_timeline_summary in Lab alongside queue, latency, runtime event, and policy evidence; Lab remains the final deployment decision owner.",
+      "raw_context": {
+        "operation_timeline_summary": {
+          "summary": {
+            "schema_version": "inferedge-orchestrator-operation-timeline-summary-v1",
+            "source": "queue_depth_timeline+latency_timeline+policy_decision_log+runtime_event_summary"
+          },
+          "boundary_markers_valid": true,
+          "review_hints": [
+            "review_queue_pressure",
+            "review_scheduler_delay",
+            "review_deadline_miss",
+            "review_fallback_use"
+          ],
+          "affected_tasks": [
+            "vision_agent",
+            "voice_command_agent"
+          ],
+          "queue_pressure_state": "overloaded",
+          "queue_pressure_reason": "queue_backlog_threshold_exceeded",
+          "max_pressure_task": "vision_agent",
+          "max_queue_wait_ms": 15.0,
+          "max_latency_ms": 72.0,
+          "policy_decision_count": 2.0,
+          "policy_decision_reasons": [
+            "queue_backlog_threshold_exceeded"
+          ],
+          "review_markers": [
+            "review_queue_pressure",
+            "review_scheduler_delay",
+            "review_deadline_miss",
+            "review_fallback_use",
+            "affected_task_context",
+            "backlog_policy_reason"
+          ],
+          "decision_owner": "lab",
+          "scheduler_owner": "orchestrator",
+          "not_a_deployment_decision": true
+        }
+      }
+    },
+    {
       "type": "runtime_history_seed_run_config_traceability",
       "metric_name": "runtime_history_seed_run_config_runs",
       "observed_value": 2,

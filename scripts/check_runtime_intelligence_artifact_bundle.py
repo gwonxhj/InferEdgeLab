@@ -131,6 +131,13 @@ REQUIRED_MARKDOWN_MARKERS = {
         "status=warning, affected=2"
     ),
     "aiguard_task_event_rollup_type": "edgeenv_orchestrator_task_event_rollup",
+    "aiguard_operation_timeline_evidence": (
+        "| AIGuard operation timeline evidence | "
+        "status=warning, markers=6"
+    ),
+    "aiguard_operation_timeline_type": (
+        "edgeenv_orchestrator_operation_timeline_summary"
+    ),
     "aiguard_remote_dispatch_summary": (
         "| AIGuard remote dispatch event summary | "
         "events=3, final=succeeded, fallback_recovered=True |"
@@ -240,6 +247,10 @@ REQUIRED_HTML_MARKERS = {
     ),
     "aiguard_task_event_rollup_evidence": "AIGuard task event rollup evidence",
     "aiguard_task_event_rollup_type": "edgeenv_orchestrator_task_event_rollup",
+    "aiguard_operation_timeline_evidence": "AIGuard operation timeline evidence",
+    "aiguard_operation_timeline_type": (
+        "edgeenv_orchestrator_operation_timeline_summary"
+    ),
     "aiguard_remote_dispatch_summary": "AIGuard remote dispatch event summary",
     "aiguard_remote_dispatch_label": (
         "events=3, final=succeeded, fallback_recovered=True"

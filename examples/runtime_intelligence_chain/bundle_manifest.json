@@ -54,6 +54,7 @@
     "Orchestrator task event rollup",
     "Lab EdgeEnv preservation context",
     "AIGuard task event rollup evidence",
+    "AIGuard operation timeline evidence",
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
     "AIGuard remote event summary consistency",

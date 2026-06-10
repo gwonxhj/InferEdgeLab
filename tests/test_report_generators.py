@@ -543,6 +543,54 @@ def make_runtime_operation_guard_analysis() -> dict:
                     }
                 },
             },
+            {
+                "type": "edgeenv_orchestrator_operation_timeline_summary",
+                "metric_name": "orchestrator_operation_timeline_review_marker_count",
+                "observed_value": 6,
+                "baseline_value": 0,
+                "threshold": 1,
+                "status": "warning",
+                "severity": "medium",
+                "why_it_matters": (
+                    "The preserved operation timeline compactly links queue "
+                    "pressure, latency wait, policy decisions, and affected tasks."
+                ),
+                "suspected_causes": [
+                    "scheduler_delay_context",
+                    "deadline_miss_context",
+                    "fallback_policy_context",
+                    "queue_pressure_context",
+                ],
+                "recommendation": (
+                    "Review the preserved operation_timeline_summary in Lab "
+                    "alongside queue, latency, runtime event, and policy evidence."
+                ),
+                "raw_context": {
+                    "operation_timeline_summary": {
+                        "boundary_markers_valid": True,
+                        "review_hints": [
+                            "review_queue_pressure",
+                            "review_scheduler_delay",
+                        ],
+                        "affected_tasks": [
+                            "vision_agent",
+                            "voice_command_agent",
+                        ],
+                        "queue_pressure_reason": (
+                            "queue_backlog_threshold_exceeded"
+                        ),
+                        "max_queue_wait_ms": 15.0,
+                        "max_latency_ms": 72.0,
+                        "policy_decision_count": 2.0,
+                        "policy_decision_reasons": [
+                            "queue_backlog_threshold_exceeded"
+                        ],
+                        "decision_owner": "lab",
+                        "scheduler_owner": "orchestrator",
+                        "not_a_deployment_decision": True,
+                    }
+                },
+            },
         ],
         "candidate_summary": {
             "edgeenv_regression": {
@@ -977,6 +1025,14 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
         "scheduler_delay=vision_agent, reasons=deadline_missed:1,"
         "queue_backlog_threshold_exceeded:2,"
         "load_shedding_backlog_threshold_exceeded:1, boundary_valid=True |"
+    ) in text
+    assert (
+        "| AIGuard operation timeline evidence | "
+        "status=warning, markers=6, tasks=vision_agent,voice_command_agent, "
+        "hints=review_queue_pressure,review_scheduler_delay, "
+        "queue=queue_backlog_threshold_exceeded, max_wait_ms=15, "
+        "max_latency_ms=72, policy_decisions=2, "
+        "policy=queue_backlog_threshold_exceeded, boundary_valid=True |"
     ) in text
     assert "AIGuard does not own the final decision" in text
 

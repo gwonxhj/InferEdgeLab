@@ -22,6 +22,10 @@ ORCHESTRATOR_TASK_EVENT_ROLLUP_EVIDENCE_TYPE = (
     "edgeenv_orchestrator_task_event_rollup"
 )
 
+ORCHESTRATOR_OPERATION_TIMELINE_EVIDENCE_TYPE = (
+    "edgeenv_orchestrator_operation_timeline_summary"
+)
+
 RUN_CONFIG_TRACEABILITY_EVIDENCE_TYPE = "runtime_history_seed_run_config_traceability"
 
 REMOTE_RUNTIME_EVENT_SUMMARY_MISMATCH_EVIDENCE_TYPE = (
@@ -1520,6 +1524,16 @@ def _append_aiguard_runtime_operation_rows(
             )
         )
 
+    operation_timeline_label = _aiguard_operation_timeline_label(evidence_items)
+    if operation_timeline_label:
+        rows.append(
+            (
+                "AIGuard operation timeline evidence",
+                operation_timeline_label,
+                "AIGuard preserves compact queue/latency/policy timeline markers as deterministic navigation context; Lab still owns the deployment decision.",
+            )
+        )
+
     candidate_summary = guard_analysis.get("candidate_summary")
     if not isinstance(candidate_summary, dict):
         return
@@ -1849,6 +1863,57 @@ def _aiguard_task_event_rollup_label(
             reason_counts = context.get("reason_counts")
             if isinstance(reason_counts, dict) and reason_counts:
                 parts.append("reasons=" + _format_reason_count_label(reason_counts))
+            boundary_valid = context.get("boundary_markers_valid")
+            if boundary_valid is not None:
+                parts.append(f"boundary_valid={boundary_valid}")
+    return ", ".join(parts)
+
+
+def _aiguard_operation_timeline_label(
+    evidence_items: list[dict[str, Any]],
+) -> str:
+    evidence = _find_evidence_item(
+        evidence_items,
+        ORCHESTRATOR_OPERATION_TIMELINE_EVIDENCE_TYPE,
+    )
+    if evidence is None:
+        return ""
+
+    parts: list[str] = []
+    status = evidence.get("status")
+    if status is not None:
+        parts.append(f"status={status}")
+    observed = evidence.get("observed_value")
+    if observed is not None:
+        parts.append(f"markers={_format_compact_value(observed)}")
+
+    raw_context = evidence.get("raw_context")
+    if isinstance(raw_context, dict):
+        context = raw_context.get("operation_timeline_summary")
+        if isinstance(context, dict):
+            affected_tasks = _string_list(context.get("affected_tasks"))
+            if affected_tasks:
+                parts.append("tasks=" + ",".join(affected_tasks))
+            review_hints = _string_list(context.get("review_hints"))
+            if review_hints:
+                parts.append("hints=" + ",".join(review_hints))
+            queue_reason = context.get("queue_pressure_reason")
+            if queue_reason is not None:
+                parts.append(f"queue={_format_compact_value(queue_reason)}")
+            max_wait = context.get("max_queue_wait_ms")
+            if max_wait is not None:
+                parts.append(f"max_wait_ms={_format_compact_value(max_wait)}")
+            max_latency = context.get("max_latency_ms")
+            if max_latency is not None:
+                parts.append(
+                    f"max_latency_ms={_format_compact_value(max_latency)}"
+                )
+            policy_count = context.get("policy_decision_count")
+            if policy_count is not None:
+                parts.append(f"policy_decisions={_format_compact_value(policy_count)}")
+            policy_reasons = _string_list(context.get("policy_decision_reasons"))
+            if policy_reasons:
+                parts.append("policy=" + ",".join(policy_reasons))
             boundary_valid = context.get("boundary_markers_valid")
             if boundary_valid is not None:
                 parts.append(f"boundary_valid={boundary_valid}")
