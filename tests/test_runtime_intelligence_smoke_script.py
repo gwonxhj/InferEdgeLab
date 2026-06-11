@@ -212,12 +212,28 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
         "stale_frame_risk",
     ]
     assert optional_present_payload["missing_optional_evidence_types"] == []
+    assert optional_present_payload["optional_present_source_artifact"] == {
+        "repository": "InferEdgeAIGuard",
+        "path": (
+            "examples/runtime_intelligence/"
+            "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
+        ),
+        "schema_version": "inferedge-aiguard-diagnosis-v1",
+        "role": "aiguard-optional-stale-drop-full-evidence-source",
+        "context_role": "read_only_cross_repo_traceability",
+    }
     assert (
         "optional_guard_evidence_types_present: "
         "[edgeenv_orchestrator_stale_drop_summary, stale_frame_risk]"
         in optional_present_summary
     )
     assert "missing_optional_evidence_types: []" in optional_present_summary
+    assert (
+        "optional_present_source_artifact: "
+        "InferEdgeAIGuard/examples/runtime_intelligence/"
+        "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
+        in optional_present_summary
+    )
 
     ci_summary = (
         output_dir / "runtime_intelligence_ci_artifact_gate_summary.md"
@@ -245,6 +261,12 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
         in ci_summary
     )
     assert "aiguard_optional_present_missing_types: none" in ci_summary
+    assert (
+        "aiguard_optional_present_source_artifact: "
+        "InferEdgeAIGuard/examples/runtime_intelligence/"
+        "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
+        in ci_summary
+    )
     assert "## Validated Duration Traceability" in ci_summary
     assert (
         "duration_handoff_alignment: EdgeEnv/AIGuard report context preserved"

@@ -264,7 +264,12 @@ path. A companion
 `aiguard_edgeenv_handoff_alignment_optional_present.json/.md` fixture exercises
 the same optional labels when they are present, proving the gate can record
 `optional_guard_evidence_types_present` without promoting those labels to
-required deployment-decision evidence.
+required deployment-decision evidence. That optional-present fixture also
+records the source as
+`InferEdgeAIGuard/examples/runtime_intelligence/aiguard_runtime_operation_guard_analysis_optional_stale_drop.json`
+so reviewers can trace Lab's optional-present handoff fixture back to the
+AIGuard full-evidence example without making that cross-repo path a required
+runtime contract.
 
 Remote dispatch rows in this artifact chain are starter evidence only. The
 gates require worker-selection, fallback recovery, event-count, consistency,

@@ -73,6 +73,13 @@
     "stale_frame_risk"
   ],
   "missing_optional_evidence_types": [],
+  "optional_present_source_artifact": {
+    "repository": "InferEdgeAIGuard",
+    "path": "examples/runtime_intelligence/aiguard_runtime_operation_guard_analysis_optional_stale_drop.json",
+    "schema_version": "inferedge-aiguard-diagnosis-v1",
+    "role": "aiguard-optional-stale-drop-full-evidence-source",
+    "context_role": "read_only_cross_repo_traceability"
+  },
   "supplemental_guard_evidence_types": [
     "edgeenv_orchestrator_operation_risk_summary",
     "edgeenv_orchestrator_stale_drop_summary",

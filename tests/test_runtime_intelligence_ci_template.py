@@ -337,6 +337,12 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         '"optional_guard_evidence_types_present":'
         '["edgeenv_orchestrator_stale_drop_summary","stale_frame_risk"],'
         '"missing_optional_evidence_types":[],'
+        '"optional_present_source_artifact":{'
+        '"repository":"InferEdgeAIGuard",'
+        '"path":"examples/runtime_intelligence/aiguard_runtime_operation_guard_analysis_optional_stale_drop.json",'
+        '"schema_version":"inferedge-aiguard-diagnosis-v1",'
+        '"role":"aiguard-optional-stale-drop-full-evidence-source",'
+        '"context_role":"read_only_cross_repo_traceability"},'
         '"invalid_optional_evidence_types":[],'
         '"handoff_producer_lineage_guard_alignment_run_ids":'
         '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
@@ -361,6 +367,7 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
                 "- optional_aiguard_evidence_types: [stale_frame_risk, edgeenv_orchestrator_stale_drop_summary]",
                 "- optional_guard_evidence_types_present: [edgeenv_orchestrator_stale_drop_summary, stale_frame_risk]",
                 "- missing_optional_evidence_types: []",
+                "- optional_present_source_artifact: InferEdgeAIGuard/examples/runtime_intelligence/aiguard_runtime_operation_guard_analysis_optional_stale_drop.json",
                 "- handoff_producer_lineage_guard_alignment_run_ids: [edgeenv-smoke-candidate, edgeenv-smoke-missing]",
                 "- guard_analysis_producer_lineage_guard_alignment_run_ids: [edgeenv-smoke-candidate, edgeenv-smoke-missing]",
             ]
@@ -442,6 +449,12 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         in summary
     )
     assert "aiguard_optional_present_missing_types: none" in summary
+    assert (
+        "aiguard_optional_present_source_artifact: "
+        "InferEdgeAIGuard/examples/runtime_intelligence/"
+        "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
+        in summary
+    )
 
     (report_dir / "runtime_anomaly_gate_summary.md").write_text(
         "- Status: passed\n",
