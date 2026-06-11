@@ -255,6 +255,12 @@ and the `Reviewer operation quick scan` row marker,
 `aiguard_validates_expected_report_markers` must remain `false`. This keeps
 AIGuard as a deterministic external evidence provider while leaving report
 marker enforcement to Lab's bundle/report gates.
+The same alignment artifact also preserves
+`optional_aiguard_evidence_types` as `read_only_optional_guard_context`. The CI
+artifact gate checks `aiguard_validates_optional_evidence_as_required=false`,
+records which optional stale-drop evidence labels are absent from the bundled
+guard artifact, and keeps those absences out of the required evidence failure
+path.
 
 Remote dispatch rows in this artifact chain are starter evidence only. The
 gates require worker-selection, fallback recovery, event-count, consistency,
