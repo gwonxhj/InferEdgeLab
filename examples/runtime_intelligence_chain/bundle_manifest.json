@@ -53,6 +53,7 @@
     "Reviewer operation quick scan",
     "Orchestrator task event rollup",
     "Lab EdgeEnv preservation context",
+    "AIGuard operation risk rollup evidence",
     "AIGuard task event rollup evidence",
     "AIGuard operation timeline evidence",
     "AIGuard runtime operation anomalies",

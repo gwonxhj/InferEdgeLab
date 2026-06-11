@@ -18,6 +18,10 @@ ORCHESTRATOR_OPERATION_RISK_EVIDENCE_TYPE = (
     "edgeenv_orchestrator_operation_risk_summary"
 )
 
+ORCHESTRATOR_OPERATION_RISK_ROLLUP_EVIDENCE_TYPE = (
+    "edgeenv_orchestrator_operation_risk_rollup"
+)
+
 ORCHESTRATOR_TASK_EVENT_ROLLUP_EVIDENCE_TYPE = (
     "edgeenv_orchestrator_task_event_rollup"
 )
@@ -1514,6 +1518,18 @@ def _append_aiguard_runtime_operation_rows(
             )
         )
 
+    operation_risk_rollup_label = _aiguard_operation_risk_rollup_label(
+        evidence_items
+    )
+    if operation_risk_rollup_label:
+        rows.append(
+            (
+                "AIGuard operation risk rollup evidence",
+                operation_risk_rollup_label,
+                "AIGuard preserves compact operation risk rollup markers as deterministic warning context; Lab still owns the deployment decision.",
+            )
+        )
+
     task_event_rollup_label = _aiguard_task_event_rollup_label(evidence_items)
     if task_event_rollup_label:
         rows.append(
@@ -1818,6 +1834,52 @@ def _aiguard_operation_risk_summary_label(
             degraded_workers = _string_list(context.get("degraded_worker_ids"))
             if degraded_workers:
                 parts.append("degraded_workers=" + ",".join(degraded_workers))
+            boundary_valid = context.get("boundary_markers_valid")
+            if boundary_valid is not None:
+                parts.append(f"boundary_valid={boundary_valid}")
+    return ", ".join(parts)
+
+
+def _aiguard_operation_risk_rollup_label(
+    evidence_items: list[dict[str, Any]],
+) -> str:
+    evidence = _find_evidence_item(
+        evidence_items,
+        ORCHESTRATOR_OPERATION_RISK_ROLLUP_EVIDENCE_TYPE,
+    )
+    if evidence is None:
+        return ""
+
+    parts: list[str] = []
+    status = evidence.get("status")
+    if status is not None:
+        parts.append(f"status={status}")
+    observed = evidence.get("observed_value")
+    if observed is not None:
+        parts.append(f"markers={_format_compact_value(observed)}")
+
+    raw_context = evidence.get("raw_context")
+    if isinstance(raw_context, dict):
+        context = raw_context.get("operation_risk_rollup")
+        if isinstance(context, dict):
+            for field, label in (
+                ("risk_level", "risk"),
+                ("queue_pressure_reason", "queue"),
+                ("max_total_queue_depth", "max_queue"),
+                ("deadline_missed_count", "deadline"),
+                ("fallback_count", "fallback"),
+                ("drop_count", "drop"),
+                ("scheduler_delay_event_count", "scheduler_delay"),
+            ):
+                value = context.get(field)
+                if value is not None:
+                    parts.append(f"{label}={_format_compact_value(value)}")
+            primary_reasons = _string_list(context.get("primary_reasons"))
+            if primary_reasons:
+                parts.append("reasons=" + ",".join(primary_reasons))
+            affected_tasks = _string_list(context.get("affected_tasks"))
+            if affected_tasks:
+                parts.append("tasks=" + ",".join(affected_tasks))
             boundary_valid = context.get("boundary_markers_valid")
             if boundary_valid is not None:
                 parts.append(f"boundary_valid={boundary_valid}")

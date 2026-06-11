@@ -60,6 +60,7 @@
     "external_aiguard_required_evidence_types": [
       "runtime_telemetry_context_coverage",
       "edgeenv_orchestrator_producer_lineage",
+      "edgeenv_orchestrator_operation_risk_rollup",
       "edgeenv_orchestrator_task_event_rollup",
       "edgeenv_orchestrator_operation_timeline_summary",
       "runtime_history_seed_run_config_traceability",
@@ -75,6 +76,7 @@
       "Reviewer operation quick scan",
       "Orchestrator task event rollup",
       "Lab EdgeEnv preservation context",
+      "AIGuard operation risk rollup evidence",
       "AIGuard task event rollup evidence",
       "AIGuard operation timeline evidence",
       "AIGuard runtime operation anomalies",
@@ -152,8 +154,16 @@
       "edgeenv-smoke-candidate",
       "edgeenv-smoke-missing"
     ],
+    "orchestrator_operation_risk_rollup_present": true,
+    "orchestrator_operation_risk_rollup_run_ids": [
+      "edgeenv-smoke-candidate"
+    ],
     "orchestrator_task_event_rollup_present": true,
     "orchestrator_task_event_rollup_run_ids": [
+      "edgeenv-smoke-candidate"
+    ],
+    "orchestrator_operation_timeline_summary_present": true,
+    "orchestrator_operation_timeline_summary_run_ids": [
       "edgeenv-smoke-candidate"
     ]
   },

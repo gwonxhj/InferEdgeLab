@@ -100,6 +100,7 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     evidence_types = {item["type"] for item in bundle["guard_analysis"]["evidence"]}
     assert "edgeenv_orchestrator_producer_lineage" in evidence_types
     assert "edgeenv_orchestrator_operation_risk_summary" in evidence_types
+    assert "edgeenv_orchestrator_operation_risk_rollup" in evidence_types
     assert "edgeenv_orchestrator_task_event_rollup" in evidence_types
     assert "edgeenv_orchestrator_operation_timeline_summary" in evidence_types
     assert "runtime_history_seed_run_config_traceability" in evidence_types
@@ -570,6 +571,9 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "AIGuard runtime operation anomalies" in markdown
     assert "AIGuard operation risk summary evidence" in markdown
     assert "edgeenv_orchestrator_operation_risk_summary" in markdown
+    assert "AIGuard operation risk rollup evidence" in markdown
+    assert "edgeenv_orchestrator_operation_risk_rollup" in markdown
+    assert "risk=review" in markdown
     assert "AIGuard task event rollup evidence" in markdown
     assert "edgeenv_orchestrator_task_event_rollup" in markdown
     assert "AIGuard operation timeline evidence" in markdown
@@ -691,6 +695,9 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "runtime_queue_overload, runtime_thermal_instability" in html
     assert "AIGuard operation risk summary evidence" in html
     assert "edgeenv_orchestrator_operation_risk_summary" in html
+    assert "AIGuard operation risk rollup evidence" in html
+    assert "edgeenv_orchestrator_operation_risk_rollup" in html
+    assert "risk=review" in html
     assert "AIGuard task event rollup evidence" in html
     assert "edgeenv_orchestrator_task_event_rollup" in html
     assert "AIGuard operation timeline evidence" in html
