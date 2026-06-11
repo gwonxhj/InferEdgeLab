@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 from fastapi.responses import FileResponse
 from fastapi.responses import RedirectResponse
+from fastapi.responses import Response
 
 import inferedgelab.api as api
 
@@ -98,6 +99,26 @@ def test_studio_static_assets_are_served():
     assert style_response.headers["cache-control"] == "no-store"
     assert "renderPipeline" in Path(app_response.path).read_text(encoding="utf-8")
     assert "pipeline-flow" in Path(style_response.path).read_text(encoding="utf-8")
+
+
+def test_studio_file_preview_asset_fallbacks_are_served():
+    app = api.create_app()
+    app_route = _get_route(app, "/app.js")
+    style_route = _get_route(app, "/style.css")
+
+    app_response = app_route.endpoint()
+    style_response = style_route.endpoint()
+
+    assert isinstance(app_response, Response)
+    assert isinstance(style_response, Response)
+    assert app_response.status_code == 200
+    assert style_response.status_code == 200
+    assert app_response.headers["cache-control"] == "no-store"
+    assert style_response.headers["cache-control"] == "no-store"
+    assert app_response.media_type == "application/javascript"
+    assert style_response.media_type == "text/css"
+    assert b"/studio/static/app.js owns Studio initialization" in app_response.body
+    assert b"/studio/static/style.css owns Studio styling" in style_response.body
 
 
 def test_studio_static_assets_include_redesigned_ui_contracts():

@@ -12,6 +12,7 @@ from fastapi import Request
 from fastapi import Body
 from fastapi.responses import FileResponse
 from fastapi.responses import RedirectResponse
+from fastapi.responses import Response
 
 from inferedgelab.compare.comparator import compare_results
 from inferedgelab.compare.judgement import judge_comparison
@@ -61,11 +62,39 @@ def studio_korean_particle_redirect() -> RedirectResponse:
 
 @router.get("/studio/static/{asset_name}", include_in_schema=False)
 def studio_static(asset_name: str) -> FileResponse:
+    return _studio_static_response(asset_name)
+
+
+@router.get("/app.js", include_in_schema=False)
+def studio_file_preview_app() -> Response:
+    return _studio_file_preview_placeholder(
+        "application/javascript",
+        "// Local server placeholder: /studio/static/app.js owns Studio initialization.\n",
+    )
+
+
+@router.get("/style.css", include_in_schema=False)
+def studio_file_preview_style() -> Response:
+    return _studio_file_preview_placeholder(
+        "text/css",
+        "/* Local server placeholder: /studio/static/style.css owns Studio styling. */\n",
+    )
+
+
+def _studio_static_response(asset_name: str) -> FileResponse:
     media_type = STATIC_ASSETS.get(asset_name)
     if media_type is None:
         raise HTTPException(status_code=404, detail="studio asset not found")
     return FileResponse(
         STATIC_DIR / asset_name,
+        media_type=media_type,
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+def _studio_file_preview_placeholder(media_type: str, content: str) -> Response:
+    return Response(
+        content=content,
         media_type=media_type,
         headers={"Cache-Control": "no-store"},
     )
