@@ -79,6 +79,7 @@ def _text_summary(report: dict) -> str:
     remote_runtime_event_summary = (
         remote_context.get("remote_runtime_event_summary") or {}
     )
+    orchestrator_guard = report.get("orchestrator_operation_guard_summary") or {}
     edgeenv_context = (
         report["agent_runtime_summary"].get("edgeenv_preservation_context") or {}
     )
@@ -113,6 +114,9 @@ def _text_summary(report: dict) -> str:
         f"remote_runtime_event_count: {remote_runtime_event_summary.get('runtime_event_count')}",
         f"remote_runtime_event_final_status: {remote_runtime_event_summary.get('final_status')}",
         f"remote_runtime_summary_boundary: {remote_runtime_event_summary.get('operation_boundary')}",
+        f"stale_drop_count: {orchestrator_guard.get('stale_drop_count')}",
+        f"stale_drop_rate: {orchestrator_guard.get('stale_drop_rate')}",
+        f"tasks_with_stale_drop: {', '.join(orchestrator_guard.get('tasks_with_stale_drop') or [])}",
         f"edgeenv_run_id: {edgeenv_context.get('run_id')}",
         f"edgeenv_runtime_operation_health: {edgeenv_context.get('runtime_operation_health_reason')}",
         f"edgeenv_runtime_operation_action: {edgeenv_context.get('runtime_operation_recommended_action')}",

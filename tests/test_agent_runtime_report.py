@@ -460,16 +460,72 @@ def orchestrator_operation_guard_analysis() -> dict:
                     },
                 },
             },
+            {
+                "type": "stale_frame_risk",
+                "metric_name": "stale_drop_rate",
+                "observed_value": 0.714,
+                "baseline_value": 0,
+                "threshold": 0.2,
+                "delta": None,
+                "delta_pct": None,
+                "increase_factor": None,
+                "severity": "high",
+                "status": "failed",
+                "explanation": (
+                    "Orchestrator reported 5 stale/backlog drop events."
+                ),
+                "why_it_matters": (
+                    "Stale frame or backlog drops can protect high-priority "
+                    "work, but they also show that lower-priority workloads may "
+                    "lose fresh inputs."
+                ),
+                "suspected_causes": [
+                    "load_shedding_context",
+                    "stale_queue_overflow",
+                ],
+                "recommendation": (
+                    "Review tasks_with_stale_drop, stale_drop_reasons, queue "
+                    "depth, producer rate, and fallback policy in Lab."
+                ),
+                "raw_context": {
+                    "stale_drop_count": 5,
+                    "total_drop_count": 7,
+                    "stale_drop_rate": 0.714,
+                    "stale_drop_reasons": {
+                        "load_shedding_backlog_threshold_exceeded": 3,
+                        "queue_overflow_drop_oldest": 2,
+                    },
+                    "stale_drop_reason_classes": [
+                        "load_shedding_stale_backlog",
+                        "stale_queue_overflow",
+                    ],
+                    "tasks_with_stale_drop": [
+                        "vision_agent",
+                        "voice_command_agent",
+                    ],
+                    "latest_stale_drop_event": {
+                        "task": "voice_command_agent",
+                        "agent_id": "voice_command_agent",
+                        "reason": "queue_overflow_drop_oldest",
+                        "stale_drop_class": "stale_queue_overflow",
+                    },
+                    "decision_owner": "lab",
+                    "scheduler_owner": "orchestrator",
+                    "not_a_deployment_decision": True,
+                },
+            },
         ]
     )
     data["suspected_causes"] = [
         *data["suspected_causes"],
         "fallback_policy_used",
         "scheduler_queue_wait",
+        "stale_queue_overflow",
     ]
     data["recommendations"] = [
         *data["recommendations"],
         "Inspect worker health reasons and scheduler delay timeline.",
+        "Review stale drop reasons and affected agent workloads in Lab.",
     ]
     return data
 
@@ -1340,12 +1396,13 @@ def test_agent_runtime_report_summarizes_orchestrator_operation_guard_evidence()
     )
 
     orchestrator_guard = report["orchestrator_operation_guard_summary"]
-    assert orchestrator_guard["evidence_count"] == 2
-    assert orchestrator_guard["failed_count"] == 1
+    assert orchestrator_guard["evidence_count"] == 3
+    assert orchestrator_guard["failed_count"] == 2
     assert orchestrator_guard["warning_count"] == 1
     assert orchestrator_guard["evidence_types"] == [
         "worker_health_degradation",
         "scheduler_delay_pattern",
+        "stale_frame_risk",
     ]
     assert orchestrator_guard["health_reasons"] == [
         "fallback_policy_used",
@@ -1364,18 +1421,71 @@ def test_agent_runtime_report_summarizes_orchestrator_operation_guard_evidence()
         "load_shedding_backlog_threshold_exceeded": 1,
     }
     assert orchestrator_guard["scheduler_delay_event_count"] == 2
+    assert orchestrator_guard["stale_drop_count"] == 5
+    assert orchestrator_guard["stale_drop_rate"] == 0.714
+    assert orchestrator_guard["stale_drop_reasons"] == {
+        "load_shedding_backlog_threshold_exceeded": 3,
+        "queue_overflow_drop_oldest": 2,
+    }
+    assert orchestrator_guard["stale_drop_reason_classes"] == [
+        "load_shedding_stale_backlog",
+        "stale_queue_overflow",
+    ]
+    assert orchestrator_guard["tasks_with_stale_drop"] == [
+        "vision_agent",
+        "voice_command_agent",
+    ]
+
+
+def test_agent_runtime_report_command_text_surfaces_stale_drop(capsys):
+    agent_runtime_report_cmd(
+        orchestration_summary="examples/agent_runtime/agent_3_orchestration_summary.json",
+        guard_analysis="examples/agent_runtime/aiguard_runtime_guard_analysis.json",
+        runtime_result="",
+        remote_dispatch="",
+        edgeenv_run_show="",
+        format="text",
+        output="",
+    )
+
+    out = capsys.readouterr().out
+    assert "stale_drop_count: 5" in out
+    assert "stale_drop_rate: 0.714" in out
+    assert "tasks_with_stale_drop: vision_agent, voice_command_agent" in out
+
+    report = build_agent_runtime_reliability_report(
+        orchestration_summary=orchestration_summary(),
+        guard_analysis=orchestrator_operation_guard_analysis(),
+    )
+    orchestrator_guard = report["orchestrator_operation_guard_summary"]
     assert orchestrator_guard["evidence"][1]["runtime_event_reason_counts"] == {
         "scheduler_delay_observed": 2,
     }
+    assert orchestrator_guard["evidence"][2]["stale_drop_boundary_markers_valid"] is None
+    assert orchestrator_guard["evidence"][2]["stale_drop_decision_owner"] == "lab"
+    assert (
+        orchestrator_guard["evidence"][2]["stale_drop_scheduler_owner"]
+        == "orchestrator"
+    )
+    assert (
+        orchestrator_guard["evidence"][2]["stale_drop_not_a_deployment_decision"]
+        is True
+    )
 
     markdown = build_agent_runtime_reliability_markdown(report)
     assert "AIGuard Orchestrator Operation Evidence" in markdown
     assert "worker_health_degradation" in markdown
     assert "scheduler_delay_pattern" in markdown
+    assert "stale_frame_risk" in markdown
     assert "policy_decision_reasons" in markdown
     assert "queue_backlog_threshold_exceeded=1" in markdown
     assert "drop_reasons" in markdown
     assert "load_shedding_backlog_threshold_exceeded=1" in markdown
+    assert "stale_drop_count" in markdown
+    assert "stale_drop_rate" in markdown
+    assert "tasks_with_stale_drop" in markdown
+    assert "vision_agent, voice_command_agent" in markdown
+    assert "queue_overflow_drop_oldest=2" in markdown
 
 
 def test_agent_runtime_report_marks_runtime_timeout_as_review():
@@ -1509,6 +1619,9 @@ def test_agent_runtime_report_markdown_contains_sections():
     assert "AIGuard Orchestrator Operation Evidence" in markdown
     assert "worker_health_degradation" in markdown
     assert "scheduler_delay_pattern" in markdown
+    assert "stale_frame_risk" in markdown
+    assert "stale_drop_count" in markdown
+    assert "tasks_with_stale_drop" in markdown
     assert "Remote Dispatch Context" in markdown
     assert "Remote execution starter evidence" in markdown
     assert "jetson-nano-01" in markdown
@@ -1560,6 +1673,14 @@ def test_agent_runtime_report_loads_committed_fixtures():
         "path=agent_runtime_preservation"
     )
     assert "device_local_events=0" in context["preservation_details_label"]
+    orchestrator_guard = report["orchestrator_operation_guard_summary"]
+    assert "stale_frame_risk" in orchestrator_guard["evidence_types"]
+    assert orchestrator_guard["stale_drop_count"] == 5
+    assert orchestrator_guard["stale_drop_rate"] == 0.714
+    assert orchestrator_guard["tasks_with_stale_drop"] == [
+        "vision_agent",
+        "voice_command_agent",
+    ]
 
 
 def test_agent_runtime_report_surfaces_remote_execution_failure():
@@ -1706,3 +1827,9 @@ def test_agent_runtime_report_command_outputs_json(tmp_path, capsys):
     ]
     edgeenv_context = report["agent_runtime_summary"]["edgeenv_preservation_context"]
     assert edgeenv_context["run_id"] == "run-20260529-094714-0955a027"
+    orchestrator_guard = report["orchestrator_operation_guard_summary"]
+    assert orchestrator_guard["stale_drop_count"] == 5
+    assert orchestrator_guard["tasks_with_stale_drop"] == [
+        "vision_agent",
+        "voice_command_agent",
+    ]

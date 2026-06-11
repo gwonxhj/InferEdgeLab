@@ -30,6 +30,10 @@ RUNTIME_OPERATION_GUARD_EVIDENCE_TYPES = {
 ORCHESTRATOR_OPERATION_GUARD_EVIDENCE_TYPES = {
     "worker_health_degradation",
     "scheduler_delay_pattern",
+    "operation_timeline_summary",
+    "stale_frame_risk",
+    "edgeenv_orchestrator_operation_timeline_summary",
+    "edgeenv_orchestrator_stale_drop_summary",
 }
 
 DEFAULT_AGENT_RUNTIME_THRESHOLDS = {
@@ -877,6 +881,11 @@ def build_agent_runtime_reliability_markdown(report: dict[str, Any]) -> str:
             f"| policy_decision_reasons | {_fmt_mapping(orchestrator_guard.get('policy_decision_reason_counts'))} |",
             f"| drop_reasons | {_fmt_mapping(orchestrator_guard.get('drop_reason_counts'))} |",
             f"| scheduler_delay_event_count | {_fmt_number(orchestrator_guard.get('scheduler_delay_event_count'))} |",
+            f"| stale_drop_count | {_fmt_number(orchestrator_guard.get('stale_drop_count'))} |",
+            f"| stale_drop_rate | {_fmt_number(orchestrator_guard.get('stale_drop_rate'))} |",
+            f"| tasks_with_stale_drop | {', '.join(orchestrator_guard.get('tasks_with_stale_drop') or []) or '-'} |",
+            f"| stale_drop_reasons | {_fmt_mapping(orchestrator_guard.get('stale_drop_reasons'))} |",
+            f"| stale_drop_reason_classes | {', '.join(orchestrator_guard.get('stale_drop_reason_classes') or []) or '-'} |",
             "",
             "Orchestrator operation guard evidence:",
             "",
@@ -1494,7 +1503,12 @@ def _orchestrator_operation_guard_summary(
     health_reason_counts: dict[str, int] = {}
     policy_decision_reason_counts: dict[str, int] = {}
     drop_reason_counts: dict[str, int] = {}
+    stale_drop_reason_counts: dict[str, int] = {}
+    stale_drop_reason_classes: list[str] = []
+    tasks_with_stale_drop: list[str] = []
     scheduler_delay_event_count = 0.0
+    stale_drop_count = 0.0
+    stale_drop_rate = 0.0
     for item in evidence:
         detail = _orchestrator_operation_guard_detail(item)
         health_reason_counts = _merge_count_maps(
@@ -1509,9 +1523,33 @@ def _orchestrator_operation_guard_summary(
             drop_reason_counts,
             detail.get("drop_reason_counts"),
         )
+        stale_drop_reason_counts = _merge_count_maps(
+            stale_drop_reason_counts,
+            detail.get("stale_drop_reasons"),
+        )
+        stale_drop_reason_classes = _unique_strings(
+            [
+                *stale_drop_reason_classes,
+                *_string_list(detail.get("stale_drop_reason_classes")),
+            ]
+        )
+        tasks_with_stale_drop = _unique_strings(
+            [
+                *tasks_with_stale_drop,
+                *_string_list(detail.get("tasks_with_stale_drop")),
+            ]
+        )
         scheduler_delay_event_count = max(
             scheduler_delay_event_count,
             _non_negative_number(detail.get("scheduler_delay_event_count")),
+        )
+        stale_drop_count = max(
+            stale_drop_count,
+            _non_negative_number(detail.get("stale_drop_count")),
+        )
+        stale_drop_rate = max(
+            stale_drop_rate,
+            _non_negative_number(detail.get("stale_drop_rate")),
         )
     metric_context = metrics if isinstance(metrics, dict) else {}
     if not policy_decision_reason_counts:
@@ -1547,6 +1585,11 @@ def _orchestrator_operation_guard_summary(
         "policy_decision_reason_counts": policy_decision_reason_counts,
         "drop_reason_counts": drop_reason_counts,
         "scheduler_delay_event_count": scheduler_delay_event_count,
+        "stale_drop_count": stale_drop_count,
+        "stale_drop_rate": stale_drop_rate,
+        "stale_drop_reasons": stale_drop_reason_counts,
+        "stale_drop_reason_classes": stale_drop_reason_classes,
+        "tasks_with_stale_drop": tasks_with_stale_drop,
         "evidence": [
             {
                 "type": item.get("type"),
@@ -1575,6 +1618,7 @@ def _orchestrator_operation_guard_detail(
     health_reason_counts = {}
     if isinstance(worker_health, dict):
         health_reason_counts = _count_mapping(worker_health.get("health_reason_counts"))
+    stale_drop = _stale_drop_guard_context(raw_context)
     return {
         "health_reason_counts": health_reason_counts,
         "policy_decision_reason_counts": _count_mapping(
@@ -1587,6 +1631,59 @@ def _orchestrator_operation_guard_detail(
         "scheduler_delay_event_count": _non_negative_number(
             raw_context.get("scheduler_delay_event_count")
         ),
+        "stale_drop_count": stale_drop.get("stale_drop_count", 0.0),
+        "total_drop_count": stale_drop.get("total_drop_count", 0.0),
+        "stale_drop_rate": stale_drop.get("stale_drop_rate", 0.0),
+        "stale_drop_reasons": stale_drop.get("stale_drop_reasons", {}),
+        "stale_drop_reason_classes": stale_drop.get(
+            "stale_drop_reason_classes", []
+        ),
+        "tasks_with_stale_drop": stale_drop.get("tasks_with_stale_drop", []),
+        "latest_stale_drop_event": stale_drop.get("latest_stale_drop_event", {}),
+        "stale_drop_boundary_markers_valid": stale_drop.get(
+            "boundary_markers_valid"
+        ),
+        "stale_drop_decision_owner": stale_drop.get("decision_owner"),
+        "stale_drop_scheduler_owner": stale_drop.get("scheduler_owner"),
+        "stale_drop_not_a_deployment_decision": stale_drop.get(
+            "not_a_deployment_decision"
+        ),
+    }
+
+
+def _stale_drop_guard_context(raw_context: dict[str, Any]) -> dict[str, Any]:
+    candidate = raw_context.get("stale_drop_summary")
+    if not isinstance(candidate, dict):
+        candidate = {}
+    summary = candidate.get("summary")
+    if isinstance(summary, dict):
+        source = {**summary, **candidate}
+        source.pop("summary", None)
+    else:
+        source = {**candidate, **raw_context}
+    total_drop_count = _non_negative_number(source.get("total_drop_count"))
+    stale_drop_count = _non_negative_number(source.get("stale_drop_count"))
+    stale_drop_rate = _non_negative_number(source.get("stale_drop_rate"))
+    if stale_drop_rate <= 0 and total_drop_count > 0:
+        stale_drop_rate = stale_drop_count / total_drop_count
+    return {
+        "stale_drop_count": stale_drop_count,
+        "total_drop_count": total_drop_count,
+        "stale_drop_rate": stale_drop_rate,
+        "stale_drop_reasons": _count_mapping(source.get("stale_drop_reasons")),
+        "stale_drop_reason_classes": _string_list(
+            source.get("stale_drop_reason_classes")
+        ),
+        "tasks_with_stale_drop": _string_list(source.get("tasks_with_stale_drop")),
+        "latest_stale_drop_event": (
+            dict(source.get("latest_stale_drop_event"))
+            if isinstance(source.get("latest_stale_drop_event"), dict)
+            else {}
+        ),
+        "boundary_markers_valid": source.get("boundary_markers_valid"),
+        "decision_owner": source.get("decision_owner"),
+        "scheduler_owner": source.get("scheduler_owner"),
+        "not_a_deployment_decision": source.get("not_a_deployment_decision"),
     }
 
 
