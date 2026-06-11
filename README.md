@@ -136,6 +136,7 @@ Portfolio entry points:
 |---|---|---|
 | [Portfolio submission](docs/portfolio/inferedge_portfolio_submission.md) | [한국어: 포트폴리오 제출 문서](docs/portfolio/inferedge_portfolio_submission.ko.md) | submission-ready project narrative |
 | [Resume/interview summary](docs/portfolio/inferedge_resume_interview_summary.md) | [한국어: 이력서/면접 요약](docs/portfolio/inferedge_resume_interview_summary.ko.md) | short role-specific explanation |
+| [Local Studio demo walkthrough](docs/portfolio/local_studio_demo_walkthrough.md) | [한국어: Local Studio 데모 가이드](docs/portfolio/local_studio_demo_walkthrough.ko.md) | browser demo path and role-specific talking route |
 | [1-page architecture summary](docs/portfolio/inferedge_1page_architecture.md) | [한국어: 1페이지 아키텍처 요약](docs/portfolio/inferedge_1page_architecture.ko.md) | ecosystem diagram and role split |
 | [Pipeline status](docs/portfolio/inferedge_pipeline_status.md) | [한국어: 파이프라인 상태](docs/portfolio/inferedge_pipeline_status.ko.md) | current implementation status |
 
@@ -169,6 +170,9 @@ It runs on the user's machine through the FastAPI server and is intended as a lo
 
 InferEdge Local Studio can replay the bundled portfolio evidence without requiring a live Jetson device during an interview walkthrough.
 The `Load Demo Evidence` flow imports the ONNX Runtime CPU and TensorRT Jetson Runtime JSON fixtures from [examples/studio_demo](examples/studio_demo), refreshes Compare View, and keeps the demo pair selectable in Recent jobs while the local server process is running.
+
+For a role-specific browser demo route, use [Local Studio demo walkthrough](docs/portfolio/local_studio_demo_walkthrough.md)
+([한국어: Local Studio 데모 가이드](docs/portfolio/local_studio_demo_walkthrough.ko.md)).
 
 ### Run the Browser Demo
 
