@@ -13,6 +13,7 @@
 - EdgeEnv runtime telemetry/regression context ingestion.
 - AIGuard deterministic runtime warning evidence preservation.
 - Orchestrator queue/deadline/fallback context를 supplemental operation evidence로 표시.
+- Runtime Intelligence operation risk rollup chain: Orchestrator operation risk/timeline context -> EdgeEnv handoff -> AIGuard deterministic evidence -> Lab Runtime Intelligence Risk Summary.
 
 ## 현재 evidence snapshot
 
@@ -22,6 +23,7 @@
 | Jetson TensorRT FP16 25W demo | `10.066401 ms` mean, `15.548438 ms` p99, `99.340373 FPS` |
 | Demo speedup | 약 `4.51x` |
 | Jetson EdgeEnv preservation smoke | `device_local_starter`, `run-20260529-034704-fbf753f0`, `runtime_operation_summary` |
+| Runtime Intelligence rollup chain | `operation_risk_rollup` -> EdgeEnv handoff -> AIGuard evidence -> Lab Risk Summary |
 
 ## 아직 구현하지 않았거나 명시적으로 제외한 것
 
