@@ -55,21 +55,70 @@
         "queue_depth_sample_count": 1,
         "latency_sample_count": 1
       }
+    },
+    {
+      "type": "stale_frame_risk",
+      "metric_name": "stale_drop_rate",
+      "observed_value": 0.714,
+      "baseline_value": 0,
+      "threshold": 0.2,
+      "delta": null,
+      "delta_pct": null,
+      "increase_factor": null,
+      "severity": "high",
+      "status": "failed",
+      "explanation": "Orchestrator reported 5 stale/backlog drop events.",
+      "why_it_matters": "Stale frame or backlog drops can protect high-priority work, but they also show that lower-priority Vision or command workloads may lose fresh inputs under sustained multi-agent load.",
+      "suspected_causes": [
+        "load_shedding_context",
+        "stale_queue_overflow"
+      ],
+      "recommendation": "Review tasks_with_stale_drop, stale_drop_reasons, queue depth, producer rate, and fallback policy in Lab before treating the operation profile as stable.",
+      "raw_context": {
+        "stale_drop_count": 5,
+        "total_drop_count": 7,
+        "stale_drop_rate": 0.714,
+        "stale_drop_reasons": {
+          "load_shedding_backlog_threshold_exceeded": 3,
+          "queue_overflow_drop_oldest": 2
+        },
+        "stale_drop_reason_classes": [
+          "load_shedding_stale_backlog",
+          "stale_queue_overflow"
+        ],
+        "tasks_with_stale_drop": [
+          "vision_agent",
+          "voice_command_agent"
+        ],
+        "latest_stale_drop_event": {
+          "task": "voice_command_agent",
+          "agent_id": "voice_command_agent",
+          "reason": "queue_overflow_drop_oldest",
+          "stale_drop_class": "stale_queue_overflow"
+        },
+        "decision_owner": "lab",
+        "scheduler_owner": "orchestrator",
+        "not_a_deployment_decision": true
+      }
     }
   ],
   "suspected_causes": [
     "queue_backlog",
     "overload_load_shedding",
     "producer_rate_exceeds_runtime_capacity",
-    "sustained_multi_agent_overload"
+    "sustained_multi_agent_overload",
+    "stale_queue_overflow"
   ],
   "recommendations": [
     "Tune target FPS, queue size, drop policy, or fallback policy for affected agents.",
-    "Lower producer rate, tighten stale-frame drop policy, or move lower priority work behind a fallback path before deployment."
+    "Lower producer rate, tighten stale-frame drop policy, or move lower priority work behind a fallback path before deployment.",
+    "Review stale drop reasons and affected agent workloads in Lab."
   ],
   "thresholds": {
     "drop_rate_review": 0.2,
-    "drop_rate_blocked": 0.5
+    "drop_rate_blocked": 0.5,
+    "stale_drop_rate_review": 0.2,
+    "stale_drop_rate_blocked": 0.5
   },
   "baseline_summary": {},
   "candidate_summary": {

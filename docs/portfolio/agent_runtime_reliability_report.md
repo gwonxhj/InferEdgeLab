@@ -106,6 +106,11 @@ Future hardening, not current completion:
 AIGuard `guard_analysis` also includes `sustained_overload_risk`, which Lab
 preserves as report evidence and reflects in the agent deployment decision
 context.
+Newer AIGuard guard analysis can also include `stale_frame_risk` or preserved
+`edgeenv_orchestrator_stale_drop_summary` evidence. Lab surfaces the stale-drop
+count, stale-drop rate, affected tasks, reason counts, and reason classes in
+the AIGuard Orchestrator Operation Evidence section as deployment review
+context.
 
 The report also preserves the Orchestrator operation-health fields added for
 runtime operation review:
@@ -151,8 +156,9 @@ runtime operation review:
 - AIGuard Orchestrator operation evidence, including
   `worker_health_degradation` and `scheduler_delay_pattern` when Orchestrator
   worker health or runtime event telemetry is analyzed by AIGuard.
-  Lab preserves health reasons, policy/drop reason counts, and scheduler delay
-  counts as deployment context without making AIGuard the final decision owner.
+  Lab preserves health reasons, policy/drop/stale-drop reason counts, scheduler
+  delay counts, stale-drop affected tasks, and stale-drop boundary markers as
+  deployment context without making AIGuard the final decision owner.
 
 These fields make the report path explicit:
 
@@ -204,8 +210,10 @@ The report also surfaces Orchestrator operation guard evidence as context. For
 example, `worker_health_degradation` shows degraded/constrained worker reasons
 such as fallback policy use or dropped frames, while `scheduler_delay_pattern`
 shows scheduler delay counts and related policy/drop reasons. These evidence
-items contribute through AIGuard's overall guard verdict and remain separate
-from Lab's final policy ownership.
+shows scheduler delay counts and related policy/drop reasons.
+`stale_frame_risk` shows which tasks had stale/backlog drops and why. These
+evidence items contribute through AIGuard's overall guard verdict and remain
+separate from Lab's final policy ownership.
 
 ## Boundary
 
