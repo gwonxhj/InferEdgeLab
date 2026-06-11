@@ -119,6 +119,8 @@ The current cross-repository loop is covered by documentation, fixtures, and smo
 - Local Studio portfolio demo evidence for ONNX Runtime CPU, TensorRT Jetson FP16 25W, Jetson FP16 15W power-mode evidence, and AIGuard diagnosis cases
 - YOLOv8 COCO subset evaluation report generated from 10 local images and 89 converted COCO-style person annotations, with metric backend `simplified`, mAP@50 0.1410, precision 0.2941, recall 0.1685, and structural validation passed
 - Validation problem case fixtures for annotation-missing review, invalid detection structure blocking, and contract shape mismatch blocking
+- Runtime Intelligence evidence chain from Orchestrator operation context and `operation_risk_rollup`, through EdgeEnv telemetry/regression handoff, optional AIGuard deterministic runtime evidence, and Lab's Runtime Intelligence Risk Summary / deployment risk report
+- Runtime Intelligence bundle gates for reviewer quick-scan markers, operation timeline evidence, task event rollup evidence, remote fallback starter evidence, and explicit Lab final decision ownership without changing existing JSON contracts
 
 This means the current product boundary is testable without running the production worker infrastructure.
 
@@ -160,6 +162,7 @@ This does not mean production SaaS is complete.
 - Problem-case validation reports that make skipped accuracy, invalid output structure, contract mismatch, and latency regression visible in Local Studio
 - Cross-repo fixture compatibility across Forge, Runtime, Lab, and AIGuard
 - Rule/evidence based AIGuard diagnosis, including normal/pass, bbox collapse/blocked, score saturation/blocked, temporal instability/review_required, and provenance mismatch cases
+- Runtime Intelligence operation risk rollup chain with Orchestrator operation context, EdgeEnv handoff validation, AIGuard deterministic evidence preservation, and Lab-owned Risk Summary markers
 
 ### Planned Later
 

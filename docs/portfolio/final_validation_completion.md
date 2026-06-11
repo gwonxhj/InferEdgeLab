@@ -15,6 +15,7 @@ InferEdge is complete for the current portfolio milestone when it can replay a l
 - normal and problem demo evidence
 - JSON/Markdown/HTML report artifacts
 - Local Studio browser replay
+- Runtime Intelligence operation risk rollup evidence routed through Orchestrator, EdgeEnv, optional AIGuard, and a Lab-owned risk summary
 - full test suite passing
 
 ## Completed Evidence
@@ -32,6 +33,7 @@ InferEdge is complete for the current portfolio milestone when it can replay a l
 | Normal demo case | done | `examples/validation_demo/subset/` |
 | Problem demo cases | done | annotation missing, invalid structure, contract mismatch reports |
 | Report formats | done | JSON, Markdown, HTML evaluation reports |
+| Runtime Intelligence risk summary | done | Orchestrator `operation_risk_rollup` -> EdgeEnv handoff -> AIGuard deterministic evidence -> Lab deployment risk report |
 | Tests | done | full `pytest` suite passing locally |
 
 ## Validated Numbers
