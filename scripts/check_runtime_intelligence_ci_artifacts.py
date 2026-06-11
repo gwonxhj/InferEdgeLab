@@ -72,6 +72,7 @@ REQUIRED_BUNDLE_MANIFEST_SUMMARY_MARKERS = (
     "edgeenv_handoff: producer_lineage_guard_alignment validated",
     "edgeenv_handoff: orchestrator_task_event_rollup validated",
     "edgeenv_handoff: missing_telemetry_orchestrator_context validated",
+    "edgeenv_handoff: optional AIGuard evidence types declared",
 )
 REQUIRED_LAB_EXPECTED_REPORT_MARKERS = (
     "Runtime Intelligence Risk Summary",

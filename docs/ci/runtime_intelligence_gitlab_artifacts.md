@@ -140,6 +140,10 @@ The initial gate is conservative:
 - the same handoff must declare `external_aiguard_required_evidence_types`, and
   the bundle gate verifies those requirements against the bundled
   `guard_analysis.evidence` type set
+- if the handoff declares `optional_aiguard_evidence_types`, the bundle gate
+  validates the known stale-drop labels (`stale_frame_risk` and
+  `edgeenv_orchestrator_stale_drop_summary`) as optional context that remains
+  separate from the required AIGuard evidence set
 - the EdgeEnv handoff `runtime_telemetry_history` file must exist and preserve
   the EdgeEnv history schema, telemetry coverage summary, and Runtime history
   seed ownership markers

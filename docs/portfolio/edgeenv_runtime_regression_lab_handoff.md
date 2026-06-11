@@ -147,6 +147,11 @@ This second smoke uses committed lightweight artifacts to represent the cross-re
 - `examples/runtime_intelligence_chain/bundle_manifest.json` declares the local-first artifact bundle, file paths, source repositories, artifact roles, producer contracts, owners, and boundary flags.
 - `examples/runtime_intelligence_chain/edgeenv_lab_handoff_manifest.json` mirrors the EdgeEnv producer-side handoff manifest and its `lab_bundle_alignment` metadata, so Lab can verify EdgeEnv-produced file keys separately from external AIGuard evidence.
 - The same handoff declares `external_aiguard_required_evidence_types`; Lab's bundle gate checks that those types are present in the external `guard_analysis.evidence` list without making AIGuard the final decision owner.
+- If the handoff also declares `optional_aiguard_evidence_types`, Lab validates
+  the known optional stale-drop evidence labels (`stale_frame_risk` and
+  `edgeenv_orchestrator_stale_drop_summary`) as optional context only. Those
+  labels must remain separate from the required Guard evidence set and do not
+  become a Lab deployment-decision requirement.
 - `examples/runtime_intelligence_chain/runtime_telemetry_history.json` is the EdgeEnv producer-side telemetry history artifact referenced by the handoff manifest. It includes a missing-telemetry run as an evidence gap and preserves Orchestrator context on that entry without turning Orchestrator into a regression or deployment decision owner.
 - Orchestrator context is preserved inside the EdgeEnv regression artifact as `orchestrator_operation_context`.
 - AIGuard deterministic queue/thermal and task-event rollup evidence is passed as a precomputed `guard_analysis` artifact that mirrors the AIGuard producer-side diagnosis v1 evidence shape.
