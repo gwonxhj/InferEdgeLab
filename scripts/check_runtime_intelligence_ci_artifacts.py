@@ -81,6 +81,7 @@ REQUIRED_LAB_EXPECTED_REPORT_MARKERS = (
     "Reviewer operation quick scan",
     "Orchestrator task event rollup",
     "Lab EdgeEnv preservation context",
+    "AIGuard operation risk rollup evidence",
     "AIGuard task event rollup evidence",
     "AIGuard operation timeline evidence",
     "AIGuard runtime operation anomalies",
@@ -222,6 +223,8 @@ def _validate_runtime_report(path: Path, errors: list[str]) -> None:
         "runtime_queue_overload, runtime_thermal_instability",
         "AIGuard operation risk summary evidence",
         "edgeenv_orchestrator_operation_risk_summary",
+        "AIGuard operation risk rollup evidence",
+        "edgeenv_orchestrator_operation_risk_rollup",
         "AIGuard task event rollup evidence",
         "Lab EdgeEnv preservation context",
         "lab_report_preservation_context_present=True",
@@ -369,6 +372,7 @@ def _validate_aiguard_handoff_alignment(
             "Reviewer operation quick scan, "
             "Orchestrator task event rollup, "
             "Lab EdgeEnv preservation context, "
+            "AIGuard operation risk rollup evidence, "
             "AIGuard task event rollup evidence, "
             "AIGuard operation timeline evidence, "
             "AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, "

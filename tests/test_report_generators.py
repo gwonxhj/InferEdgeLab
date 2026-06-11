@@ -501,6 +501,57 @@ def make_runtime_operation_guard_analysis() -> dict:
                 },
             },
             {
+                "type": "edgeenv_orchestrator_operation_risk_rollup",
+                "metric_name": "orchestrator_operation_risk_rollup_marker_count",
+                "observed_value": 8,
+                "baseline_value": 0,
+                "threshold": 1,
+                "status": "warning",
+                "severity": "medium",
+                "why_it_matters": (
+                    "Operation risk rollup condenses queue pressure, deadline, "
+                    "fallback, drop, and scheduler-delay signals."
+                ),
+                "suspected_causes": [
+                    "queue_pressure_context",
+                    "deadline_miss_context",
+                    "fallback_policy_context",
+                    "scheduler_delay_context",
+                    "operation_risk_rollup_context",
+                ],
+                "recommendation": (
+                    "Review operation_risk_rollup in Lab alongside operation "
+                    "timeline, task-event rollup, and worker health evidence."
+                ),
+                "raw_context": {
+                    "operation_risk_rollup": {
+                        "boundary_markers_valid": True,
+                        "risk_level": "review",
+                        "primary_reasons": [
+                            "queue_pressure_overloaded",
+                            "scheduler_delay_present",
+                            "deadline_missed_present",
+                            "fallback_used",
+                        ],
+                        "affected_tasks": [
+                            "vision_agent",
+                            "voice_command_agent",
+                        ],
+                        "queue_pressure_reason": (
+                            "queue_backlog_threshold_exceeded"
+                        ),
+                        "max_total_queue_depth": 7,
+                        "deadline_missed_count": 2,
+                        "fallback_count": 1,
+                        "drop_count": 1,
+                        "scheduler_delay_event_count": 1,
+                        "decision_owner": "lab",
+                        "scheduler_owner": "orchestrator",
+                        "not_a_deployment_decision": True,
+                    }
+                },
+            },
+            {
                 "type": "edgeenv_orchestrator_task_event_rollup",
                 "metric_name": "orchestrator_task_event_affected_task_count",
                 "observed_value": 2,
@@ -1019,6 +1070,15 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
         "jetson_clocks=unknown, warmup=1, runs=10 |"
     ) in text
     assert (
+        "| AIGuard operation risk rollup evidence | "
+        "status=warning, markers=8, risk=review, "
+        "queue=queue_backlog_threshold_exceeded, max_queue=7, "
+        "deadline=2, fallback=1, drop=1, scheduler_delay=1, "
+        "reasons=queue_pressure_overloaded,scheduler_delay_present,"
+        "deadline_missed_present,fallback_used, "
+        "tasks=vision_agent,voice_command_agent, boundary_valid=True |"
+    ) in text
+    assert (
         "| AIGuard task event rollup evidence | "
         "status=warning, affected=2, tasks=vision_agent,voice_command_agent, "
         "deadline=vision_agent, fallback=voice_command_agent, "
@@ -1093,6 +1153,8 @@ def test_generate_compare_html_summarizes_operation_risk_summary():
     assert "Orchestrator task event rollup" in html
     assert "vision_agent(delay=1,miss=1,max_delay_cycles=3,max_wait_ms=15)" in html
     assert "queue=queue_backlog_threshold_exceeded" in html
+    assert "AIGuard operation risk rollup evidence" in html
+    assert "risk=review" in html
     assert "Lab still owns the deployment decision" in html
 
 

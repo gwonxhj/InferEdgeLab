@@ -321,7 +321,12 @@ def test_runtime_intelligence_bundle_manifest_gate_validates_edgeenv_handoff(
     assert "edgeenv_handoff: device_local_producer_lineage validated" in summary
     assert "edgeenv_handoff: fixture_matrix_context validated" in summary
     assert "edgeenv_handoff: producer_lineage_guard_alignment validated" in summary
+    assert "edgeenv_handoff: orchestrator_operation_risk_rollup validated" in summary
     assert "edgeenv_handoff: orchestrator_task_event_rollup validated" in summary
+    assert (
+        "edgeenv_handoff: orchestrator_operation_timeline_summary validated"
+        in summary
+    )
     assert "edgeenv_handoff: missing_telemetry_orchestrator_context validated" in summary
     assert (
         "edgeenv_handoff: external AIGuard evidence requirements declared"
@@ -534,6 +539,64 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_edgeenv_summary
     assert (
         "edgeenv_report_summary.orchestrator_task_event_rollup_run_ids "
         "must match preserved Orchestrator task event rollup run IDs"
+    ) in summary
+
+
+def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_edgeenv_summary_operation_rollup(
+    tmp_path,
+):
+    handoff = json.loads(EDGEENV_HANDOFF.read_text(encoding="utf-8"))
+    handoff["files"]["edgeenv_regression_report"] = str(
+        REPO_ROOT
+        / "examples"
+        / "runtime_intelligence_chain"
+        / "edgeenv_regression_with_orchestrator_context.json"
+    )
+    handoff["files"]["runtime_telemetry_history"] = str(
+        REPO_ROOT
+        / "examples"
+        / "runtime_intelligence_chain"
+        / "runtime_telemetry_history.json"
+    )
+    handoff["edgeenv_report_summary"][
+        "orchestrator_operation_risk_rollup_present"
+    ] = False
+    handoff["edgeenv_report_summary"][
+        "orchestrator_operation_risk_rollup_run_ids"
+    ] = []
+    handoff["edgeenv_report_summary"][
+        "orchestrator_operation_timeline_summary_present"
+    ] = False
+    handoff["edgeenv_report_summary"][
+        "orchestrator_operation_timeline_summary_run_ids"
+    ] = []
+    handoff_path = tmp_path / "edgeenv_lab_handoff_manifest.json"
+    handoff_path.write_text(json.dumps(handoff), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(
+        manifest=str(MANIFEST),
+        edgeenv_handoff=str(handoff_path),
+        summary_out=str(summary_path),
+    )
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert (
+        "edgeenv_report_summary.orchestrator_operation_risk_rollup_present "
+        "must match preserved Orchestrator operation risk rollup context"
+    ) in summary
+    assert (
+        "edgeenv_report_summary.orchestrator_operation_risk_rollup_run_ids "
+        "must match preserved Orchestrator operation risk rollup run IDs"
+    ) in summary
+    assert (
+        "edgeenv_report_summary.orchestrator_operation_timeline_summary_present "
+        "must match preserved Orchestrator operation timeline summary context"
+    ) in summary
+    assert (
+        "edgeenv_report_summary.orchestrator_operation_timeline_summary_run_ids "
+        "must match preserved Orchestrator operation timeline summary run IDs"
     ) in summary
 
 

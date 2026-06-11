@@ -97,6 +97,7 @@ REQUIRED_EDGEENV_HANDOFF_BOUNDARY_FLAGS = {
 REQUIRED_GUARD_TYPES = {
     "runtime_telemetry_context_coverage",
     "edgeenv_orchestrator_producer_lineage",
+    "edgeenv_orchestrator_operation_risk_rollup",
     "edgeenv_orchestrator_task_event_rollup",
     "edgeenv_orchestrator_operation_timeline_summary",
     "runtime_history_seed_run_config_traceability",
@@ -131,6 +132,7 @@ REQUIRED_EXPECTED_REPORT_MARKERS = {
     "Reviewer operation quick scan",
     "Orchestrator task event rollup",
     "Lab EdgeEnv preservation context",
+    "AIGuard operation risk rollup evidence",
     "AIGuard task event rollup evidence",
     "AIGuard operation timeline evidence",
     "AIGuard runtime operation anomalies",
@@ -157,6 +159,7 @@ SUMMARY_CONTRACT_MARKERS = (
     "orchestrator_producer_lineage_shape: per-task source/stage/count mappings validated",
     "edgeenv_history_seed_run_config: run_config snapshots validated",
     "aiguard_evidence: edgeenv_orchestrator_producer_lineage validated",
+    "aiguard_evidence: edgeenv_orchestrator_operation_risk_rollup validated",
     "aiguard_evidence: edgeenv_orchestrator_task_event_rollup validated",
     "aiguard_evidence: edgeenv_orchestrator_operation_timeline_summary validated",
     "aiguard_evidence: runtime_history_seed_run_config_traceability validated",
@@ -189,7 +192,9 @@ EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS = (
     "edgeenv_handoff: device_local_producer_lineage validated",
     "edgeenv_handoff: fixture_matrix_context validated",
     "edgeenv_handoff: producer_lineage_guard_alignment validated",
+    "edgeenv_handoff: orchestrator_operation_risk_rollup validated",
     "edgeenv_handoff: orchestrator_task_event_rollup validated",
+    "edgeenv_handoff: orchestrator_operation_timeline_summary validated",
     "edgeenv_handoff: missing_telemetry_orchestrator_context validated",
     "edgeenv_handoff: external AIGuard evidence requirements declared",
 )
@@ -581,7 +586,13 @@ def _validate_edgeenv_handoff_report_summary(
     context = regression_report.get("runtime_telemetry_context")
     device_local_run_ids = _device_local_producer_context_run_ids(context)
     guard_alignment_run_ids = _producer_lineage_guard_alignment_run_ids(context)
+    operation_risk_rollup_run_ids = _orchestrator_operation_risk_rollup_run_ids(
+        context
+    )
     task_event_rollup_run_ids = _orchestrator_task_event_rollup_run_ids(context)
+    operation_timeline_summary_run_ids = (
+        _orchestrator_operation_timeline_summary_run_ids(context)
+    )
     fixture_matrix_context = regression_report.get("fixture_matrix_context")
     fixture_matrix_summary = _fixture_matrix_summary(fixture_matrix_context)
 
@@ -631,6 +642,38 @@ def _validate_edgeenv_handoff_report_summary(
         "EdgeEnv handoff edgeenv_report_summary."
         "orchestrator_task_event_rollup_run_ids must match preserved "
         "Orchestrator task event rollup run IDs",
+    )
+    _record(
+        summary.get("orchestrator_operation_risk_rollup_present")
+        is bool(operation_risk_rollup_run_ids),
+        errors,
+        "EdgeEnv handoff edgeenv_report_summary."
+        "orchestrator_operation_risk_rollup_present must match preserved "
+        "Orchestrator operation risk rollup context",
+    )
+    _record(
+        summary.get("orchestrator_operation_risk_rollup_run_ids")
+        == operation_risk_rollup_run_ids,
+        errors,
+        "EdgeEnv handoff edgeenv_report_summary."
+        "orchestrator_operation_risk_rollup_run_ids must match preserved "
+        "Orchestrator operation risk rollup run IDs",
+    )
+    _record(
+        summary.get("orchestrator_operation_timeline_summary_present")
+        is bool(operation_timeline_summary_run_ids),
+        errors,
+        "EdgeEnv handoff edgeenv_report_summary."
+        "orchestrator_operation_timeline_summary_present must match preserved "
+        "Orchestrator operation timeline summary context",
+    )
+    _record(
+        summary.get("orchestrator_operation_timeline_summary_run_ids")
+        == operation_timeline_summary_run_ids,
+        errors,
+        "EdgeEnv handoff edgeenv_report_summary."
+        "orchestrator_operation_timeline_summary_run_ids must match preserved "
+        "Orchestrator operation timeline summary run IDs",
     )
     _record(
         summary.get("fixture_matrix_context_present")
@@ -708,6 +751,22 @@ def _orchestrator_task_event_rollup_run_ids(context: Any) -> list[str]:
     ]
 
 
+def _orchestrator_operation_risk_rollup_run_ids(context: Any) -> list[str]:
+    return [
+        run_id
+        for run_id, operation_context in _runtime_operation_contexts(context)
+        if _has_orchestrator_operation_risk_rollup(operation_context)
+    ]
+
+
+def _orchestrator_operation_timeline_summary_run_ids(context: Any) -> list[str]:
+    return [
+        run_id
+        for run_id, operation_context in _runtime_operation_contexts(context)
+        if _has_orchestrator_operation_timeline_summary(operation_context)
+    ]
+
+
 def _runtime_operation_contexts(context: Any) -> list[tuple[str, dict[str, Any]]]:
     if not isinstance(context, dict):
         return []
@@ -778,6 +837,34 @@ def _has_orchestrator_task_event_rollup(
             "tasks_with_scheduler_delay",
         )
     )
+
+
+def _has_orchestrator_operation_risk_rollup(
+    operation_context: dict[str, Any],
+) -> bool:
+    if isinstance(operation_context.get("operation_risk_rollup"), dict):
+        return True
+    operation = _orchestrator_candidate_operation(operation_context)
+    rollup = operation.get("operation_risk_rollup")
+    return isinstance(rollup, dict) and bool(rollup)
+
+
+def _has_orchestrator_operation_timeline_summary(
+    operation_context: dict[str, Any],
+) -> bool:
+    operation = _orchestrator_candidate_operation(operation_context)
+    timeline = operation.get("operation_timeline_summary")
+    return isinstance(timeline, dict) and bool(timeline)
+
+
+def _orchestrator_candidate_operation(
+    operation_context: dict[str, Any],
+) -> dict[str, Any]:
+    candidate_context = operation_context.get("candidate_context")
+    if not isinstance(candidate_context, dict):
+        return {}
+    operation = candidate_context.get("operation")
+    return operation if isinstance(operation, dict) else {}
 
 
 def _validate_edgeenv_handoff_runtime_history_artifact(
@@ -1710,6 +1797,8 @@ def _validate_guard_analysis(guard_analysis: dict[str, Any], errors: list[str]) 
             _validate_coverage_gap_evidence(item, index, errors)
         if item.get("type") == "edgeenv_orchestrator_producer_lineage":
             _validate_producer_lineage_evidence(item, index, errors)
+        if item.get("type") == "edgeenv_orchestrator_operation_risk_rollup":
+            _validate_operation_risk_rollup_evidence(item, index, errors)
         if item.get("type") == "edgeenv_orchestrator_task_event_rollup":
             _validate_task_event_rollup_evidence(item, index, errors)
         if item.get("type") == "edgeenv_orchestrator_operation_timeline_summary":
@@ -1940,6 +2029,122 @@ def _validate_task_event_rollup_evidence(
         rollup.get("not_a_deployment_decision") is True,
         errors,
         f"AIGuard evidence[{index}] task_event_rollup.not_a_deployment_decision must be true",
+    )
+
+
+def _validate_operation_risk_rollup_evidence(
+    item: dict[str, Any],
+    index: int,
+    errors: list[str],
+) -> None:
+    _record(
+        item.get("status") == "warning",
+        errors,
+        f"AIGuard evidence[{index}] operation risk rollup status must be warning",
+    )
+    _record(
+        item.get("observed_value") == 8,
+        errors,
+        f"AIGuard evidence[{index}] operation risk rollup observed_value must be 8",
+    )
+    raw_context = item.get("raw_context") or {}
+    rollup = raw_context.get("operation_risk_rollup")
+    _record(
+        isinstance(rollup, dict),
+        errors,
+        f"AIGuard evidence[{index}] raw_context.operation_risk_rollup must be an object",
+    )
+    if not isinstance(rollup, dict):
+        return
+
+    _record(
+        rollup.get("risk_level") == "review",
+        errors,
+        f"AIGuard evidence[{index}] operation_risk_rollup.risk_level must be review",
+    )
+    _record(
+        rollup.get("affected_tasks") == ["vision_agent", "voice_command_agent"],
+        errors,
+        f"AIGuard evidence[{index}] operation_risk_rollup.affected_tasks must preserve "
+        "vision_agent and voice_command_agent",
+    )
+    _record(
+        rollup.get("queue_pressure_reason") == "queue_backlog_threshold_exceeded",
+        errors,
+        f"AIGuard evidence[{index}] operation_risk_rollup.queue_pressure_reason "
+        "must preserve queue_backlog_threshold_exceeded",
+    )
+    _record(
+        rollup.get("max_total_queue_depth") == 7.0,
+        errors,
+        f"AIGuard evidence[{index}] operation_risk_rollup.max_total_queue_depth must be 7.0",
+    )
+    _record(
+        rollup.get("deadline_missed_count") == 2.0,
+        errors,
+        f"AIGuard evidence[{index}] operation_risk_rollup.deadline_missed_count must be 2.0",
+    )
+    _record(
+        rollup.get("fallback_count") == 1.0,
+        errors,
+        f"AIGuard evidence[{index}] operation_risk_rollup.fallback_count must be 1.0",
+    )
+    _record(
+        rollup.get("drop_count") == 1.0,
+        errors,
+        f"AIGuard evidence[{index}] operation_risk_rollup.drop_count must be 1.0",
+    )
+    _record(
+        rollup.get("scheduler_delay_event_count") == 1.0,
+        errors,
+        f"AIGuard evidence[{index}] operation_risk_rollup.scheduler_delay_event_count must be 1.0",
+    )
+    review_markers = rollup.get("review_markers")
+    _record(
+        isinstance(review_markers, list),
+        errors,
+        f"AIGuard evidence[{index}] operation_risk_rollup.review_markers must be a list",
+    )
+    if isinstance(review_markers, list):
+        missing_markers = sorted(
+            {
+                "risk_level",
+                "primary_reason",
+                "affected_task_context",
+                "queue_pressure_context",
+                "deadline_miss_context",
+                "fallback_context",
+                "drop_context",
+                "scheduler_delay_context",
+            }
+            - set(review_markers)
+        )
+        _record(
+            not missing_markers,
+            errors,
+            f"AIGuard evidence[{index}] operation_risk_rollup.review_markers "
+            f"is missing {missing_markers}",
+        )
+    _record(
+        rollup.get("boundary_markers_valid") is True,
+        errors,
+        f"AIGuard evidence[{index}] operation_risk_rollup.boundary_markers_valid "
+        "must be true",
+    )
+    _record(
+        rollup.get("decision_owner") == "lab",
+        errors,
+        f"AIGuard evidence[{index}] operation_risk_rollup.decision_owner must be lab",
+    )
+    _record(
+        rollup.get("scheduler_owner") == "orchestrator",
+        errors,
+        f"AIGuard evidence[{index}] operation_risk_rollup.scheduler_owner must be orchestrator",
+    )
+    _record(
+        rollup.get("not_a_deployment_decision") is True,
+        errors,
+        f"AIGuard evidence[{index}] operation_risk_rollup.not_a_deployment_decision must be true",
     )
 
 
