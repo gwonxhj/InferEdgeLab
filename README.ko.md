@@ -63,6 +63,9 @@ InferEdge는 다음을 연결하는 validation pipeline입니다.
 Local Studio는 CLI/API/job workflow를 브라우저에서 조작하고 관찰하는 local-first interface입니다.
 cloud SaaS dashboard가 아니며, 사용자의 PC에서 실행되는 demo/review UI입니다.
 
+역할별 브라우저 데모 순서는 [Local Studio demo walkthrough](docs/portfolio/local_studio_demo_walkthrough.md)
+([한국어: Local Studio 데모 가이드](docs/portfolio/local_studio_demo_walkthrough.ko.md))를 기준으로 확인합니다.
+
 ### 브라우저 데모 실행
 
 1. `poetry run inferedgelab serve --host 127.0.0.1 --port 8000` 실행
