@@ -231,7 +231,8 @@ Runtime Intelligence smoke:
 
 ### Runtime Intelligence Risk Summary 검토 경로
 
-먼저 report의 `Reviewer Focus` table을 보고, 필요한 경우에만 detailed row를 열어 확인합니다.
+먼저 report의 `Review Path` 섹션을 보고, 이어서 `Reviewer Focus` table을 확인한 뒤, 필요한 경우에만 `Detailed Evidence Rows`를 열어 확인합니다.
+생성된 report의 `Fast path`는 `Reviewer Focus` -> `Detailed Evidence Rows` 순서로 빠르게 훑는 경로입니다.
 README에서는 빠른 검토 경로만 유지하고, 세부 marker contract는 아래 handoff 문서에 둡니다.
 
 | 리뷰어 질문 | 확인할 evidence path | 의미 |

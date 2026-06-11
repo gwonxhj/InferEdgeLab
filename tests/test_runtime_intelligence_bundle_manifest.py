@@ -194,7 +194,12 @@ def test_readme_runtime_intelligence_section_stays_scannable():
 
     assert "| Reviewer question | Evidence path | Why it matters |" in readme
     assert "| 리뷰어 질문 | 확인할 evidence path | 의미 |" in readme_ko
+    assert "Start with the report's `Review Path` section" in readme
+    assert "먼저 report의 `Review Path` 섹션" in readme_ko
     assert "Reviewer Focus" in readme
+    assert "Reviewer Focus` table" in readme_ko
+    assert "`Detailed Evidence Rows`" in readme_ko
+    assert "`Fast path`" in readme_ko
     assert "세부 marker contract" in readme_ko
     assert "Who owns the decision?" in readme
     assert "Is regression comparable?" in readme
