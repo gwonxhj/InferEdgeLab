@@ -162,6 +162,8 @@ def test_runtime_intelligence_docs_describe_expected_report_markers():
 
     for doc in (handoff_doc, ci_doc):
         assert "expected_report_markers" in doc
+        assert "optional_aiguard_evidence_types" in doc
+        assert "edgeenv_orchestrator_stale_drop_summary" in doc
         assert "Lab-owned Runtime Intelligence report contract" in doc
         for marker in REQUIRED_EXPECTED_REPORT_MARKERS:
             assert marker in doc
@@ -337,6 +339,7 @@ def test_runtime_intelligence_bundle_manifest_gate_validates_edgeenv_handoff(
         "edgeenv_handoff: external AIGuard evidence requirements declared"
         in summary
     )
+    assert "edgeenv_handoff: optional AIGuard evidence types declared" in summary
 
 
 def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_seed_run_config(
@@ -627,6 +630,36 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_missing_external_gu
     summary = summary_path.read_text(encoding="utf-8")
     assert (
         "external_aiguard_required_evidence_types must match Lab-required "
+        "AIGuard evidence types"
+    ) in summary
+
+
+def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_optional_guard_type(
+    tmp_path,
+):
+    handoff = json.loads(EDGEENV_HANDOFF.read_text(encoding="utf-8"))
+    handoff["lab_bundle_alignment"]["optional_aiguard_evidence_types"] = [
+        "runtime_queue_overload",
+        "unknown_optional_guard_type",
+    ]
+    handoff_path = tmp_path / "edgeenv_lab_handoff_manifest.json"
+    handoff_path.write_text(json.dumps(handoff), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(
+        manifest=str(MANIFEST),
+        edgeenv_handoff=str(handoff_path),
+        summary_out=str(summary_path),
+    )
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert (
+        "optional_aiguard_evidence_types must match Lab-known optional "
+        "AIGuard evidence types"
+    ) in summary
+    assert (
+        "optional_aiguard_evidence_types must remain separate from required "
         "AIGuard evidence types"
     ) in summary
 

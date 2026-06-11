@@ -105,6 +105,10 @@ REQUIRED_GUARD_TYPES = {
     "runtime_thermal_instability",
     "remote_execution_recovered_by_fallback",
 }
+OPTIONAL_AIGUARD_EVIDENCE_TYPES = {
+    "stale_frame_risk",
+    "edgeenv_orchestrator_stale_drop_summary",
+}
 REQUIRED_GUARD_EVIDENCE_FIELDS = {
     "type",
     "metric_name",
@@ -197,6 +201,9 @@ EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS = (
     "edgeenv_handoff: orchestrator_operation_timeline_summary validated",
     "edgeenv_handoff: missing_telemetry_orchestrator_context validated",
     "edgeenv_handoff: external AIGuard evidence requirements declared",
+)
+EDGEENV_HANDOFF_OPTIONAL_AIGUARD_SUMMARY_MARKER = (
+    "edgeenv_handoff: optional AIGuard evidence types declared"
 )
 
 
@@ -441,6 +448,42 @@ def _validate_edgeenv_handoff_alignment(
             "external_aiguard_required_evidence_types must match Lab-required "
             "AIGuard evidence types",
         )
+
+    optional_aiguard_evidence_types = alignment.get("optional_aiguard_evidence_types")
+    if optional_aiguard_evidence_types is not None:
+        _record(
+            isinstance(optional_aiguard_evidence_types, list),
+            errors,
+            "EdgeEnv handoff lab_bundle_alignment."
+            "optional_aiguard_evidence_types must be a list when present",
+        )
+        if isinstance(optional_aiguard_evidence_types, list):
+            invalid_optional_types = [
+                item
+                for item in optional_aiguard_evidence_types
+                if not isinstance(item, str) or not item
+            ]
+            _record(
+                not invalid_optional_types,
+                errors,
+                "EdgeEnv handoff lab_bundle_alignment."
+                "optional_aiguard_evidence_types must contain non-empty strings",
+            )
+            _record(
+                set(optional_aiguard_evidence_types)
+                == OPTIONAL_AIGUARD_EVIDENCE_TYPES,
+                errors,
+                "EdgeEnv handoff lab_bundle_alignment."
+                "optional_aiguard_evidence_types must match Lab-known optional "
+                "AIGuard evidence types",
+            )
+            _record(
+                set(optional_aiguard_evidence_types).isdisjoint(REQUIRED_GUARD_TYPES),
+                errors,
+                "EdgeEnv handoff lab_bundle_alignment."
+                "optional_aiguard_evidence_types must remain separate from "
+                "required AIGuard evidence types",
+            )
 
     expected_report_markers = alignment.get("expected_report_markers")
     _record(
@@ -1844,6 +1887,19 @@ def _validate_external_aiguard_evidence_alignment(
     )
 
 
+def _has_optional_aiguard_evidence_declaration(
+    handoff: dict[str, Any],
+) -> bool:
+    alignment = handoff.get("lab_bundle_alignment")
+    if not isinstance(alignment, dict):
+        return False
+    optional_types = alignment.get("optional_aiguard_evidence_types")
+    return (
+        isinstance(optional_types, list)
+        and set(optional_types) == OPTIONAL_AIGUARD_EVIDENCE_TYPES
+    )
+
+
 def _validate_remote_runtime_event_summary_evidence(
     item: dict[str, Any],
     index: int,
@@ -3075,12 +3131,15 @@ def _write_summary(
     manifest_path: Path,
     errors: list[str],
     edgeenv_handoff_present: bool,
+    optional_aiguard_evidence_declared: bool,
 ) -> None:
     if not path:
         return
     contract_markers = list(SUMMARY_CONTRACT_MARKERS)
     if edgeenv_handoff_present:
         contract_markers.extend(EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS)
+    if optional_aiguard_evidence_declared:
+        contract_markers.append(EDGEENV_HANDOFF_OPTIONAL_AIGUARD_SUMMARY_MARKER)
     lines = [
         "# Runtime Intelligence Bundle Manifest Gate",
         "",
@@ -3113,9 +3172,13 @@ def main(
     manifest_payload = _load_json(manifest_path, "Runtime Intelligence bundle manifest")
     _validate_manifest_shape(manifest_payload, errors)
     handoff_payload: dict[str, Any] | None = None
+    optional_aiguard_evidence_declared = False
     if edgeenv_handoff:
         edgeenv_handoff_path = Path(edgeenv_handoff).resolve()
         handoff_payload = _load_json(edgeenv_handoff_path, "EdgeEnv handoff manifest")
+        optional_aiguard_evidence_declared = (
+            _has_optional_aiguard_evidence_declaration(handoff_payload)
+        )
         _validate_edgeenv_handoff_alignment(
             handoff_payload,
             handoff_path=edgeenv_handoff_path,
@@ -3165,6 +3228,7 @@ def main(
         manifest_path=manifest_path,
         errors=errors,
         edgeenv_handoff_present=bool(edgeenv_handoff),
+        optional_aiguard_evidence_declared=optional_aiguard_evidence_declared,
     )
     if errors:
         rprint("[red]Runtime Intelligence bundle manifest gate failed.[/red]")
