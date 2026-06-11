@@ -10,6 +10,7 @@ Language: English | [한국어](inferedge_resume_interview_summary.ko.md)
 - Documented Jetson TensorRT FP16 evidence with 25W mean `10.066401 ms`, p99 `15.548438 ms`, FPS `99.340373`, plus 15W power-mode comparison evidence.
 - Added Local Studio as a local-first browser workflow UI that can replay bundled ONNX Runtime CPU and TensorRT Jetson demo evidence, showing 45.4299 ms vs 10.066401 ms mean latency and about a 4.51x TensorRT speedup without claiming production SaaS readiness.
 - Polished Runtime provenance readiness so manifest-backed TensorRT artifacts preserve source identity: `model.engine` can keep `compare_model_name=yolov8n` and `compare_key=yolov8n__b1__h640w640__fp32`.
+- Extended the Runtime Intelligence evidence chain so Orchestrator `operation_risk_rollup` context can be preserved through EdgeEnv handoff, optional AIGuard deterministic evidence, and Lab-owned risk reporting without changing final decision ownership.
 
 ## Role-Specific Resume Versions
 
@@ -24,6 +25,14 @@ Built a multi-repository edge inference validation workflow that connects model 
 ### Backend / AI Platform
 
 Built the Lab-side orchestration and contract foundation for an edge AI validation platform. InferEdgeLab exposes compare/API/job/deployment-decision boundaries, maps analyze jobs to worker requests, ingests worker responses, preserves optional AIGuard evidence, and provides a local-first Studio UI for browser-based workflow inspection. Current scope is SaaS/API/job contract foundation plus dev-only Runtime execution smoke and local Studio demo evidence; production worker daemon, persistent queue/database, file upload, production frontend, auth, and billing remain future work.
+
+## Role-Specific Runtime Intelligence Positioning
+
+| Role | Emphasize | Keep out of scope |
+|---|---|---|
+| AI Inference Engineer | Runtime telemetry, latency/p99/FPS evidence, TensorRT/ONNX Runtime comparison readiness, and deterministic anomaly context that explains why a candidate needs review. | Do not frame Runtime Intelligence as automatic model quality judgement or ML root-cause certainty. |
+| Embedded / Edge Engineer | Device-local evidence preservation, Jetson power-mode context, queue/deadline/fallback operation markers, and `operation_risk_rollup` as supplemental review evidence. | Do not present the starter evidence as live camera validation, thermal endurance certification, or production remote execution. |
+| Backend / AI Platform | File-based contract boundaries, EdgeEnv handoff traceability, AIGuard optional evidence ingestion, and Lab-owned deployment risk reporting. | Do not describe this as a production observability platform, cloud control plane, long-lived worker service, or final-decision handoff away from Lab. |
 
 ## Interview: First 30 Seconds
 
