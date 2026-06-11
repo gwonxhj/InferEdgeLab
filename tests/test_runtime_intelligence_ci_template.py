@@ -266,6 +266,15 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         '"lab_report_marker_owner":"lab",'
         '"report_marker_context_role":"lab_report_contract_context",'
         '"aiguard_validates_expected_report_markers":false,'
+        '"optional_evidence_context_role":"read_only_optional_guard_context",'
+        '"aiguard_validates_optional_evidence_as_required":false,'
+        '"optional_evidence_type_count":2,'
+        '"optional_aiguard_evidence_types":'
+        '["stale_frame_risk","edgeenv_orchestrator_stale_drop_summary"],'
+        '"optional_guard_evidence_types_present":[],'
+        '"missing_optional_evidence_types":'
+        '["edgeenv_orchestrator_stale_drop_summary","stale_frame_risk"],'
+        '"invalid_optional_evidence_types":[],'
         '"handoff_producer_lineage_guard_alignment_run_ids":'
         '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
         '"guard_analysis_producer_lineage_guard_alignment_run_ids":'
@@ -279,11 +288,16 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
                 "- status: passed",
                 "- decision_owner: lab",
                 "- diagnosis_owner: aiguard",
-                "- lab_expected_report_markers: Runtime Intelligence Risk Summary, Runtime replay duration scope, Orchestrator operation feed context, EdgeEnv fixture matrix coverage, Reviewer operation quick scan, Orchestrator task event rollup, Lab EdgeEnv preservation context, AIGuard operation risk rollup evidence, AIGuard task event rollup evidence, AIGuard operation timeline evidence, AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, AIGuard remote event summary consistency, Remote fallback starter evidence, lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback, AIGuard producer-lineage guard alignment, Lab remains the final deployment decision owner.",
+                "- lab_expected_report_markers: [Runtime Intelligence Risk Summary, Runtime replay duration scope, Orchestrator operation feed context, EdgeEnv fixture matrix coverage, Reviewer operation quick scan, Orchestrator task event rollup, Lab EdgeEnv preservation context, AIGuard operation risk rollup evidence, AIGuard task event rollup evidence, AIGuard operation timeline evidence, AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, AIGuard remote event summary consistency, Remote fallback starter evidence, lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback, AIGuard producer-lineage guard alignment, Lab remains the final deployment decision owner.]",
                 "- report_marker_context_role: lab_report_contract_context",
                 "- aiguard_validates_expected_report_markers: False",
-                "- handoff_producer_lineage_guard_alignment_run_ids: edgeenv-smoke-candidate, edgeenv-smoke-missing",
-                "- guard_analysis_producer_lineage_guard_alignment_run_ids: edgeenv-smoke-candidate, edgeenv-smoke-missing",
+                "- optional_evidence_context_role: read_only_optional_guard_context",
+                "- aiguard_validates_optional_evidence_as_required: False",
+                "- optional_aiguard_evidence_types: [stale_frame_risk, edgeenv_orchestrator_stale_drop_summary]",
+                "- optional_guard_evidence_types_present: []",
+                "- missing_optional_evidence_types: [edgeenv_orchestrator_stale_drop_summary, stale_frame_risk]",
+                "- handoff_producer_lineage_guard_alignment_run_ids: [edgeenv-smoke-candidate, edgeenv-smoke-missing]",
+                "- guard_analysis_producer_lineage_guard_alignment_run_ids: [edgeenv-smoke-candidate, edgeenv-smoke-missing]",
             ]
         ),
         encoding="utf-8",
@@ -343,6 +357,19 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
     ) in summary
     assert (
         "review_path_artifact_gate_summary: artifact gate summary reference row validated"
+        in summary
+    )
+    assert "## Validated AIGuard Optional Handoff Context" in summary
+    assert (
+        "aiguard_optional_context: read_only_optional_guard_context preserved"
+        in summary
+    )
+    assert (
+        "aiguard_optional_requirement_boundary: optional evidence not validated as required"
+        in summary
+    )
+    assert (
+        "aiguard_missing_optional_types: edgeenv_orchestrator_stale_drop_summary, stale_frame_risk"
         in summary
     )
 

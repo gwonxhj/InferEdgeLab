@@ -1,3 +1,4 @@
+import json
 import subprocess
 from pathlib import Path
 
@@ -137,22 +138,76 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
     alignment_summary = (
         output_dir / "aiguard_edgeenv_handoff_alignment.md"
     ).read_text(encoding="utf-8")
+    alignment_payload = json.loads(
+        (output_dir / "aiguard_edgeenv_handoff_alignment.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert alignment_payload["optional_evidence_context_role"] == (
+        "read_only_optional_guard_context"
+    )
+    assert alignment_payload["aiguard_validates_optional_evidence_as_required"] is False
+    assert alignment_payload["optional_aiguard_evidence_types"] == [
+        "stale_frame_risk",
+        "edgeenv_orchestrator_stale_drop_summary",
+    ]
+    assert alignment_payload["optional_guard_evidence_types_present"] == []
+    assert alignment_payload["missing_optional_evidence_types"] == [
+        "edgeenv_orchestrator_stale_drop_summary",
+        "stale_frame_risk",
+    ]
     assert "status: passed" in alignment_summary
     assert "decision_owner: lab" in alignment_summary
     assert "diagnosis_owner: aiguard" in alignment_summary
     assert (
+        "optional_evidence_context_role: read_only_optional_guard_context"
+        in alignment_summary
+    )
+    assert (
+        "aiguard_validates_optional_evidence_as_required: False"
+        in alignment_summary
+    )
+    assert (
+        "optional_aiguard_evidence_types: "
+        "[stale_frame_risk, edgeenv_orchestrator_stale_drop_summary]"
+        in alignment_summary
+    )
+    assert "optional_guard_evidence_types_present: []" in alignment_summary
+    assert (
+        "missing_optional_evidence_types: "
+        "[edgeenv_orchestrator_stale_drop_summary, stale_frame_risk]"
+        in alignment_summary
+    )
+    assert (
         "handoff_producer_lineage_guard_alignment_run_ids: "
-        "edgeenv-smoke-candidate, edgeenv-smoke-missing"
+        "[edgeenv-smoke-candidate, edgeenv-smoke-missing]"
     ) in alignment_summary
     assert (
         "guard_analysis_producer_lineage_guard_alignment_run_ids: "
-        "edgeenv-smoke-candidate, edgeenv-smoke-missing"
+        "[edgeenv-smoke-candidate, edgeenv-smoke-missing]"
     ) in alignment_summary
 
     ci_summary = (
         output_dir / "runtime_intelligence_ci_artifact_gate_summary.md"
     ).read_text(encoding="utf-8")
     assert "- Status: passed" in ci_summary
+    assert "## Validated AIGuard Optional Handoff Context" in ci_summary
+    assert (
+        "aiguard_optional_context: read_only_optional_guard_context preserved"
+        in ci_summary
+    )
+    assert (
+        "aiguard_optional_requirement_boundary: optional evidence not validated as required"
+        in ci_summary
+    )
+    assert (
+        "aiguard_optional_types: stale_frame_risk, edgeenv_orchestrator_stale_drop_summary"
+        in ci_summary
+    )
+    assert (
+        "aiguard_missing_optional_types: edgeenv_orchestrator_stale_drop_summary, stale_frame_risk"
+        in ci_summary
+    )
     assert "## Validated Duration Traceability" in ci_summary
     assert (
         "duration_handoff_alignment: EdgeEnv/AIGuard report context preserved"

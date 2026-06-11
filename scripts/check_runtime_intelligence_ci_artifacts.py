@@ -97,6 +97,21 @@ REQUIRED_AIGUARD_ALIGNMENT_RUN_IDS = [
     "edgeenv-smoke-candidate",
     "edgeenv-smoke-missing",
 ]
+REQUIRED_AIGUARD_OPTIONAL_EVIDENCE_TYPES = [
+    "stale_frame_risk",
+    "edgeenv_orchestrator_stale_drop_summary",
+]
+REQUIRED_AIGUARD_MISSING_OPTIONAL_EVIDENCE_TYPES = [
+    "edgeenv_orchestrator_stale_drop_summary",
+    "stale_frame_risk",
+]
+REQUIRED_AIGUARD_OPTIONAL_CONTEXT_SUMMARY_MARKERS = (
+    "## Validated AIGuard Optional Handoff Context",
+    "aiguard_optional_context: read_only_optional_guard_context preserved",
+    "aiguard_optional_requirement_boundary: optional evidence not validated as required",
+    "aiguard_optional_types: stale_frame_risk, edgeenv_orchestrator_stale_drop_summary",
+    "aiguard_missing_optional_types: edgeenv_orchestrator_stale_drop_summary, stale_frame_risk",
+)
 REQUIRED_DURATION_TRACEABILITY_SUMMARY_MARKERS = (
     "## Validated Duration Traceability",
     "duration_handoff_alignment: EdgeEnv/AIGuard report context preserved",
@@ -322,6 +337,45 @@ def _validate_aiguard_handoff_alignment(
             "aiguard_edgeenv_handoff_alignment.json must not claim AIGuard validates Lab report markers",
         )
         _record(
+            payload.get("optional_evidence_context_role")
+            == "read_only_optional_guard_context",
+            errors,
+            "aiguard_edgeenv_handoff_alignment.json optional_evidence_context_role must be read_only_optional_guard_context",
+        )
+        _record(
+            payload.get("aiguard_validates_optional_evidence_as_required") is False,
+            errors,
+            "aiguard_edgeenv_handoff_alignment.json must not validate optional evidence as required",
+        )
+        _record(
+            payload.get("optional_evidence_type_count")
+            == len(REQUIRED_AIGUARD_OPTIONAL_EVIDENCE_TYPES),
+            errors,
+            "aiguard_edgeenv_handoff_alignment.json optional_evidence_type_count is invalid",
+        )
+        _record(
+            payload.get("optional_aiguard_evidence_types")
+            == REQUIRED_AIGUARD_OPTIONAL_EVIDENCE_TYPES,
+            errors,
+            "aiguard_edgeenv_handoff_alignment.json optional evidence types must match EdgeEnv handoff context",
+        )
+        _record(
+            payload.get("optional_guard_evidence_types_present") == [],
+            errors,
+            "aiguard_edgeenv_handoff_alignment.json optional evidence present list must reflect the bundled guard artifact",
+        )
+        _record(
+            payload.get("missing_optional_evidence_types")
+            == REQUIRED_AIGUARD_MISSING_OPTIONAL_EVIDENCE_TYPES,
+            errors,
+            "aiguard_edgeenv_handoff_alignment.json missing optional evidence types must remain read-only context",
+        )
+        _record(
+            payload.get("invalid_optional_evidence_types") == [],
+            errors,
+            "aiguard_edgeenv_handoff_alignment.json invalid_optional_evidence_types must be empty",
+        )
+        _record(
             payload.get("lab_expected_report_marker_count")
             == len(REQUIRED_LAB_EXPECTED_REPORT_MARKERS),
             errors,
@@ -366,7 +420,7 @@ def _validate_aiguard_handoff_alignment(
             "status: passed",
             "decision_owner: lab",
             "diagnosis_owner: aiguard",
-            "lab_expected_report_markers: "
+            "lab_expected_report_markers: ["
             "Runtime Intelligence Risk Summary, Runtime replay duration scope, "
             "Orchestrator operation feed context, "
             "EdgeEnv fixture matrix coverage, "
@@ -382,13 +436,20 @@ def _validate_aiguard_handoff_alignment(
             "lab=Remote fallback starter evidence; "
             "evidence=remote_execution_recovered_by_fallback, "
             "AIGuard producer-lineage guard alignment, "
-            "Lab remains the final deployment decision owner.",
+            "Lab remains the final deployment decision owner.]",
             "report_marker_context_role: lab_report_contract_context",
             "aiguard_validates_expected_report_markers: False",
+            "optional_evidence_context_role: read_only_optional_guard_context",
+            "aiguard_validates_optional_evidence_as_required: False",
+            "optional_aiguard_evidence_types: "
+            "[stale_frame_risk, edgeenv_orchestrator_stale_drop_summary]",
+            "optional_guard_evidence_types_present: []",
+            "missing_optional_evidence_types: "
+            "[edgeenv_orchestrator_stale_drop_summary, stale_frame_risk]",
             "handoff_producer_lineage_guard_alignment_run_ids: "
-            "edgeenv-smoke-candidate, edgeenv-smoke-missing",
+            "[edgeenv-smoke-candidate, edgeenv-smoke-missing]",
             "guard_analysis_producer_lineage_guard_alignment_run_ids: "
-            "edgeenv-smoke-candidate, edgeenv-smoke-missing",
+            "[edgeenv-smoke-candidate, edgeenv-smoke-missing]",
         ):
             _record(
                 marker in text,
@@ -433,6 +494,14 @@ def _write_summary(path: Path, report_dir: Path, errors: list[str]) -> None:
         lines.extend(
             f"- {marker}"
             for marker in REQUIRED_REVIEW_PATH_SUMMARY_MARKERS
+            if not marker.startswith("## ")
+        )
+        lines.append("")
+        lines.append("## Validated AIGuard Optional Handoff Context")
+        lines.append("")
+        lines.extend(
+            f"- {marker}"
+            for marker in REQUIRED_AIGUARD_OPTIONAL_CONTEXT_SUMMARY_MARKERS
             if not marker.startswith("## ")
         )
         lines.append("")

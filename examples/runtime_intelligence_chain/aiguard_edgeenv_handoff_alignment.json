@@ -7,6 +7,7 @@
   "handoff_schema_version": "edgeenv.runtime-intelligence-lab-handoff.v1",
   "guard_analysis_schema_version": "inferedge-aiguard-diagnosis-v1",
   "required_evidence_type_count": 9,
+  "optional_evidence_type_count": 2,
   "guard_evidence_type_count": 10,
   "lab_expected_report_marker_count": 17,
   "lab_expected_report_markers": [
@@ -31,6 +32,12 @@
   "lab_report_marker_owner": "lab",
   "report_marker_context_role": "lab_report_contract_context",
   "aiguard_validates_expected_report_markers": false,
+  "optional_evidence_context_role": "read_only_optional_guard_context",
+  "aiguard_validates_optional_evidence_as_required": false,
+  "handoff_duration_traceability_present": false,
+  "handoff_duration_traceability_run_ids": [],
+  "handoff_duration_sources": [],
+  "handoff_duration_scope_labels": [],
   "required_evidence_types": [
     "runtime_telemetry_context_coverage",
     "edgeenv_orchestrator_producer_lineage",
@@ -41,6 +48,10 @@
     "runtime_queue_overload",
     "runtime_thermal_instability",
     "remote_execution_recovered_by_fallback"
+  ],
+  "optional_aiguard_evidence_types": [
+    "stale_frame_risk",
+    "edgeenv_orchestrator_stale_drop_summary"
   ],
   "guard_analysis_evidence_types": [
     "runtime_telemetry_context_coverage",
@@ -55,10 +66,16 @@
     "remote_execution_recovered_by_fallback"
   ],
   "missing_required_evidence_types": [],
+  "optional_guard_evidence_types_present": [],
+  "missing_optional_evidence_types": [
+    "edgeenv_orchestrator_stale_drop_summary",
+    "stale_frame_risk"
+  ],
   "supplemental_guard_evidence_types": [
     "edgeenv_orchestrator_operation_risk_summary"
   ],
   "invalid_required_evidence_types": [],
+  "invalid_optional_evidence_types": [],
   "invalid_guard_evidence_items": [],
   "boundary_flags": {
     "aiguard_guard_analysis_is_external": true,
