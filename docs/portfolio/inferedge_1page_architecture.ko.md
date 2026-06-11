@@ -17,7 +17,7 @@ ONNX model
 -> EdgeEnv
 -> Lab
 -> optional AIGuard
--> optional Orchestrator operation context
+-> optional Orchestrator operation context / operation_risk_rollup
 ```
 
 ## 책임 경계
@@ -29,11 +29,11 @@ ONNX model
 | EdgeEnv | registry/comparability/regression evidence | Lab decision, public leaderboard |
 | Lab | report/API/job/deployment decision | production SaaS infrastructure |
 | AIGuard | deterministic diagnosis evidence | final decision owner |
-| Orchestrator | queue/deadline/fallback operation context | Kubernetes/cloud orchestration |
+| Orchestrator | queue/deadline/fallback operation context와 `operation_risk_rollup` | Kubernetes/cloud orchestration |
 
 ## Runtime Intelligence 흐름
 
-Runtime Intelligence는 새 repo나 monitoring SaaS가 아니다. Orchestrator operation feed, EdgeEnv telemetry/regression context, AIGuard deterministic warning evidence를 Lab report에 보존해 deployment risk를 더 쉽게 검토하게 만드는 local-first evidence extension이다.
+Runtime Intelligence는 새 repo나 monitoring SaaS가 아니다. Orchestrator operation feed와 `operation_risk_rollup`, EdgeEnv telemetry/regression context, AIGuard deterministic warning evidence를 Lab report에 보존해 deployment risk를 더 쉽게 검토하게 만드는 local-first evidence extension이다.
 
 ## Reviewer focus
 

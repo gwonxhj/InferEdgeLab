@@ -8,7 +8,7 @@ InferEdge is an end-to-end Edge AI inference validation pipeline that builds dep
 
 Supporting sidecar: InferEdgeEnv is a local-first run evidence registry and comparability checker for Edge AI inference benchmark results.
 
-Runtime Intelligence extension: Orchestrator can provide supplemental operation context, EdgeEnv preserves telemetry history and comparability-first regression evidence, AIGuard can explain deterministic runtime anomaly evidence, and Lab remains the deployment risk report and final decision owner.
+Runtime Intelligence extension: Orchestrator can provide supplemental operation context including `operation_risk_rollup`, EdgeEnv preserves telemetry history and comparability-first regression evidence, AIGuard can explain deterministic runtime anomaly evidence, and Lab remains the deployment risk report and final decision owner.
 
 PDF-ready portfolio draft: [InferEdge Portfolio Submission](inferedge_portfolio_submission.md). Local PDF export uses pandoc + xelatex through `bash scripts/export_portfolio_pdf.sh`.
 
@@ -34,7 +34,7 @@ Supporting sidecar:
 InferEdgeEnv -> local-first run evidence registry / comparability checker
 
 Runtime Intelligence smoke chain:
-InferEdgeOrchestrator operation feed
+InferEdgeOrchestrator operation feed / operation_risk_rollup
 -> InferEdgeEnv telemetry history / regression context
 -> optional InferEdgeAIGuard deterministic runtime anomaly evidence
 -> InferEdgeLab Runtime Intelligence Risk Summary / deployment risk report
@@ -47,7 +47,7 @@ InferEdgeOrchestrator operation feed
 - **InferEdgeLab:** analysis/API/job/deployment decision owner. Compares Runtime results, generates reports, exposes API/job workflow contracts, preserves optional guard evidence, and owns the final `deployment_decision`.
 - **InferEdgeAIGuard:** optional rule + evidence diagnosis layer. Detects provenance/artifact/config mismatches and returns deterministic `guard_analysis` evidence for Lab to consume.
 - **InferEdgeEnv:** run evidence registry / comparability checker. Records benchmark artifacts, SQLite registry entries, evidence bundles, and comparability judgement without owning Lab deployment decisions.
-- **InferEdgeOrchestrator:** runtime operation context provider. Supplies queue, deadline, fallback, thermal, and resource context as supplemental evidence without becoming the regression/comparability owner or final decision owner.
+- **InferEdgeOrchestrator:** runtime operation context provider. Supplies queue, deadline, fallback, thermal, resource context, and compact `operation_risk_rollup` evidence without becoming the regression/comparability owner or final decision owner.
 
 Portfolio boundary: InferEdgeLab is the validation / decision layer. InferEdgeEnv is the run evidence registry / comparability layer. AIGuard and Orchestrator remain evidence providers, while Lab owns the final deployment decision.
 
@@ -64,7 +64,7 @@ Portfolio boundary: InferEdgeLab is the validation / decision layer. InferEdgeEn
 - Runtime `worker_request` validation and `worker_response` dry-run export
 - Forge worker/runtime summary
 - AIGuard evidence diagnosis cases for provenance mismatch, bbox collapse, score saturation, temporal instability, and normal/pass paths
-- Runtime Intelligence smoke evidence chain: Orchestrator `edgeenv_runtime_telemetry_feed` -> EdgeEnv telemetry history and producer-owned `history.telemetry_coverage` -> AIGuard deterministic runtime anomaly evidence -> Lab Runtime Intelligence Risk Summary
+- Runtime Intelligence smoke evidence chain: Orchestrator `edgeenv_runtime_telemetry_feed` and `operation_risk_rollup` -> EdgeEnv telemetry history and producer-owned `history.telemetry_coverage` -> AIGuard deterministic runtime anomaly evidence -> Lab Runtime Intelligence Risk Summary
 - Bundle/report gates that preserve EdgeEnv coverage ownership, Orchestrator `edgeenv_mapping_hint`, AIGuard raw-context producer lineage handoff, and Lab-owned deployment risk wording
 - Lab decision/report guard evidence smoke
 - all repo README pipeline summaries synced

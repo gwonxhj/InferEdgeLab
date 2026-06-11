@@ -16,7 +16,7 @@ Forge build provenance
 -> EdgeEnv registry / comparability / regression context
 -> Lab report / deployment decision
 -> optional AIGuard deterministic evidence
--> optional Orchestrator operation context
+-> optional Orchestrator operation context / operation_risk_rollup
 ```
 
 ## 한눈에 보는 역할 분리
@@ -28,7 +28,7 @@ Forge build provenance
 | EdgeEnv | registry/comparability | 비교 가능한 조건인지 먼저 판정했는가 |
 | Lab | report/deployment decision | 최종 deploy/review/blocked 판단을 Lab이 소유하는가 |
 | AIGuard | deterministic diagnosis | runtime/output warning을 근거 기반으로 설명하는가 |
-| Orchestrator | operation context | queue/deadline/fallback context가 supplemental evidence로 보존되는가 |
+| Orchestrator | operation context | queue/deadline/fallback context와 `operation_risk_rollup`이 supplemental evidence로 보존되는가 |
 
 ## 강한 evidence
 
@@ -36,6 +36,7 @@ Forge build provenance
 - Jetson TensorRT FP16 25W fixture: `10.066401 ms` mean / `15.548438 ms` p99 / `99.340373 FPS`.
 - 같은 demo pair 기준 TensorRT Jetson FP16은 ONNX Runtime CPU 대비 약 `4.51x` 빠르다.
 - Jetson EdgeEnv preservation smoke는 `device_local_starter`, live `tegrastats`, `runtime_operation_summary`, EdgeEnv run evidence, AIGuard warning, Lab deployment risk report까지 이어지는 local-first artifact chain을 보여준다.
+- Runtime Intelligence chain은 Orchestrator `operation_risk_rollup`을 EdgeEnv handoff, AIGuard deterministic evidence, Lab Risk Summary로 연결하되 Lab final decision ownership은 유지한다.
 
 ## 경계
 
