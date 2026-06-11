@@ -111,6 +111,20 @@ REQUIRED_AIGUARD_PRESENT_OPTIONAL_EVIDENCE_TYPES = [
     "edgeenv_orchestrator_stale_drop_summary",
     "stale_frame_risk",
 ]
+REQUIRED_AIGUARD_OPTIONAL_PRESENT_SOURCE_ARTIFACT = {
+    "repository": "InferEdgeAIGuard",
+    "path": (
+        "examples/runtime_intelligence/"
+        "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
+    ),
+    "schema_version": "inferedge-aiguard-diagnosis-v1",
+    "role": "aiguard-optional-stale-drop-full-evidence-source",
+    "context_role": "read_only_cross_repo_traceability",
+}
+REQUIRED_AIGUARD_OPTIONAL_PRESENT_SOURCE_ARTIFACT_MARKER = (
+    "InferEdgeAIGuard/examples/runtime_intelligence/"
+    "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
+)
 REQUIRED_AIGUARD_OPTIONAL_CONTEXT_SUMMARY_MARKERS = (
     "## Validated AIGuard Optional Handoff Context",
     "aiguard_optional_context: read_only_optional_guard_context preserved",
@@ -119,6 +133,8 @@ REQUIRED_AIGUARD_OPTIONAL_CONTEXT_SUMMARY_MARKERS = (
     "aiguard_missing_optional_types: edgeenv_orchestrator_stale_drop_summary, stale_frame_risk",
     "aiguard_optional_present_types: edgeenv_orchestrator_stale_drop_summary, stale_frame_risk",
     "aiguard_optional_present_missing_types: none",
+    "aiguard_optional_present_source_artifact: "
+    f"{REQUIRED_AIGUARD_OPTIONAL_PRESENT_SOURCE_ARTIFACT_MARKER}",
 )
 REQUIRED_DURATION_TRACEABILITY_SUMMARY_MARKERS = (
     "## Validated Duration Traceability",
@@ -312,6 +328,7 @@ def _validate_aiguard_handoff_alignment(
     *,
     expected_optional_guard_evidence_types_present: list[str] | None = None,
     expected_missing_optional_evidence_types: list[str] | None = None,
+    expected_optional_present_source_artifact: dict[str, str] | None = None,
 ) -> None:
     expected_optional_guard_evidence_types_present = (
         expected_optional_guard_evidence_types_present
@@ -401,6 +418,13 @@ def _validate_aiguard_handoff_alignment(
             errors,
             "aiguard_edgeenv_handoff_alignment.json invalid_optional_evidence_types must be empty",
         )
+        if expected_optional_present_source_artifact is not None:
+            _record(
+                payload.get("optional_present_source_artifact")
+                == expected_optional_present_source_artifact,
+                errors,
+                "aiguard_edgeenv_handoff_alignment.json optional-present source artifact must point to the AIGuard full evidence example",
+            )
         _record(
             payload.get("lab_expected_report_marker_count")
             == len(REQUIRED_LAB_EXPECTED_REPORT_MARKERS),
@@ -448,7 +472,7 @@ def _validate_aiguard_handoff_alignment(
         expected_missing_marker = _format_markdown_inline_list(
             expected_missing_optional_evidence_types
         )
-        for marker in (
+        expected_markers = [
             "status: passed",
             "decision_owner: lab",
             "diagnosis_owner: aiguard",
@@ -481,7 +505,13 @@ def _validate_aiguard_handoff_alignment(
             "[edgeenv-smoke-candidate, edgeenv-smoke-missing]",
             "guard_analysis_producer_lineage_guard_alignment_run_ids: "
             "[edgeenv-smoke-candidate, edgeenv-smoke-missing]",
-        ):
+        ]
+        if expected_optional_present_source_artifact is not None:
+            expected_markers.append(
+                "optional_present_source_artifact: "
+                f"{REQUIRED_AIGUARD_OPTIONAL_PRESENT_SOURCE_ARTIFACT_MARKER}"
+            )
+        for marker in expected_markers:
             _record(
                 marker in text,
                 errors,
@@ -567,6 +597,9 @@ def main(report_dir: str, summary_out: str = "") -> int:
                 REQUIRED_AIGUARD_PRESENT_OPTIONAL_EVIDENCE_TYPES
             ),
             expected_missing_optional_evidence_types=[],
+            expected_optional_present_source_artifact=(
+                REQUIRED_AIGUARD_OPTIONAL_PRESENT_SOURCE_ARTIFACT
+            ),
         )
         _validate_runtime_report(report_path / "runtime_anomaly_summary.md", errors)
         _validate_portfolio_status(report_path / "portfolio_demo_check.json", errors)
