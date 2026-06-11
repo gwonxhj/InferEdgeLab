@@ -71,6 +71,10 @@ cp examples/runtime_intelligence_chain/aiguard_edgeenv_handoff_alignment.json \
   "$OUTPUT_DIR/aiguard_edgeenv_handoff_alignment.json"
 cp examples/runtime_intelligence_chain/aiguard_edgeenv_handoff_alignment.md \
   "$OUTPUT_DIR/aiguard_edgeenv_handoff_alignment.md"
+cp examples/runtime_intelligence_chain/aiguard_edgeenv_handoff_alignment_optional_present.json \
+  "$OUTPUT_DIR/aiguard_edgeenv_handoff_alignment_optional_present.json"
+cp examples/runtime_intelligence_chain/aiguard_edgeenv_handoff_alignment_optional_present.md \
+  "$OUTPUT_DIR/aiguard_edgeenv_handoff_alignment_optional_present.md"
 
 "${LAB_CMD[@]}" compare \
   examples/edgeenv_regression/lab_baseline_result.json \

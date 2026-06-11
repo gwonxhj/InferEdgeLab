@@ -260,7 +260,11 @@ The same alignment artifact also preserves
 artifact gate checks `aiguard_validates_optional_evidence_as_required=false`,
 records which optional stale-drop evidence labels are absent from the bundled
 guard artifact, and keeps those absences out of the required evidence failure
-path.
+path. A companion
+`aiguard_edgeenv_handoff_alignment_optional_present.json/.md` fixture exercises
+the same optional labels when they are present, proving the gate can record
+`optional_guard_evidence_types_present` without promoting those labels to
+required deployment-decision evidence.
 
 Remote dispatch rows in this artifact chain are starter evidence only. The
 gates require worker-selection, fallback recovery, event-count, consistency,
