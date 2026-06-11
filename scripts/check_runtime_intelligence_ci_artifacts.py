@@ -16,11 +16,13 @@ REQUIRED_HTML_ARTIFACTS = {
 }
 REQUIRED_SUMMARY_ARTIFACTS = {
     "aiguard_edgeenv_handoff_alignment.md",
+    "aiguard_edgeenv_handoff_alignment_optional_present.md",
     "runtime_intelligence_bundle_manifest_gate_summary.md",
     "runtime_anomaly_gate_summary.md",
 }
 REQUIRED_JSON_ARTIFACTS = {
     "aiguard_edgeenv_handoff_alignment.json",
+    "aiguard_edgeenv_handoff_alignment_optional_present.json",
     "portfolio_demo_check.json",
     "deployment_risk_summary.json",
 }
@@ -105,12 +107,18 @@ REQUIRED_AIGUARD_MISSING_OPTIONAL_EVIDENCE_TYPES = [
     "edgeenv_orchestrator_stale_drop_summary",
     "stale_frame_risk",
 ]
+REQUIRED_AIGUARD_PRESENT_OPTIONAL_EVIDENCE_TYPES = [
+    "edgeenv_orchestrator_stale_drop_summary",
+    "stale_frame_risk",
+]
 REQUIRED_AIGUARD_OPTIONAL_CONTEXT_SUMMARY_MARKERS = (
     "## Validated AIGuard Optional Handoff Context",
     "aiguard_optional_context: read_only_optional_guard_context preserved",
     "aiguard_optional_requirement_boundary: optional evidence not validated as required",
     "aiguard_optional_types: stale_frame_risk, edgeenv_orchestrator_stale_drop_summary",
     "aiguard_missing_optional_types: edgeenv_orchestrator_stale_drop_summary, stale_frame_risk",
+    "aiguard_optional_present_types: edgeenv_orchestrator_stale_drop_summary, stale_frame_risk",
+    "aiguard_optional_present_missing_types: none",
 )
 REQUIRED_DURATION_TRACEABILITY_SUMMARY_MARKERS = (
     "## Validated Duration Traceability",
@@ -161,6 +169,10 @@ def _load_json(path: Path, errors: list[str], label: str) -> dict:
         errors.append(f"{label} must be a JSON object: {path}")
         return {}
     return payload
+
+
+def _format_markdown_inline_list(values: list[str]) -> str:
+    return f"[{', '.join(values)}]" if values else "[]"
 
 
 def _validate_required_files(report_dir: Path, errors: list[str]) -> None:
@@ -297,7 +309,20 @@ def _validate_aiguard_handoff_alignment(
     json_path: Path,
     markdown_path: Path,
     errors: list[str],
+    *,
+    expected_optional_guard_evidence_types_present: list[str] | None = None,
+    expected_missing_optional_evidence_types: list[str] | None = None,
 ) -> None:
+    expected_optional_guard_evidence_types_present = (
+        expected_optional_guard_evidence_types_present
+        if expected_optional_guard_evidence_types_present is not None
+        else []
+    )
+    expected_missing_optional_evidence_types = (
+        expected_missing_optional_evidence_types
+        if expected_missing_optional_evidence_types is not None
+        else REQUIRED_AIGUARD_MISSING_OPTIONAL_EVIDENCE_TYPES
+    )
     payload = _load_json(json_path, errors, "AIGuard EdgeEnv handoff alignment JSON")
     if payload:
         _record(
@@ -360,13 +385,14 @@ def _validate_aiguard_handoff_alignment(
             "aiguard_edgeenv_handoff_alignment.json optional evidence types must match EdgeEnv handoff context",
         )
         _record(
-            payload.get("optional_guard_evidence_types_present") == [],
+            payload.get("optional_guard_evidence_types_present")
+            == expected_optional_guard_evidence_types_present,
             errors,
             "aiguard_edgeenv_handoff_alignment.json optional evidence present list must reflect the bundled guard artifact",
         )
         _record(
             payload.get("missing_optional_evidence_types")
-            == REQUIRED_AIGUARD_MISSING_OPTIONAL_EVIDENCE_TYPES,
+            == expected_missing_optional_evidence_types,
             errors,
             "aiguard_edgeenv_handoff_alignment.json missing optional evidence types must remain read-only context",
         )
@@ -416,6 +442,12 @@ def _validate_aiguard_handoff_alignment(
         "AIGuard EdgeEnv handoff alignment Markdown",
     )
     if text:
+        expected_present_marker = _format_markdown_inline_list(
+            expected_optional_guard_evidence_types_present
+        )
+        expected_missing_marker = _format_markdown_inline_list(
+            expected_missing_optional_evidence_types
+        )
         for marker in (
             "status: passed",
             "decision_owner: lab",
@@ -443,9 +475,8 @@ def _validate_aiguard_handoff_alignment(
             "aiguard_validates_optional_evidence_as_required: False",
             "optional_aiguard_evidence_types: "
             "[stale_frame_risk, edgeenv_orchestrator_stale_drop_summary]",
-            "optional_guard_evidence_types_present: []",
-            "missing_optional_evidence_types: "
-            "[edgeenv_orchestrator_stale_drop_summary, stale_frame_risk]",
+            f"optional_guard_evidence_types_present: {expected_present_marker}",
+            f"missing_optional_evidence_types: {expected_missing_marker}",
             "handoff_producer_lineage_guard_alignment_run_ids: "
             "[edgeenv-smoke-candidate, edgeenv-smoke-missing]",
             "guard_analysis_producer_lineage_guard_alignment_run_ids: "
@@ -527,6 +558,15 @@ def main(report_dir: str, summary_out: str = "") -> int:
             report_path / "aiguard_edgeenv_handoff_alignment.json",
             report_path / "aiguard_edgeenv_handoff_alignment.md",
             errors,
+        )
+        _validate_aiguard_handoff_alignment(
+            report_path / "aiguard_edgeenv_handoff_alignment_optional_present.json",
+            report_path / "aiguard_edgeenv_handoff_alignment_optional_present.md",
+            errors,
+            expected_optional_guard_evidence_types_present=(
+                REQUIRED_AIGUARD_PRESENT_OPTIONAL_EVIDENCE_TYPES
+            ),
+            expected_missing_optional_evidence_types=[],
         )
         _validate_runtime_report(report_path / "runtime_anomaly_summary.md", errors)
         _validate_portfolio_status(report_path / "portfolio_demo_check.json", errors)

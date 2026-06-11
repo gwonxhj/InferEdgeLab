@@ -52,6 +52,8 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
         "runtime_intelligence_bundle_manifest_gate_summary.md",
         "aiguard_edgeenv_handoff_alignment.json",
         "aiguard_edgeenv_handoff_alignment.md",
+        "aiguard_edgeenv_handoff_alignment_optional_present.json",
+        "aiguard_edgeenv_handoff_alignment_optional_present.md",
         "edgeenv_runtime_regression.md",
         "edgeenv_runtime_regression.html",
         "runtime_anomaly_summary.md",
@@ -186,6 +188,36 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
         "guard_analysis_producer_lineage_guard_alignment_run_ids: "
         "[edgeenv-smoke-candidate, edgeenv-smoke-missing]"
     ) in alignment_summary
+    optional_present_summary = (
+        output_dir / "aiguard_edgeenv_handoff_alignment_optional_present.md"
+    ).read_text(encoding="utf-8")
+    optional_present_payload = json.loads(
+        (
+            output_dir / "aiguard_edgeenv_handoff_alignment_optional_present.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert optional_present_payload["optional_evidence_context_role"] == (
+        "read_only_optional_guard_context"
+    )
+    assert (
+        optional_present_payload["aiguard_validates_optional_evidence_as_required"]
+        is False
+    )
+    assert optional_present_payload["optional_aiguard_evidence_types"] == [
+        "stale_frame_risk",
+        "edgeenv_orchestrator_stale_drop_summary",
+    ]
+    assert optional_present_payload["optional_guard_evidence_types_present"] == [
+        "edgeenv_orchestrator_stale_drop_summary",
+        "stale_frame_risk",
+    ]
+    assert optional_present_payload["missing_optional_evidence_types"] == []
+    assert (
+        "optional_guard_evidence_types_present: "
+        "[edgeenv_orchestrator_stale_drop_summary, stale_frame_risk]"
+        in optional_present_summary
+    )
+    assert "missing_optional_evidence_types: []" in optional_present_summary
 
     ci_summary = (
         output_dir / "runtime_intelligence_ci_artifact_gate_summary.md"
@@ -208,6 +240,11 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
         "aiguard_missing_optional_types: edgeenv_orchestrator_stale_drop_summary, stale_frame_risk"
         in ci_summary
     )
+    assert (
+        "aiguard_optional_present_types: edgeenv_orchestrator_stale_drop_summary, stale_frame_risk"
+        in ci_summary
+    )
+    assert "aiguard_optional_present_missing_types: none" in ci_summary
     assert "## Validated Duration Traceability" in ci_summary
     assert (
         "duration_handoff_alignment: EdgeEnv/AIGuard report context preserved"
