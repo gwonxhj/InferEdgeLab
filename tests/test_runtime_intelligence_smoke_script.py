@@ -221,6 +221,32 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
         "schema_version": "inferedge-aiguard-diagnosis-v1",
         "role": "aiguard-optional-stale-drop-full-evidence-source",
         "context_role": "read_only_cross_repo_traceability",
+        "reproduction_command": [
+            "python",
+            "-m",
+            "inferedge_aiguard.cli",
+            "build-runtime-intelligence-optional-stale-drop",
+            "--edgeenv-regression",
+            (
+                "examples/runtime_intelligence/"
+                "edgeenv_runtime_regression_with_optional_stale_drop_context.json"
+            ),
+            "--remote-dispatch",
+            (
+                "examples/runtime_intelligence/"
+                "remote_dispatch_fallback_recovered_result.json"
+            ),
+            "--orchestration-summary",
+            (
+                "examples/runtime_intelligence/"
+                "orchestrator_multi_workload_sustained_summary.json"
+            ),
+            "--save-json",
+            (
+                "examples/runtime_intelligence/"
+                "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
+            ),
+        ],
     }
     assert (
         "optional_guard_evidence_types_present: "
@@ -231,6 +257,23 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
     assert (
         "optional_present_source_artifact: "
         "InferEdgeAIGuard/examples/runtime_intelligence/"
+        "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
+        in optional_present_summary
+    )
+    assert (
+        "optional_present_reproduction_command: "
+        "python -m inferedge_aiguard.cli "
+        "build-runtime-intelligence-optional-stale-drop "
+        "--edgeenv-regression "
+        "examples/runtime_intelligence/"
+        "edgeenv_runtime_regression_with_optional_stale_drop_context.json "
+        "--remote-dispatch "
+        "examples/runtime_intelligence/remote_dispatch_fallback_recovered_result.json "
+        "--orchestration-summary "
+        "examples/runtime_intelligence/"
+        "orchestrator_multi_workload_sustained_summary.json "
+        "--save-json "
+        "examples/runtime_intelligence/"
         "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
         in optional_present_summary
     )
@@ -264,6 +307,23 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
     assert (
         "aiguard_optional_present_source_artifact: "
         "InferEdgeAIGuard/examples/runtime_intelligence/"
+        "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
+        in ci_summary
+    )
+    assert (
+        "aiguard_optional_present_reproduction_command: "
+        "python -m inferedge_aiguard.cli "
+        "build-runtime-intelligence-optional-stale-drop "
+        "--edgeenv-regression "
+        "examples/runtime_intelligence/"
+        "edgeenv_runtime_regression_with_optional_stale_drop_context.json "
+        "--remote-dispatch "
+        "examples/runtime_intelligence/remote_dispatch_fallback_recovered_result.json "
+        "--orchestration-summary "
+        "examples/runtime_intelligence/"
+        "orchestrator_multi_workload_sustained_summary.json "
+        "--save-json "
+        "examples/runtime_intelligence/"
         "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
         in ci_summary
     )

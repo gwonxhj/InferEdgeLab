@@ -111,6 +111,33 @@ REQUIRED_AIGUARD_PRESENT_OPTIONAL_EVIDENCE_TYPES = [
     "edgeenv_orchestrator_stale_drop_summary",
     "stale_frame_risk",
 ]
+REQUIRED_AIGUARD_OPTIONAL_PRESENT_SOURCE_ARTIFACT_MARKER = (
+    "InferEdgeAIGuard/examples/runtime_intelligence/"
+    "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
+)
+REQUIRED_AIGUARD_OPTIONAL_PRESENT_REPRODUCTION_COMMAND = [
+    "python",
+    "-m",
+    "inferedge_aiguard.cli",
+    "build-runtime-intelligence-optional-stale-drop",
+    "--edgeenv-regression",
+    (
+        "examples/runtime_intelligence/"
+        "edgeenv_runtime_regression_with_optional_stale_drop_context.json"
+    ),
+    "--remote-dispatch",
+    "examples/runtime_intelligence/remote_dispatch_fallback_recovered_result.json",
+    "--orchestration-summary",
+    "examples/runtime_intelligence/orchestrator_multi_workload_sustained_summary.json",
+    "--save-json",
+    (
+        "examples/runtime_intelligence/"
+        "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
+    ),
+]
+REQUIRED_AIGUARD_OPTIONAL_PRESENT_REPRODUCTION_COMMAND_MARKER = " ".join(
+    REQUIRED_AIGUARD_OPTIONAL_PRESENT_REPRODUCTION_COMMAND
+)
 REQUIRED_AIGUARD_OPTIONAL_PRESENT_SOURCE_ARTIFACT = {
     "repository": "InferEdgeAIGuard",
     "path": (
@@ -120,11 +147,8 @@ REQUIRED_AIGUARD_OPTIONAL_PRESENT_SOURCE_ARTIFACT = {
     "schema_version": "inferedge-aiguard-diagnosis-v1",
     "role": "aiguard-optional-stale-drop-full-evidence-source",
     "context_role": "read_only_cross_repo_traceability",
+    "reproduction_command": REQUIRED_AIGUARD_OPTIONAL_PRESENT_REPRODUCTION_COMMAND,
 }
-REQUIRED_AIGUARD_OPTIONAL_PRESENT_SOURCE_ARTIFACT_MARKER = (
-    "InferEdgeAIGuard/examples/runtime_intelligence/"
-    "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
-)
 REQUIRED_AIGUARD_OPTIONAL_CONTEXT_SUMMARY_MARKERS = (
     "## Validated AIGuard Optional Handoff Context",
     "aiguard_optional_context: read_only_optional_guard_context preserved",
@@ -135,6 +159,8 @@ REQUIRED_AIGUARD_OPTIONAL_CONTEXT_SUMMARY_MARKERS = (
     "aiguard_optional_present_missing_types: none",
     "aiguard_optional_present_source_artifact: "
     f"{REQUIRED_AIGUARD_OPTIONAL_PRESENT_SOURCE_ARTIFACT_MARKER}",
+    "aiguard_optional_present_reproduction_command: "
+    f"{REQUIRED_AIGUARD_OPTIONAL_PRESENT_REPRODUCTION_COMMAND_MARKER}",
 )
 REQUIRED_DURATION_TRACEABILITY_SUMMARY_MARKERS = (
     "## Validated Duration Traceability",
@@ -510,6 +536,10 @@ def _validate_aiguard_handoff_alignment(
             expected_markers.append(
                 "optional_present_source_artifact: "
                 f"{REQUIRED_AIGUARD_OPTIONAL_PRESENT_SOURCE_ARTIFACT_MARKER}"
+            )
+            expected_markers.append(
+                "optional_present_reproduction_command: "
+                f"{REQUIRED_AIGUARD_OPTIONAL_PRESENT_REPRODUCTION_COMMAND_MARKER}"
             )
         for marker in expected_markers:
             _record(
