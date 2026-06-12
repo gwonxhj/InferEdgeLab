@@ -144,6 +144,10 @@ The initial gate is conservative:
   validates the known stale-drop labels (`stale_frame_risk` and
   `edgeenv_orchestrator_stale_drop_summary`) as optional context that remains
   separate from the required AIGuard evidence set
+- if the handoff declares `optional_aiguard_source_traceability`, the bundle
+  gate validates the `read_only_optional_source_traceability` AIGuard source
+  artifact path and reproduction command as read-only metadata, without making
+  EdgeEnv produce `guard_analysis`
 - the EdgeEnv handoff `runtime_telemetry_history` file must exist and preserve
   the EdgeEnv history schema, telemetry coverage summary, and Runtime history
   seed ownership markers

@@ -275,6 +275,10 @@ bash scripts/smoke_runtime_intelligence_chain.sh \
 
 이 smoke는 EdgeEnv가 선언한 external AIGuard evidence requirement가 bundled
 `guard_analysis`로 충족되는지도 확인하는 artifact integrity check입니다.
+또한 `optional_aiguard_source_traceability`가 있으면 Lab bundle gate가
+`read_only_optional_source_traceability` source artifact path와 AIGuard
+재생성 명령을 검증하되, EdgeEnv가 `guard_analysis`를 생성한다는 의미로
+해석하지 않습니다.
 EdgeEnv나 AIGuard가 Lab의 final deployment decision을 대체하지 않습니다.
 
 ## 현재 범위와 future work

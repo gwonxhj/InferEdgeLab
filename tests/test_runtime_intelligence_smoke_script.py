@@ -114,6 +114,10 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
         in bundle_summary
     )
     assert "edgeenv_handoff: optional AIGuard evidence types declared" in bundle_summary
+    assert (
+        "edgeenv_handoff: optional AIGuard source traceability declared"
+        in bundle_summary
+    )
     assert "edgeenv_handoff: device_local_producer_lineage validated" in bundle_summary
     assert (
         "edgeenv_handoff: producer_lineage_guard_alignment validated"

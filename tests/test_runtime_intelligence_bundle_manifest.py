@@ -4,6 +4,8 @@ import sys
 from pathlib import Path
 
 from scripts.check_runtime_intelligence_bundle_manifest import (
+    OPTIONAL_AIGUARD_SOURCE_ARTIFACT,
+    OPTIONAL_AIGUARD_SOURCE_TRACEABILITY_CONTEXT_ROLE,
     REQUIRED_EXPECTED_REPORT_MARKERS,
     main as manifest_gate,
 )
@@ -163,6 +165,8 @@ def test_runtime_intelligence_docs_describe_expected_report_markers():
     for doc in (handoff_doc, ci_doc):
         assert "expected_report_markers" in doc
         assert "optional_aiguard_evidence_types" in doc
+        assert "optional_aiguard_source_traceability" in doc
+        assert "read_only_optional_source_traceability" in doc
         assert "edgeenv_orchestrator_stale_drop_summary" in doc
         assert "Lab-owned Runtime Intelligence report contract" in doc
         for marker in REQUIRED_EXPECTED_REPORT_MARKERS:
@@ -327,6 +331,13 @@ def test_runtime_intelligence_bundle_manifest_gate_validates_edgeenv_handoff(
         == 0
     )
     summary = summary_path.read_text(encoding="utf-8")
+    handoff = json.loads(EDGEENV_HANDOFF.read_text(encoding="utf-8"))
+    assert handoff["lab_bundle_alignment"]["optional_aiguard_source_traceability"] == {
+        "context_role": OPTIONAL_AIGUARD_SOURCE_TRACEABILITY_CONTEXT_ROLE,
+        "edgeenv_does_not_generate_guard_analysis": True,
+        "lab_is_final_decision_owner": True,
+        "optional_present_source_artifact": OPTIONAL_AIGUARD_SOURCE_ARTIFACT,
+    }
     assert "edgeenv_handoff: lab_bundle_alignment validated" in summary
     assert "edgeenv_handoff: runtime_telemetry_history validated" in summary
     assert "edgeenv_handoff: history_seed_run_config validated" in summary
@@ -346,6 +357,10 @@ def test_runtime_intelligence_bundle_manifest_gate_validates_edgeenv_handoff(
         in summary
     )
     assert "edgeenv_handoff: optional AIGuard evidence types declared" in summary
+    assert (
+        "edgeenv_handoff: optional AIGuard source traceability declared"
+        in summary
+    )
 
 
 def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_seed_run_config(
@@ -667,6 +682,31 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_optional_guard_
     assert (
         "optional_aiguard_evidence_types must remain separate from required "
         "AIGuard evidence types"
+    ) in summary
+
+
+def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_optional_source_traceability(
+    tmp_path,
+):
+    handoff = json.loads(EDGEENV_HANDOFF.read_text(encoding="utf-8"))
+    handoff["lab_bundle_alignment"]["optional_aiguard_source_traceability"][
+        "optional_present_source_artifact"
+    ]["repository"] = "InferEdgeEnv"
+    handoff_path = tmp_path / "edgeenv_lab_handoff_manifest.json"
+    handoff_path.write_text(json.dumps(handoff), encoding="utf-8")
+    summary_path = tmp_path / "bundle_manifest_gate_summary.md"
+
+    result = manifest_gate(
+        manifest=str(MANIFEST),
+        edgeenv_handoff=str(handoff_path),
+        summary_out=str(summary_path),
+    )
+
+    assert result == 2
+    summary = summary_path.read_text(encoding="utf-8")
+    assert (
+        "optional_aiguard_source_traceability.optional_present_source_artifact "
+        "must match the Lab-known AIGuard optional stale-drop source artifact"
     ) in summary
 
 
