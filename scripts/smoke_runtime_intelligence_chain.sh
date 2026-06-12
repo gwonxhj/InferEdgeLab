@@ -15,6 +15,7 @@ Usage:
 This smoke reproduces the local-first Runtime Intelligence artifact chain:
   bundle manifest gate
   -> AIGuard EdgeEnv handoff alignment gate fixture
+  -> EdgeEnv/AIGuard optional source traceability gate
   -> EdgeEnv regression report
   -> Runtime Intelligence report with precomputed AIGuard evidence
   -> report artifact gate
@@ -75,6 +76,11 @@ cp examples/runtime_intelligence_chain/aiguard_edgeenv_handoff_alignment_optiona
   "$OUTPUT_DIR/aiguard_edgeenv_handoff_alignment_optional_present.json"
 cp examples/runtime_intelligence_chain/aiguard_edgeenv_handoff_alignment_optional_present.md \
   "$OUTPUT_DIR/aiguard_edgeenv_handoff_alignment_optional_present.md"
+
+"${PYTHON_CMD[@]}" scripts/check_runtime_intelligence_source_traceability.py \
+  --edgeenv-handoff examples/runtime_intelligence_chain/edgeenv_lab_handoff_manifest.json \
+  --aiguard-alignment "$OUTPUT_DIR/aiguard_edgeenv_handoff_alignment_optional_present.json" \
+  --summary-out "$OUTPUT_DIR/runtime_intelligence_source_traceability_summary.md"
 
 "${LAB_CMD[@]}" compare \
   examples/edgeenv_regression/lab_baseline_result.json \

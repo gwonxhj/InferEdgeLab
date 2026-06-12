@@ -54,6 +54,7 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
         "aiguard_edgeenv_handoff_alignment.md",
         "aiguard_edgeenv_handoff_alignment_optional_present.json",
         "aiguard_edgeenv_handoff_alignment_optional_present.md",
+        "runtime_intelligence_source_traceability_summary.md",
         "edgeenv_runtime_regression.md",
         "edgeenv_runtime_regression.html",
         "runtime_anomaly_summary.md",
@@ -330,6 +331,47 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
         "examples/runtime_intelligence/"
         "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
         in ci_summary
+    )
+    source_traceability_summary = (
+        output_dir / "runtime_intelligence_source_traceability_summary.md"
+    ).read_text(encoding="utf-8")
+    assert "- Status: passed" in source_traceability_summary
+    assert "## Validated Source Traceability" in source_traceability_summary
+    assert (
+        "source_traceability_alignment: EdgeEnv handoff and AIGuard "
+        "optional-present fixture match"
+    ) in source_traceability_summary
+    assert (
+        "edgeenv_optional_source_traceability: "
+        "read_only_optional_source_traceability preserved"
+    ) in source_traceability_summary
+    assert (
+        "aiguard_optional_present_source_artifact: "
+        "InferEdgeAIGuard/examples/runtime_intelligence/"
+        "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
+        in source_traceability_summary
+    )
+    assert (
+        "aiguard_optional_present_reproduction_command: "
+        "python -m inferedge_aiguard.cli "
+        "build-runtime-intelligence-optional-stale-drop "
+        "--edgeenv-regression "
+        "examples/runtime_intelligence/"
+        "edgeenv_runtime_regression_with_optional_stale_drop_context.json "
+        "--remote-dispatch "
+        "examples/runtime_intelligence/remote_dispatch_fallback_recovered_result.json "
+        "--orchestration-summary "
+        "examples/runtime_intelligence/"
+        "orchestrator_multi_workload_sustained_summary.json "
+        "--save-json "
+        "examples/runtime_intelligence/"
+        "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
+        in source_traceability_summary
+    )
+    assert (
+        "ownership: edgeenv_does_not_generate_guard_analysis=true, "
+        "lab_is_final_decision_owner=true"
+        in source_traceability_summary
     )
     assert "## Validated Duration Traceability" in ci_summary
     assert (

@@ -29,6 +29,17 @@ DURATION_TRACEABILITY_SUMMARY = "\n".join(
         "- review_path_artifact_gate_summary: artifact gate summary reference row validated",
     ]
 ) + "\n"
+SOURCE_TRACEABILITY_SUMMARY = "\n".join(
+    [
+        "- Status: passed",
+        "## Validated Source Traceability",
+        "- source_traceability_alignment: EdgeEnv handoff and AIGuard optional-present fixture match",
+        "- edgeenv_optional_source_traceability: read_only_optional_source_traceability preserved",
+        "- aiguard_optional_present_source_artifact: InferEdgeAIGuard/examples/runtime_intelligence/aiguard_runtime_operation_guard_analysis_optional_stale_drop.json",
+        "- aiguard_optional_present_reproduction_command: python -m inferedge_aiguard.cli build-runtime-intelligence-optional-stale-drop --edgeenv-regression examples/runtime_intelligence/edgeenv_runtime_regression_with_optional_stale_drop_context.json --remote-dispatch examples/runtime_intelligence/remote_dispatch_fallback_recovered_result.json --orchestration-summary examples/runtime_intelligence/orchestrator_multi_workload_sustained_summary.json --save-json examples/runtime_intelligence/aiguard_runtime_operation_guard_analysis_optional_stale_drop.json",
+        "- ownership: edgeenv_does_not_generate_guard_analysis=true, lab_is_final_decision_owner=true",
+    ]
+) + "\n"
 RUNTIME_REPORT_REVIEW_PATH_MARKERS = [
     "### Review Path",
     "Review path: start with `Reviewer Focus`, then open `Detailed Evidence Rows`",
@@ -79,6 +90,9 @@ def test_runtime_intelligence_gitlab_template_keeps_local_first_artifact_contrac
     assert "runtime_anomaly_gate_summary.md" in text
     assert "aiguard_edgeenv_handoff_alignment.json" in text
     assert "aiguard_edgeenv_handoff_alignment.md" in text
+    assert "aiguard_edgeenv_handoff_alignment_optional_present.json" in text
+    assert "aiguard_edgeenv_handoff_alignment_optional_present.md" in text
+    assert "runtime_intelligence_source_traceability_summary.md" in text
     assert "smoke_runtime_intelligence_chain.sh --output-dir" in text
     assert "runtime_intelligence_ci_artifact_gate_summary.md" in text
     assert "deployment_risk_summary.json" in text
@@ -106,6 +120,8 @@ def test_runtime_intelligence_gitlab_doc_states_ownership_boundaries():
     assert "Validated Duration Traceability" in text
     assert "duration_handoff_alignment" in text
     assert "Validated Review Path" in text
+    assert "Validated Source Traceability" in text
+    assert "source traceability summary" in text
     assert "Review path" in text
     assert "runtime_intelligence_ci_artifact_gate_summary.md" in text
 
@@ -240,6 +256,10 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
     )
     (report_dir / "runtime_anomaly_gate_summary.md").write_text(
         DURATION_TRACEABILITY_SUMMARY,
+        encoding="utf-8",
+    )
+    (report_dir / "runtime_intelligence_source_traceability_summary.md").write_text(
+        SOURCE_TRACEABILITY_SUMMARY,
         encoding="utf-8",
     )
     (report_dir / "aiguard_edgeenv_handoff_alignment.json").write_text(
@@ -483,6 +503,45 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         "--save-json "
         "examples/runtime_intelligence/"
         "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
+        in summary
+    )
+    assert "## Validated Source Traceability" in summary
+    assert (
+        "source_traceability_alignment: EdgeEnv handoff and AIGuard "
+        "optional-present fixture match"
+        in summary
+    )
+    assert (
+        "edgeenv_optional_source_traceability: "
+        "read_only_optional_source_traceability preserved"
+        in summary
+    )
+    assert (
+        "aiguard_optional_present_source_artifact: "
+        "InferEdgeAIGuard/examples/runtime_intelligence/"
+        "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
+        in summary
+    )
+    assert (
+        "aiguard_optional_present_reproduction_command: "
+        "python -m inferedge_aiguard.cli "
+        "build-runtime-intelligence-optional-stale-drop "
+        "--edgeenv-regression "
+        "examples/runtime_intelligence/"
+        "edgeenv_runtime_regression_with_optional_stale_drop_context.json "
+        "--remote-dispatch "
+        "examples/runtime_intelligence/remote_dispatch_fallback_recovered_result.json "
+        "--orchestration-summary "
+        "examples/runtime_intelligence/"
+        "orchestrator_multi_workload_sustained_summary.json "
+        "--save-json "
+        "examples/runtime_intelligence/"
+        "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
+        in summary
+    )
+    assert (
+        "ownership: edgeenv_does_not_generate_guard_analysis=true, "
+        "lab_is_final_decision_owner=true"
         in summary
     )
 

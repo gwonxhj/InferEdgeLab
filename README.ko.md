@@ -278,7 +278,9 @@ bash scripts/smoke_runtime_intelligence_chain.sh \
 또한 `optional_aiguard_source_traceability`가 있으면 Lab bundle gate가
 `read_only_optional_source_traceability` source artifact path와 AIGuard
 재생성 명령을 검증하되, EdgeEnv가 `guard_analysis`를 생성한다는 의미로
-해석하지 않습니다.
+해석하지 않습니다. 이어서 source traceability gate가 EdgeEnv mirror와
+AIGuard optional-present fixture가 같은 source artifact와 명령을 가리키는지
+확인합니다.
 EdgeEnv나 AIGuard가 Lab의 final deployment decision을 대체하지 않습니다.
 
 ## 현재 범위와 future work
