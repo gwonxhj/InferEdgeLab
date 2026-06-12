@@ -137,6 +137,8 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
         encoding="utf-8"
     )
     assert "Runtime replay duration scope" in runtime_summary
+    assert "runtime_intelligence_source_traceability_summary.md" in runtime_summary
+    assert "source_traceability_alignment" in runtime_summary
     assert "short 96-frame-class replay (96 frames)" in runtime_summary
     assert "class=short_96_frame_class, frames=96" in runtime_summary
     assert "source=entrypoint_requested_frames" in runtime_summary
@@ -384,3 +386,8 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
         in ci_summary
     )
     assert "duration_label: short 96-frame-class replay (96 frames)" in ci_summary
+    assert (
+        "review_path_source_traceability_summary: "
+        "source traceability summary reference row validated"
+        in ci_summary
+    )

@@ -194,6 +194,7 @@ REQUIRED_REVIEW_PATH_SUMMARY_MARKERS = (
     "review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated",
     "review_path_scope: comparable regression / telemetry replay / operation evidence preserved",
     "review_path_artifact_gate_summary: artifact gate summary reference row validated",
+    "review_path_source_traceability_summary: source traceability summary reference row validated",
 )
 
 
@@ -304,6 +305,8 @@ def _validate_runtime_report(path: Path, errors: list[str]) -> None:
         "Fast path: `Reviewer Focus` -> `Detailed Evidence Rows` only when a quick signal needs supporting evidence.",
         "| Step | Open | Use it for |",
         "| 3 | `Artifact Gate Summary` | Cross-check `runtime_intelligence_bundle_manifest_gate_summary.md`",
+        "`runtime_intelligence_source_traceability_summary.md`",
+        "`source_traceability_alignment`",
         "`reviewer_path_gate`, `reviewer_path_local_links`, and `reviewer_path_anchor_fragments`",
         "only for comparable regression, telemetry/replay gaps, operation quick scan",
         "Runtime replay duration scope",

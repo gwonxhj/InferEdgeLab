@@ -647,8 +647,10 @@ def _runtime_intelligence_risk_summary_to_html(
         "replay gap, preserved run/path, or deterministic warning evidence.</div>"
         '<div class="review-step"><span class="review-step-index">3</span>'
         "<strong>Artifact Gate Summary</strong>: cross-check "
-        "<code>runtime_intelligence_bundle_manifest_gate_summary.md</code> and "
+        "<code>runtime_intelligence_bundle_manifest_gate_summary.md</code>, "
+        "<code>runtime_intelligence_source_traceability_summary.md</code>, and "
         "<code>runtime_anomaly_gate_summary.md</code> for "
+        "<code>source_traceability_alignment</code>, "
         "<code>reviewer_path_gate</code>, "
         "<code>reviewer_path_local_links</code>, and "
         "<code>reviewer_path_anchor_fragments</code> marker preservation.</div>"

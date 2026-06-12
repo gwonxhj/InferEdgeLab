@@ -21,6 +21,10 @@ REQUIRED_MARKDOWN_MARKERS = {
         "| 3 | `Artifact Gate Summary` | Cross-check "
         "`runtime_intelligence_bundle_manifest_gate_summary.md`"
     ),
+    "review_path_source_traceability_summary": (
+        "`runtime_intelligence_source_traceability_summary.md`"
+    ),
+    "review_path_source_traceability_marker": "`source_traceability_alignment`",
     "review_path_artifact_gate_summary_markers": (
         "`reviewer_path_gate`, `reviewer_path_local_links`, and "
         "`reviewer_path_anchor_fragments`"
@@ -211,6 +215,10 @@ REQUIRED_HTML_MARKERS = {
     "review_path_artifact_gate_summary_file": (
         "runtime_intelligence_bundle_manifest_gate_summary.md"
     ),
+    "review_path_source_traceability_summary_file": (
+        "runtime_intelligence_source_traceability_summary.md"
+    ),
+    "review_path_source_traceability_marker": "source_traceability_alignment",
     "review_path_artifact_gate_summary_markers": "reviewer_path_anchor_fragments",
     "review_path_scope": (
         "only for comparable regression, telemetry/replay gaps, operation quick scan"
@@ -356,6 +364,7 @@ REVIEW_PATH_SUMMARY_MARKERS = (
     "review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated",
     "review_path_scope: comparable regression / telemetry replay / operation evidence preserved",
     "review_path_artifact_gate_summary: artifact gate summary reference row validated",
+    "review_path_source_traceability_summary: source traceability summary reference row validated",
 )
 
 
