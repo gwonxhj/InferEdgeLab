@@ -109,6 +109,42 @@ OPTIONAL_AIGUARD_EVIDENCE_TYPES = {
     "stale_frame_risk",
     "edgeenv_orchestrator_stale_drop_summary",
 }
+OPTIONAL_AIGUARD_SOURCE_TRACEABILITY_CONTEXT_ROLE = (
+    "read_only_optional_source_traceability"
+)
+OPTIONAL_AIGUARD_SOURCE_ARTIFACT = {
+    "repository": "InferEdgeAIGuard",
+    "path": (
+        "examples/runtime_intelligence/"
+        "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
+    ),
+    "schema_version": "inferedge-aiguard-diagnosis-v1",
+    "role": "aiguard-optional-stale-drop-full-evidence-source",
+    "context_role": "read_only_cross_repo_traceability",
+    "reproduction_command": [
+        "python",
+        "-m",
+        "inferedge_aiguard.cli",
+        "build-runtime-intelligence-optional-stale-drop",
+        "--edgeenv-regression",
+        (
+            "examples/runtime_intelligence/"
+            "edgeenv_runtime_regression_with_optional_stale_drop_context.json"
+        ),
+        "--remote-dispatch",
+        "examples/runtime_intelligence/remote_dispatch_fallback_recovered_result.json",
+        "--orchestration-summary",
+        (
+            "examples/runtime_intelligence/"
+            "orchestrator_multi_workload_sustained_summary.json"
+        ),
+        "--save-json",
+        (
+            "examples/runtime_intelligence/"
+            "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
+        ),
+    ],
+}
 REQUIRED_GUARD_EVIDENCE_FIELDS = {
     "type",
     "metric_name",
@@ -204,6 +240,9 @@ EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS = (
 )
 EDGEENV_HANDOFF_OPTIONAL_AIGUARD_SUMMARY_MARKER = (
     "edgeenv_handoff: optional AIGuard evidence types declared"
+)
+EDGEENV_HANDOFF_OPTIONAL_AIGUARD_SOURCE_TRACEABILITY_SUMMARY_MARKER = (
+    "edgeenv_handoff: optional AIGuard source traceability declared"
 )
 
 
@@ -484,6 +523,8 @@ def _validate_edgeenv_handoff_alignment(
                 "optional_aiguard_evidence_types must remain separate from "
                 "required AIGuard evidence types",
             )
+
+    _validate_optional_aiguard_source_traceability(alignment, errors)
 
     expected_report_markers = alignment.get("expected_report_markers")
     _record(
@@ -1887,6 +1928,54 @@ def _validate_external_aiguard_evidence_alignment(
     )
 
 
+def _validate_optional_aiguard_source_traceability(
+    alignment: dict[str, Any],
+    errors: list[str],
+) -> None:
+    traceability = alignment.get("optional_aiguard_source_traceability")
+    if traceability is None:
+        return
+    _record(
+        isinstance(traceability, dict),
+        errors,
+        "EdgeEnv handoff lab_bundle_alignment."
+        "optional_aiguard_source_traceability must be an object when present",
+    )
+    if not isinstance(traceability, dict):
+        return
+
+    _record(
+        traceability.get("context_role")
+        == OPTIONAL_AIGUARD_SOURCE_TRACEABILITY_CONTEXT_ROLE,
+        errors,
+        "EdgeEnv handoff lab_bundle_alignment."
+        "optional_aiguard_source_traceability.context_role must be "
+        f"{OPTIONAL_AIGUARD_SOURCE_TRACEABILITY_CONTEXT_ROLE}",
+    )
+    _record(
+        traceability.get("edgeenv_does_not_generate_guard_analysis") is True,
+        errors,
+        "EdgeEnv handoff lab_bundle_alignment."
+        "optional_aiguard_source_traceability."
+        "edgeenv_does_not_generate_guard_analysis must be true",
+    )
+    _record(
+        traceability.get("lab_is_final_decision_owner") is True,
+        errors,
+        "EdgeEnv handoff lab_bundle_alignment."
+        "optional_aiguard_source_traceability.lab_is_final_decision_owner "
+        "must be true",
+    )
+    _record(
+        traceability.get("optional_present_source_artifact")
+        == OPTIONAL_AIGUARD_SOURCE_ARTIFACT,
+        errors,
+        "EdgeEnv handoff lab_bundle_alignment."
+        "optional_aiguard_source_traceability.optional_present_source_artifact "
+        "must match the Lab-known AIGuard optional stale-drop source artifact",
+    )
+
+
 def _has_optional_aiguard_evidence_declaration(
     handoff: dict[str, Any],
 ) -> bool:
@@ -1897,6 +1986,25 @@ def _has_optional_aiguard_evidence_declaration(
     return (
         isinstance(optional_types, list)
         and set(optional_types) == OPTIONAL_AIGUARD_EVIDENCE_TYPES
+    )
+
+
+def _has_optional_aiguard_source_traceability_declaration(
+    handoff: dict[str, Any],
+) -> bool:
+    alignment = handoff.get("lab_bundle_alignment")
+    if not isinstance(alignment, dict):
+        return False
+    traceability = alignment.get("optional_aiguard_source_traceability")
+    if not isinstance(traceability, dict):
+        return False
+    return (
+        traceability.get("context_role")
+        == OPTIONAL_AIGUARD_SOURCE_TRACEABILITY_CONTEXT_ROLE
+        and traceability.get("edgeenv_does_not_generate_guard_analysis") is True
+        and traceability.get("lab_is_final_decision_owner") is True
+        and traceability.get("optional_present_source_artifact")
+        == OPTIONAL_AIGUARD_SOURCE_ARTIFACT
     )
 
 
@@ -3132,6 +3240,7 @@ def _write_summary(
     errors: list[str],
     edgeenv_handoff_present: bool,
     optional_aiguard_evidence_declared: bool,
+    optional_aiguard_source_traceability_declared: bool,
 ) -> None:
     if not path:
         return
@@ -3140,6 +3249,10 @@ def _write_summary(
         contract_markers.extend(EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS)
     if optional_aiguard_evidence_declared:
         contract_markers.append(EDGEENV_HANDOFF_OPTIONAL_AIGUARD_SUMMARY_MARKER)
+    if optional_aiguard_source_traceability_declared:
+        contract_markers.append(
+            EDGEENV_HANDOFF_OPTIONAL_AIGUARD_SOURCE_TRACEABILITY_SUMMARY_MARKER
+        )
     lines = [
         "# Runtime Intelligence Bundle Manifest Gate",
         "",
@@ -3173,11 +3286,15 @@ def main(
     _validate_manifest_shape(manifest_payload, errors)
     handoff_payload: dict[str, Any] | None = None
     optional_aiguard_evidence_declared = False
+    optional_aiguard_source_traceability_declared = False
     if edgeenv_handoff:
         edgeenv_handoff_path = Path(edgeenv_handoff).resolve()
         handoff_payload = _load_json(edgeenv_handoff_path, "EdgeEnv handoff manifest")
         optional_aiguard_evidence_declared = (
             _has_optional_aiguard_evidence_declaration(handoff_payload)
+        )
+        optional_aiguard_source_traceability_declared = (
+            _has_optional_aiguard_source_traceability_declaration(handoff_payload)
         )
         _validate_edgeenv_handoff_alignment(
             handoff_payload,
@@ -3229,6 +3346,9 @@ def main(
         errors=errors,
         edgeenv_handoff_present=bool(edgeenv_handoff),
         optional_aiguard_evidence_declared=optional_aiguard_evidence_declared,
+        optional_aiguard_source_traceability_declared=(
+            optional_aiguard_source_traceability_declared
+        ),
     )
     if errors:
         rprint("[red]Runtime Intelligence bundle manifest gate failed.[/red]")

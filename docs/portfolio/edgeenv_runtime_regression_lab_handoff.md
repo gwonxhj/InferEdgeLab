@@ -152,6 +152,11 @@ This second smoke uses committed lightweight artifacts to represent the cross-re
   `edgeenv_orchestrator_stale_drop_summary`) as optional context only. Those
   labels must remain separate from the required Guard evidence set and do not
   become a Lab deployment-decision requirement.
+- If the handoff also declares `optional_aiguard_source_traceability`, Lab
+  validates the `read_only_optional_source_traceability` source artifact path
+  and AIGuard reproduction command as read-only metadata. This links the
+  EdgeEnv handoff to the AIGuard optional-present full-evidence fixture without
+  making EdgeEnv produce `guard_analysis`.
 - `examples/runtime_intelligence_chain/runtime_telemetry_history.json` is the EdgeEnv producer-side telemetry history artifact referenced by the handoff manifest. It includes a missing-telemetry run as an evidence gap and preserves Orchestrator context on that entry without turning Orchestrator into a regression or deployment decision owner.
 - Orchestrator context is preserved inside the EdgeEnv regression artifact as `orchestrator_operation_context`.
 - AIGuard deterministic queue/thermal and task-event rollup evidence is passed as a precomputed `guard_analysis` artifact that mirrors the AIGuard producer-side diagnosis v1 evidence shape.
