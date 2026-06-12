@@ -536,6 +536,8 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
         "| 3 | `Artifact Gate Summary` | Cross-check "
         "`runtime_intelligence_bundle_manifest_gate_summary.md`"
     ) in markdown
+    assert "`runtime_intelligence_source_traceability_summary.md`" in markdown
+    assert "`source_traceability_alignment`" in markdown
     assert "reviewer_path_anchor_fragments" in markdown
     assert "### Reviewer Focus" in markdown
     assert "| Focus | Quick signal | First read |" in markdown
@@ -645,6 +647,8 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "<strong>Detailed Evidence Rows</strong>: open only the rows needed" in html
     assert "<strong>Artifact Gate Summary</strong>: cross-check" in html
     assert "runtime_intelligence_bundle_manifest_gate_summary.md" in html
+    assert "runtime_intelligence_source_traceability_summary.md" in html
+    assert "source_traceability_alignment" in html
     assert "reviewer_path_anchor_fragments" in html
     assert "Lab remains the final deployment decision owner." in html
     assert "Reviewer Focus" in html

@@ -970,10 +970,11 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
     ) in text
     assert (
         "| 3 | `Artifact Gate Summary` | Cross-check "
-        "`runtime_intelligence_bundle_manifest_gate_summary.md` and "
-        "`runtime_anomaly_gate_summary.md` for `reviewer_path_gate`, "
-        "`reviewer_path_local_links`, and `reviewer_path_anchor_fragments` "
-        "marker preservation. |"
+        "`runtime_intelligence_bundle_manifest_gate_summary.md`, "
+        "`runtime_intelligence_source_traceability_summary.md`, and "
+        "`runtime_anomaly_gate_summary.md` for `source_traceability_alignment`, "
+        "`reviewer_path_gate`, `reviewer_path_local_links`, and "
+        "`reviewer_path_anchor_fragments` marker preservation. |"
     ) in text
     assert "### Reviewer Focus" in text
     assert "| Focus | Quick signal | First read |" in text

@@ -168,6 +168,11 @@ This second smoke uses committed lightweight artifacts to represent the cross-re
 - The bundle manifest also declares `expected_report_markers`; Lab's gate requires the declared marker set to match the Lab-owned Runtime Intelligence report contract before the report is generated.
 - The same gate can also consume `--edgeenv-handoff` to compare EdgeEnv producer-side `lab_bundle_alignment` metadata against Lab's bundle manifest contract.
 - `scripts/check_runtime_intelligence_artifact_bundle.py` gates the generated report so required Runtime Intelligence rows, remote dispatch summary/boundary rows, and ownership text cannot disappear silently.
+- The generated Runtime Intelligence report Review Path points reviewers to
+  `runtime_intelligence_source_traceability_summary.md` and
+  `source_traceability_alignment` alongside the manifest and report artifact
+  gates, so optional AIGuard source provenance remains visible from the
+  Lab-owned report.
 
 Expected Lab behavior:
 
@@ -234,6 +239,7 @@ Expected Lab behavior:
   `review_path_fast_path: readable Review Path fast path rendered`,
   `review_path: Reviewer Focus -> Detailed Evidence Rows guidance validated`,
   `review_path_artifact_gate_summary: artifact gate summary reference row validated`,
+  `review_path_source_traceability_summary: source traceability summary reference row validated`,
   preserving the generated report reading order as reviewer navigation
   evidence without making CI or AIGuard the report owner.
 - The Jetson/device-local preservation row starts with `identity=jetson_device_local_preservation` and the device-local path marker such as `path=device_local_starter` when available, making the preserved Jetson EdgeEnv run easier to identify before reviewers inspect detailed queue/resource context.
