@@ -269,7 +269,11 @@ records the source as
 `InferEdgeAIGuard/examples/runtime_intelligence/aiguard_runtime_operation_guard_analysis_optional_stale_drop.json`
 so reviewers can trace Lab's optional-present handoff fixture back to the
 AIGuard full-evidence example without making that cross-repo path a required
-runtime contract.
+runtime contract. It also records the AIGuard-side reproduction command,
+`python -m inferedge_aiguard.cli build-runtime-intelligence-optional-stale-drop`,
+as read-only traceability so the source artifact can be regenerated from
+committed AIGuard source fixtures while Lab remains the report and deployment
+decision owner.
 
 Remote dispatch rows in this artifact chain are starter evidence only. The
 gates require worker-selection, fallback recovery, event-count, consistency,

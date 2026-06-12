@@ -342,7 +342,18 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         '"path":"examples/runtime_intelligence/aiguard_runtime_operation_guard_analysis_optional_stale_drop.json",'
         '"schema_version":"inferedge-aiguard-diagnosis-v1",'
         '"role":"aiguard-optional-stale-drop-full-evidence-source",'
-        '"context_role":"read_only_cross_repo_traceability"},'
+        '"context_role":"read_only_cross_repo_traceability",'
+        '"reproduction_command":['
+        '"python","-m","inferedge_aiguard.cli",'
+        '"build-runtime-intelligence-optional-stale-drop",'
+        '"--edgeenv-regression",'
+        '"examples/runtime_intelligence/edgeenv_runtime_regression_with_optional_stale_drop_context.json",'
+        '"--remote-dispatch",'
+        '"examples/runtime_intelligence/remote_dispatch_fallback_recovered_result.json",'
+        '"--orchestration-summary",'
+        '"examples/runtime_intelligence/orchestrator_multi_workload_sustained_summary.json",'
+        '"--save-json",'
+        '"examples/runtime_intelligence/aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"]},'
         '"invalid_optional_evidence_types":[],'
         '"handoff_producer_lineage_guard_alignment_run_ids":'
         '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
@@ -368,6 +379,7 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
                 "- optional_guard_evidence_types_present: [edgeenv_orchestrator_stale_drop_summary, stale_frame_risk]",
                 "- missing_optional_evidence_types: []",
                 "- optional_present_source_artifact: InferEdgeAIGuard/examples/runtime_intelligence/aiguard_runtime_operation_guard_analysis_optional_stale_drop.json",
+                "- optional_present_reproduction_command: python -m inferedge_aiguard.cli build-runtime-intelligence-optional-stale-drop --edgeenv-regression examples/runtime_intelligence/edgeenv_runtime_regression_with_optional_stale_drop_context.json --remote-dispatch examples/runtime_intelligence/remote_dispatch_fallback_recovered_result.json --orchestration-summary examples/runtime_intelligence/orchestrator_multi_workload_sustained_summary.json --save-json examples/runtime_intelligence/aiguard_runtime_operation_guard_analysis_optional_stale_drop.json",
                 "- handoff_producer_lineage_guard_alignment_run_ids: [edgeenv-smoke-candidate, edgeenv-smoke-missing]",
                 "- guard_analysis_producer_lineage_guard_alignment_run_ids: [edgeenv-smoke-candidate, edgeenv-smoke-missing]",
             ]
@@ -452,6 +464,23 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
     assert (
         "aiguard_optional_present_source_artifact: "
         "InferEdgeAIGuard/examples/runtime_intelligence/"
+        "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
+        in summary
+    )
+    assert (
+        "aiguard_optional_present_reproduction_command: "
+        "python -m inferedge_aiguard.cli "
+        "build-runtime-intelligence-optional-stale-drop "
+        "--edgeenv-regression "
+        "examples/runtime_intelligence/"
+        "edgeenv_runtime_regression_with_optional_stale_drop_context.json "
+        "--remote-dispatch "
+        "examples/runtime_intelligence/remote_dispatch_fallback_recovered_result.json "
+        "--orchestration-summary "
+        "examples/runtime_intelligence/"
+        "orchestrator_multi_workload_sustained_summary.json "
+        "--save-json "
+        "examples/runtime_intelligence/"
         "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
         in summary
     )

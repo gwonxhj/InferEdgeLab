@@ -167,6 +167,12 @@ def test_runtime_intelligence_docs_describe_expected_report_markers():
         assert "Lab-owned Runtime Intelligence report contract" in doc
         for marker in REQUIRED_EXPECTED_REPORT_MARKERS:
             assert marker in doc
+    assert "build-runtime-intelligence-optional-stale-drop" in ci_doc
+    assert (
+        "aiguard_runtime_operation_guard_analysis_optional_stale_drop.json"
+        in ci_doc
+    )
+    assert "committed AIGuard source fixtures" in ci_doc
 
 
 def test_runtime_intelligence_docs_record_jetson_edgeenv_preservation_boundary():
