@@ -63,6 +63,7 @@ Expected artifacts are intentionally file-based and local-first:
 - deterministic Runtime Intelligence summary Markdown / HTML with precomputed AIGuard runtime operation evidence
 - remote dispatch starter runtime event summary rows derived from precomputed AIGuard evidence
 - AIGuard EdgeEnv handoff alignment JSON / Markdown summary
+- Runtime Intelligence source traceability summary
 - Runtime Intelligence artifact gate summary
 - portfolio demo check JSON / Markdown
 - deployment risk summary JSON
@@ -248,6 +249,9 @@ The final CI summary also repeats `Validated Review Path`, the `review_path`
 marker, the readable fast-path marker, and the artifact gate summary reference
 marker, so reviewers can follow the same README -> Lab report -> gate-summary
 reading order from the deployment-risk artifact.
+It also repeats `Validated Source Traceability`, confirming that the EdgeEnv
+handoff mirror and AIGuard optional-present alignment fixture reference the
+same optional stale-drop source artifact and reproduction command.
 The same CI artifact gate also checks the copied
 `aiguard_edgeenv_handoff_alignment.json/.md` for Lab report marker context:
 `lab_expected_report_markers` must match the Lab-owned Runtime Intelligence

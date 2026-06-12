@@ -17,6 +17,7 @@ REQUIRED_HTML_ARTIFACTS = {
 REQUIRED_SUMMARY_ARTIFACTS = {
     "aiguard_edgeenv_handoff_alignment.md",
     "aiguard_edgeenv_handoff_alignment_optional_present.md",
+    "runtime_intelligence_source_traceability_summary.md",
     "runtime_intelligence_bundle_manifest_gate_summary.md",
     "runtime_anomaly_gate_summary.md",
 }
@@ -163,6 +164,16 @@ REQUIRED_AIGUARD_OPTIONAL_CONTEXT_SUMMARY_MARKERS = (
     "aiguard_optional_present_reproduction_command: "
     f"{REQUIRED_AIGUARD_OPTIONAL_PRESENT_REPRODUCTION_COMMAND_MARKER}",
 )
+REQUIRED_SOURCE_TRACEABILITY_SUMMARY_MARKERS = (
+    "## Validated Source Traceability",
+    "source_traceability_alignment: EdgeEnv handoff and AIGuard optional-present fixture match",
+    "edgeenv_optional_source_traceability: read_only_optional_source_traceability preserved",
+    "aiguard_optional_present_source_artifact: "
+    f"{REQUIRED_AIGUARD_OPTIONAL_PRESENT_SOURCE_ARTIFACT_MARKER}",
+    "aiguard_optional_present_reproduction_command: "
+    f"{REQUIRED_AIGUARD_OPTIONAL_PRESENT_REPRODUCTION_COMMAND_MARKER}",
+    "ownership: edgeenv_does_not_generate_guard_analysis=true, lab_is_final_decision_owner=true",
+)
 REQUIRED_DURATION_TRACEABILITY_SUMMARY_MARKERS = (
     "## Validated Duration Traceability",
     "duration_handoff_alignment: EdgeEnv/AIGuard report context preserved",
@@ -265,6 +276,20 @@ def _validate_bundle_manifest_gate_summary(path: Path, errors: list[str]) -> Non
             marker in text,
             errors,
             f"{label} missing validated contract marker: {marker}",
+        )
+
+
+def _validate_source_traceability_summary(path: Path, errors: list[str]) -> None:
+    label = "Runtime Intelligence source traceability summary"
+    text = _read_text(path, errors, label)
+    if not text:
+        return
+    _record("- Status: passed" in text, errors, f"{label} must have passed status")
+    for marker in REQUIRED_SOURCE_TRACEABILITY_SUMMARY_MARKERS:
+        _record(
+            marker in text,
+            errors,
+            f"{label} missing source traceability marker: {marker}",
         )
 
 
@@ -597,6 +622,14 @@ def _write_summary(path: Path, report_dir: Path, errors: list[str]) -> None:
             if not marker.startswith("## ")
         )
         lines.append("")
+        lines.append("## Validated Source Traceability")
+        lines.append("")
+        lines.extend(
+            f"- {marker}"
+            for marker in REQUIRED_SOURCE_TRACEABILITY_SUMMARY_MARKERS
+            if not marker.startswith("## ")
+        )
+        lines.append("")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines), encoding="utf-8")
 
@@ -609,6 +642,10 @@ def main(report_dir: str, summary_out: str = "") -> int:
         _validate_required_files(report_path, errors)
         _validate_bundle_manifest_gate_summary(
             report_path / "runtime_intelligence_bundle_manifest_gate_summary.md",
+            errors,
+        )
+        _validate_source_traceability_summary(
+            report_path / "runtime_intelligence_source_traceability_summary.md",
             errors,
         )
         _validate_runtime_artifact_gate_summary(
