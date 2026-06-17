@@ -218,6 +218,7 @@ def test_readme_runtime_intelligence_section_stays_scannable():
     assert "Is telemetry/replay evidence complete enough?" in readme
     assert "Is there an operation risk worth opening first?" in readme
     assert "Which preserved run/path is being reviewed?" in readme
+    assert "Which upstream samples explain the handoff?" in readme
     assert "Which warnings remain review context only?" in readme
     for row in [
         "최종 판단 owner는 누구인가?",
@@ -225,6 +226,7 @@ def test_readme_runtime_intelligence_section_stays_scannable():
         "telemetry/replay evidence가 충분한가?",
         "먼저 열어볼 operation risk가 있는가?",
         "어떤 preserved run/path를 보는가?",
+        "upstream sample handoff는 어디서 확인하는가?",
         "어떤 warning이 review context로만 남는가?",
     ]:
         assert row in readme_ko
@@ -247,9 +249,31 @@ def test_readme_runtime_intelligence_section_stays_scannable():
         "Remote fallback starter evidence",
         "Lab remains the final deployment decision owner",
         "production_remote_execution=false",
+        "agent_scheduler_delay_sample.json",
+        "remote_fallback_recovery_sample.json",
+        "scheduler_delay_pattern",
+        "remote_execution_recovered_by_fallback",
     ]:
         assert marker in readme
         assert marker in readme_ko
+
+    handoff = (
+        REPO_ROOT
+        / "docs"
+        / "portfolio"
+        / "edgeenv_runtime_regression_lab_handoff.md"
+    ).read_text(encoding="utf-8")
+    for marker in [
+        "agent_scheduler_delay_sample.json",
+        "remote_fallback_recovery_sample.json",
+        "scheduler_delay_pattern",
+        "remote_execution_recovered_by_fallback",
+        "Reviewer operation quick scan",
+        "Remote fallback starter evidence",
+        "benchmark outputs",
+        "deployment policy inputs",
+    ]:
+        assert marker in handoff
 
 
 def test_readme_internal_links_include_matching_korean_labels():
