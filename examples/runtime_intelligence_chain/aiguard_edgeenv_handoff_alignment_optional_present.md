@@ -63,4 +63,6 @@ InferEdgeAIGuard EdgeEnv handoff alignment summary
 - supplemental_guard_evidence_types: [edgeenv_orchestrator_operation_risk_summary, edgeenv_orchestrator_stale_drop_summary, stale_frame_risk]
 - handoff_producer_lineage_guard_alignment_run_ids: [edgeenv-smoke-candidate, edgeenv-smoke-missing]
 - guard_analysis_producer_lineage_guard_alignment_run_ids: [edgeenv-smoke-candidate, edgeenv-smoke-missing]
+- handoff_policy_pressure_summary_run_ids: [edgeenv-smoke-candidate]
+- guard_analysis_policy_pressure_summary_run_ids: [edgeenv-smoke-candidate]
 ```

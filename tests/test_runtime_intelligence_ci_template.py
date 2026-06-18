@@ -313,6 +313,11 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
         '"guard_analysis_producer_lineage_guard_alignment_run_ids":'
         '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
+        '"handoff_policy_pressure_summary_run_ids":'
+        '["edgeenv-smoke-candidate"],'
+        '"guard_analysis_policy_pressure_summary_run_ids":'
+        '["edgeenv-smoke-candidate"],'
+        '"policy_pressure_summary_errors":[],'
         '"guard_alignment_summary_errors":[],"errors":[]}',
         encoding="utf-8",
     )
@@ -332,6 +337,8 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
                 "- missing_optional_evidence_types: [edgeenv_orchestrator_stale_drop_summary, stale_frame_risk]",
                 "- handoff_producer_lineage_guard_alignment_run_ids: [edgeenv-smoke-candidate, edgeenv-smoke-missing]",
                 "- guard_analysis_producer_lineage_guard_alignment_run_ids: [edgeenv-smoke-candidate, edgeenv-smoke-missing]",
+                "- handoff_policy_pressure_summary_run_ids: [edgeenv-smoke-candidate]",
+                "- guard_analysis_policy_pressure_summary_run_ids: [edgeenv-smoke-candidate]",
             ]
         ),
         encoding="utf-8",
@@ -395,6 +402,11 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
         '"guard_analysis_producer_lineage_guard_alignment_run_ids":'
         '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
+        '"handoff_policy_pressure_summary_run_ids":'
+        '["edgeenv-smoke-candidate"],'
+        '"guard_analysis_policy_pressure_summary_run_ids":'
+        '["edgeenv-smoke-candidate"],'
+        '"policy_pressure_summary_errors":[],'
         '"guard_alignment_summary_errors":[],"errors":[]}',
         encoding="utf-8",
     )
@@ -418,6 +430,8 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
                 "- optional_present_reproduction_command: python -m inferedge_aiguard.cli build-runtime-intelligence-optional-stale-drop --edgeenv-regression examples/runtime_intelligence/edgeenv_runtime_regression_with_optional_stale_drop_context.json --remote-dispatch examples/runtime_intelligence/remote_dispatch_fallback_recovered_result.json --orchestration-summary examples/runtime_intelligence/orchestrator_multi_workload_sustained_summary.json --save-json examples/runtime_intelligence/aiguard_runtime_operation_guard_analysis_optional_stale_drop.json",
                 "- handoff_producer_lineage_guard_alignment_run_ids: [edgeenv-smoke-candidate, edgeenv-smoke-missing]",
                 "- guard_analysis_producer_lineage_guard_alignment_run_ids: [edgeenv-smoke-candidate, edgeenv-smoke-missing]",
+                "- handoff_policy_pressure_summary_run_ids: [edgeenv-smoke-candidate]",
+                "- guard_analysis_policy_pressure_summary_run_ids: [edgeenv-smoke-candidate]",
             ]
         ),
         encoding="utf-8",
@@ -774,6 +788,11 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_lab_marker_cont
         '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
         '"guard_analysis_producer_lineage_guard_alignment_run_ids":'
         '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
+        '"handoff_policy_pressure_summary_run_ids":'
+        '["edgeenv-smoke-candidate"],'
+        '"guard_analysis_policy_pressure_summary_run_ids":'
+        '["edgeenv-smoke-candidate"],'
+        '"policy_pressure_summary_errors":[],'
         '"guard_alignment_summary_errors":[],"errors":[]}',
         encoding="utf-8",
     )
@@ -785,6 +804,8 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_lab_marker_cont
                 "- diagnosis_owner: aiguard",
                 "- handoff_producer_lineage_guard_alignment_run_ids: edgeenv-smoke-candidate, edgeenv-smoke-missing",
                 "- guard_analysis_producer_lineage_guard_alignment_run_ids: edgeenv-smoke-candidate, edgeenv-smoke-missing",
+                "- handoff_policy_pressure_summary_run_ids: [edgeenv-smoke-candidate]",
+                "- guard_analysis_policy_pressure_summary_run_ids: [edgeenv-smoke-candidate]",
             ]
         ),
         encoding="utf-8",
@@ -1179,6 +1200,11 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_failed_deployment_risk(
         '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
         '"guard_analysis_producer_lineage_guard_alignment_run_ids":'
         '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
+        '"handoff_policy_pressure_summary_run_ids":'
+        '["edgeenv-smoke-candidate"],'
+        '"guard_analysis_policy_pressure_summary_run_ids":'
+        '["edgeenv-smoke-candidate"],'
+        '"policy_pressure_summary_errors":[],'
         '"guard_alignment_summary_errors":[],"errors":[]}',
         encoding="utf-8",
     )
@@ -1193,6 +1219,8 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_failed_deployment_risk(
                 "- aiguard_validates_expected_report_markers: False",
                 "- handoff_producer_lineage_guard_alignment_run_ids: edgeenv-smoke-candidate, edgeenv-smoke-missing",
                 "- guard_analysis_producer_lineage_guard_alignment_run_ids: edgeenv-smoke-candidate, edgeenv-smoke-missing",
+                "- handoff_policy_pressure_summary_run_ids: [edgeenv-smoke-candidate]",
+                "- guard_analysis_policy_pressure_summary_run_ids: [edgeenv-smoke-candidate]",
             ]
         ),
         encoding="utf-8",
