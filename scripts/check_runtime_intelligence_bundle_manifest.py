@@ -101,6 +101,7 @@ REQUIRED_GUARD_TYPES = {
     "edgeenv_orchestrator_task_event_rollup",
     "edgeenv_orchestrator_operation_timeline_summary",
     "edgeenv_orchestrator_scheduler_fairness_summary",
+    "edgeenv_orchestrator_policy_pressure_summary",
     "runtime_history_seed_run_config_traceability",
     "runtime_queue_overload",
     "runtime_thermal_instability",
@@ -177,6 +178,7 @@ REQUIRED_EXPECTED_REPORT_MARKERS = {
     "AIGuard task event rollup evidence",
     "AIGuard operation timeline evidence",
     "AIGuard scheduler fairness evidence",
+    "AIGuard policy pressure evidence",
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
     "AIGuard remote event summary consistency",
@@ -205,11 +207,13 @@ SUMMARY_CONTRACT_MARKERS = (
     "aiguard_evidence: edgeenv_orchestrator_task_event_rollup validated",
     "aiguard_evidence: edgeenv_orchestrator_operation_timeline_summary validated",
     "aiguard_evidence: edgeenv_orchestrator_scheduler_fairness_summary validated",
+    "aiguard_evidence: edgeenv_orchestrator_policy_pressure_summary validated",
     "aiguard_evidence: runtime_history_seed_run_config_traceability validated",
     "aiguard_evidence: remote_execution_recovered_by_fallback validated",
     "aiguard_raw_context: producer_lineage_shape preserved",
     "aiguard_raw_context: task_event_rollup preserved",
     "aiguard_raw_context: scheduler_fairness_summary preserved",
+    "aiguard_raw_context: policy_pressure_summary preserved",
     "aiguard_raw_context: history_seed_run_config_traceability preserved",
     "aiguard_raw_context: remote_runtime_event_summary preserved",
     "aiguard_raw_context: remote_runtime_summary_boundary preserved",
@@ -1893,6 +1897,8 @@ def _validate_guard_analysis(guard_analysis: dict[str, Any], errors: list[str]) 
             _validate_operation_timeline_evidence(item, index, errors)
         if item.get("type") == "edgeenv_orchestrator_scheduler_fairness_summary":
             _validate_scheduler_fairness_evidence(item, index, errors)
+        if item.get("type") == "edgeenv_orchestrator_policy_pressure_summary":
+            _validate_policy_pressure_evidence(item, index, errors)
         if item.get("type") == "runtime_history_seed_run_config_traceability":
             _validate_run_config_traceability_evidence(item, index, errors)
         if item.get("type") == "remote_execution_recovered_by_fallback":
@@ -2488,6 +2494,80 @@ def _validate_scheduler_fairness_evidence(
         fairness.get("not_a_deployment_decision") is True,
         errors,
         f"AIGuard evidence[{index}] scheduler_fairness_summary.not_a_deployment_decision must be true",
+    )
+
+
+def _validate_policy_pressure_evidence(
+    item: dict[str, Any],
+    index: int,
+    errors: list[str],
+) -> None:
+    _record(
+        item.get("status") == "warning",
+        errors,
+        f"AIGuard evidence[{index}] policy pressure status must be warning",
+    )
+    _record(
+        item.get("observed_value") == 5,
+        errors,
+        f"AIGuard evidence[{index}] policy pressure observed_value must be 5",
+    )
+    raw_context = item.get("raw_context") or {}
+    pressure = raw_context.get("policy_pressure_summary")
+    _record(
+        isinstance(pressure, dict),
+        errors,
+        f"AIGuard evidence[{index}] raw_context.policy_pressure_summary must be an object",
+    )
+    if not isinstance(pressure, dict):
+        return
+
+    _record(
+        pressure.get("boundary_markers_valid") is True,
+        errors,
+        f"AIGuard evidence[{index}] policy_pressure_summary.boundary_markers_valid "
+        "must be true",
+    )
+    _record(
+        pressure.get("limited_tasks") == ["vision_agent", "voice_command_agent"],
+        errors,
+        f"AIGuard evidence[{index}] policy_pressure_summary.limited_tasks "
+        "must preserve vision_agent and voice_command_agent",
+    )
+    _record(
+        pressure.get("protected_tasks") == ["safety_monitor_agent"],
+        errors,
+        f"AIGuard evidence[{index}] policy_pressure_summary.protected_tasks "
+        "must preserve safety_monitor_agent",
+    )
+    _record(
+        pressure.get("fallback_tasks") == ["voice_command_agent"],
+        errors,
+        f"AIGuard evidence[{index}] policy_pressure_summary.fallback_tasks "
+        "must preserve voice_command_agent",
+    )
+    reason_counts = pressure.get("decision_reason_counts")
+    _record(
+        isinstance(reason_counts, dict)
+        and reason_counts.get("queue_backlog_threshold_exceeded") == 2,
+        errors,
+        f"AIGuard evidence[{index}] policy_pressure_summary.decision_reason_counts "
+        "must preserve queue_backlog_threshold_exceeded:2",
+    )
+    _record(
+        pressure.get("decision_owner") == "lab",
+        errors,
+        f"AIGuard evidence[{index}] policy_pressure_summary.decision_owner must be lab",
+    )
+    _record(
+        pressure.get("scheduler_owner") == "orchestrator",
+        errors,
+        f"AIGuard evidence[{index}] policy_pressure_summary.scheduler_owner must be orchestrator",
+    )
+    _record(
+        pressure.get("not_a_deployment_decision") is True,
+        errors,
+        f"AIGuard evidence[{index}] policy_pressure_summary.not_a_deployment_decision must be true",
     )
 
 

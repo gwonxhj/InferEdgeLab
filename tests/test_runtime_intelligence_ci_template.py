@@ -170,6 +170,8 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
                 "edgeenv_orchestrator_operation_timeline_summary",
                 "AIGuard scheduler fairness evidence",
                 "edgeenv_orchestrator_scheduler_fairness_summary",
+                "AIGuard policy pressure evidence",
+                "edgeenv_orchestrator_policy_pressure_summary",
                 "Lab EdgeEnv preservation context",
                 "lab_report_preservation_context_present=True",
                 "lab_preservation=present",
@@ -224,11 +226,13 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
                 "- aiguard_evidence: edgeenv_orchestrator_task_event_rollup validated",
                 "- aiguard_evidence: edgeenv_orchestrator_operation_timeline_summary validated",
                 "- aiguard_evidence: edgeenv_orchestrator_scheduler_fairness_summary validated",
+                    "- aiguard_evidence: edgeenv_orchestrator_policy_pressure_summary validated",
                 "- aiguard_evidence: runtime_history_seed_run_config_traceability validated",
                 "- aiguard_evidence: remote_execution_recovered_by_fallback validated",
                 "- aiguard_raw_context: producer_lineage_shape preserved",
                 "- aiguard_raw_context: task_event_rollup preserved",
                 "- aiguard_raw_context: scheduler_fairness_summary preserved",
+                    "- aiguard_raw_context: policy_pressure_summary preserved",
                 "- aiguard_raw_context: history_seed_run_config_traceability preserved",
                 "- aiguard_raw_context: remote_runtime_event_summary preserved",
                 "- aiguard_raw_context: remote_runtime_summary_boundary preserved",
@@ -272,7 +276,7 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
     (report_dir / "aiguard_edgeenv_handoff_alignment.json").write_text(
         '{"schema_version":"inferedge-aiguard-edgeenv-handoff-alignment-v1",'
         '"status":"passed","decision_owner":"lab","diagnosis_owner":"aiguard",'
-        '"lab_expected_report_marker_count":18,'
+        '"lab_expected_report_marker_count":19,'
         '"lab_expected_report_markers":['
         '"Runtime Intelligence Risk Summary",'
         '"Runtime replay duration scope",'
@@ -285,6 +289,7 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         '"AIGuard task event rollup evidence",'
         '"AIGuard operation timeline evidence",'
         '"AIGuard scheduler fairness evidence",'
+        '"AIGuard policy pressure evidence",'
         '"AIGuard runtime operation anomalies",'
         '"AIGuard remote dispatch event summary",'
         '"AIGuard remote event summary consistency",'
@@ -317,7 +322,7 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
                 "- status: passed",
                 "- decision_owner: lab",
                 "- diagnosis_owner: aiguard",
-                "- lab_expected_report_markers: [Runtime Intelligence Risk Summary, Runtime replay duration scope, Orchestrator operation feed context, EdgeEnv fixture matrix coverage, Reviewer operation quick scan, Orchestrator task event rollup, Lab EdgeEnv preservation context, AIGuard operation risk rollup evidence, AIGuard task event rollup evidence, AIGuard operation timeline evidence, AIGuard scheduler fairness evidence, AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, AIGuard remote event summary consistency, Remote fallback starter evidence, lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback, AIGuard producer-lineage guard alignment, Lab remains the final deployment decision owner.]",
+                "- lab_expected_report_markers: [Runtime Intelligence Risk Summary, Runtime replay duration scope, Orchestrator operation feed context, EdgeEnv fixture matrix coverage, Reviewer operation quick scan, Orchestrator task event rollup, Lab EdgeEnv preservation context, AIGuard operation risk rollup evidence, AIGuard task event rollup evidence, AIGuard operation timeline evidence, AIGuard scheduler fairness evidence, AIGuard policy pressure evidence, AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, AIGuard remote event summary consistency, Remote fallback starter evidence, lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback, AIGuard producer-lineage guard alignment, Lab remains the final deployment decision owner.]",
                 "- report_marker_context_role: lab_report_contract_context",
                 "- aiguard_validates_expected_report_markers: False",
                 "- optional_evidence_context_role: read_only_optional_guard_context",
@@ -336,7 +341,7 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
     ).write_text(
         '{"schema_version":"inferedge-aiguard-edgeenv-handoff-alignment-v1",'
         '"status":"passed","decision_owner":"lab","diagnosis_owner":"aiguard",'
-        '"lab_expected_report_marker_count":18,'
+        '"lab_expected_report_marker_count":19,'
         '"lab_expected_report_markers":['
         '"Runtime Intelligence Risk Summary",'
         '"Runtime replay duration scope",'
@@ -349,6 +354,7 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         '"AIGuard task event rollup evidence",'
         '"AIGuard operation timeline evidence",'
         '"AIGuard scheduler fairness evidence",'
+        '"AIGuard policy pressure evidence",'
         '"AIGuard runtime operation anomalies",'
         '"AIGuard remote dispatch event summary",'
         '"AIGuard remote event summary consistency",'
@@ -400,7 +406,7 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
                 "- status: passed",
                 "- decision_owner: lab",
                 "- diagnosis_owner: aiguard",
-                "- lab_expected_report_markers: [Runtime Intelligence Risk Summary, Runtime replay duration scope, Orchestrator operation feed context, EdgeEnv fixture matrix coverage, Reviewer operation quick scan, Orchestrator task event rollup, Lab EdgeEnv preservation context, AIGuard operation risk rollup evidence, AIGuard task event rollup evidence, AIGuard operation timeline evidence, AIGuard scheduler fairness evidence, AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, AIGuard remote event summary consistency, Remote fallback starter evidence, lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback, AIGuard producer-lineage guard alignment, Lab remains the final deployment decision owner.]",
+                "- lab_expected_report_markers: [Runtime Intelligence Risk Summary, Runtime replay duration scope, Orchestrator operation feed context, EdgeEnv fixture matrix coverage, Reviewer operation quick scan, Orchestrator task event rollup, Lab EdgeEnv preservation context, AIGuard operation risk rollup evidence, AIGuard task event rollup evidence, AIGuard operation timeline evidence, AIGuard scheduler fairness evidence, AIGuard policy pressure evidence, AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, AIGuard remote event summary consistency, Remote fallback starter evidence, lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback, AIGuard producer-lineage guard alignment, Lab remains the final deployment decision owner.]",
                 "- report_marker_context_role: lab_report_contract_context",
                 "- aiguard_validates_expected_report_markers: False",
                 "- optional_evidence_context_role: read_only_optional_guard_context",
@@ -664,6 +670,8 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_lab_marker_cont
                 "edgeenv_orchestrator_operation_timeline_summary",
                 "AIGuard scheduler fairness evidence",
                 "edgeenv_orchestrator_scheduler_fairness_summary",
+                "AIGuard policy pressure evidence",
+                "edgeenv_orchestrator_policy_pressure_summary",
                 "Lab EdgeEnv preservation context",
                 "lab_report_preservation_context_present=True",
                 "lab_preservation=present",
@@ -718,6 +726,7 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_lab_marker_cont
                 "- aiguard_evidence: edgeenv_orchestrator_task_event_rollup validated",
                 "- aiguard_evidence: edgeenv_orchestrator_operation_timeline_summary validated",
                 "- aiguard_evidence: edgeenv_orchestrator_scheduler_fairness_summary validated",
+                    "- aiguard_evidence: edgeenv_orchestrator_policy_pressure_summary validated",
                 "- aiguard_evidence: runtime_history_seed_run_config_traceability validated",
                 "- aiguard_evidence: remote_execution_recovered_by_fallback validated",
                 "- aiguard_raw_context: producer_lineage_shape preserved",
@@ -841,6 +850,8 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_contract_marker
                 "edgeenv_orchestrator_operation_timeline_summary",
                 "AIGuard scheduler fairness evidence",
                 "edgeenv_orchestrator_scheduler_fairness_summary",
+                "AIGuard policy pressure evidence",
+                "edgeenv_orchestrator_policy_pressure_summary",
                 "Lab EdgeEnv preservation context",
                 "lab_report_preservation_context_present=True",
                 "lab_preservation=present",
@@ -947,6 +958,8 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_missing_coverage_gap_ma
                 "edgeenv_orchestrator_operation_timeline_summary",
                 "AIGuard scheduler fairness evidence",
                 "edgeenv_orchestrator_scheduler_fairness_summary",
+                "AIGuard policy pressure evidence",
+                "edgeenv_orchestrator_policy_pressure_summary",
                 "Lab EdgeEnv preservation context",
                 "lab_report_preservation_context_present=True",
                 "lab_preservation=present",
@@ -1038,6 +1051,8 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_failed_deployment_risk(
                 "edgeenv_orchestrator_operation_timeline_summary",
                 "AIGuard scheduler fairness evidence",
                 "edgeenv_orchestrator_scheduler_fairness_summary",
+                "AIGuard policy pressure evidence",
+                "edgeenv_orchestrator_policy_pressure_summary",
                 "Lab EdgeEnv preservation context",
                 "lab_report_preservation_context_present=True",
                 "lab_preservation=present",
@@ -1092,6 +1107,7 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_failed_deployment_risk(
                 "- aiguard_evidence: edgeenv_orchestrator_task_event_rollup validated",
                 "- aiguard_evidence: edgeenv_orchestrator_operation_timeline_summary validated",
                 "- aiguard_evidence: edgeenv_orchestrator_scheduler_fairness_summary validated",
+                    "- aiguard_evidence: edgeenv_orchestrator_policy_pressure_summary validated",
                 "- aiguard_evidence: runtime_history_seed_run_config_traceability validated",
                 "- aiguard_evidence: remote_execution_recovered_by_fallback validated",
                 "- aiguard_raw_context: producer_lineage_shape preserved",
@@ -1135,7 +1151,7 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_failed_deployment_risk(
     (report_dir / "aiguard_edgeenv_handoff_alignment.json").write_text(
         '{"schema_version":"inferedge-aiguard-edgeenv-handoff-alignment-v1",'
         '"status":"passed","decision_owner":"lab","diagnosis_owner":"aiguard",'
-        '"lab_expected_report_marker_count":18,'
+        '"lab_expected_report_marker_count":19,'
         '"lab_expected_report_markers":['
         '"Runtime Intelligence Risk Summary",'
         '"Runtime replay duration scope",'
@@ -1148,6 +1164,7 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_failed_deployment_risk(
         '"AIGuard task event rollup evidence",'
         '"AIGuard operation timeline evidence",'
         '"AIGuard scheduler fairness evidence",'
+        '"AIGuard policy pressure evidence",'
         '"AIGuard runtime operation anomalies",'
         '"AIGuard remote dispatch event summary",'
         '"AIGuard remote event summary consistency",'
@@ -1171,7 +1188,7 @@ def test_runtime_intelligence_ci_artifact_gate_fails_for_failed_deployment_risk(
                 "- status: passed",
                 "- decision_owner: lab",
                 "- diagnosis_owner: aiguard",
-                "- lab_expected_report_markers: Runtime Intelligence Risk Summary, Runtime replay duration scope, Orchestrator operation feed context, EdgeEnv fixture matrix coverage, Reviewer operation quick scan, Orchestrator task event rollup, Lab EdgeEnv preservation context, AIGuard operation risk rollup evidence, AIGuard task event rollup evidence, AIGuard operation timeline evidence, AIGuard scheduler fairness evidence, AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, AIGuard remote event summary consistency, Remote fallback starter evidence, lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback, AIGuard producer-lineage guard alignment, Lab remains the final deployment decision owner.",
+                "- lab_expected_report_markers: Runtime Intelligence Risk Summary, Runtime replay duration scope, Orchestrator operation feed context, EdgeEnv fixture matrix coverage, Reviewer operation quick scan, Orchestrator task event rollup, Lab EdgeEnv preservation context, AIGuard operation risk rollup evidence, AIGuard task event rollup evidence, AIGuard operation timeline evidence, AIGuard scheduler fairness evidence, AIGuard policy pressure evidence, AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, AIGuard remote event summary consistency, Remote fallback starter evidence, lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback, AIGuard producer-lineage guard alignment, Lab remains the final deployment decision owner.",
                 "- report_marker_context_role: lab_report_contract_context",
                 "- aiguard_validates_expected_report_markers: False",
                 "- handoff_producer_lineage_guard_alignment_run_ids: edgeenv-smoke-candidate, edgeenv-smoke-missing",

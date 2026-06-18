@@ -642,6 +642,48 @@ def make_runtime_operation_guard_analysis() -> dict:
                     }
                 },
             },
+            {
+                "type": "edgeenv_orchestrator_policy_pressure_summary",
+                "metric_name": "orchestrator_policy_pressure_marker_count",
+                "observed_value": 5,
+                "baseline_value": 0,
+                "threshold": 1,
+                "status": "warning",
+                "severity": "medium",
+                "why_it_matters": (
+                    "Policy-pressure context explains which tasks were limited, "
+                    "protected, or sent to fallback under queue backlog pressure."
+                ),
+                "suspected_causes": [
+                    "policy_decision_context",
+                    "queue_pressure_context",
+                    "fallback_policy_context",
+                    "load_shedding_context",
+                    "scheduler_delay_context",
+                ],
+                "recommendation": (
+                    "Review policy_pressure in Lab alongside operation timeline, "
+                    "task event rollup, and scheduler fairness evidence."
+                ),
+                "raw_context": {
+                    "policy_pressure_summary": {
+                        "boundary_markers_valid": True,
+                        "limited_tasks": [
+                            "vision_agent",
+                            "voice_command_agent",
+                        ],
+                        "protected_tasks": ["safety_monitor_agent"],
+                        "fallback_tasks": ["voice_command_agent"],
+                        "decision_reason_counts": {
+                            "queue_backlog_threshold_exceeded": 2,
+                        },
+                        "max_backlog_over_threshold": 4,
+                        "decision_owner": "lab",
+                        "scheduler_owner": "orchestrator",
+                        "not_a_deployment_decision": True,
+                    }
+                },
+            },
         ],
         "candidate_summary": {
             "edgeenv_regression": {
@@ -1095,6 +1137,13 @@ def test_generate_compare_markdown_summarizes_orchestrator_context_risk():
         "max_latency_ms=72, policy_decisions=2, "
         "policy=queue_backlog_threshold_exceeded, boundary_valid=True |"
     ) in text
+    assert (
+        "| AIGuard policy pressure evidence | "
+        "status=warning, markers=5, limited=vision_agent,voice_command_agent, "
+        "protected=safety_monitor_agent, fallback=voice_command_agent, "
+        "reasons=queue_backlog_threshold_exceeded:2, "
+        "max_backlog_over_threshold=4, boundary_valid=True |"
+    ) in text
     assert "AIGuard does not own the final decision" in text
 
 
@@ -1156,6 +1205,10 @@ def test_generate_compare_html_summarizes_operation_risk_summary():
     assert "queue=queue_backlog_threshold_exceeded" in html
     assert "AIGuard operation risk rollup evidence" in html
     assert "risk=review" in html
+    assert "AIGuard policy pressure evidence" in html
+    assert "limited=vision_agent,voice_command_agent" in html
+    assert "protected=safety_monitor_agent" in html
+    assert "max_backlog_over_threshold=4" in html
     assert "Lab still owns the deployment decision" in html
 
 
