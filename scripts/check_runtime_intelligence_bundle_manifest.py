@@ -100,6 +100,7 @@ REQUIRED_GUARD_TYPES = {
     "edgeenv_orchestrator_operation_risk_rollup",
     "edgeenv_orchestrator_task_event_rollup",
     "edgeenv_orchestrator_operation_timeline_summary",
+    "edgeenv_orchestrator_scheduler_fairness_summary",
     "runtime_history_seed_run_config_traceability",
     "runtime_queue_overload",
     "runtime_thermal_instability",
@@ -175,6 +176,7 @@ REQUIRED_EXPECTED_REPORT_MARKERS = {
     "AIGuard operation risk rollup evidence",
     "AIGuard task event rollup evidence",
     "AIGuard operation timeline evidence",
+    "AIGuard scheduler fairness evidence",
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
     "AIGuard remote event summary consistency",
@@ -202,10 +204,12 @@ SUMMARY_CONTRACT_MARKERS = (
     "aiguard_evidence: edgeenv_orchestrator_operation_risk_rollup validated",
     "aiguard_evidence: edgeenv_orchestrator_task_event_rollup validated",
     "aiguard_evidence: edgeenv_orchestrator_operation_timeline_summary validated",
+    "aiguard_evidence: edgeenv_orchestrator_scheduler_fairness_summary validated",
     "aiguard_evidence: runtime_history_seed_run_config_traceability validated",
     "aiguard_evidence: remote_execution_recovered_by_fallback validated",
     "aiguard_raw_context: producer_lineage_shape preserved",
     "aiguard_raw_context: task_event_rollup preserved",
+    "aiguard_raw_context: scheduler_fairness_summary preserved",
     "aiguard_raw_context: history_seed_run_config_traceability preserved",
     "aiguard_raw_context: remote_runtime_event_summary preserved",
     "aiguard_raw_context: remote_runtime_summary_boundary preserved",
@@ -1887,6 +1891,8 @@ def _validate_guard_analysis(guard_analysis: dict[str, Any], errors: list[str]) 
             _validate_task_event_rollup_evidence(item, index, errors)
         if item.get("type") == "edgeenv_orchestrator_operation_timeline_summary":
             _validate_operation_timeline_evidence(item, index, errors)
+        if item.get("type") == "edgeenv_orchestrator_scheduler_fairness_summary":
+            _validate_scheduler_fairness_evidence(item, index, errors)
         if item.get("type") == "runtime_history_seed_run_config_traceability":
             _validate_run_config_traceability_evidence(item, index, errors)
         if item.get("type") == "remote_execution_recovered_by_fallback":
@@ -2408,6 +2414,80 @@ def _validate_operation_timeline_evidence(
         timeline.get("not_a_deployment_decision") is True,
         errors,
         f"AIGuard evidence[{index}] operation_timeline_summary.not_a_deployment_decision must be true",
+    )
+
+
+def _validate_scheduler_fairness_evidence(
+    item: dict[str, Any],
+    index: int,
+    errors: list[str],
+) -> None:
+    _record(
+        item.get("status") == "warning",
+        errors,
+        f"AIGuard evidence[{index}] scheduler fairness status must be warning",
+    )
+    _record(
+        item.get("observed_value") == 4,
+        errors,
+        f"AIGuard evidence[{index}] scheduler fairness observed_value must be 4",
+    )
+    raw_context = item.get("raw_context") or {}
+    fairness = raw_context.get("scheduler_fairness_summary")
+    _record(
+        isinstance(fairness, dict),
+        errors,
+        f"AIGuard evidence[{index}] raw_context.scheduler_fairness_summary must be an object",
+    )
+    if not isinstance(fairness, dict):
+        return
+
+    _record(
+        fairness.get("boundary_markers_valid") is True,
+        errors,
+        f"AIGuard evidence[{index}] scheduler_fairness_summary.boundary_markers_valid "
+        "must be true",
+    )
+    _record(
+        fairness.get("protected_high_priority_tasks") == ["safety_monitor_agent"],
+        errors,
+        f"AIGuard evidence[{index}] scheduler_fairness_summary.protected_high_priority_tasks "
+        "must preserve safety_monitor_agent",
+    )
+    _record(
+        fairness.get("tasks_with_starvation_risk")
+        == ["vision_agent", "voice_command_agent"],
+        errors,
+        f"AIGuard evidence[{index}] scheduler_fairness_summary.tasks_with_starvation_risk "
+        "must preserve vision_agent and voice_command_agent",
+    )
+    _record(
+        fairness.get("tasks_with_scheduler_delay") == ["vision_agent"],
+        errors,
+        f"AIGuard evidence[{index}] scheduler_fairness_summary.tasks_with_scheduler_delay "
+        "must preserve vision_agent",
+    )
+    _record(
+        fairness.get("tasks_with_degradation")
+        == ["vision_agent", "voice_command_agent"],
+        errors,
+        f"AIGuard evidence[{index}] scheduler_fairness_summary.tasks_with_degradation "
+        "must preserve vision_agent and voice_command_agent",
+    )
+    _record(
+        fairness.get("decision_owner") == "lab",
+        errors,
+        f"AIGuard evidence[{index}] scheduler_fairness_summary.decision_owner must be lab",
+    )
+    _record(
+        fairness.get("scheduler_owner") == "orchestrator",
+        errors,
+        f"AIGuard evidence[{index}] scheduler_fairness_summary.scheduler_owner must be orchestrator",
+    )
+    _record(
+        fairness.get("not_a_deployment_decision") is True,
+        errors,
+        f"AIGuard evidence[{index}] scheduler_fairness_summary.not_a_deployment_decision must be true",
     )
 
 

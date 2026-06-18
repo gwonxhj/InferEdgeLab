@@ -149,6 +149,13 @@ REQUIRED_MARKDOWN_MARKERS = {
     "aiguard_operation_timeline_type": (
         "edgeenv_orchestrator_operation_timeline_summary"
     ),
+    "aiguard_scheduler_fairness_evidence": (
+        "| AIGuard scheduler fairness evidence | "
+        "status=warning, markers=4"
+    ),
+    "aiguard_scheduler_fairness_type": (
+        "edgeenv_orchestrator_scheduler_fairness_summary"
+    ),
     "aiguard_remote_dispatch_summary": (
         "| AIGuard remote dispatch event summary | "
         "events=3, final=succeeded, fallback_recovered=True |"
@@ -271,6 +278,12 @@ REQUIRED_HTML_MARKERS = {
     "aiguard_operation_timeline_evidence": "AIGuard operation timeline evidence",
     "aiguard_operation_timeline_type": (
         "edgeenv_orchestrator_operation_timeline_summary"
+    ),
+    "aiguard_scheduler_fairness_evidence": (
+        "AIGuard scheduler fairness evidence"
+    ),
+    "aiguard_scheduler_fairness_type": (
+        "edgeenv_orchestrator_scheduler_fairness_summary"
     ),
     "aiguard_remote_dispatch_summary": "AIGuard remote dispatch event summary",
     "aiguard_remote_dispatch_label": (
