@@ -1640,6 +1640,88 @@
       }
     },
     {
+      "type": "edgeenv_orchestrator_policy_pressure_summary",
+      "metric_name": "orchestrator_policy_pressure_marker_count",
+      "observed_value": 5,
+      "baseline_value": 0,
+      "threshold": 1,
+      "delta": 5,
+      "delta_pct": null,
+      "increase_factor": null,
+      "severity": "medium",
+      "status": "warning",
+      "explanation": "EdgeEnv preserved Orchestrator policy_pressure summary with 5 review markers.",
+      "why_it_matters": "Policy-pressure context explains which tasks were limited, protected, or sent to fallback under queue backlog pressure.",
+      "suspected_causes": [
+        "policy_decision_context",
+        "queue_pressure_context",
+        "fallback_policy_context",
+        "load_shedding_context",
+        "scheduler_delay_context"
+      ],
+      "recommendation": "Review policy_pressure in Lab alongside operation timeline, task event rollup, and scheduler fairness evidence.",
+      "raw_context": {
+        "policy_pressure_summary": {
+          "summary": {
+            "schema_version": "inferedge-orchestrator-policy-pressure-summary-v1",
+            "role": "supplemental",
+            "decision_owner": "lab",
+            "scheduler_owner": "orchestrator",
+            "not_a_deployment_decision": true,
+            "decision_count": 2,
+            "decision_reason_counts": {
+              "queue_backlog_threshold_exceeded": 2
+            },
+            "limited_tasks": [
+              "vision_agent",
+              "voice_command_agent"
+            ],
+            "protected_tasks": [
+              "safety_monitor_agent"
+            ],
+            "fallback_tasks": [
+              "voice_command_agent"
+            ],
+            "fallback_decision_count": 1,
+            "backlog_thresholds": [
+              3
+            ],
+            "max_total_backlog_before": 7,
+            "max_backlog_over_threshold": 4,
+            "pressure_markers": [
+              "policy_decision_present",
+              "backlog_exceeded_threshold",
+              "fallback_policy_used",
+              "workload_limited_by_policy",
+              "scheduler_delay_present"
+            ],
+            "interpretation": "Scheduler policy pressure preserved as Lab review context only.",
+            "first_read": "review_policy_pressure_context"
+          },
+          "marker_count": 5,
+          "decision_count": 2,
+          "decision_reason_counts": {
+            "queue_backlog_threshold_exceeded": 2
+          },
+          "limited_tasks": [
+            "vision_agent",
+            "voice_command_agent"
+          ],
+          "protected_tasks": [
+            "safety_monitor_agent"
+          ],
+          "fallback_tasks": [
+            "voice_command_agent"
+          ],
+          "max_backlog_over_threshold": 4,
+          "decision_owner": "lab",
+          "scheduler_owner": "orchestrator",
+          "not_a_deployment_decision": true,
+          "boundary_markers_valid": true
+        }
+      }
+    },
+    {
       "type": "runtime_history_seed_run_config_traceability",
       "metric_name": "runtime_history_seed_run_config_runs",
       "observed_value": 2,

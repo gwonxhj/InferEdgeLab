@@ -34,6 +34,10 @@ ORCHESTRATOR_SCHEDULER_FAIRNESS_EVIDENCE_TYPE = (
     "edgeenv_orchestrator_scheduler_fairness_summary"
 )
 
+ORCHESTRATOR_POLICY_PRESSURE_EVIDENCE_TYPE = (
+    "edgeenv_orchestrator_policy_pressure_summary"
+)
+
 RUN_CONFIG_TRACEABILITY_EVIDENCE_TYPE = "runtime_history_seed_run_config_traceability"
 
 REMOTE_RUNTIME_EVENT_SUMMARY_MISMATCH_EVIDENCE_TYPE = (
@@ -1564,6 +1568,16 @@ def _append_aiguard_runtime_operation_rows(
             )
         )
 
+    policy_pressure_label = _aiguard_policy_pressure_label(evidence_items)
+    if policy_pressure_label:
+        rows.append(
+            (
+                "AIGuard policy pressure evidence",
+                policy_pressure_label,
+                "AIGuard preserves scheduler policy-pressure context as deterministic review evidence; Lab still owns the deployment decision.",
+            )
+        )
+
     candidate_summary = guard_analysis.get("candidate_summary")
     if not isinstance(candidate_summary, dict):
         return
@@ -2030,6 +2044,52 @@ def _aiguard_scheduler_fairness_label(
             degraded_tasks = _string_list(context.get("tasks_with_degradation"))
             if degraded_tasks:
                 parts.append("degraded=" + ",".join(degraded_tasks))
+            boundary_valid = context.get("boundary_markers_valid")
+            if boundary_valid is not None:
+                parts.append(f"boundary_valid={boundary_valid}")
+    return ", ".join(parts)
+
+
+def _aiguard_policy_pressure_label(
+    evidence_items: list[dict[str, Any]],
+) -> str:
+    evidence = _find_evidence_item(
+        evidence_items,
+        ORCHESTRATOR_POLICY_PRESSURE_EVIDENCE_TYPE,
+    )
+    if evidence is None:
+        return ""
+
+    parts: list[str] = []
+    status = evidence.get("status")
+    if status is not None:
+        parts.append(f"status={status}")
+    observed = evidence.get("observed_value")
+    if observed is not None:
+        parts.append(f"markers={_format_compact_value(observed)}")
+
+    raw_context = evidence.get("raw_context")
+    if isinstance(raw_context, dict):
+        context = raw_context.get("policy_pressure_summary")
+        if isinstance(context, dict):
+            limited_tasks = _string_list(context.get("limited_tasks"))
+            if limited_tasks:
+                parts.append("limited=" + ",".join(limited_tasks))
+            protected_tasks = _string_list(context.get("protected_tasks"))
+            if protected_tasks:
+                parts.append("protected=" + ",".join(protected_tasks))
+            fallback_tasks = _string_list(context.get("fallback_tasks"))
+            if fallback_tasks:
+                parts.append("fallback=" + ",".join(fallback_tasks))
+            reason_counts = context.get("decision_reason_counts")
+            if isinstance(reason_counts, dict) and reason_counts:
+                parts.append("reasons=" + _format_reason_count_label(reason_counts))
+            max_over_threshold = context.get("max_backlog_over_threshold")
+            if max_over_threshold is not None:
+                parts.append(
+                    "max_backlog_over_threshold="
+                    f"{_format_compact_value(max_over_threshold)}"
+                )
             boundary_valid = context.get("boundary_markers_valid")
             if boundary_valid is not None:
                 parts.append(f"boundary_valid={boundary_valid}")
