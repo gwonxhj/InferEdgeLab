@@ -111,6 +111,12 @@ Newer AIGuard guard analysis can also include `stale_frame_risk` or preserved
 count, stale-drop rate, affected tasks, reason counts, and reason classes in
 the AIGuard Orchestrator Operation Evidence section as deployment review
 context.
+When AIGuard preserves
+`edgeenv_orchestrator_scheduler_fairness_summary`, Lab surfaces protected
+high-priority tasks, starvation-risk tasks, scheduler-delay tasks, degraded
+tasks, and boundary markers as scheduler fairness review context. This remains
+Lab-owned deployment review evidence and does not make AIGuard or Orchestrator
+the final decision owner.
 
 The report also preserves the Orchestrator operation-health fields added for
 runtime operation review:
@@ -157,8 +163,9 @@ runtime operation review:
   `worker_health_degradation` and `scheduler_delay_pattern` when Orchestrator
   worker health or runtime event telemetry is analyzed by AIGuard.
   Lab preserves health reasons, policy/drop/stale-drop reason counts, scheduler
-  delay counts, stale-drop affected tasks, and stale-drop boundary markers as
-  deployment context without making AIGuard the final decision owner.
+  delay counts, stale-drop affected tasks, scheduler fairness task groups, and
+  boundary markers as deployment context without making AIGuard the final
+  decision owner.
 
 These fields make the report path explicit:
 
@@ -211,7 +218,9 @@ example, `worker_health_degradation` shows degraded/constrained worker reasons
 such as fallback policy use or dropped frames, while `scheduler_delay_pattern`
 shows scheduler delay counts and related policy/drop reasons. These evidence
 shows scheduler delay counts and related policy/drop reasons.
-`stale_frame_risk` shows which tasks had stale/backlog drops and why. These
+`stale_frame_risk` shows which tasks had stale/backlog drops and why, and
+`edgeenv_orchestrator_scheduler_fairness_summary` shows which tasks were
+protected, delayed, starved, or degraded under scheduler pressure. These
 evidence items contribute through AIGuard's overall guard verdict and remain
 separate from Lab's final policy ownership.
 

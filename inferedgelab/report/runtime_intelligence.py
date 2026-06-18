@@ -30,6 +30,10 @@ ORCHESTRATOR_OPERATION_TIMELINE_EVIDENCE_TYPE = (
     "edgeenv_orchestrator_operation_timeline_summary"
 )
 
+ORCHESTRATOR_SCHEDULER_FAIRNESS_EVIDENCE_TYPE = (
+    "edgeenv_orchestrator_scheduler_fairness_summary"
+)
+
 RUN_CONFIG_TRACEABILITY_EVIDENCE_TYPE = "runtime_history_seed_run_config_traceability"
 
 REMOTE_RUNTIME_EVENT_SUMMARY_MISMATCH_EVIDENCE_TYPE = (
@@ -1550,6 +1554,16 @@ def _append_aiguard_runtime_operation_rows(
             )
         )
 
+    scheduler_fairness_label = _aiguard_scheduler_fairness_label(evidence_items)
+    if scheduler_fairness_label:
+        rows.append(
+            (
+                "AIGuard scheduler fairness evidence",
+                scheduler_fairness_label,
+                "AIGuard preserves scheduler fairness context as deterministic review evidence; Lab still owns the deployment decision.",
+            )
+        )
+
     candidate_summary = guard_analysis.get("candidate_summary")
     if not isinstance(candidate_summary, dict):
         return
@@ -1976,6 +1990,46 @@ def _aiguard_operation_timeline_label(
             policy_reasons = _string_list(context.get("policy_decision_reasons"))
             if policy_reasons:
                 parts.append("policy=" + ",".join(policy_reasons))
+            boundary_valid = context.get("boundary_markers_valid")
+            if boundary_valid is not None:
+                parts.append(f"boundary_valid={boundary_valid}")
+    return ", ".join(parts)
+
+
+def _aiguard_scheduler_fairness_label(
+    evidence_items: list[dict[str, Any]],
+) -> str:
+    evidence = _find_evidence_item(
+        evidence_items,
+        ORCHESTRATOR_SCHEDULER_FAIRNESS_EVIDENCE_TYPE,
+    )
+    if evidence is None:
+        return ""
+
+    parts: list[str] = []
+    status = evidence.get("status")
+    if status is not None:
+        parts.append(f"status={status}")
+    observed = evidence.get("observed_value")
+    if observed is not None:
+        parts.append(f"markers={_format_compact_value(observed)}")
+
+    raw_context = evidence.get("raw_context")
+    if isinstance(raw_context, dict):
+        context = raw_context.get("scheduler_fairness_summary")
+        if isinstance(context, dict):
+            protected_tasks = _string_list(context.get("protected_high_priority_tasks"))
+            if protected_tasks:
+                parts.append("protected=" + ",".join(protected_tasks))
+            starvation_tasks = _string_list(context.get("tasks_with_starvation_risk"))
+            if starvation_tasks:
+                parts.append("starvation=" + ",".join(starvation_tasks))
+            delay_tasks = _string_list(context.get("tasks_with_scheduler_delay"))
+            if delay_tasks:
+                parts.append("scheduler_delay=" + ",".join(delay_tasks))
+            degraded_tasks = _string_list(context.get("tasks_with_degradation"))
+            if degraded_tasks:
+                parts.append("degraded=" + ",".join(degraded_tasks))
             boundary_valid = context.get("boundary_markers_valid")
             if boundary_valid is not None:
                 parts.append(f"boundary_valid={boundary_valid}")
