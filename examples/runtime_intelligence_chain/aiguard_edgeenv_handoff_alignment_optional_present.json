@@ -124,6 +124,13 @@
     "edgeenv-smoke-candidate",
     "edgeenv-smoke-missing"
   ],
+  "handoff_policy_pressure_summary_run_ids": [
+    "edgeenv-smoke-candidate"
+  ],
+  "guard_analysis_policy_pressure_summary_run_ids": [
+    "edgeenv-smoke-candidate"
+  ],
+  "policy_pressure_summary_errors": [],
   "guard_alignment_summary_errors": [],
   "errors": []
 }

@@ -208,6 +208,10 @@ The handoff gate also compares Orchestrator operation risk rollup and operation
 timeline summary run IDs against the preserved EdgeEnv regression context, so
 compact AIGuard operation evidence remains traceable to producer-side
 Orchestrator context.
+It additionally requires AIGuard's EdgeEnv handoff alignment artifact to carry
+matching policy-pressure summary run IDs from the EdgeEnv handoff and the
+`guard_analysis` raw context, keeping policy-pressure review evidence tied back
+to the same candidate run without moving deployment ownership away from Lab.
 
 The artifact gate is implemented by `scripts/check_runtime_intelligence_artifact_bundle.py`. It checks the generated Markdown / HTML report for the required Runtime Intelligence rows, including the short `Review Path` section, the `Review path` note, the `Reviewer Focus` quick-scan table, Lab ownership, EdgeEnv comparability, `EdgeEnv fixture matrix coverage`, telemetry coverage-gap markers, Runtime replay duration scope with `source=entrypoint_requested_frames` traceability, Orchestrator operation feed context, the Lab-owned `Reviewer operation quick scan` row, compact queue/deadline/fallback operation markers with `max_total_queue_depth`, AIGuard max queue raw-context traceability, Orchestrator task event rollup, Lab EdgeEnv preservation context, Jetson/device-local preservation identity and detail labels, Orchestrator `operation_risk_summary` navigation context, AIGuard runtime operation anomalies, AIGuard `edgeenv_orchestrator_operation_risk_summary` evidence, AIGuard `edgeenv_orchestrator_operation_risk_rollup` evidence, AIGuard `edgeenv_orchestrator_task_event_rollup` evidence, AIGuard `edgeenv_orchestrator_operation_timeline_summary` evidence, AIGuard `edgeenv_orchestrator_scheduler_fairness_summary` evidence, AIGuard `edgeenv_orchestrator_policy_pressure_summary` evidence, remote dispatch starter event summary, `Remote fallback starter evidence`, `edgeenv_orchestrator_producer_lineage`, `runtime_history_seed_run_config_traceability`, `remote_execution_recovered_by_fallback`, and triggered deployment review rules.
 

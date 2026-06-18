@@ -107,6 +107,9 @@ REQUIRED_AIGUARD_ALIGNMENT_RUN_IDS = [
     "edgeenv-smoke-candidate",
     "edgeenv-smoke-missing",
 ]
+REQUIRED_AIGUARD_POLICY_PRESSURE_RUN_IDS = [
+    "edgeenv-smoke-candidate",
+]
 REQUIRED_AIGUARD_OPTIONAL_EVIDENCE_TYPES = [
     "stale_frame_risk",
     "edgeenv_orchestrator_stale_drop_summary",
@@ -511,6 +514,23 @@ def _validate_aiguard_handoff_alignment(
             "AIGuard alignment guard_analysis run IDs must match EdgeEnv summary",
         )
         _record(
+            payload.get("handoff_policy_pressure_summary_run_ids")
+            == REQUIRED_AIGUARD_POLICY_PRESSURE_RUN_IDS,
+            errors,
+            "AIGuard alignment handoff policy-pressure run IDs must match EdgeEnv summary",
+        )
+        _record(
+            payload.get("guard_analysis_policy_pressure_summary_run_ids")
+            == REQUIRED_AIGUARD_POLICY_PRESSURE_RUN_IDS,
+            errors,
+            "AIGuard alignment guard_analysis policy-pressure run IDs must match EdgeEnv summary",
+        )
+        _record(
+            payload.get("policy_pressure_summary_errors") == [],
+            errors,
+            "AIGuard alignment policy_pressure_summary_errors must be empty",
+        )
+        _record(
             payload.get("guard_alignment_summary_errors") == [],
             errors,
             "AIGuard alignment guard_alignment_summary_errors must be empty",
@@ -568,6 +588,10 @@ def _validate_aiguard_handoff_alignment(
             "[edgeenv-smoke-candidate, edgeenv-smoke-missing]",
             "guard_analysis_producer_lineage_guard_alignment_run_ids: "
             "[edgeenv-smoke-candidate, edgeenv-smoke-missing]",
+            "handoff_policy_pressure_summary_run_ids: "
+            "[edgeenv-smoke-candidate]",
+            "guard_analysis_policy_pressure_summary_run_ids: "
+            "[edgeenv-smoke-candidate]",
         ]
         if expected_optional_present_source_artifact is not None:
             expected_markers.append(
