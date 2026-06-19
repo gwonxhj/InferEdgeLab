@@ -92,6 +92,7 @@ Guardrail:
 
 - `portfolio-demo-check`는 committed Studio fixture, README/PPT 수치, portfolio docs, local Studio asset을 검증합니다.
 - `core4-conformance-check`는 Forge manifest/metadata fixture, Runtime result JSON, Lab compare/deployment decision surface, AIGuard `guard_analysis` evidence를 기존 schema 변경 없이 검증합니다.
+- Lab decision surface는 `policy_version`, `triggered_rules`, `policy_summary`를 노출하며, reviewer는 [Lab Decision Policy](docs/policy/lab_decision_policy.md)에서 rule별 의미를 확인할 수 있습니다.
 
 추가 report path:
 

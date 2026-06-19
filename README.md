@@ -202,7 +202,7 @@ Guardrails:
 
 - `portfolio-demo-check` validates committed Studio fixtures, README/PPT metrics, portfolio docs, and local Studio assets without starting workers, queues, databases, or a production SaaS service.
 - `core4-conformance-check` validates bundled Forge manifest/metadata, Runtime result JSON, Lab compare bundle aliases/rendered outputs, Lab deployment decision surface, and AIGuard `guard_analysis` without mutating existing schemas.
-- The Lab decision surface exposes `policy_version`, `triggered_rules`, and `policy_summary` so reviewers can see which local policy rules produced deploy/review/block/unknown outcomes.
+- The Lab decision surface exposes `policy_version`, `triggered_rules`, and `policy_summary` so reviewers can see which local policy rules produced deploy/review/block/unknown outcomes; see [Lab Decision Policy](docs/policy/lab_decision_policy.md).
 
 Additional report paths:
 

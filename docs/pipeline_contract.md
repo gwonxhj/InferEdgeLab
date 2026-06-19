@@ -128,6 +128,9 @@ Deployment decisions include a backward-compatible policy trace:
 - `triggered_rules`: compact rule IDs explaining which Lab/Guard/contract conditions affected the decision.
 - `policy_summary`: reviewer-facing rule effects and descriptions.
 
+The reviewer-facing policy reference is maintained in
+[Lab Decision Policy](policy/lab_decision_policy.md).
+
 The v1 policy keeps existing decision behavior stable while making review/block reasoning explicit. Examples include Guard error evidence mapping to `blocked`, Guard warning evidence mapping to `review_required`, shape mismatch mapping to review, and latency/accuracy trade-off risk mapping to review.
 
 ## SaaS Boundary

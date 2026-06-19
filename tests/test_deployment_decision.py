@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from pathlib import Path
+
+from inferedgelab.services.deployment_decision import POLICY_RULES
 from inferedgelab.services.deployment_decision import POLICY_VERSION
 from inferedgelab.services.deployment_decision import build_deployment_decision
 
@@ -217,3 +220,31 @@ def test_diagnosis_guard_verdict_review_requires_lab_review():
     assert decision["guard_status"] == "warning"
     assert decision["guard_verdict"] == "review_required"
     assert_policy(decision, "guard_warning_review")
+
+
+def test_lab_decision_policy_reference_documents_current_rules():
+    root = Path(__file__).resolve().parents[1]
+    policy_doc = (root / "docs" / "policy" / "lab_decision_policy.md").read_text(
+        encoding="utf-8"
+    )
+    readme = (root / "README.md").read_text(encoding="utf-8")
+    readme_ko = (root / "README.ko.md").read_text(encoding="utf-8")
+    pipeline_contract = (root / "docs" / "pipeline_contract.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert POLICY_VERSION in policy_doc
+    assert "Lab owns the final deployment decision" in policy_doc
+    assert "policy_version" in policy_doc
+    assert "triggered_rules" in policy_doc
+    assert "policy_summary" in policy_doc
+    assert "not mutate `metadata.json`, `manifest.json`, Runtime" in policy_doc
+    assert "not make AIGuard, EdgeEnv, Orchestrator, or CI" in policy_doc
+    assert "production SaaS" in policy_doc
+    for rule, metadata in POLICY_RULES.items():
+        assert f"`{rule}`" in policy_doc
+        assert f"| `{rule}` | `{metadata['effect']}` | {metadata['description']} |" in policy_doc
+
+    assert "docs/policy/lab_decision_policy.md" in readme
+    assert "docs/policy/lab_decision_policy.md" in readme_ko
+    assert "policy/lab_decision_policy.md" in pipeline_contract
