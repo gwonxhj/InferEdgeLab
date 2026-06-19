@@ -576,6 +576,7 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "AIGuard operation risk rollup evidence" in markdown
     assert "edgeenv_orchestrator_operation_risk_rollup" in markdown
     assert "risk=review" in markdown
+    assert "first_read=review_operation_risk_context" in markdown
     assert "AIGuard task event rollup evidence" in markdown
     assert "edgeenv_orchestrator_task_event_rollup" in markdown
     assert "AIGuard operation timeline evidence" in markdown
@@ -702,6 +703,7 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "AIGuard operation risk rollup evidence" in html
     assert "edgeenv_orchestrator_operation_risk_rollup" in html
     assert "risk=review" in html
+    assert "first_read=review_operation_risk_context" in html
     assert "AIGuard task event rollup evidence" in html
     assert "edgeenv_orchestrator_task_event_rollup" in html
     assert "AIGuard operation timeline evidence" in html

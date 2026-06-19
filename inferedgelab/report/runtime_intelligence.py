@@ -1892,6 +1892,7 @@ def _aiguard_operation_risk_rollup_label(
         if isinstance(context, dict):
             for field, label in (
                 ("risk_level", "risk"),
+                ("first_read", "first_read"),
                 ("queue_pressure_reason", "queue"),
                 ("max_total_queue_depth", "max_queue"),
                 ("deadline_missed_count", "deadline"),
