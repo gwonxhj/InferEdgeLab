@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from inferedgelab.services.compare_service import build_compare_bundle
 from inferedgelab.services.deployment_decision import POLICY_VERSION
 from inferedgelab.services.demo_evidence_report import build_demo_evidence_summary
 
@@ -25,6 +26,9 @@ def build_core4_conformance_report(repo_root: str | Path | None = None) -> dict[
 
     manifest_path = root / "examples" / "core4_conformance" / "forge_manifest.json"
     metadata_path = root / "examples" / "core4_conformance" / "forge_metadata.json"
+    baseline_runtime_path = (
+        root / "examples" / "studio_demo" / "onnxruntime_cpu_result.json"
+    )
     runtime_path = root / "examples" / "studio_demo" / "tensorrt_jetson_25w_result.json"
     guard_path = root / "examples" / "studio_demo" / "aiguard_portfolio_cases.json"
 
@@ -32,11 +36,16 @@ def build_core4_conformance_report(repo_root: str | Path | None = None) -> dict[
     metadata = _load_json(metadata_path, checks, "forge:metadata_file")
     runtime = _load_json(runtime_path, checks, "runtime:result_file")
     guard_bundle = _load_json(guard_path, checks, "aiguard:portfolio_cases_file")
+    compare_bundle = _build_lab_compare_bundle(
+        baseline_runtime_path,
+        runtime_path,
+        checks,
+    )
     summary = build_demo_evidence_summary()
 
     _check_forge_contract(manifest, metadata, checks)
     _check_runtime_contract(runtime, manifest, metadata, checks)
-    _check_lab_contract(summary, checks)
+    _check_lab_contract(summary, compare_bundle, checks)
     _check_aiguard_contract(guard_bundle, checks)
     _check_cross_repo_handoff(manifest, metadata, runtime, checks)
 
@@ -56,6 +65,10 @@ def build_core4_conformance_report(repo_root: str | Path | None = None) -> dict[
             "forge_manifest": str(manifest_path),
             "forge_metadata": str(metadata_path),
             "runtime_result": str(runtime_path),
+            "lab_compare_output": (
+                "generated from examples/studio_demo/onnxruntime_cpu_result.json "
+                "and examples/studio_demo/tensorrt_jetson_25w_result.json"
+            ),
             "lab_compare_source": "examples/studio_demo via demo evidence summary",
             "aiguard_guard_analysis": str(guard_path),
         },
@@ -227,7 +240,11 @@ def _check_runtime_contract(
         )
 
 
-def _check_lab_contract(summary: dict[str, Any], checks: list[dict[str, Any]]) -> None:
+def _check_lab_contract(
+    summary: dict[str, Any],
+    compare_bundle: dict[str, Any] | None,
+    checks: list[dict[str, Any]],
+) -> None:
     comparison = summary.get("comparison") if isinstance(summary.get("comparison"), dict) else {}
     decision = summary.get("deployment_decision") if isinstance(summary.get("deployment_decision"), dict) else {}
     checks.extend(
@@ -289,6 +306,155 @@ def _check_lab_contract(summary: dict[str, Any], checks: list[dict[str, Any]]) -
                 category="lab",
                 expected="non-empty policy_summary list",
                 observed=decision.get("policy_summary"),
+            ),
+        ]
+    )
+    _check_lab_compare_bundle_contract(compare_bundle, checks)
+
+
+def _build_lab_compare_bundle(
+    baseline_runtime_path: Path,
+    candidate_runtime_path: Path,
+    checks: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    try:
+        bundle = build_compare_bundle(
+            base_path=baseline_runtime_path,
+            new_path=candidate_runtime_path,
+        )
+    except Exception as exc:  # pragma: no cover - defensive actionable report path
+        checks.append(
+            _check_item(
+                name="lab:compare_bundle_build",
+                passed=False,
+                category="lab",
+                expected="build_compare_bundle succeeds for committed Studio fixtures",
+                observed=f"{type(exc).__name__}: {exc}",
+            )
+        )
+        return None
+    checks.append(
+        _check_item(
+            name="lab:compare_bundle_build",
+            passed=True,
+            category="lab",
+            expected="build_compare_bundle succeeds for committed Studio fixtures",
+            observed=f"{baseline_runtime_path} -> {candidate_runtime_path}",
+        )
+    )
+    return bundle
+
+
+def _check_lab_compare_bundle_contract(
+    compare_bundle: dict[str, Any] | None,
+    checks: list[dict[str, Any]],
+) -> None:
+    required_keys = [
+        "meta",
+        "data",
+        "rendered",
+        "base",
+        "new",
+        "base_path",
+        "new_path",
+        "result",
+        "judgement",
+        "markdown",
+        "html",
+        "legacy_warning",
+        "deployment_decision",
+    ]
+    checks.extend(
+        _required_path_checks(
+            compare_bundle,
+            "lab_compare_bundle",
+            [(key,) for key in required_keys],
+            category="lab",
+        )
+    )
+    if compare_bundle is None:
+        return
+
+    data = (
+        compare_bundle.get("data")
+        if isinstance(compare_bundle.get("data"), dict)
+        else {}
+    )
+    rendered = (
+        compare_bundle.get("rendered")
+        if isinstance(compare_bundle.get("rendered"), dict)
+        else {}
+    )
+    result = (
+        compare_bundle.get("result")
+        if isinstance(compare_bundle.get("result"), dict)
+        else {}
+    )
+    judgement = (
+        compare_bundle.get("judgement")
+        if isinstance(compare_bundle.get("judgement"), dict)
+        else {}
+    )
+    deployment_decision = (
+        compare_bundle.get("deployment_decision")
+        if isinstance(compare_bundle.get("deployment_decision"), dict)
+        else {}
+    )
+    checks.extend(
+        [
+            _check_item(
+                name="lab:compare_bundle_data_aliases",
+                passed=data.get("result") == compare_bundle.get("result")
+                and data.get("judgement") == compare_bundle.get("judgement")
+                and data.get("deployment_decision")
+                == compare_bundle.get("deployment_decision"),
+                category="lab",
+                expected="data aliases match top-level result/judgement/deployment_decision",
+                observed=sorted(data.keys()) if isinstance(data, dict) else None,
+            ),
+            _check_item(
+                name="lab:compare_bundle_rendered_aliases",
+                passed=rendered.get("markdown") == compare_bundle.get("markdown")
+                and rendered.get("html") == compare_bundle.get("html"),
+                category="lab",
+                expected="rendered aliases match top-level markdown/html",
+                observed=sorted(rendered.keys()) if isinstance(rendered, dict) else None,
+            ),
+            _check_item(
+                name="lab:compare_bundle_comparison_mode",
+                passed=bool(
+                    _dig(result, ("precision", "comparison_mode"))
+                    and judgement.get("comparison_mode")
+                ),
+                category="lab",
+                expected="comparison mode present in result precision and judgement",
+                observed={
+                    "result": _dig(result, ("precision", "comparison_mode")),
+                    "judgement": judgement.get("comparison_mode"),
+                },
+            ),
+            _check_item(
+                name="lab:compare_bundle_rendered_outputs",
+                passed=bool(compare_bundle.get("markdown"))
+                and bool(compare_bundle.get("html")),
+                category="lab",
+                expected="non-empty markdown/html compare report outputs",
+                observed={
+                    "markdown": bool(compare_bundle.get("markdown")),
+                    "html": bool(compare_bundle.get("html")),
+                },
+            ),
+            _check_item(
+                name="lab:compare_bundle_deployment_decision_owner",
+                passed=deployment_decision.get("decision")
+                in {"deployable", "review_required", "review", "blocked", "unknown"}
+                and deployment_decision.get("policy_version") == POLICY_VERSION,
+                category="lab",
+                expected=f"Lab-owned deployment decision with {POLICY_VERSION}",
+                observed={
+                    "decision": deployment_decision.get("decision"),
+                    "policy_version": deployment_decision.get("policy_version"),
+                },
             ),
         ]
     )

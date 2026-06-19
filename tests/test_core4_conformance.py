@@ -22,6 +22,23 @@ def test_core4_conformance_report_passes_for_committed_fixtures():
     assert report["layers"]["aiguard"]["status"] == "pass"
     assert report["layers"]["handoff"]["status"] == "pass"
     assert any(check["name"] == "handoff:source_model_sha256" for check in report["checks"])
+    assert any(check["name"] == "lab:compare_bundle_build" for check in report["checks"])
+    assert any(
+        check["name"] == "lab_compare_bundle:deployment_decision"
+        for check in report["checks"]
+    )
+    assert any(
+        check["name"] == "lab:compare_bundle_data_aliases"
+        for check in report["checks"]
+    )
+    assert any(
+        check["name"] == "lab:compare_bundle_rendered_outputs"
+        for check in report["checks"]
+    )
+    assert any(
+        check["name"] == "lab:compare_bundle_deployment_decision_owner"
+        for check in report["checks"]
+    )
     assert any(check["name"] == "lab:compare_speedup" for check in report["checks"])
     assert any(check["name"] == "lab:deployment_policy_version" for check in report["checks"])
     assert any(check["name"] == "lab:deployment_triggered_rules" for check in report["checks"])
