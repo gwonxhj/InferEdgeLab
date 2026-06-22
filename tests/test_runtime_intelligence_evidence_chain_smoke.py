@@ -103,6 +103,7 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert "edgeenv_orchestrator_operation_risk_rollup" in evidence_types
     assert "edgeenv_orchestrator_task_event_rollup" in evidence_types
     assert "edgeenv_orchestrator_operation_timeline_summary" in evidence_types
+    assert "edgeenv_orchestrator_worker_health_trend" in evidence_types
     assert "runtime_history_seed_run_config_traceability" in evidence_types
     assert "remote_execution_recovered_by_fallback" in evidence_types
     coverage_evidence = next(
@@ -166,7 +167,11 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     ] == "edgeenv_orchestrator_producer_lineage"
     assert guard_edgeenv_context[
         "orchestrator_guard_alignment_operation_evidence_candidates"
-    ] == ["runtime_queue_overload", "runtime_thermal_instability"]
+    ] == [
+        "runtime_queue_overload",
+        "runtime_thermal_instability",
+        "edgeenv_orchestrator_worker_health_trend",
+    ]
     assert (
         guard_edgeenv_context[
             "orchestrator_guard_alignment_lab_is_final_decision_owner"
@@ -316,7 +321,7 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
         if item["type"] == "edgeenv_orchestrator_operation_timeline_summary"
     )
     assert operation_timeline_evidence["status"] == "warning"
-    assert operation_timeline_evidence["observed_value"] == 6
+    assert operation_timeline_evidence["observed_value"] == 7
     operation_timeline_context = operation_timeline_evidence["raw_context"][
         "operation_timeline_summary"
     ]
@@ -329,6 +334,29 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert operation_timeline_context["policy_decision_reasons"] == [
         "queue_backlog_threshold_exceeded"
     ]
+    worker_health_trend_evidence = next(
+        item
+        for item in bundle["guard_analysis"]["evidence"]
+        if item["type"] == "edgeenv_orchestrator_worker_health_trend"
+    )
+    assert worker_health_trend_evidence["status"] == "warning"
+    assert worker_health_trend_evidence["observed_value"] == 5
+    worker_health_trend_context = worker_health_trend_evidence["raw_context"][
+        "worker_health_trend"
+    ]
+    assert worker_health_trend_context["boundary_markers_valid"] is True
+    assert worker_health_trend_context["scheduler_owner"] == "orchestrator"
+    assert worker_health_trend_context["decision_owner"] == "lab"
+    assert worker_health_trend_context["not_a_deployment_decision"] is True
+    assert worker_health_trend_context["degraded_workers"] == ["vision_agent"]
+    assert worker_health_trend_context["constrained_workers"] == [
+        "voice_command_agent"
+    ]
+    assert worker_health_trend_context["health_state_counts"] == {
+        "healthy": 1,
+        "degraded": 1,
+        "constrained": 1,
+    }
     assert operation_risk_context["device_local_event_count"] == 15.0
     run_config_traceability_evidence = next(
         item
@@ -454,7 +482,8 @@ def test_runtime_intelligence_chain_smoke_ingests_precomputed_guard_artifact():
     assert (
         "| AIGuard producer-lineage guard alignment | "
         "evidence=edgeenv_orchestrator_producer_lineage, "
-        "candidates=runtime_queue_overload,runtime_thermal_instability, "
+        "candidates=runtime_queue_overload,runtime_thermal_instability,"
+        "edgeenv_orchestrator_worker_health_trend, "
         "lab_final_owner=true |"
     ) in bundle["markdown"]
     assert "| AIGuard history seed handoff | seeds=2.0" in bundle["markdown"]
@@ -585,6 +614,11 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "max_wait_ms=15" in markdown
     assert "policy_decisions=2" in markdown
     assert "status=warning, markers=4" in markdown
+    assert "AIGuard worker health trend evidence" in markdown
+    assert "edgeenv_orchestrator_worker_health_trend" in markdown
+    assert "degraded=vision_agent" in markdown
+    assert "constrained=voice_command_agent" in markdown
+    assert "health_states=healthy:1,degraded:1,constrained:1" in markdown
     assert "health=worker_health_degraded" in markdown
     assert "Orchestrator context attached runs" in markdown
     assert "Orchestrator operation risk summary" in markdown
@@ -711,6 +745,11 @@ def test_compare_cmd_runtime_intelligence_chain_writes_markdown_and_html(
     assert "tasks=vision_agent,voice_command_agent" in html
     assert "max_wait_ms=15" in html
     assert "policy_decisions=2" in html
+    assert "AIGuard worker health trend evidence" in html
+    assert "edgeenv_orchestrator_worker_health_trend" in html
+    assert "degraded=vision_agent" in html
+    assert "constrained=voice_command_agent" in html
+    assert "health_states=healthy:1,degraded:1,constrained:1" in html
     assert "health=worker_health_degraded" in html
     assert "AIGuard remote dispatch event summary" in html
     assert "events=3, final=succeeded, fallback_recovered=True" in html

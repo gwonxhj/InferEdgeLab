@@ -1103,7 +1103,10 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_mapping_hint(
     mapping_hint = operation_context["edgeenv_mapping_hint"]
     mapping_hint["coverage_summary_owner"] = "orchestrator"
     mapping_hint.pop("candidate_context_required_fields")
-    mapping_hint["aiguard_evidence_candidates"] = ["runtime_queue_overload"]
+    mapping_hint["aiguard_evidence_candidates"] = [
+        "runtime_queue_overload",
+        "edgeenv_orchestrator_worker_health_trend",
+    ]
     operation_context["candidate_context"].pop("telemetry_source")
 
     edgeenv_copy = tmp_path / "edgeenv_regression.json"
@@ -1446,7 +1449,7 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_guard_mapping_h
     ] = "aiguard"
     edgeenv_context["orchestrator_edgeenv_mapping_hint"][
         "aiguard_evidence_candidates"
-    ] = ["runtime_queue_overload"]
+    ] = ["runtime_queue_overload", "edgeenv_orchestrator_worker_health_trend"]
     edgeenv_context.pop("orchestrator_mapping_hint_candidate_context_required_fields")
     edgeenv_context.pop("orchestrator_mapping_hint_aiguard_evidence_candidates")
     edgeenv_context["orchestrator_candidate_context_telemetry_source"] = "unknown"
@@ -1648,10 +1651,11 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_guard_operation
 
     assert result == 2
     summary = summary_path.read_text(encoding="utf-8")
-    assert "operation timeline observed_value must be 6" in summary
+    assert "operation timeline observed_value must be 7" in summary
     assert (
         "operation_timeline_summary.review_hints is missing "
-        "['review_deadline_miss', 'review_fallback_use', 'review_scheduler_delay']"
+        "['review_deadline_miss', 'review_fallback_use', "
+        "'review_scheduler_delay', 'review_worker_health_trend']"
     ) in summary
     assert "operation_timeline_summary.decision_owner must be lab" in summary
     assert (
@@ -1685,7 +1689,7 @@ def test_runtime_intelligence_bundle_manifest_gate_fails_for_bad_guard_missing_c
     ] = "aiguard"
     edgeenv_context[
         "history_missing_orchestrator_mapping_hint_aiguard_evidence_candidates"
-    ] = ["runtime_queue_overload"]
+    ] = ["runtime_queue_overload", "edgeenv_orchestrator_worker_health_trend"]
 
     guard_copy = tmp_path / "aiguard_guard_analysis.json"
     guard_copy.write_text(json.dumps(guard_analysis), encoding="utf-8")
