@@ -34,6 +34,10 @@ ORCHESTRATOR_SCHEDULER_FAIRNESS_EVIDENCE_TYPE = (
     "edgeenv_orchestrator_scheduler_fairness_summary"
 )
 
+ORCHESTRATOR_WORKER_HEALTH_TREND_EVIDENCE_TYPE = (
+    "edgeenv_orchestrator_worker_health_trend"
+)
+
 ORCHESTRATOR_POLICY_PRESSURE_EVIDENCE_TYPE = (
     "edgeenv_orchestrator_policy_pressure_summary"
 )
@@ -1568,6 +1572,16 @@ def _append_aiguard_runtime_operation_rows(
             )
         )
 
+    worker_health_trend_label = _aiguard_worker_health_trend_label(evidence_items)
+    if worker_health_trend_label:
+        rows.append(
+            (
+                "AIGuard worker health trend evidence",
+                worker_health_trend_label,
+                "AIGuard preserves degraded/constrained worker trend context as deterministic review evidence; Lab still owns the deployment decision.",
+            )
+        )
+
     policy_pressure_label = _aiguard_policy_pressure_label(evidence_items)
     if policy_pressure_label:
         rows.append(
@@ -2045,6 +2059,51 @@ def _aiguard_scheduler_fairness_label(
             degraded_tasks = _string_list(context.get("tasks_with_degradation"))
             if degraded_tasks:
                 parts.append("degraded=" + ",".join(degraded_tasks))
+            boundary_valid = context.get("boundary_markers_valid")
+            if boundary_valid is not None:
+                parts.append(f"boundary_valid={boundary_valid}")
+    return ", ".join(parts)
+
+
+def _aiguard_worker_health_trend_label(
+    evidence_items: list[dict[str, Any]],
+) -> str:
+    evidence = _find_evidence_item(
+        evidence_items,
+        ORCHESTRATOR_WORKER_HEALTH_TREND_EVIDENCE_TYPE,
+    )
+    if evidence is None:
+        return ""
+
+    parts: list[str] = []
+    status = evidence.get("status")
+    if status is not None:
+        parts.append(f"status={status}")
+    observed = evidence.get("observed_value")
+    if observed is not None:
+        parts.append(f"markers={_format_compact_value(observed)}")
+
+    raw_context = evidence.get("raw_context")
+    if isinstance(raw_context, dict):
+        context = raw_context.get("worker_health_trend")
+        if isinstance(context, dict):
+            degraded_workers = _string_list(context.get("degraded_workers"))
+            if degraded_workers:
+                parts.append("degraded=" + ",".join(degraded_workers))
+            constrained_workers = _string_list(context.get("constrained_workers"))
+            if constrained_workers:
+                parts.append("constrained=" + ",".join(constrained_workers))
+            health_state_counts = context.get("health_state_counts")
+            if isinstance(health_state_counts, dict):
+                state_labels = [
+                    f"{state}:{_format_compact_value(count)}"
+                    for state, count in health_state_counts.items()
+                    if isinstance(state, str)
+                    and state in {"healthy", "degraded", "constrained"}
+                    and count is not None
+                ]
+                if state_labels:
+                    parts.append("health_states=" + ",".join(state_labels))
             boundary_valid = context.get("boundary_markers_valid")
             if boundary_valid is not None:
                 parts.append(f"boundary_valid={boundary_valid}")

@@ -144,7 +144,7 @@ REQUIRED_MARKDOWN_MARKERS = {
     "aiguard_task_event_rollup_type": "edgeenv_orchestrator_task_event_rollup",
     "aiguard_operation_timeline_evidence": (
         "| AIGuard operation timeline evidence | "
-        "status=warning, markers=6"
+        "status=warning, markers=7"
     ),
     "aiguard_operation_timeline_type": (
         "edgeenv_orchestrator_operation_timeline_summary"
@@ -155,6 +155,13 @@ REQUIRED_MARKDOWN_MARKERS = {
     ),
     "aiguard_scheduler_fairness_type": (
         "edgeenv_orchestrator_scheduler_fairness_summary"
+    ),
+    "aiguard_worker_health_trend_evidence": (
+        "| AIGuard worker health trend evidence | "
+        "status=warning, markers=5"
+    ),
+    "aiguard_worker_health_trend_type": (
+        "edgeenv_orchestrator_worker_health_trend"
     ),
     "aiguard_policy_pressure_evidence": (
         "| AIGuard policy pressure evidence | "
@@ -291,6 +298,12 @@ REQUIRED_HTML_MARKERS = {
     ),
     "aiguard_scheduler_fairness_type": (
         "edgeenv_orchestrator_scheduler_fairness_summary"
+    ),
+    "aiguard_worker_health_trend_evidence": (
+        "AIGuard worker health trend evidence"
+    ),
+    "aiguard_worker_health_trend_type": (
+        "edgeenv_orchestrator_worker_health_trend"
     ),
     "aiguard_policy_pressure_evidence": "AIGuard policy pressure evidence",
     "aiguard_policy_pressure_type": (

@@ -73,6 +73,7 @@ REQUIRED_ORCHESTRATOR_CANDIDATE_CONTEXT_FIELDS = {
 REQUIRED_ORCHESTRATOR_AIGUARD_EVIDENCE_CANDIDATES = {
     "runtime_queue_overload",
     "runtime_thermal_instability",
+    "edgeenv_orchestrator_worker_health_trend",
 }
 REQUIRED_ORCHESTRATOR_GUARD_ALIGNMENT = {
     "declared_by": "orchestrator",
@@ -101,6 +102,7 @@ REQUIRED_GUARD_TYPES = {
     "edgeenv_orchestrator_task_event_rollup",
     "edgeenv_orchestrator_operation_timeline_summary",
     "edgeenv_orchestrator_scheduler_fairness_summary",
+    "edgeenv_orchestrator_worker_health_trend",
     "edgeenv_orchestrator_policy_pressure_summary",
     "runtime_history_seed_run_config_traceability",
     "runtime_queue_overload",
@@ -178,6 +180,7 @@ REQUIRED_EXPECTED_REPORT_MARKERS = {
     "AIGuard task event rollup evidence",
     "AIGuard operation timeline evidence",
     "AIGuard scheduler fairness evidence",
+    "AIGuard worker health trend evidence",
     "AIGuard policy pressure evidence",
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
@@ -197,7 +200,7 @@ SUMMARY_CONTRACT_MARKERS = (
     "ownership: regression_owner=edgeenv, deployment_decision_owner=lab",
     "orchestrator_mapping_hint: coverage_summary_owner=edgeenv",
     "orchestrator_mapping_hint: operation_context_role=supplemental",
-    "orchestrator_mapping_hint: aiguard_evidence_candidates=runtime_queue_overload,runtime_thermal_instability",
+    "orchestrator_mapping_hint: aiguard_evidence_candidates=runtime_queue_overload,runtime_thermal_instability,edgeenv_orchestrator_worker_health_trend",
     "orchestrator_downstream_guard_alignment: producer_lineage_evidence_type=edgeenv_orchestrator_producer_lineage",
     "orchestrator_device_local_producer_lineage: candidate_context.producer validated",
     "orchestrator_producer_lineage_shape: per-task source/stage/count mappings validated",
@@ -207,12 +210,14 @@ SUMMARY_CONTRACT_MARKERS = (
     "aiguard_evidence: edgeenv_orchestrator_task_event_rollup validated",
     "aiguard_evidence: edgeenv_orchestrator_operation_timeline_summary validated",
     "aiguard_evidence: edgeenv_orchestrator_scheduler_fairness_summary validated",
+    "aiguard_evidence: edgeenv_orchestrator_worker_health_trend validated",
     "aiguard_evidence: edgeenv_orchestrator_policy_pressure_summary validated",
     "aiguard_evidence: runtime_history_seed_run_config_traceability validated",
     "aiguard_evidence: remote_execution_recovered_by_fallback validated",
     "aiguard_raw_context: producer_lineage_shape preserved",
     "aiguard_raw_context: task_event_rollup preserved",
     "aiguard_raw_context: scheduler_fairness_summary preserved",
+    "aiguard_raw_context: worker_health_trend preserved",
     "aiguard_raw_context: policy_pressure_summary preserved",
     "aiguard_raw_context: history_seed_run_config_traceability preserved",
     "aiguard_raw_context: remote_runtime_event_summary preserved",
@@ -243,6 +248,7 @@ EDGEENV_HANDOFF_SUMMARY_CONTRACT_MARKERS = (
     "edgeenv_handoff: orchestrator_operation_risk_rollup validated",
     "edgeenv_handoff: orchestrator_task_event_rollup validated",
     "edgeenv_handoff: orchestrator_operation_timeline_summary validated",
+    "edgeenv_handoff: orchestrator_worker_health_trend validated",
     "edgeenv_handoff: missing_telemetry_orchestrator_context validated",
     "edgeenv_handoff: external AIGuard evidence requirements declared",
 )
@@ -685,6 +691,9 @@ def _validate_edgeenv_handoff_report_summary(
     operation_timeline_summary_run_ids = (
         _orchestrator_operation_timeline_summary_run_ids(context)
     )
+    worker_health_trend_run_ids = _orchestrator_worker_health_trend_run_ids(
+        context
+    )
     fixture_matrix_context = regression_report.get("fixture_matrix_context")
     fixture_matrix_summary = _fixture_matrix_summary(fixture_matrix_context)
 
@@ -766,6 +775,22 @@ def _validate_edgeenv_handoff_report_summary(
         "EdgeEnv handoff edgeenv_report_summary."
         "orchestrator_operation_timeline_summary_run_ids must match preserved "
         "Orchestrator operation timeline summary run IDs",
+    )
+    _record(
+        summary.get("orchestrator_worker_health_trend_present")
+        is bool(worker_health_trend_run_ids),
+        errors,
+        "EdgeEnv handoff edgeenv_report_summary."
+        "orchestrator_worker_health_trend_present must match preserved "
+        "Orchestrator worker health trend context",
+    )
+    _record(
+        summary.get("orchestrator_worker_health_trend_run_ids")
+        == worker_health_trend_run_ids,
+        errors,
+        "EdgeEnv handoff edgeenv_report_summary."
+        "orchestrator_worker_health_trend_run_ids must match preserved "
+        "Orchestrator worker health trend run IDs",
     )
     _record(
         summary.get("fixture_matrix_context_present")
@@ -859,6 +884,14 @@ def _orchestrator_operation_timeline_summary_run_ids(context: Any) -> list[str]:
     ]
 
 
+def _orchestrator_worker_health_trend_run_ids(context: Any) -> list[str]:
+    return [
+        run_id
+        for run_id, operation_context in _runtime_operation_contexts(context)
+        if _has_orchestrator_worker_health_trend(operation_context)
+    ]
+
+
 def _runtime_operation_contexts(context: Any) -> list[tuple[str, dict[str, Any]]]:
     if not isinstance(context, dict):
         return []
@@ -947,6 +980,18 @@ def _has_orchestrator_operation_timeline_summary(
     operation = _orchestrator_candidate_operation(operation_context)
     timeline = operation.get("operation_timeline_summary")
     return isinstance(timeline, dict) and bool(timeline)
+
+
+def _has_orchestrator_worker_health_trend(
+    operation_context: dict[str, Any],
+) -> bool:
+    operation = _orchestrator_candidate_operation(operation_context)
+    trend = operation.get("worker_health_trend")
+    if not isinstance(trend, dict):
+        timeline = operation.get("operation_timeline_summary")
+        if isinstance(timeline, dict):
+            trend = timeline.get("worker_health_trend")
+    return isinstance(trend, dict) and bool(trend)
 
 
 def _orchestrator_candidate_operation(
@@ -1897,6 +1942,8 @@ def _validate_guard_analysis(guard_analysis: dict[str, Any], errors: list[str]) 
             _validate_operation_timeline_evidence(item, index, errors)
         if item.get("type") == "edgeenv_orchestrator_scheduler_fairness_summary":
             _validate_scheduler_fairness_evidence(item, index, errors)
+        if item.get("type") == "edgeenv_orchestrator_worker_health_trend":
+            _validate_worker_health_trend_evidence(item, index, errors)
         if item.get("type") == "edgeenv_orchestrator_policy_pressure_summary":
             _validate_policy_pressure_evidence(item, index, errors)
         if item.get("type") == "runtime_history_seed_run_config_traceability":
@@ -2335,9 +2382,9 @@ def _validate_operation_timeline_evidence(
         f"AIGuard evidence[{index}] operation timeline status must be warning",
     )
     _record(
-        item.get("observed_value") == 6,
+        item.get("observed_value") == 7,
         errors,
-        f"AIGuard evidence[{index}] operation timeline observed_value must be 6",
+        f"AIGuard evidence[{index}] operation timeline observed_value must be 7",
     )
     raw_context = item.get("raw_context") or {}
     timeline = raw_context.get("operation_timeline_summary")
@@ -2391,6 +2438,7 @@ def _validate_operation_timeline_evidence(
                 "review_scheduler_delay",
                 "review_deadline_miss",
                 "review_fallback_use",
+                "review_worker_health_trend",
             }
             - set(review_hints)
         )
@@ -2494,6 +2542,72 @@ def _validate_scheduler_fairness_evidence(
         fairness.get("not_a_deployment_decision") is True,
         errors,
         f"AIGuard evidence[{index}] scheduler_fairness_summary.not_a_deployment_decision must be true",
+    )
+
+
+def _validate_worker_health_trend_evidence(
+    item: dict[str, Any],
+    index: int,
+    errors: list[str],
+) -> None:
+    _record(
+        item.get("status") == "warning",
+        errors,
+        f"AIGuard evidence[{index}] worker health trend status must be warning",
+    )
+    _record(
+        item.get("observed_value") == 5,
+        errors,
+        f"AIGuard evidence[{index}] worker health trend observed_value must be 5",
+    )
+    raw_context = item.get("raw_context") or {}
+    trend = raw_context.get("worker_health_trend")
+    _record(
+        isinstance(trend, dict),
+        errors,
+        f"AIGuard evidence[{index}] raw_context.worker_health_trend must be an object",
+    )
+    if not isinstance(trend, dict):
+        return
+
+    _record(
+        trend.get("boundary_markers_valid") is True,
+        errors,
+        f"AIGuard evidence[{index}] worker_health_trend.boundary_markers_valid must be true",
+    )
+    _record(
+        trend.get("degraded_workers") == ["vision_agent"],
+        errors,
+        f"AIGuard evidence[{index}] worker_health_trend.degraded_workers must preserve vision_agent",
+    )
+    _record(
+        trend.get("constrained_workers") == ["voice_command_agent"],
+        errors,
+        f"AIGuard evidence[{index}] worker_health_trend.constrained_workers must preserve voice_command_agent",
+    )
+    state_counts = trend.get("health_state_counts")
+    _record(
+        isinstance(state_counts, dict)
+        and state_counts.get("healthy") == 1
+        and state_counts.get("degraded") == 1
+        and state_counts.get("constrained") == 1,
+        errors,
+        f"AIGuard evidence[{index}] worker_health_trend.health_state_counts must preserve healthy/degraded/constrained counts",
+    )
+    _record(
+        trend.get("decision_owner") == "lab",
+        errors,
+        f"AIGuard evidence[{index}] worker_health_trend.decision_owner must be lab",
+    )
+    _record(
+        trend.get("scheduler_owner") == "orchestrator",
+        errors,
+        f"AIGuard evidence[{index}] worker_health_trend.scheduler_owner must be orchestrator",
+    )
+    _record(
+        trend.get("not_a_deployment_decision") is True,
+        errors,
+        f"AIGuard evidence[{index}] worker_health_trend.not_a_deployment_decision must be true",
     )
 
 

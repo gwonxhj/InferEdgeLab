@@ -57,6 +57,7 @@
     "AIGuard task event rollup evidence",
     "AIGuard operation timeline evidence",
     "AIGuard scheduler fairness evidence",
+    "AIGuard worker health trend evidence",
     "AIGuard policy pressure evidence",
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
