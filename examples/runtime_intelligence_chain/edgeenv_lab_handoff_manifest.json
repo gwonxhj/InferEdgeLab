@@ -73,7 +73,8 @@
     ],
     "optional_aiguard_evidence_types": [
       "stale_frame_risk",
-      "edgeenv_orchestrator_stale_drop_summary"
+      "edgeenv_orchestrator_stale_drop_summary",
+      "edgeenv_orchestrator_pressure_window_summary"
     ],
     "optional_aiguard_source_traceability": {
       "context_role": "read_only_optional_source_traceability",
@@ -113,15 +114,16 @@
       "AIGuard task event rollup evidence",
       "AIGuard operation timeline evidence",
       "AIGuard scheduler fairness evidence",
+      "AIGuard worker health trend evidence",
       "AIGuard policy pressure evidence",
+      "AIGuard pressure window evidence",
       "AIGuard runtime operation anomalies",
       "AIGuard remote dispatch event summary",
       "AIGuard remote event summary consistency",
       "Remote fallback starter evidence",
       "lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback",
       "AIGuard producer-lineage guard alignment",
-      "Lab remains the final deployment decision owner.",
-      "AIGuard worker health trend evidence"
+      "Lab remains the final deployment decision owner."
     ],
     "source_repositories": {
       "runtime_result": "InferEdge-Runtime",
@@ -204,6 +206,10 @@
     ],
     "orchestrator_worker_health_trend_present": true,
     "orchestrator_worker_health_trend_run_ids": [
+      "edgeenv-smoke-candidate"
+    ],
+    "orchestrator_pressure_window_summary_present": true,
+    "orchestrator_pressure_window_summary_run_ids": [
       "edgeenv-smoke-candidate"
     ]
   },

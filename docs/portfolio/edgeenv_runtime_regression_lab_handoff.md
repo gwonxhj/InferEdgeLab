@@ -148,10 +148,11 @@ This second smoke uses committed lightweight artifacts to represent the cross-re
 - `examples/runtime_intelligence_chain/edgeenv_lab_handoff_manifest.json` mirrors the EdgeEnv producer-side handoff manifest and its `lab_bundle_alignment` metadata, so Lab can verify EdgeEnv-produced file keys separately from external AIGuard evidence.
 - The same handoff declares `external_aiguard_required_evidence_types`; Lab's bundle gate checks that those types are present in the external `guard_analysis.evidence` list without making AIGuard the final decision owner.
 - If the handoff also declares `optional_aiguard_evidence_types`, Lab validates
-  the known optional stale-drop evidence labels (`stale_frame_risk` and
-  `edgeenv_orchestrator_stale_drop_summary`) as optional context only. Those
-  labels must remain separate from the required Guard evidence set and do not
-  become a Lab deployment-decision requirement.
+  the known optional evidence labels (`stale_frame_risk`,
+  `edgeenv_orchestrator_stale_drop_summary`, and
+  `edgeenv_orchestrator_pressure_window_summary`) as optional context only.
+  Those labels must remain separate from the required Guard evidence set and do
+  not become a Lab deployment-decision requirement.
 - If the handoff also declares `optional_aiguard_source_traceability`, Lab
   validates the `read_only_optional_source_traceability` source artifact path
   and AIGuard reproduction command as read-only metadata. This links the
@@ -192,7 +193,7 @@ Expected Lab behavior:
 - The same gate requires EdgeEnv-preserved Orchestrator producer markers to carry `source_repository=InferEdgeOrchestrator`, `artifact_role=orchestrator-supplemental-operation-context`, and `producer_contract=inferedge-orchestrator-edgeenv-runtime-telemetry-feed-v1`.
 - When EdgeEnv preservation context is present, Lab renders `Lab EdgeEnv preservation context` with `lab_report_preservation_context_present=True`, `lab_preservation=present`, and `lab_context=present` so the Runtime Intelligence report gate and entrypoint evidence index use the same Lab-owned marker vocabulary.
 - When an EdgeEnv handoff manifest is provided, the bundle gate requires EdgeEnv-produced file keys, external AIGuard file keys, source repository mapping, artifact roles, producer contracts, and boundary flags to match Lab's Runtime Intelligence bundle contract.
-- The same manifest gate requires `expected_report_markers` to preserve these exact Lab-owned report markers: `Runtime Intelligence Risk Summary`, `Runtime replay duration scope`, `Orchestrator operation feed context`, `EdgeEnv fixture matrix coverage`, `Reviewer operation quick scan`, `Orchestrator task event rollup`, `Lab EdgeEnv preservation context`, `AIGuard operation risk rollup evidence`, `AIGuard task event rollup evidence`, `AIGuard operation timeline evidence`, `AIGuard scheduler fairness evidence`, `AIGuard worker health trend evidence`, `AIGuard policy pressure evidence`, `AIGuard runtime operation anomalies`, `AIGuard remote dispatch event summary`, `AIGuard remote event summary consistency`, `Remote fallback starter evidence`, `lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback`, `AIGuard producer-lineage guard alignment`, and `Lab remains the final deployment decision owner.`.
+- The same manifest gate requires `expected_report_markers` to preserve these exact Lab-owned report markers: `Runtime Intelligence Risk Summary`, `Runtime replay duration scope`, `Orchestrator operation feed context`, `EdgeEnv fixture matrix coverage`, `Reviewer operation quick scan`, `Orchestrator task event rollup`, `Lab EdgeEnv preservation context`, `AIGuard operation risk rollup evidence`, `AIGuard task event rollup evidence`, `AIGuard operation timeline evidence`, `AIGuard scheduler fairness evidence`, `AIGuard worker health trend evidence`, `AIGuard policy pressure evidence`, `AIGuard pressure window evidence`, `AIGuard runtime operation anomalies`, `AIGuard remote dispatch event summary`, `AIGuard remote event summary consistency`, `Remote fallback starter evidence`, `lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback`, `AIGuard producer-lineage guard alignment`, and `Lab remains the final deployment decision owner.`.
 - Reviewer navigation can trace Orchestrator curated samples through AIGuard evidence into Lab report rows: `agent_scheduler_delay_sample.json` -> `scheduler_delay_pattern` -> `Reviewer operation quick scan` / `Orchestrator queue/deadline/fallback markers`, and `remote_fallback_recovery_sample.json` -> `remote_execution_recovered_by_fallback` -> `Remote fallback starter evidence`. Lab does not treat those curated samples as benchmark outputs, production retry proof, or deployment policy inputs.
 - The external AIGuard artifact gate also requires `runtime_queue_overload`
   raw context to preserve

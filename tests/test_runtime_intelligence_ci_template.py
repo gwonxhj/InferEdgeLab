@@ -226,13 +226,17 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
                 "- aiguard_evidence: edgeenv_orchestrator_task_event_rollup validated",
                 "- aiguard_evidence: edgeenv_orchestrator_operation_timeline_summary validated",
                 "- aiguard_evidence: edgeenv_orchestrator_scheduler_fairness_summary validated",
-                    "- aiguard_evidence: edgeenv_orchestrator_policy_pressure_summary validated",
+                "- aiguard_evidence: edgeenv_orchestrator_worker_health_trend validated",
+                "- aiguard_evidence: edgeenv_orchestrator_policy_pressure_summary validated",
+                "- aiguard_evidence: edgeenv_orchestrator_pressure_window_summary validated",
                 "- aiguard_evidence: runtime_history_seed_run_config_traceability validated",
                 "- aiguard_evidence: remote_execution_recovered_by_fallback validated",
                 "- aiguard_raw_context: producer_lineage_shape preserved",
                 "- aiguard_raw_context: task_event_rollup preserved",
                 "- aiguard_raw_context: scheduler_fairness_summary preserved",
-                    "- aiguard_raw_context: policy_pressure_summary preserved",
+                "- aiguard_raw_context: worker_health_trend preserved",
+                "- aiguard_raw_context: policy_pressure_summary preserved",
+                "- aiguard_raw_context: pressure_window_summary preserved",
                 "- aiguard_raw_context: history_seed_run_config_traceability preserved",
                 "- aiguard_raw_context: remote_runtime_event_summary preserved",
                 "- aiguard_raw_context: remote_runtime_summary_boundary preserved",
@@ -276,7 +280,7 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
     (report_dir / "aiguard_edgeenv_handoff_alignment.json").write_text(
         '{"schema_version":"inferedge-aiguard-edgeenv-handoff-alignment-v1",'
         '"status":"passed","decision_owner":"lab","diagnosis_owner":"aiguard",'
-        '"lab_expected_report_marker_count":19,'
+        '"lab_expected_report_marker_count":21,'
         '"lab_expected_report_markers":['
         '"Runtime Intelligence Risk Summary",'
         '"Runtime replay duration scope",'
@@ -289,7 +293,9 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         '"AIGuard task event rollup evidence",'
         '"AIGuard operation timeline evidence",'
         '"AIGuard scheduler fairness evidence",'
+        '"AIGuard worker health trend evidence",'
         '"AIGuard policy pressure evidence",'
+        '"AIGuard pressure window evidence",'
         '"AIGuard runtime operation anomalies",'
         '"AIGuard remote dispatch event summary",'
         '"AIGuard remote event summary consistency",'
@@ -302,10 +308,12 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         '"aiguard_validates_expected_report_markers":false,'
         '"optional_evidence_context_role":"read_only_optional_guard_context",'
         '"aiguard_validates_optional_evidence_as_required":false,'
-        '"optional_evidence_type_count":2,'
+        '"optional_evidence_type_count":3,'
         '"optional_aiguard_evidence_types":'
-        '["stale_frame_risk","edgeenv_orchestrator_stale_drop_summary"],'
-        '"optional_guard_evidence_types_present":[],'
+        '["stale_frame_risk","edgeenv_orchestrator_stale_drop_summary",'
+        '"edgeenv_orchestrator_pressure_window_summary"],'
+        '"optional_guard_evidence_types_present":'
+        '["edgeenv_orchestrator_pressure_window_summary"],'
         '"missing_optional_evidence_types":'
         '["edgeenv_orchestrator_stale_drop_summary","stale_frame_risk"],'
         '"invalid_optional_evidence_types":[],'
@@ -314,10 +322,15 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         '"guard_analysis_producer_lineage_guard_alignment_run_ids":'
         '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
         '"handoff_policy_pressure_summary_run_ids":'
-        '["edgeenv-smoke-candidate"],'
+        '[],'
         '"guard_analysis_policy_pressure_summary_run_ids":'
-        '["edgeenv-smoke-candidate"],'
+        '[],'
         '"policy_pressure_summary_errors":[],'
+        '"handoff_pressure_window_summary_run_ids":'
+        '["edgeenv-smoke-candidate"],'
+        '"guard_analysis_pressure_window_summary_run_ids":'
+        '["edgeenv-smoke-candidate"],'
+        '"pressure_window_summary_errors":[],'
         '"guard_alignment_summary_errors":[],"errors":[]}',
         encoding="utf-8",
     )
@@ -327,18 +340,20 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
                 "- status: passed",
                 "- decision_owner: lab",
                 "- diagnosis_owner: aiguard",
-                "- lab_expected_report_markers: [Runtime Intelligence Risk Summary, Runtime replay duration scope, Orchestrator operation feed context, EdgeEnv fixture matrix coverage, Reviewer operation quick scan, Orchestrator task event rollup, Lab EdgeEnv preservation context, AIGuard operation risk rollup evidence, AIGuard task event rollup evidence, AIGuard operation timeline evidence, AIGuard scheduler fairness evidence, AIGuard policy pressure evidence, AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, AIGuard remote event summary consistency, Remote fallback starter evidence, lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback, AIGuard producer-lineage guard alignment, Lab remains the final deployment decision owner.]",
+                "- lab_expected_report_markers: [Runtime Intelligence Risk Summary, Runtime replay duration scope, Orchestrator operation feed context, EdgeEnv fixture matrix coverage, Reviewer operation quick scan, Orchestrator task event rollup, Lab EdgeEnv preservation context, AIGuard operation risk rollup evidence, AIGuard task event rollup evidence, AIGuard operation timeline evidence, AIGuard scheduler fairness evidence, AIGuard worker health trend evidence, AIGuard policy pressure evidence, AIGuard pressure window evidence, AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, AIGuard remote event summary consistency, Remote fallback starter evidence, lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback, AIGuard producer-lineage guard alignment, Lab remains the final deployment decision owner.]",
                 "- report_marker_context_role: lab_report_contract_context",
                 "- aiguard_validates_expected_report_markers: False",
                 "- optional_evidence_context_role: read_only_optional_guard_context",
                 "- aiguard_validates_optional_evidence_as_required: False",
-                "- optional_aiguard_evidence_types: [stale_frame_risk, edgeenv_orchestrator_stale_drop_summary]",
-                "- optional_guard_evidence_types_present: []",
+                "- optional_aiguard_evidence_types: [stale_frame_risk, edgeenv_orchestrator_stale_drop_summary, edgeenv_orchestrator_pressure_window_summary]",
+                "- optional_guard_evidence_types_present: [edgeenv_orchestrator_pressure_window_summary]",
                 "- missing_optional_evidence_types: [edgeenv_orchestrator_stale_drop_summary, stale_frame_risk]",
                 "- handoff_producer_lineage_guard_alignment_run_ids: [edgeenv-smoke-candidate, edgeenv-smoke-missing]",
                 "- guard_analysis_producer_lineage_guard_alignment_run_ids: [edgeenv-smoke-candidate, edgeenv-smoke-missing]",
-                "- handoff_policy_pressure_summary_run_ids: [edgeenv-smoke-candidate]",
-                "- guard_analysis_policy_pressure_summary_run_ids: [edgeenv-smoke-candidate]",
+                "- handoff_policy_pressure_summary_run_ids: []",
+                "- guard_analysis_policy_pressure_summary_run_ids: []",
+                "- handoff_pressure_window_summary_run_ids: [edgeenv-smoke-candidate]",
+                "- guard_analysis_pressure_window_summary_run_ids: [edgeenv-smoke-candidate]",
             ]
         ),
         encoding="utf-8",
@@ -348,7 +363,7 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
     ).write_text(
         '{"schema_version":"inferedge-aiguard-edgeenv-handoff-alignment-v1",'
         '"status":"passed","decision_owner":"lab","diagnosis_owner":"aiguard",'
-        '"lab_expected_report_marker_count":19,'
+        '"lab_expected_report_marker_count":21,'
         '"lab_expected_report_markers":['
         '"Runtime Intelligence Risk Summary",'
         '"Runtime replay duration scope",'
@@ -361,7 +376,9 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         '"AIGuard task event rollup evidence",'
         '"AIGuard operation timeline evidence",'
         '"AIGuard scheduler fairness evidence",'
+        '"AIGuard worker health trend evidence",'
         '"AIGuard policy pressure evidence",'
+        '"AIGuard pressure window evidence",'
         '"AIGuard runtime operation anomalies",'
         '"AIGuard remote dispatch event summary",'
         '"AIGuard remote event summary consistency",'
@@ -374,11 +391,13 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         '"aiguard_validates_expected_report_markers":false,'
         '"optional_evidence_context_role":"read_only_optional_guard_context",'
         '"aiguard_validates_optional_evidence_as_required":false,'
-        '"optional_evidence_type_count":2,'
+        '"optional_evidence_type_count":3,'
         '"optional_aiguard_evidence_types":'
-        '["stale_frame_risk","edgeenv_orchestrator_stale_drop_summary"],'
+        '["stale_frame_risk","edgeenv_orchestrator_stale_drop_summary",'
+        '"edgeenv_orchestrator_pressure_window_summary"],'
         '"optional_guard_evidence_types_present":'
-        '["edgeenv_orchestrator_stale_drop_summary","stale_frame_risk"],'
+        '["edgeenv_orchestrator_pressure_window_summary",'
+        '"edgeenv_orchestrator_stale_drop_summary","stale_frame_risk"],'
         '"missing_optional_evidence_types":[],'
         '"optional_present_source_artifact":{'
         '"repository":"InferEdgeAIGuard",'
@@ -403,10 +422,15 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         '"guard_analysis_producer_lineage_guard_alignment_run_ids":'
         '["edgeenv-smoke-candidate","edgeenv-smoke-missing"],'
         '"handoff_policy_pressure_summary_run_ids":'
-        '["edgeenv-smoke-candidate"],'
+        '[],'
         '"guard_analysis_policy_pressure_summary_run_ids":'
-        '["edgeenv-smoke-candidate"],'
+        '[],'
         '"policy_pressure_summary_errors":[],'
+        '"handoff_pressure_window_summary_run_ids":'
+        '["edgeenv-smoke-candidate"],'
+        '"guard_analysis_pressure_window_summary_run_ids":'
+        '["edgeenv-smoke-candidate"],'
+        '"pressure_window_summary_errors":[],'
         '"guard_alignment_summary_errors":[],"errors":[]}',
         encoding="utf-8",
     )
@@ -418,20 +442,22 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
                 "- status: passed",
                 "- decision_owner: lab",
                 "- diagnosis_owner: aiguard",
-                "- lab_expected_report_markers: [Runtime Intelligence Risk Summary, Runtime replay duration scope, Orchestrator operation feed context, EdgeEnv fixture matrix coverage, Reviewer operation quick scan, Orchestrator task event rollup, Lab EdgeEnv preservation context, AIGuard operation risk rollup evidence, AIGuard task event rollup evidence, AIGuard operation timeline evidence, AIGuard scheduler fairness evidence, AIGuard policy pressure evidence, AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, AIGuard remote event summary consistency, Remote fallback starter evidence, lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback, AIGuard producer-lineage guard alignment, Lab remains the final deployment decision owner.]",
+                "- lab_expected_report_markers: [Runtime Intelligence Risk Summary, Runtime replay duration scope, Orchestrator operation feed context, EdgeEnv fixture matrix coverage, Reviewer operation quick scan, Orchestrator task event rollup, Lab EdgeEnv preservation context, AIGuard operation risk rollup evidence, AIGuard task event rollup evidence, AIGuard operation timeline evidence, AIGuard scheduler fairness evidence, AIGuard worker health trend evidence, AIGuard policy pressure evidence, AIGuard pressure window evidence, AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, AIGuard remote event summary consistency, Remote fallback starter evidence, lab=Remote fallback starter evidence; evidence=remote_execution_recovered_by_fallback, AIGuard producer-lineage guard alignment, Lab remains the final deployment decision owner.]",
                 "- report_marker_context_role: lab_report_contract_context",
                 "- aiguard_validates_expected_report_markers: False",
                 "- optional_evidence_context_role: read_only_optional_guard_context",
                 "- aiguard_validates_optional_evidence_as_required: False",
-                "- optional_aiguard_evidence_types: [stale_frame_risk, edgeenv_orchestrator_stale_drop_summary]",
-                "- optional_guard_evidence_types_present: [edgeenv_orchestrator_stale_drop_summary, stale_frame_risk]",
+                "- optional_aiguard_evidence_types: [stale_frame_risk, edgeenv_orchestrator_stale_drop_summary, edgeenv_orchestrator_pressure_window_summary]",
+                "- optional_guard_evidence_types_present: [edgeenv_orchestrator_pressure_window_summary, edgeenv_orchestrator_stale_drop_summary, stale_frame_risk]",
                 "- missing_optional_evidence_types: []",
                 "- optional_present_source_artifact: InferEdgeAIGuard/examples/runtime_intelligence/aiguard_runtime_operation_guard_analysis_optional_stale_drop.json",
                 "- optional_present_reproduction_command: python -m inferedge_aiguard.cli build-runtime-intelligence-optional-stale-drop --edgeenv-regression examples/runtime_intelligence/edgeenv_runtime_regression_with_optional_stale_drop_context.json --remote-dispatch examples/runtime_intelligence/remote_dispatch_fallback_recovered_result.json --orchestration-summary examples/runtime_intelligence/orchestrator_multi_workload_sustained_summary.json --save-json examples/runtime_intelligence/aiguard_runtime_operation_guard_analysis_optional_stale_drop.json",
                 "- handoff_producer_lineage_guard_alignment_run_ids: [edgeenv-smoke-candidate, edgeenv-smoke-missing]",
                 "- guard_analysis_producer_lineage_guard_alignment_run_ids: [edgeenv-smoke-candidate, edgeenv-smoke-missing]",
-                "- handoff_policy_pressure_summary_run_ids: [edgeenv-smoke-candidate]",
-                "- guard_analysis_policy_pressure_summary_run_ids: [edgeenv-smoke-candidate]",
+                "- handoff_policy_pressure_summary_run_ids: []",
+                "- guard_analysis_policy_pressure_summary_run_ids: []",
+                "- handoff_pressure_window_summary_run_ids: [edgeenv-smoke-candidate]",
+                "- guard_analysis_pressure_window_summary_run_ids: [edgeenv-smoke-candidate]",
             ]
         ),
         encoding="utf-8",
@@ -511,7 +537,9 @@ def test_runtime_intelligence_ci_artifact_gate_passes_for_expected_outputs(tmp_p
         in summary
     )
     assert (
-        "aiguard_optional_present_types: edgeenv_orchestrator_stale_drop_summary, stale_frame_risk"
+        "aiguard_optional_present_types: "
+        "edgeenv_orchestrator_pressure_window_summary, "
+        "edgeenv_orchestrator_stale_drop_summary, stale_frame_risk"
         in summary
     )
     assert "aiguard_optional_present_missing_types: none" in summary

@@ -170,6 +170,13 @@ REQUIRED_MARKDOWN_MARKERS = {
     "aiguard_policy_pressure_type": (
         "edgeenv_orchestrator_policy_pressure_summary"
     ),
+    "aiguard_pressure_window_evidence": (
+        "| AIGuard pressure window evidence | "
+        "status=warning, windows=1"
+    ),
+    "aiguard_pressure_window_type": (
+        "edgeenv_orchestrator_pressure_window_summary"
+    ),
     "aiguard_remote_dispatch_summary": (
         "| AIGuard remote dispatch event summary | "
         "events=3, final=succeeded, fallback_recovered=True |"
@@ -308,6 +315,10 @@ REQUIRED_HTML_MARKERS = {
     "aiguard_policy_pressure_evidence": "AIGuard policy pressure evidence",
     "aiguard_policy_pressure_type": (
         "edgeenv_orchestrator_policy_pressure_summary"
+    ),
+    "aiguard_pressure_window_evidence": "AIGuard pressure window evidence",
+    "aiguard_pressure_window_type": (
+        "edgeenv_orchestrator_pressure_window_summary"
     ),
     "aiguard_remote_dispatch_summary": "AIGuard remote dispatch event summary",
     "aiguard_remote_dispatch_label": (

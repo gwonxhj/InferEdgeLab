@@ -59,6 +59,7 @@
     "AIGuard scheduler fairness evidence",
     "AIGuard worker health trend evidence",
     "AIGuard policy pressure evidence",
+    "AIGuard pressure window evidence",
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
     "AIGuard remote event summary consistency",
