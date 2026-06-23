@@ -112,6 +112,7 @@ REQUIRED_GUARD_TYPES = {
 OPTIONAL_AIGUARD_EVIDENCE_TYPES = {
     "stale_frame_risk",
     "edgeenv_orchestrator_stale_drop_summary",
+    "edgeenv_orchestrator_pressure_window_summary",
 }
 OPTIONAL_AIGUARD_SOURCE_TRACEABILITY_CONTEXT_ROLE = (
     "read_only_optional_source_traceability"
@@ -182,6 +183,7 @@ REQUIRED_EXPECTED_REPORT_MARKERS = {
     "AIGuard scheduler fairness evidence",
     "AIGuard worker health trend evidence",
     "AIGuard policy pressure evidence",
+    "AIGuard pressure window evidence",
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
     "AIGuard remote event summary consistency",
@@ -212,6 +214,7 @@ SUMMARY_CONTRACT_MARKERS = (
     "aiguard_evidence: edgeenv_orchestrator_scheduler_fairness_summary validated",
     "aiguard_evidence: edgeenv_orchestrator_worker_health_trend validated",
     "aiguard_evidence: edgeenv_orchestrator_policy_pressure_summary validated",
+    "aiguard_evidence: edgeenv_orchestrator_pressure_window_summary validated",
     "aiguard_evidence: runtime_history_seed_run_config_traceability validated",
     "aiguard_evidence: remote_execution_recovered_by_fallback validated",
     "aiguard_raw_context: producer_lineage_shape preserved",
@@ -219,6 +222,7 @@ SUMMARY_CONTRACT_MARKERS = (
     "aiguard_raw_context: scheduler_fairness_summary preserved",
     "aiguard_raw_context: worker_health_trend preserved",
     "aiguard_raw_context: policy_pressure_summary preserved",
+    "aiguard_raw_context: pressure_window_summary preserved",
     "aiguard_raw_context: history_seed_run_config_traceability preserved",
     "aiguard_raw_context: remote_runtime_event_summary preserved",
     "aiguard_raw_context: remote_runtime_summary_boundary preserved",
@@ -1946,6 +1950,8 @@ def _validate_guard_analysis(guard_analysis: dict[str, Any], errors: list[str]) 
             _validate_worker_health_trend_evidence(item, index, errors)
         if item.get("type") == "edgeenv_orchestrator_policy_pressure_summary":
             _validate_policy_pressure_evidence(item, index, errors)
+        if item.get("type") == "edgeenv_orchestrator_pressure_window_summary":
+            _validate_pressure_window_evidence(item, index, errors)
         if item.get("type") == "runtime_history_seed_run_config_traceability":
             _validate_run_config_traceability_evidence(item, index, errors)
         if item.get("type") == "remote_execution_recovered_by_fallback":
@@ -2682,6 +2688,92 @@ def _validate_policy_pressure_evidence(
         pressure.get("not_a_deployment_decision") is True,
         errors,
         f"AIGuard evidence[{index}] policy_pressure_summary.not_a_deployment_decision must be true",
+    )
+
+
+def _validate_pressure_window_evidence(
+    item: dict[str, Any],
+    index: int,
+    errors: list[str],
+) -> None:
+    _record(
+        item.get("status") == "warning",
+        errors,
+        f"AIGuard evidence[{index}] pressure window status must be warning",
+    )
+    _record(
+        item.get("observed_value") == 1,
+        errors,
+        f"AIGuard evidence[{index}] pressure window observed_value must be 1",
+    )
+    raw_context = item.get("raw_context") or {}
+    pressure = raw_context.get("pressure_window_summary")
+    _record(
+        isinstance(pressure, dict),
+        errors,
+        f"AIGuard evidence[{index}] raw_context.pressure_window_summary must be an object",
+    )
+    if not isinstance(pressure, dict):
+        return
+
+    _record(
+        pressure.get("boundary_markers_valid") is True,
+        errors,
+        f"AIGuard evidence[{index}] pressure_window_summary.boundary_markers_valid "
+        "must be true",
+    )
+    _record(
+        pressure.get("first_read") == "review_sustained_pressure_window",
+        errors,
+        f"AIGuard evidence[{index}] pressure_window_summary.first_read must be review_sustained_pressure_window",
+    )
+    _record(
+        pressure.get("window_count") == 1.0,
+        errors,
+        f"AIGuard evidence[{index}] pressure_window_summary.window_count must be 1.0",
+    )
+    _record(
+        pressure.get("peak_total_queue_depth") == 7.0,
+        errors,
+        f"AIGuard evidence[{index}] pressure_window_summary.peak_total_queue_depth must be 7.0",
+    )
+    _record(
+        pressure.get("longest_window_cycles") == 2.0,
+        errors,
+        f"AIGuard evidence[{index}] pressure_window_summary.longest_window_cycles must be 2.0",
+    )
+    _record(
+        pressure.get("limited_tasks") == ["vision_agent", "voice_command_agent"],
+        errors,
+        f"AIGuard evidence[{index}] pressure_window_summary.limited_tasks "
+        "must preserve vision_agent and voice_command_agent",
+    )
+    _record(
+        pressure.get("protected_tasks") == ["safety_monitor_agent"],
+        errors,
+        f"AIGuard evidence[{index}] pressure_window_summary.protected_tasks "
+        "must preserve safety_monitor_agent",
+    )
+    _record(
+        pressure.get("fallback_tasks") == ["voice_command_agent"],
+        errors,
+        f"AIGuard evidence[{index}] pressure_window_summary.fallback_tasks "
+        "must preserve voice_command_agent",
+    )
+    _record(
+        pressure.get("decision_owner") == "lab",
+        errors,
+        f"AIGuard evidence[{index}] pressure_window_summary.decision_owner must be lab",
+    )
+    _record(
+        pressure.get("scheduler_owner") == "orchestrator",
+        errors,
+        f"AIGuard evidence[{index}] pressure_window_summary.scheduler_owner must be orchestrator",
+    )
+    _record(
+        pressure.get("not_a_deployment_decision") is True,
+        errors,
+        f"AIGuard evidence[{index}] pressure_window_summary.not_a_deployment_decision must be true",
     )
 
 

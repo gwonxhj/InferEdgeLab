@@ -42,6 +42,10 @@ ORCHESTRATOR_POLICY_PRESSURE_EVIDENCE_TYPE = (
     "edgeenv_orchestrator_policy_pressure_summary"
 )
 
+ORCHESTRATOR_PRESSURE_WINDOW_EVIDENCE_TYPE = (
+    "edgeenv_orchestrator_pressure_window_summary"
+)
+
 RUN_CONFIG_TRACEABILITY_EVIDENCE_TYPE = "runtime_history_seed_run_config_traceability"
 
 REMOTE_RUNTIME_EVENT_SUMMARY_MISMATCH_EVIDENCE_TYPE = (
@@ -1592,6 +1596,16 @@ def _append_aiguard_runtime_operation_rows(
             )
         )
 
+    pressure_window_label = _aiguard_pressure_window_label(evidence_items)
+    if pressure_window_label:
+        rows.append(
+            (
+                "AIGuard pressure window evidence",
+                pressure_window_label,
+                "AIGuard preserves sustained overload-window context as deterministic review evidence; Lab still owns the deployment decision.",
+            )
+        )
+
     candidate_summary = guard_analysis.get("candidate_summary")
     if not isinstance(candidate_summary, dict):
         return
@@ -2150,6 +2164,52 @@ def _aiguard_policy_pressure_label(
                     "max_backlog_over_threshold="
                     f"{_format_compact_value(max_over_threshold)}"
                 )
+            boundary_valid = context.get("boundary_markers_valid")
+            if boundary_valid is not None:
+                parts.append(f"boundary_valid={boundary_valid}")
+    return ", ".join(parts)
+
+
+def _aiguard_pressure_window_label(
+    evidence_items: list[dict[str, Any]],
+) -> str:
+    evidence = _find_evidence_item(
+        evidence_items,
+        ORCHESTRATOR_PRESSURE_WINDOW_EVIDENCE_TYPE,
+    )
+    if evidence is None:
+        return ""
+
+    parts: list[str] = []
+    status = evidence.get("status")
+    if status is not None:
+        parts.append(f"status={status}")
+    observed = evidence.get("observed_value")
+    if observed is not None:
+        parts.append(f"windows={_format_compact_value(observed)}")
+
+    raw_context = evidence.get("raw_context")
+    if isinstance(raw_context, dict):
+        context = raw_context.get("pressure_window_summary")
+        if isinstance(context, dict):
+            peak_depth = context.get("peak_total_queue_depth")
+            if peak_depth is not None:
+                parts.append(f"peak_queue={_format_compact_value(peak_depth)}")
+            longest = context.get("longest_window_cycles")
+            if longest is not None:
+                parts.append(f"longest_cycles={_format_compact_value(longest)}")
+            limited_tasks = _string_list(context.get("limited_tasks"))
+            if limited_tasks:
+                parts.append("limited=" + ",".join(limited_tasks))
+            protected_tasks = _string_list(context.get("protected_tasks"))
+            if protected_tasks:
+                parts.append("protected=" + ",".join(protected_tasks))
+            fallback_tasks = _string_list(context.get("fallback_tasks"))
+            if fallback_tasks:
+                parts.append("fallback=" + ",".join(fallback_tasks))
+            first_read = context.get("first_read")
+            if first_read is not None:
+                parts.append(f"first_read={_format_compact_value(first_read)}")
             boundary_valid = context.get("boundary_markers_valid")
             if boundary_valid is not None:
                 parts.append(f"boundary_valid={boundary_valid}")

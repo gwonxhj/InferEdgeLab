@@ -6,10 +6,10 @@
   "diagnosis_owner": "aiguard",
   "handoff_schema_version": "edgeenv.runtime-intelligence-lab-handoff.v1",
   "guard_analysis_schema_version": "inferedge-aiguard-diagnosis-v1",
-  "required_evidence_type_count": 10,
-  "optional_evidence_type_count": 2,
-  "guard_evidence_type_count": 11,
-  "lab_expected_report_marker_count": 19,
+  "required_evidence_type_count": 12,
+  "optional_evidence_type_count": 3,
+  "guard_evidence_type_count": 14,
+  "lab_expected_report_marker_count": 21,
   "lab_expected_report_markers": [
     "Runtime Intelligence Risk Summary",
     "Runtime replay duration scope",
@@ -22,7 +22,9 @@
     "AIGuard task event rollup evidence",
     "AIGuard operation timeline evidence",
     "AIGuard scheduler fairness evidence",
+    "AIGuard worker health trend evidence",
     "AIGuard policy pressure evidence",
+    "AIGuard pressure window evidence",
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
     "AIGuard remote event summary consistency",
@@ -51,11 +53,13 @@
     "runtime_history_seed_run_config_traceability",
     "runtime_queue_overload",
     "runtime_thermal_instability",
-    "remote_execution_recovered_by_fallback"
+    "remote_execution_recovered_by_fallback",
+    "edgeenv_orchestrator_worker_health_trend"
   ],
   "optional_aiguard_evidence_types": [
     "stale_frame_risk",
-    "edgeenv_orchestrator_stale_drop_summary"
+    "edgeenv_orchestrator_stale_drop_summary",
+    "edgeenv_orchestrator_pressure_window_summary"
   ],
   "guard_analysis_evidence_types": [
     "runtime_telemetry_context_coverage",
@@ -65,20 +69,25 @@
     "edgeenv_orchestrator_task_event_rollup",
     "edgeenv_orchestrator_operation_timeline_summary",
     "edgeenv_orchestrator_scheduler_fairness_summary",
+    "edgeenv_orchestrator_worker_health_trend",
     "edgeenv_orchestrator_policy_pressure_summary",
+    "edgeenv_orchestrator_pressure_window_summary",
     "runtime_history_seed_run_config_traceability",
     "runtime_thermal_instability",
     "runtime_queue_overload",
     "remote_execution_recovered_by_fallback"
   ],
   "missing_required_evidence_types": [],
-  "optional_guard_evidence_types_present": [],
+  "optional_guard_evidence_types_present": [
+    "edgeenv_orchestrator_pressure_window_summary"
+  ],
   "missing_optional_evidence_types": [
     "edgeenv_orchestrator_stale_drop_summary",
     "stale_frame_risk"
   ],
   "supplemental_guard_evidence_types": [
-    "edgeenv_orchestrator_operation_risk_summary"
+    "edgeenv_orchestrator_operation_risk_summary",
+    "edgeenv_orchestrator_pressure_window_summary"
   ],
   "invalid_required_evidence_types": [],
   "invalid_optional_evidence_types": [],
@@ -99,13 +108,16 @@
     "edgeenv-smoke-candidate",
     "edgeenv-smoke-missing"
   ],
-  "handoff_policy_pressure_summary_run_ids": [
-    "edgeenv-smoke-candidate"
-  ],
-  "guard_analysis_policy_pressure_summary_run_ids": [
-    "edgeenv-smoke-candidate"
-  ],
-  "policy_pressure_summary_errors": [],
   "guard_alignment_summary_errors": [],
+  "handoff_policy_pressure_summary_run_ids": [],
+  "guard_analysis_policy_pressure_summary_run_ids": [],
+  "policy_pressure_summary_errors": [],
+  "handoff_pressure_window_summary_run_ids": [
+    "edgeenv-smoke-candidate"
+  ],
+  "guard_analysis_pressure_window_summary_run_ids": [
+    "edgeenv-smoke-candidate"
+  ],
+  "pressure_window_summary_errors": [],
   "errors": []
 }

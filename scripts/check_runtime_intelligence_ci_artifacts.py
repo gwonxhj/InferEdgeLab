@@ -47,13 +47,17 @@ REQUIRED_BUNDLE_MANIFEST_SUMMARY_MARKERS = (
     "aiguard_evidence: edgeenv_orchestrator_task_event_rollup validated",
     "aiguard_evidence: edgeenv_orchestrator_operation_timeline_summary validated",
     "aiguard_evidence: edgeenv_orchestrator_scheduler_fairness_summary validated",
+    "aiguard_evidence: edgeenv_orchestrator_worker_health_trend validated",
     "aiguard_evidence: edgeenv_orchestrator_policy_pressure_summary validated",
+    "aiguard_evidence: edgeenv_orchestrator_pressure_window_summary validated",
     "aiguard_evidence: runtime_history_seed_run_config_traceability validated",
     "aiguard_evidence: remote_execution_recovered_by_fallback validated",
     "aiguard_raw_context: producer_lineage_shape preserved",
     "aiguard_raw_context: task_event_rollup preserved",
     "aiguard_raw_context: scheduler_fairness_summary preserved",
+    "aiguard_raw_context: worker_health_trend preserved",
     "aiguard_raw_context: policy_pressure_summary preserved",
+    "aiguard_raw_context: pressure_window_summary preserved",
     "aiguard_raw_context: history_seed_run_config_traceability preserved",
     "aiguard_raw_context: remote_runtime_event_summary preserved",
     "aiguard_raw_context: remote_runtime_summary_boundary preserved",
@@ -94,7 +98,9 @@ REQUIRED_LAB_EXPECTED_REPORT_MARKERS = (
     "AIGuard task event rollup evidence",
     "AIGuard operation timeline evidence",
     "AIGuard scheduler fairness evidence",
+    "AIGuard worker health trend evidence",
     "AIGuard policy pressure evidence",
+    "AIGuard pressure window evidence",
     "AIGuard runtime operation anomalies",
     "AIGuard remote dispatch event summary",
     "AIGuard remote event summary consistency",
@@ -107,18 +113,24 @@ REQUIRED_AIGUARD_ALIGNMENT_RUN_IDS = [
     "edgeenv-smoke-candidate",
     "edgeenv-smoke-missing",
 ]
-REQUIRED_AIGUARD_POLICY_PRESSURE_RUN_IDS = [
+REQUIRED_AIGUARD_POLICY_PRESSURE_RUN_IDS = []
+REQUIRED_AIGUARD_PRESSURE_WINDOW_RUN_IDS = [
     "edgeenv-smoke-candidate",
 ]
 REQUIRED_AIGUARD_OPTIONAL_EVIDENCE_TYPES = [
     "stale_frame_risk",
     "edgeenv_orchestrator_stale_drop_summary",
+    "edgeenv_orchestrator_pressure_window_summary",
 ]
 REQUIRED_AIGUARD_MISSING_OPTIONAL_EVIDENCE_TYPES = [
     "edgeenv_orchestrator_stale_drop_summary",
     "stale_frame_risk",
 ]
+REQUIRED_AIGUARD_DEFAULT_PRESENT_OPTIONAL_EVIDENCE_TYPES = [
+    "edgeenv_orchestrator_pressure_window_summary",
+]
 REQUIRED_AIGUARD_PRESENT_OPTIONAL_EVIDENCE_TYPES = [
+    "edgeenv_orchestrator_pressure_window_summary",
     "edgeenv_orchestrator_stale_drop_summary",
     "stale_frame_risk",
 ]
@@ -164,9 +176,11 @@ REQUIRED_AIGUARD_OPTIONAL_CONTEXT_SUMMARY_MARKERS = (
     "## Validated AIGuard Optional Handoff Context",
     "aiguard_optional_context: read_only_optional_guard_context preserved",
     "aiguard_optional_requirement_boundary: optional evidence not validated as required",
-    "aiguard_optional_types: stale_frame_risk, edgeenv_orchestrator_stale_drop_summary",
+    "aiguard_optional_types: "
+    f"{', '.join(REQUIRED_AIGUARD_OPTIONAL_EVIDENCE_TYPES)}",
     "aiguard_missing_optional_types: edgeenv_orchestrator_stale_drop_summary, stale_frame_risk",
-    "aiguard_optional_present_types: edgeenv_orchestrator_stale_drop_summary, stale_frame_risk",
+    "aiguard_optional_present_types: "
+    f"{', '.join(REQUIRED_AIGUARD_PRESENT_OPTIONAL_EVIDENCE_TYPES)}",
     "aiguard_optional_present_missing_types: none",
     "aiguard_optional_present_source_artifact: "
     f"{REQUIRED_AIGUARD_OPTIONAL_PRESENT_SOURCE_ARTIFACT_MARKER}",
@@ -397,7 +411,7 @@ def _validate_aiguard_handoff_alignment(
     expected_optional_guard_evidence_types_present = (
         expected_optional_guard_evidence_types_present
         if expected_optional_guard_evidence_types_present is not None
-        else []
+        else REQUIRED_AIGUARD_DEFAULT_PRESENT_OPTIONAL_EVIDENCE_TYPES
     )
     expected_missing_optional_evidence_types = (
         expected_missing_optional_evidence_types
@@ -531,6 +545,23 @@ def _validate_aiguard_handoff_alignment(
             "AIGuard alignment policy_pressure_summary_errors must be empty",
         )
         _record(
+            payload.get("handoff_pressure_window_summary_run_ids")
+            == REQUIRED_AIGUARD_PRESSURE_WINDOW_RUN_IDS,
+            errors,
+            "AIGuard alignment handoff pressure-window run IDs must match EdgeEnv summary",
+        )
+        _record(
+            payload.get("guard_analysis_pressure_window_summary_run_ids")
+            == REQUIRED_AIGUARD_PRESSURE_WINDOW_RUN_IDS,
+            errors,
+            "AIGuard alignment guard_analysis pressure-window run IDs must match EdgeEnv summary",
+        )
+        _record(
+            payload.get("pressure_window_summary_errors") == [],
+            errors,
+            "AIGuard alignment pressure_window_summary_errors must be empty",
+        )
+        _record(
             payload.get("guard_alignment_summary_errors") == [],
             errors,
             "AIGuard alignment guard_alignment_summary_errors must be empty",
@@ -568,7 +599,9 @@ def _validate_aiguard_handoff_alignment(
             "AIGuard task event rollup evidence, "
             "AIGuard operation timeline evidence, "
             "AIGuard scheduler fairness evidence, "
+            "AIGuard worker health trend evidence, "
             "AIGuard policy pressure evidence, "
+            "AIGuard pressure window evidence, "
             "AIGuard runtime operation anomalies, AIGuard remote dispatch event summary, "
             "AIGuard remote event summary consistency, "
             "Remote fallback starter evidence, "
@@ -581,7 +614,8 @@ def _validate_aiguard_handoff_alignment(
             "optional_evidence_context_role: read_only_optional_guard_context",
             "aiguard_validates_optional_evidence_as_required: False",
             "optional_aiguard_evidence_types: "
-            "[stale_frame_risk, edgeenv_orchestrator_stale_drop_summary]",
+            "[stale_frame_risk, edgeenv_orchestrator_stale_drop_summary, "
+            "edgeenv_orchestrator_pressure_window_summary]",
             f"optional_guard_evidence_types_present: {expected_present_marker}",
             f"missing_optional_evidence_types: {expected_missing_marker}",
             "handoff_producer_lineage_guard_alignment_run_ids: "
@@ -589,8 +623,12 @@ def _validate_aiguard_handoff_alignment(
             "guard_analysis_producer_lineage_guard_alignment_run_ids: "
             "[edgeenv-smoke-candidate, edgeenv-smoke-missing]",
             "handoff_policy_pressure_summary_run_ids: "
-            "[edgeenv-smoke-candidate]",
+            "[]",
             "guard_analysis_policy_pressure_summary_run_ids: "
+            "[]",
+            "handoff_pressure_window_summary_run_ids: "
+            "[edgeenv-smoke-candidate]",
+            "guard_analysis_pressure_window_summary_run_ids: "
             "[edgeenv-smoke-candidate]",
         ]
         if expected_optional_present_source_artifact is not None:

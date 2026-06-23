@@ -159,19 +159,27 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
     assert alignment_payload["optional_aiguard_evidence_types"] == [
         "stale_frame_risk",
         "edgeenv_orchestrator_stale_drop_summary",
+        "edgeenv_orchestrator_pressure_window_summary",
     ]
-    assert alignment_payload["optional_guard_evidence_types_present"] == []
+    assert alignment_payload["optional_guard_evidence_types_present"] == [
+        "edgeenv_orchestrator_pressure_window_summary",
+    ]
     assert alignment_payload["missing_optional_evidence_types"] == [
         "edgeenv_orchestrator_stale_drop_summary",
         "stale_frame_risk",
     ]
-    assert alignment_payload["handoff_policy_pressure_summary_run_ids"] == [
+    assert alignment_payload["handoff_policy_pressure_summary_run_ids"] == []
+    assert alignment_payload[
+        "guard_analysis_policy_pressure_summary_run_ids"
+    ] == []
+    assert alignment_payload["policy_pressure_summary_errors"] == []
+    assert alignment_payload["handoff_pressure_window_summary_run_ids"] == [
         "edgeenv-smoke-candidate"
     ]
     assert alignment_payload[
-        "guard_analysis_policy_pressure_summary_run_ids"
+        "guard_analysis_pressure_window_summary_run_ids"
     ] == ["edgeenv-smoke-candidate"]
-    assert alignment_payload["policy_pressure_summary_errors"] == []
+    assert alignment_payload["pressure_window_summary_errors"] == []
     assert "status: passed" in alignment_summary
     assert "decision_owner: lab" in alignment_summary
     assert "diagnosis_owner: aiguard" in alignment_summary
@@ -185,10 +193,15 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
     )
     assert (
         "optional_aiguard_evidence_types: "
-        "[stale_frame_risk, edgeenv_orchestrator_stale_drop_summary]"
+        "[stale_frame_risk, edgeenv_orchestrator_stale_drop_summary, "
+        "edgeenv_orchestrator_pressure_window_summary]"
         in alignment_summary
     )
-    assert "optional_guard_evidence_types_present: []" in alignment_summary
+    assert (
+        "optional_guard_evidence_types_present: "
+        "[edgeenv_orchestrator_pressure_window_summary]"
+        in alignment_summary
+    )
     assert (
         "missing_optional_evidence_types: "
         "[edgeenv_orchestrator_stale_drop_summary, stale_frame_risk]"
@@ -204,10 +217,18 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
     ) in alignment_summary
     assert (
         "handoff_policy_pressure_summary_run_ids: "
-        "[edgeenv-smoke-candidate]"
+        "[]"
     ) in alignment_summary
     assert (
         "guard_analysis_policy_pressure_summary_run_ids: "
+        "[]"
+    ) in alignment_summary
+    assert (
+        "handoff_pressure_window_summary_run_ids: "
+        "[edgeenv-smoke-candidate]"
+    ) in alignment_summary
+    assert (
+        "guard_analysis_pressure_window_summary_run_ids: "
         "[edgeenv-smoke-candidate]"
     ) in alignment_summary
     optional_present_summary = (
@@ -228,19 +249,26 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
     assert optional_present_payload["optional_aiguard_evidence_types"] == [
         "stale_frame_risk",
         "edgeenv_orchestrator_stale_drop_summary",
+        "edgeenv_orchestrator_pressure_window_summary",
     ]
     assert optional_present_payload["optional_guard_evidence_types_present"] == [
+        "edgeenv_orchestrator_pressure_window_summary",
         "edgeenv_orchestrator_stale_drop_summary",
         "stale_frame_risk",
     ]
     assert optional_present_payload["missing_optional_evidence_types"] == []
-    assert optional_present_payload["handoff_policy_pressure_summary_run_ids"] == [
+    assert optional_present_payload["handoff_policy_pressure_summary_run_ids"] == []
+    assert optional_present_payload[
+        "guard_analysis_policy_pressure_summary_run_ids"
+    ] == []
+    assert optional_present_payload["policy_pressure_summary_errors"] == []
+    assert optional_present_payload["handoff_pressure_window_summary_run_ids"] == [
         "edgeenv-smoke-candidate"
     ]
     assert optional_present_payload[
-        "guard_analysis_policy_pressure_summary_run_ids"
+        "guard_analysis_pressure_window_summary_run_ids"
     ] == ["edgeenv-smoke-candidate"]
-    assert optional_present_payload["policy_pressure_summary_errors"] == []
+    assert optional_present_payload["pressure_window_summary_errors"] == []
     assert optional_present_payload["optional_present_source_artifact"] == {
         "repository": "InferEdgeAIGuard",
         "path": (
@@ -279,7 +307,8 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
     }
     assert (
         "optional_guard_evidence_types_present: "
-        "[edgeenv_orchestrator_stale_drop_summary, stale_frame_risk]"
+        "[edgeenv_orchestrator_pressure_window_summary, "
+        "edgeenv_orchestrator_stale_drop_summary, stale_frame_risk]"
         in optional_present_summary
     )
     assert "missing_optional_evidence_types: []" in optional_present_summary
@@ -322,6 +351,7 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
     )
     assert (
         "aiguard_optional_types: stale_frame_risk, edgeenv_orchestrator_stale_drop_summary"
+        ", edgeenv_orchestrator_pressure_window_summary"
         in ci_summary
     )
     assert (
@@ -329,7 +359,9 @@ def test_runtime_intelligence_smoke_script_runs_artifact_chain(tmp_path):
         in ci_summary
     )
     assert (
-        "aiguard_optional_present_types: edgeenv_orchestrator_stale_drop_summary, stale_frame_risk"
+        "aiguard_optional_present_types: "
+        "edgeenv_orchestrator_pressure_window_summary, "
+        "edgeenv_orchestrator_stale_drop_summary, stale_frame_risk"
         in ci_summary
     )
     assert "aiguard_optional_present_missing_types: none" in ci_summary

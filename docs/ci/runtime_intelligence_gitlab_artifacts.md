@@ -142,9 +142,10 @@ The initial gate is conservative:
   the bundle gate verifies those requirements against the bundled
   `guard_analysis.evidence` type set
 - if the handoff declares `optional_aiguard_evidence_types`, the bundle gate
-  validates the known stale-drop labels (`stale_frame_risk` and
-  `edgeenv_orchestrator_stale_drop_summary`) as optional context that remains
-  separate from the required AIGuard evidence set
+  validates the known optional labels (`stale_frame_risk`,
+  `edgeenv_orchestrator_stale_drop_summary`, and
+  `edgeenv_orchestrator_pressure_window_summary`) as optional context that
+  remains separate from the required AIGuard evidence set
 - if the handoff declares `optional_aiguard_source_traceability`, the bundle
   gate validates the `read_only_optional_source_traceability` AIGuard source
   artifact path and reproduction command as read-only metadata, without making
@@ -188,6 +189,7 @@ packaging runs. That marker set preserves `Runtime Intelligence Risk Summary`,
 `AIGuard scheduler fairness evidence`,
 `AIGuard worker health trend evidence`,
 `AIGuard policy pressure evidence`,
+`AIGuard pressure window evidence`,
 `AIGuard runtime operation anomalies`,
 `AIGuard remote dispatch event summary`,
 `AIGuard remote event summary consistency`,
@@ -275,9 +277,9 @@ marker enforcement to Lab's bundle/report gates.
 The same alignment artifact also preserves
 `optional_aiguard_evidence_types` as `read_only_optional_guard_context`. The CI
 artifact gate checks `aiguard_validates_optional_evidence_as_required=false`,
-records which optional stale-drop evidence labels are absent from the bundled
-guard artifact, and keeps those absences out of the required evidence failure
-path. A companion
+records which optional stale-drop and pressure-window evidence labels are
+absent from the bundled guard artifact, and keeps those absences out of the
+required evidence failure path. A companion
 `aiguard_edgeenv_handoff_alignment_optional_present.json/.md` fixture exercises
 the same optional labels when they are present, proving the gate can record
 `optional_guard_evidence_types_present` without promoting those labels to
