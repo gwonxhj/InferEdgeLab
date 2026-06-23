@@ -167,6 +167,9 @@ REQUIRED_MARKDOWN_MARKERS = {
         "| AIGuard policy pressure evidence | "
         "status=warning, markers=5"
     ),
+    "aiguard_policy_pressure_reasons": (
+        "reasons=queue_backlog_threshold_exceeded:2"
+    ),
     "aiguard_policy_pressure_type": (
         "edgeenv_orchestrator_policy_pressure_summary"
     ),
@@ -313,6 +316,9 @@ REQUIRED_HTML_MARKERS = {
         "edgeenv_orchestrator_worker_health_trend"
     ),
     "aiguard_policy_pressure_evidence": "AIGuard policy pressure evidence",
+    "aiguard_policy_pressure_reasons": (
+        "reasons=queue_backlog_threshold_exceeded:2"
+    ),
     "aiguard_policy_pressure_type": (
         "edgeenv_orchestrator_policy_pressure_summary"
     ),
@@ -415,6 +421,10 @@ REVIEW_PATH_SUMMARY_MARKERS = (
     "review_path_source_traceability_summary: source traceability summary reference row validated",
 )
 
+POLICY_PRESSURE_SUMMARY_MARKERS = (
+    "aiguard_policy_pressure_reasons: reasons=queue_backlog_threshold_exceeded:2",
+)
+
 
 def _read_text(path: str, label: str) -> str:
     try:
@@ -474,6 +484,10 @@ def _write_summary(
         lines.append("## Validated Review Path")
         lines.append("")
         lines.extend(f"- {marker}" for marker in REVIEW_PATH_SUMMARY_MARKERS)
+        lines.append("")
+        lines.append("## Validated Policy Pressure")
+        lines.append("")
+        lines.extend(f"- {marker}" for marker in POLICY_PRESSURE_SUMMARY_MARKERS)
         lines.append("")
 
     out_path = Path(path)
