@@ -89,6 +89,7 @@ def test_runtime_intelligence_artifact_gate_passes_for_chain_report(tmp_path):
         "review_path_artifact_gate_summary: artifact gate summary reference row validated"
         in summary
     )
+    assert "aiguard_policy_pressure_reasons" in summary
     markdown = markdown_path.read_text(encoding="utf-8")
     html = html_path.read_text(encoding="utf-8")
     assert "### Review Path" in markdown
@@ -124,6 +125,8 @@ def test_runtime_intelligence_artifact_gate_passes_for_chain_report(tmp_path):
     assert "not_a_deployment_decision=True" in markdown
     assert "EdgeEnv fixture matrix coverage" in html
     assert "roles=6/6" in html
+    assert "reasons=queue_backlog_threshold_exceeded:2" in markdown
+    assert "reasons=queue_backlog_threshold_exceeded:2" in html
 
 
 def test_runtime_intelligence_artifact_gate_cli_passes_for_chain_report(tmp_path):
@@ -164,6 +167,7 @@ def test_runtime_intelligence_artifact_gate_cli_passes_for_chain_report(tmp_path
         "review_path_artifact_gate_summary: artifact gate summary reference row validated"
         in summary
     )
+    assert "aiguard_policy_pressure_reasons" in summary
 
 
 def test_runtime_intelligence_docs_describe_duration_traceability_gate_summary():
@@ -186,6 +190,8 @@ def test_runtime_intelligence_docs_describe_duration_traceability_gate_summary()
         assert "EdgeEnv fixture matrix coverage" in text
         assert "Validated Review Path" in text
         assert "Reviewer Focus -> Detailed Evidence Rows guidance validated" in text
+        assert "Validated Policy Pressure" in text
+        assert "policy-pressure reason-count marker" in text
 
 
 def test_runtime_intelligence_artifact_gate_fails_when_owner_row_is_missing(
